@@ -11,7 +11,6 @@ import {
   Gauge,
   Globe2,
   LogIn,
-  LogOut,
   Mail,
   Menu,
   Play,
@@ -22,18 +21,8 @@ import {
 import { CapitalAiLogo } from '../../../shared/branding';
 import { NeuralBackground } from '../../../shared/visuals/NeuralBackground';
 
-interface LandingPageProfile {
-  name: string;
-  subscriptionTier: string;
-}
-
 interface LandingPageProps {
-  preview: React.ReactNode;
-  newsfeed: React.ReactNode;
-  pricing: React.ReactNode;
-  profile?: LandingPageProfile | null;
   onLoginNavigate?: () => void;
-  onLogout?: () => void | Promise<void>;
 }
 
 const APPLICATION_PILLARS = [
@@ -127,15 +116,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MobileNavigation({
-  profile,
-  onLoginNavigate,
-  onLogout,
-}: {
-  profile?: LandingPageProfile | null;
-  onLoginNavigate?: () => void;
-  onLogout?: () => void | Promise<void>;
-}) {
+function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void }) {
   return (
     <details className="group relative lg:hidden">
       <summary
@@ -145,40 +126,27 @@ function MobileNavigation({
         <Menu size={20} aria-hidden="true" />
       </summary>
       <div className="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-brand-primary/20 bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
-        {profile ? (
-          <div className="mb-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-3">
-            <div className="flex items-center gap-2 text-xs font-black text-text-primary">
-              <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
-              <span className="truncate">{profile.name}</span>
-            </div>
-            <span className="mt-2 inline-flex rounded-full border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">
-              {profile.subscriptionTier}
-            </span>
+        <div data-static-slot="profile-subscription" className="mb-3 rounded-xl border border-border bg-surface/45 p-3">
+          <div className="flex items-center gap-2 text-xs font-black text-text-primary">
+            <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+            <span>Profil &amp; Abo</span>
           </div>
-        ) : null}
+          <span className="mt-2 inline-flex rounded-full border border-border px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">
+            LF-02 · noch nicht angebunden
+          </span>
+        </div>
         <nav className="grid gap-1 text-sm" aria-label="Mobile Hauptnavigation">
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#produkt">Produkt</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#analysis-workbench">Analysen</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#pricing">Preise &amp; Abo</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="/learning-platform">Learning</a>
-          {!profile ? (
-            <a
-              className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-3 font-black text-brand-primary"
-              href="/login"
-              onClick={onLoginNavigate}
-            >
-              Anmelden
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void onLogout?.()}
-              className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface/60 px-3 py-3 font-black text-text-primary"
-            >
-              <LogOut size={15} aria-hidden="true" />
-              Abmelden
-            </button>
-          )}
+          <a
+            className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-3 font-black text-brand-primary"
+            href="/login"
+            onClick={onLoginNavigate}
+          >
+            Anmelden
+          </a>
         </nav>
       </div>
     </details>
@@ -192,14 +160,7 @@ function MobileNavigation({
  * surfaces (Newsfeed access + analysis workbench) so the dependency direction remains app -> features.
  * Authentication stays on /login; this component creates no session and defines no scoring/data authority.
  */
-export function LandingPage({
-  preview,
-  newsfeed,
-  pricing,
-  profile,
-  onLoginNavigate,
-  onLogout,
-}: LandingPageProps) {
+export function LandingPage({ onLoginNavigate }: LandingPageProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,color-mix(in_srgb,var(--color-brand-primary)_9%,transparent),transparent_30%),radial-gradient(circle_at_90%_20%,color-mix(in_srgb,var(--color-decorative-purple)_8%,transparent),transparent_30%),radial-gradient(circle_at_52%_72%,color-mix(in_srgb,var(--color-decorative-cyan)_4%,transparent),transparent_34%)]" />
@@ -253,25 +214,22 @@ export function LandingPage({
           </nav>
 
           <div className="flex items-center gap-2">
-            {profile ? (
-              <div className="hidden items-center gap-2 sm:flex">
-                <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface/50 px-3 py-2 text-xs font-bold text-text-primary">
-                  <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
-                  <span className="max-w-32 truncate">{profile.name}</span>
-                </span>
-                <span className="inline-flex min-h-11 items-center rounded-xl border border-brand-primary/30 bg-brand-primary/10 px-3 py-2 font-mono text-[10px] font-black uppercase tracking-wider text-brand-primary">
-                  {profile.subscriptionTier}
-                </span>
-              </div>
-            ) : (
-              <a
-                href="/login"
-                onClick={onLoginNavigate}
-                className="hidden min-h-11 items-center justify-center rounded-xl border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary transition hover:border-brand-primary/35 hover:bg-surface sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-              >
-                Anmelden
-              </a>
-            )}
+            <div data-static-slot="profile-subscription" className="hidden items-center gap-2 xl:flex" aria-label="Vorgesehene Position für Profil und Abonnement">
+              <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface/35 px-3 py-2 text-xs font-bold text-text-secondary">
+                <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+                Profil / Abo
+              </span>
+              <span className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 py-2 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">
+                LF-02
+              </span>
+            </div>
+            <a
+              href="/login"
+              onClick={onLoginNavigate}
+              className="hidden min-h-11 items-center justify-center rounded-xl border border-border bg-surface/50 px-4 py-2 text-xs font-bold text-text-primary transition hover:border-brand-primary/35 hover:bg-surface sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+            >
+              Anmelden
+            </a>
             <a
               href="#analysis-workbench"
               className="hidden min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-xs font-black uppercase tracking-wider text-background shadow-[0_0_20px_color-mix(in_srgb,var(--color-brand-primary)_24%,transparent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary sm:inline-flex"
@@ -279,7 +237,7 @@ export function LandingPage({
               <Gauge size={14} aria-hidden="true" />
               Analyse starten
             </a>
-            <MobileNavigation profile={profile} onLoginNavigate={onLoginNavigate} onLogout={onLogout} />
+            <MobileNavigation onLoginNavigate={onLoginNavigate} />
           </div>
         </div>
       </header>
@@ -293,17 +251,12 @@ export function LandingPage({
           <span className="sr-only">
             Mobile CAPITAL-AI Startansicht. Die dargestellte Grafik ist das freigegebene Layout-Mockup; Finanzdaten und Scoring bleiben an die nachfolgenden kanonischen Laufzeitflächen gebunden.
           </span>
-          {profile ? (
-            <div className="absolute right-3 top-3 z-10 flex max-w-[72%] flex-wrap justify-end gap-2">
-              <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-background/85 px-3 py-2 text-[10px] font-black text-text-primary backdrop-blur-md">
-                <UserRound size={13} className="text-brand-primary" aria-hidden="true" />
-                <span className="max-w-28 truncate">{profile.name}</span>
-              </span>
-              <span className="inline-flex min-h-9 items-center rounded-full border border-brand-primary/35 bg-background/85 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary backdrop-blur-md">
-                {profile.subscriptionTier}
-              </span>
-            </div>
-          ) : null}
+          <div data-static-slot="mobile-profile-subscription" className="absolute right-3 top-3 z-10 flex max-w-[72%] flex-wrap justify-end gap-2">
+            <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-background/85 px-3 py-2 text-[10px] font-black text-text-secondary backdrop-blur-md">
+              <UserRound size={13} className="text-brand-primary" aria-hidden="true" />
+              Profil / Abo · LF-02
+            </span>
+          </div>
           <a
             href="#analysis-workbench"
             aria-label="Analyse starten"
@@ -359,8 +312,16 @@ export function LandingPage({
               </div>
             </div>
           </div>
-          <div className="p-4 sm:p-5">
-            {newsfeed}
+          <div data-static-slot="news" className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5" aria-label="Statische News-Vorschau">
+            {['Markt-News', 'Unternehmens-News', 'Makro & Research'].map((label) => (
+              <article key={label} className="min-h-28 rounded-xl border border-border bg-background/45 p-4">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-accent">LF-05 Vorschau</span>
+                <h3 className="mt-3 text-sm font-black text-text-primary">{label}</h3>
+                <div className="mt-4 h-2 w-full rounded-full bg-surface" aria-hidden="true" />
+                <div className="mt-2 h-2 w-3/4 rounded-full bg-surface" aria-hidden="true" />
+                <p className="mt-4 text-[10px] text-text-secondary">Keine Live-News-Anfrage in LF-01.</p>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -526,17 +487,37 @@ export function LandingPage({
                   Enterprise Scorer & Bewertungstools im neuen Landing-Shell
                 </h2>
                 <p className="text-sm leading-relaxed text-text-secondary">
-                  Der Enterprise Scorer bleibt für alle sichtbar. Ohne aktives Abo ist die Asset-Auswahl auf BTC begrenzt; ein aktives Starter-, Pro- oder Enterprise-Abo schaltet die bestehende Asset-Auswahl frei, ohne eine zweite Scoring-Authority einzuführen.
+                  Diese Fläche zeigt ausschließlich die spätere Enterprise-Scorer-Position. In LF-01 wird keine Scoring-Anfrage ausgeführt und kein synthetischer Score als produktiv dargestellt.
                 </p>
               </div>
               <div className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-brand-accent/25 bg-brand-accent/[0.08] px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
                 <Activity size={13} className="text-brand-accent" aria-hidden="true" />
-                {profile && profile.subscriptionTier !== 'Free'
-                  ? `${profile.subscriptionTier} · Asset-Auswahl`
-                  : 'BTC · ohne Abo'}
+                BTC · statische Vorschau
               </div>
             </div>
-            {preview}
+            <div data-static-slot="scorer" className="grid gap-4 rounded-2xl border border-border bg-background/45 p-4 md:grid-cols-[220px_minmax(0,1fr)]">
+              <aside className="space-y-3 rounded-xl border border-border bg-surface/35 p-4">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">LF-04 Vorschau</span>
+                {['Enterprise Scorer', 'Ranking', 'Value Check'].map((label) => (
+                  <div key={label} className="rounded-lg border border-border px-3 py-2 text-xs font-bold text-text-secondary">{label}</div>
+                ))}
+              </aside>
+              <div className="rounded-xl border border-border bg-surface/25 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">Asset</p>
+                    <p className="mt-1 text-lg font-black text-text-primary">BTC</p>
+                  </div>
+                  <span className="rounded-full border border-border px-3 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">Preview · nicht live</span>
+                </div>
+                <div className="mt-6 space-y-3" aria-hidden="true">
+                  <div className="h-3 w-full rounded-full bg-surface" />
+                  <div className="h-3 w-5/6 rounded-full bg-surface" />
+                  <div className="h-3 w-2/3 rounded-full bg-surface" />
+                </div>
+                <p className="mt-5 text-xs leading-relaxed text-text-secondary">Keine produktive Scoring-, Evidence-, DQ- oder Ranking-Ausgabe in dieser Phase.</p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -546,7 +527,16 @@ export function LandingPage({
           aria-label="Pricing und Abonnement"
           className="scroll-mt-24"
         >
-          {pricing}
+          <div data-static-slot="pricing" className="grid gap-4 md:grid-cols-3" aria-label="Statische Pricing-Vorschau">
+            {['Starter', 'Pro', 'Enterprise'].map((tier) => (
+              <article key={tier} className="ui-panel min-h-44 border-border bg-surface/30 p-5">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">LF-03 Vorschau</span>
+                <h2 className="mt-3 text-xl font-black text-text-primary">{tier}</h2>
+                <p className="mt-3 text-xs leading-relaxed text-text-secondary">Tarif- und Entitlement-Daten werden erst nach LF-02 aus der kanonischen Backend-Authority angebunden.</p>
+                <span className="mt-5 inline-flex min-h-10 items-center rounded-xl border border-border px-3 py-2 text-[10px] font-black uppercase tracking-wider text-text-secondary">Noch nicht buchbar</span>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section
@@ -621,7 +611,7 @@ export function LandingPage({
             <div className="max-w-3xl">
               <h2 className="text-sm font-black text-text-primary">CAPITAL-AI – quantitative Multi-Asset-Analyse</h2>
               <p className="mt-2 leading-relaxed">
-                CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Fehlende oder nicht freigegebene Finanzdaten werden nicht durch Demo- oder synthetische Werte ersetzt. Die öffentliche Workbench erzeugt keine persistierte anonyme Supabase-/IAM-Session.
+                CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Fehlende oder nicht freigegebene Finanzdaten werden nicht durch Demo- oder synthetische Werte ersetzt. Die LF-01-Landingpage ist eine statische visuelle Baseline; produktive Scoring-, News-, Pricing- und Subscription-Anbindungen folgen erst nach ihren jeweiligen Gates.
               </p>
             </div>
 

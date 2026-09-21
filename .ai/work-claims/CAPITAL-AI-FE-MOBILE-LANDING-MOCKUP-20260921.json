@@ -8,10 +8,10 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Owner-directed root landing convergence: preserve the approved mobile-first 16.08 appearance, keep /login as the dedicated login page, return authenticated users to / with profile/subscription projection, surface backend-backed pricing on the landing page, and keep the landing Enterprise Scorer BTC-only for users without a paid subscription.",
+  "workItem": "LF-00/LF-01 Landing-First re-scope: preserve canonical root/login routing and the approved mobile-first visual design while establishing a static landing baseline with explicit non-live placeholders; defer auth/profile, pricing/entitlements, scoring, news and other productive integrations to later gated phases.",
   "startedAt": "2026-09-21T13:07:00+02:00",
   "baseBranch": "main",
-  "baseSha": "8a64644ad6257f2c295959f6d79a80cc29a51b28",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
   "branch": "frontend/mobile-landing-mockup-background-20260921",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -22,12 +22,17 @@
     ".ai/work-claims/CAPITAL-AI-FE-MOBILE-LANDING-MOCKUP-20260921.json",
     "public/brand/hero/capital-ai-mobile-landing.jpg",
     "src/app/routing/AppRoutes.tsx",
-    "src/app/public/LandingPricingPanel.tsx",
-    "src/app/public/PublicAnalysisWorkbench.tsx",
     "src/features/public/ui/LandingPage.tsx",
-    "src/features/billing/ui/Checkout.tsx",
     "tests/unit/publicLandingRoute.test.ts",
     "tests/unit/frontend1608AppearanceContract.test.ts"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "lastSyncedMainSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "phase": "LF-01_STATIC_VISUAL_LANDING",
+  "deferredProductiveIntegrations": [
+    "LF-02 auth/profile/subscription projection",
+    "LF-03 pricing/entitlement provider integration",
+    "LF-04 Enterprise Scorer runtime integration",
+    "LF-05 news/data runtime integration"
+  ]
 }
