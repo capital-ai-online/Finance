@@ -1,4 +1,4 @@
-schema_version: "3.3.0"
+schema_version: "3.4.0"
 work_package: "SH-V3-02"
 project: "CAPITAL-AI-GOV"
 title: "Control Panel Autofix Orchestration Watchdog"
@@ -48,6 +48,10 @@ failure_classes:
   PR_LIVE_DASHBOARD_REPAIR_BOUNDARY_TOO_STRICT:
     condition: "PR Governance detects an incomplete v1.8 Live Dashboard, but the Decision/Evidence Reconciler rejects the existing uniquely bounded table because it is not already in the canonical three-row shape"
     action: "replace only one table-only Live Dashboard bounded by the Decision heading and the canonical Human Decision table; derive Status/Synchronität/Nächster Schritt from canonical Evidence; reject duplicate markers, prose-bearing blocks and ambiguous section boundaries"
+
+  PRODUCTION_BASELINE_REFRESH_CANCEL_RACE:
+    condition: "a Governance failure proves the PR production baseline stale after head movement, but the trusted baseline refresh run is cancelled before the exact-head body write completes"
+    action: "never cancel an in-flight production-baseline refresh generation; queue duplicate source events behind the canonical per-PR writer lease and revalidate Governance only after a proven baseline/body mutation"
 
   TEST_CONTRACT_DRIFT:
     action: "dispatch only an explicitly registered deterministic repairer"
@@ -250,6 +254,7 @@ exit_gate:
   - "missing dispatch becomes ORCHESTRATION_TRIGGER_MISSING"
   - "exact CI workflow_dispatch revalidation re-enters the existing bounded repair/reconciliation listeners"
   - "an incomplete but uniquely bounded table-only v1.8 Live Dashboard is repaired by the existing Decision/Evidence Reconciler"
+  - "production-baseline refresh runs are serialized and never cancelled mid-write by duplicate completion events"
   - "repair outcome is exact-head verified"
   - "protected Actions-minute blockers never enter remediation"
   - "every observed merge is bound to the resulting CURRENT_MAIN generation"
