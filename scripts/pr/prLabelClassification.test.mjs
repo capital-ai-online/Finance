@@ -66,7 +66,8 @@ test('PR create workflow classifies and ensures the label before gh pr create', 
   assert.ok(ensureIndex > classifyIndex, 'repository label must be ensured after classification');
   assert.ok(createIndex > ensureIndex, 'PR must be created only after classification and label ensure');
   assert.match(workflow, /--label "\$PR_LABEL_NAME"/);
-  assert.match(workflow, /issues:\s*write/);
+  assert.match(workflow, /pull-requests:\s*write/);
+  assert.doesNotMatch(workflow, /issues:\s*write/);
   assert.doesNotMatch(workflow, /PR_LABELS_JSON/);
 });
 
