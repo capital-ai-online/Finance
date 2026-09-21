@@ -4,7 +4,7 @@
 **Primary PVC:** `PVC-05`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN`  
 **Baseline:** `main@9ab7776114beff33412e1bd2cfb57c3db84e31b9`  
-**Status:** `PRE_CREATE_IMPLEMENTED_MAIN / PROVIDER_CONVERGENCE_REMEDIATION_IN_BRANCH`
+**Status:** `IMPLEMENTED_BRANCH / PR_CREATE_BLOCKED_PROVIDER_LABEL_DRIFT`
 
 ## Owner supersession
 
@@ -44,7 +44,7 @@ Examples:
 
 ## Provider-Metadaten-Konvergenz — Issue #1224
 
-Der Provider-Readback für `project:CAPITAL-AI-OPS` zeigte am 2026-09-21 weiterhin `#EDEDED`, obwohl die kanonische Routing-Zeile `#845CDC` vorgibt. Der Pre-Create-Pfad enthält bereits den einzigen autorisierten Label-Writer (`gh label create --force`), lief aber nur während einer konkreten PR-Erstellung. Bestehender Provider-Drift konnte deshalb vor einem direkten PR-Handoff bestehen bleiben.
+Der Provider-Readback für `project:CAPITAL-AI-OPS` zeigte am 2026-09-21 weiterhin `#EDEDED`, obwohl die kanonische Routing-Zeile `#845CDC` vorgibt. Der finale Pre-Create-Readback des Reparatur-Branches zeigte zusätzlich `project:CAPITAL-AI-GOV = #EDEDED` ohne Beschreibung statt kanonisch `#A1A1AA`; damit ist der Drift katalogweit und blockiert die regelkonforme Erstellung des Governance-Reparatur-PRs selbst. Der Pre-Create-Pfad enthält bereits den einzigen autorisierten Label-Writer (`gh label create --force`), lief aber nur während einer konkreten PR-Erstellung. Bestehender Provider-Drift konnte deshalb vor einem direkten PR-Handoff bestehen bleiben.
 
 Diese Remediation **erweitert denselben Writer**, sie erzeugt weder eine zweite Label-Registry noch einen post-create PR-Klassifizierer:
 
