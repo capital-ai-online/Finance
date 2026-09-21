@@ -5,7 +5,7 @@
 **Version:** `2.5.0`  
 **Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
 **Date:** `2026-09-21`  
-**Repository baseline:** `main@ad47710808b179afb7b969f1c12825b4064be866`  
+**Repository baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
 **Role:** `CROSS_CUTTING_SECURITY`  
 **Primary Project Value Chain ownership:** `[]`  
 **Project coverage:** `PVC-01` through `PVC-18` as Security overlay  
@@ -213,7 +213,7 @@ PR creation requires separate explicit Human/Owner approval for the exact curren
 **State:** `ACTIVE / ROADMAP_PROMOTED / IMPLEMENTATION_OPEN`  
 **Owner direction:** 2026-09-20; roadmap promotion reaffirmed 2026-09-21  
 **Original materialization:** Human-merged PR #1165  
-**Current roadmap baseline:** `main@ad47710808b179afb7b969f1c12825b4064be866`  
+**Current roadmap baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
 **Canonical package:** `docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md`
 
 SEC-WEB-HARDENING-01 is the active website/deployment Security roadmap. It reuses SEC-01..SEC-10 and all existing Release/Production/IAM/Governance controls. The roadmap is orchestration/status only and does not become a second instruction, task, finding, evidence or deployment authority.

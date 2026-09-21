@@ -9,7 +9,7 @@
   "primaryProductivePvc": [],
   "branchName": "agent/security-web-hardening-roadmap-promotion-20260921",
   "baseBranch": "main",
-  "baseSha": "ad47710808b179afb7b969f1c12825b4064be866",
+  "baseSha": "8a64644ad6257f2c295959f6d79a80cc29a51b28",
   "workItem": "Promote SEC-WEB-HARDENING-01 to active SEC Roadmap",
   "approvedScope": "Promote the already merged SEC-WEB-HARDENING-01 work package into the canonical Security roadmap projections; preserve detailed package semantics by reference, release the stale merged materialization claim, and create no runtime/provider/production mutation.",
   "claimedPaths": [
@@ -24,5 +24,5 @@
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
   "initialBaseSha": "30598d9b674285b587f5204da70cc7e89bafd80d",
-  "recorrelatedAt": "2026-09-21T13:16:00+02:00"
+  "recorrelatedAt": "2026-09-21T14:08:00+02:00"
 }

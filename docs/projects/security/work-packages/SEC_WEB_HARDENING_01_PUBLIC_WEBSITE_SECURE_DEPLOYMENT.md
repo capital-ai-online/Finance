@@ -6,7 +6,7 @@
 **Status:** MATERIALIZED_MAIN / PROMOTED_TO_SEC_ROADMAP / IMPLEMENTATION_OPEN  
 **Priority:** P0/P1 security program  
 **Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
-**Roadmap promotion baseline:** main@ad47710808b179afb7b969f1c12825b4064be866  
+**Roadmap promotion baseline:** main@8a64644ad6257f2c295959f6d79a80cc29a51b28  
 **Trust root:** /AGENTS.md@CURRENT_MAIN  
 **Security direction:** SECURITY_FOUNDATION_FIRST  
 **Security owner:** CAPITAL-AI-SEC for threat/risk/control definition, findings, testing requirements and independent verification  

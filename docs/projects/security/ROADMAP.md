@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEC — Canonical Roadmap
 
-**Baseline:** `main@ad47710808b179afb7b969f1c12825b4064be866`
+**Baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`
 
 **Project:** `CAPITAL-AI-SEC`  
 **Folder:** `docs/projects/security/`  
@@ -78,7 +78,7 @@ No historical/non-terminal Security state self-activates; independent verificati
 
 **Owner direction:** 2026-09-20; reaffirmed as SEC Roadmap on 2026-09-21  
 **Original materialization:** Human-merged PR #1165  
-**Roadmap baseline:** `main@ad47710808b179afb7b969f1c12825b4064be866`  
+**Roadmap baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
 **State:** `ACTIVE / ROADMAP_PROMOTED / IMPLEMENTATION_OPEN`  
 **Canonical detail:** `docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md`  
 **Detailed cross-cutting roadmap:** `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`
