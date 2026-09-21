@@ -9,30 +9,33 @@
 
 ## Owner decision
 
-The Human Owner directs that merge of PR #1206 adopts the **current complete presentation architecture** from `SvenKulessa/FRONTEND`: graphical components, modals, UI slices, application composition, entry point, styles, presentation type shapes and required visual fixtures.
+PR #1206 adopts the complete current graphical architecture from `SvenKulessa/FRONTEND` and fixes the canonical root landing page to that exact pinned source version.
 
-Existing Finance repository components are connected to that graphical architecture **after** this adoption through separate owner-correct adapter work. Productive Finance logic is not replaced by demo logic from the design repository.
+The runtime landing binding is presentation-only. Existing Finance auth/session, provider/data, scoring, news, pricing/entitlement, billing, Security, Compliance, Governance and deployment authority is not replaced by the design repository.
 
-## Snapshot completeness
+## Snapshot and runtime completeness
 
-PR #1206 contains the pinned current upstream presentation tree:
+PR #1206 contains:
 
-- `src/App.tsx` and `src/main.tsx`;
-- `src/index.css` and `src/types.ts`;
-- all 13 current files under `src/components/`;
-- `src/data/mockData.ts` as `VISUAL_FIXTURE_ONLY`;
-- a source manifest tying the snapshot to upstream SHA `8f6b629c...`.
+- pinned upstream `src/App.tsx` as the runtime `ReferenceApp.tsx`;
+- all 13 current upstream files under `src/components/`, byte-identical by Git blob SHA;
+- `src/data/mockData.ts` and `src/types.ts`, byte-identical to the pinned presentation source;
+- all four current upstream image assets, including the new wide banner;
+- the exact upstream `src/index.css` retained as source evidence plus a scoped Finance style adapter;
+- `source-lock.json` with source/target blob identities;
+- a unit test that recomputes Git blob SHAs and fails on graphical drift;
+- the canonical Finance `LandingPage` rendering the pinned `ReferenceApp`.
 
-This is a physical merge artifact, not only a scheduled-sync promise.
+This is a physical runtime binding and a physical evidence snapshot, not only a scheduled-sync promise.
 
 ## LF-01 semantics
 
-On observed CURRENT_MAIN, root already renders the static LandingPage, login returns to `/`, productive news/workbench/pricing surfaces are absent from root composition and LandingPage has no direct fetch requirement.
-
 After Human/CODEOWNER merge of PR #1206, `LF-01_EXIT_EVIDENCE_CONVERGENCE = PASS` means:
 
-- the static Landing-First baseline remains established;
-- the authoritative graphical target is the pinned FRONTEND presentation architecture;
-- later work may begin adapter-based binding of Finance-owned components to that target in dependency order.
+- the selected FRONTEND commit is the fixed graphical source for the public root;
+- every current upstream graphical component is present in the Finance runtime presentation subtree;
+- the root landing renders that pinned composition directly;
+- future upstream changes remain review-only until another Finance PR intentionally advances the pin;
+- productive Finance authorities remain separate and owner-correct.
 
-This PASS does not turn independent Security, Compliance or Quality findings into PASS. Applicable SEC/COMP/QM gates remain independently fail-closed.
+Independent Security, Compliance and Quality findings are not implicitly converted to PASS. Applicable SEC/COMP/QM gates remain fail-closed.
