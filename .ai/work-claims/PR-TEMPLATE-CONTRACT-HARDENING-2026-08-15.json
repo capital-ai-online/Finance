@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-TEMPLATE-CONTRACT-HARDENING-2026-08-15",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok",
@@ -42,5 +42,11 @@
     ".github/pull_request_template.md",
     ".ai/work-claims/PR-TEMPLATE-CONTRACT-HARDENING-2026-08-15.json"
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "releaseEvidence": {
+    "reason": "merged",
+    "pullRequest": 331,
+    "mergedAt": "2026-08-15T19:12:49Z",
+    "releasedBy": "CAPITAL-AI-GOV-PR-TEMPLATE-SUPERSESSION-20260921"
+  }
 }

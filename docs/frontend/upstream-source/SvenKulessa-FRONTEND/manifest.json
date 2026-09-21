@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.1.0",
+  "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
+  "sourceRepository": "SvenKulessa/FRONTEND",
+  "sourceRef": "main",
+  "sourceSha": "8f6b629c985ca2e46c822ff911f53741d0141e07",
+  "adoptionMode": "FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT",
+  "allCurrentElementsMirrored": true,
+  "currentGraphicalComponentCount": 13,
+  "visualFixtureOnly": [
+    "src/data/mockData.ts"
+  ],
+  "runtimePromotionAutomatic": false,
+  "financeComponentsBindAfterArchitectureAdoption": true,
+  "files": [
+    {
+      "sourcePath": "src/App.tsx",
+      "role": "PRESENTATION_ARCHITECTURE"
+    },
+    {
+      "sourcePath": "src/main.tsx",
+      "role": "PRESENTATION_ARCHITECTURE"
+    },
+    {
+      "sourcePath": "src/index.css",
+      "role": "PRESENTATION_ARCHITECTURE"
+    },
+    {
+      "sourcePath": "src/types.ts",
+      "role": "PRESENTATION_ARCHITECTURE"
+    },
+    {
+      "sourcePath": "src/data/mockData.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/components/Hero.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/Header.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/Footer.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/BrandLogo.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/StatusBar.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/KeyPillars.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/CoreModules.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/AnalysisModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/MarketOverview.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/AllMarketsModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/ProductTourModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/AssetDetailModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    },
+    {
+      "sourcePath": "src/components/ModuleDetailModal.tsx",
+      "role": "GRAPHICAL_COMPONENT"
+    }
+  ]
+}
