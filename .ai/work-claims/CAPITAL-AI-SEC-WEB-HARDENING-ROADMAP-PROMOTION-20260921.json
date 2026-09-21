@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-WEB-HARDENING-ROADMAP-PROMOTION-20260921",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "owner": "CAPITAL-AI-SEC",
+  "primaryProductivePvc": [],
+  "branchName": "agent/security-web-hardening-roadmap-promotion-20260921",
+  "baseBranch": "main",
+  "baseSha": "ad47710808b179afb7b969f1c12825b4064be866",
+  "workItem": "Promote SEC-WEB-HARDENING-01 to active SEC Roadmap",
+  "approvedScope": "Promote the already merged SEC-WEB-HARDENING-01 work package into the canonical Security roadmap projections; preserve detailed package semantics by reference, release the stale merged materialization claim, and create no runtime/provider/production mutation.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEC-WEB-HARDENING-01-20260920.json",
+    ".ai/work-claims/CAPITAL-AI-SEC-WEB-HARDENING-ROADMAP-PROMOTION-20260921.json",
+    "docs/projects/security/ROADMAP.md",
+    "docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md",
+    "docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md"
+  ],
+  "foreignWork": [],
+  "startedAt": "2026-09-21T13:12:00+02:00",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "initialBaseSha": "30598d9b674285b587f5204da70cc7e89bafd80d",
+  "recorrelatedAt": "2026-09-21T13:16:00+02:00"
+}
