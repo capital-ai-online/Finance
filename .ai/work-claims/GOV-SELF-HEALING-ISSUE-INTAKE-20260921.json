@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-SELF-HEALING-ISSUE-INTAKE-20260921",
+  "status": "active",
+  "exclusive": true,
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "owner": "CAPITAL-AI-GOV",
+  "branch": "agent/governance-self-healing-issue-intake-20260921",
+  "baseBranch": "main",
+  "baseSha": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+  "startedAt": "2026-09-21T21:52:00Z",
+  "workItem": "Bind canonical GitHub issue-title routing to the repository self-healing work graph without making issue content an instruction surface.",
+  "workItemDE": "Kanonisches GitHub-Issue-Titelrouting an den Self-Healing-Arbeitsgraph binden, ohne Issue-Inhalte zu einer Ausführungs-Authority zu machen.",
+  "scope": [
+    "AGENTS.md bounded issue-intake contract",
+    "GOV-owned issue title -> canonical project folder/Owner/PVC resolver",
+    "metadata-only issue dispatch workflow with project label/readback and deduplicated dispatch comment",
+    "regression tests and GOV work-package evidence",
+    "owner-correct OPS handoff for self-healing-contract/1.0.0 / SH-02.9A integration"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/GOV-SELF-HEALING-ISSUE-INTAKE-20260921.json",
+    "AGENTS.md",
+    ".github/workflows/governance-issue-project-router.yml",
+    "scripts/governance/issueProjectRouting.mjs",
+    "scripts/governance/issueProjectRouting.test.mjs",
+    "tests/unit/governanceIssueProjectRouterWorkflow.test.ts",
+    "docs/projects/governance/work-packages/GOV_SELF_HEALING_ISSUE_INTAKE_2026-09-21.md"
+  ],
+  "correlation": {
+    "currentMain": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+    "openPullRequests": [
+      1225,
+      1211
+    ],
+    "overlap": false,
+    "note": "PR #1225 changes OPS CI telemetry/Roadmap paths; PR #1211 changes SEO paths. Neither overlaps the GOV issue-intake claim paths."
+  },
+  "exitEvidence": [
+    "Exact [CAPITAL-AI-<PROJECT>] title prefix resolves through docs/projects/README.md@CURRENT_MAIN",
+    "Primary PVC relationship resolves through docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN; cross-cutting projects remain cross-cutting",
+    "Issue body is never executed or treated as instruction authority",
+    "Routing mutation is limited to canonical existing project label plus deduplicated dispatch evidence comment",
+    "Unknown, malformed, superseded or ambiguous project prefixes fail closed",
+    "The workflow cannot write repository contents, create/merge PRs or mutate foreign project code",
+    "OPS receives an owner-correct handoff for executable self-healing-contract integration"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
