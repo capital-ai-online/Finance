@@ -304,9 +304,12 @@ function upsertDecisionSummaryRow(bodyText, label, value) {
   const anchors = anchorExpressions.flatMap((expression) => [...section.matchAll(expression)]);
   if (anchors.length !== 1) return null;
   const anchorRow = anchors[0][0];
+  const normalizedAnchorRow = /^\|\s*Human-\/CODEOWNER-Entscheidung\s*\|/.test(anchorRow)
+    ? '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |'
+    : anchorRow;
   const updatedSection = section.replace(
     anchorRow,
-    `| ${label} | ${compactCell(value)} |\n${anchorRow}`,
+    `| ${label} | ${compactCell(value)} |\n${normalizedAnchorRow}`,
   );
   return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
 }
