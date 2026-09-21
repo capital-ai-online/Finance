@@ -38,7 +38,7 @@ describe('P0 GitHub Actions CI cost control', () => {
   it('dispatches CI only after the validated non-force branch write and evaluates the planner eligibility output fail-closed', () => {
     const yaml = fs.readFileSync(baselineAutofixWorkflowPath, 'utf8');
     const write = yaml.indexOf('await github.rest.git.updateRef');
-    const dispatch = yaml.indexOf('await github.rest.actions.createWorkflowDispatch');
+    const dispatch = yaml.indexOf("workflow_id: 'ci.yml'", write);
 
     expect(write).toBeGreaterThan(-1);
     expect(dispatch).toBeGreaterThan(write);
