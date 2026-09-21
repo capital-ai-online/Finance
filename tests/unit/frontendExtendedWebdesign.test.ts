@@ -22,6 +22,7 @@ function classTokens(source: string): Set<string> {
   return tokens;
 }
 const login = read('src/features/public/ui/LoginPage.tsx');
+const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
 const facade = read('src/features/public/ui/index.ts');
@@ -66,6 +67,10 @@ describe('extended FRONTEND webdesign sync', () => {
 
   it('uses the latest graphical source for /login while retaining Finance auth handlers', () => {
     expect(login).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(login).toContain('data-presentation-source-path="src/components/LoginPage.tsx"');
+    expect(login).toContain('Webanwendungs-Potenzial');
+    expect(login).toContain('Institutionelle Marktintelligenz für fundierte Entscheidungen');
+    expect(login).toContain('<BrandLogo variant="stacked" size="lg" />');
     expect(login).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(login).toContain('supabase.auth.signInWithPassword');
     expect(login).toContain('supabase.auth.signUp');
@@ -85,6 +90,9 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(routes).toContain("currentPath === '/impressum'");
     expect(routes).toContain("currentPath === '/faq'");
     expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
+    expect(routes).not.toContain('<LegalPageShell activeRoute=');
+    expect(legalPages).not.toContain('VERSION 0.6.0');
+    expect(legalPages).not.toContain('DESIGN: CAPITAL-AI-FE');
     expect(legalPages).toContain('data-design-source="SvenKulessa/FRONTEND"');
     expect(legalPages).toContain('data-content-owner="CAPITAL-AI-COMP"');
     expect(legalPages).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
@@ -106,6 +114,12 @@ describe('extended FRONTEND webdesign sync', () => {
     );
 
     expect(foreignVisibleTokens).toEqual([]);
+  });
+
+  it('removes internal version and raw color-code chrome from the mobile menu', () => {
+    expect(header).toContain('System Online');
+    expect(header).not.toContain('System v6.0 Online');
+    expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
