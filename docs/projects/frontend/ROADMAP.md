@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-21 — PR #1206 merged; mobile/tablet source layout accepted; desktop-only runtime adapter correlated  
-**Baseline:** `main@d6be9db867d058d057c39df6e93e49fe3c875145`  
+**Baseline:** `main@22541eedb57d5cc690b13bc9b8284ae5a6f07c0c`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
