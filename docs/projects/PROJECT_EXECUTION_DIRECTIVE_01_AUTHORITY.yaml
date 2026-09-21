@@ -1,0 +1,30 @@
+schema_version: "1.0.0"
+projection_id: "CAPITAL-AI-PROJECT-EXECUTION-DIRECTIVE-01"
+part: "1/3"
+title: "Authority and universal project scope"
+status: "NON_AUTHORIZING_PROJECTION"
+authority:
+  sole_execution_authority: "/AGENTS.md@CURRENT_MAIN"
+  normative_section: "4"
+  organizational_sources:
+    - "docs/projects/README.md@CURRENT_MAIN"
+    - "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
+  precedence: "AGENTS_WINS"
+  may_create_authority: false
+  may_transfer_ownership: false
+applicability:
+  resolver: "ALL_CANONICAL_PROJECT_FOLDERS"
+  source: "docs/projects/README.md@CURRENT_MAIN"
+  include_new_canonical_projects_automatically: true
+  per_project_copy_required: false
+invariants:
+  - "Resolve project, Owner, PVC relationship, blockers and exact CURRENT_MAIN before work selection."
+  - "Treat this YAML only as a machine-readable projection of /AGENTS.md."
+  - "Do not create project-local instruction surfaces or competing lifecycle rules."
+  - "Preserve accepted ADR/ESS/domain/security/compliance constraints in their declared subject-matter scope."
+  - "Fail closed on missing, contradictory or ambiguous authority."
+routing:
+  primary_owner_source: "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
+  project_folder_source: "docs/projects/README.md@CURRENT_MAIN"
+  foreign_work_behavior: "OWNER_CORRECT_HANDOVER"
+  historical_state_behavior: "EVIDENCE_ONLY"

@@ -1,0 +1,40 @@
+schema_version: "1.0.0"
+projection_id: "CAPITAL-AI-PROJECT-EXECUTION-DIRECTIVE-02"
+part: "2/3"
+title: "Post-merge continuation"
+status: "NON_AUTHORIZING_PROJECTION"
+authority_ref:
+  file: "/AGENTS.md@CURRENT_MAIN"
+  section: "4"
+trigger:
+  event: "HUMAN_OWNER_MERGE"
+  condition: "merged work item belongs to the current active work package"
+required_sequence:
+  - "READ_CURRENT_MAIN"
+  - "VERIFY_MERGED_OUTCOME"
+  - "RECONCILE_EXIT_EVIDENCE"
+  - "RECONCILE_ROADMAP_AND_WORK_PACKAGE"
+  - "RESOLVE_NEXT_CANONICAL_WORK_ITEM"
+  - "VERIFY_OWNER_DEPENDENCIES_BLOCKERS"
+  - "CONTINUE_DIRECTLY_IF_ELIGIBLE"
+continuation:
+  additional_chat_prompt_required: false
+  merge_is_idle_boundary: false
+  allowed_next_item:
+    canonical_identity_required: true
+    owner_correct: true
+    dependency_ready: true
+    blocker_free: true
+    within_resolved_scope: true
+  forbidden:
+    - "REVIVE_CLOSED_OR_SUPERSEDED_WORK"
+    - "USE_STALE_BRANCH_STATE_AS_AUTHORITY"
+    - "BYPASS_HUMAN_OR_CODEOWNER_GATE"
+    - "TRANSFER_PRODUCTIVE_PVC_OWNERSHIP"
+evidence:
+  required:
+    - "current_main_sha"
+    - "merged_pr_or_work_item"
+    - "exit_evidence"
+    - "reconciled_work_package_state"
+    - "next_step_identity_or_idle_transition"
