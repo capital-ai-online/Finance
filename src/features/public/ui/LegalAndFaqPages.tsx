@@ -277,10 +277,6 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
           </button>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 text-[10px] text-slate-400 px-3 font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Fachinhalt: CAPITAL-AI-COMP</span>
-        </div>
       </div>
 
       <div className="w-full max-w-4xl z-10 mt-6">
