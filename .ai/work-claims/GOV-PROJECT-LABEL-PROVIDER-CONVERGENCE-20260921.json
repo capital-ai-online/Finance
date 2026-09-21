@@ -67,6 +67,7 @@
     }
   },
   "exitEvidence": [
+    "project:CAPITAL-AI-FE must read back provider-side with canonical color #DC7CA8 and the canonical Frontend description before the system-wide label blocker may be closed or Frontend PR creation treated as unblocked",
     "project:CAPITAL-AI-OPS resolves to canonical color #845CDC and current canonical description from docs/projects/README.md",
     "all canonical project labels are derived by the existing prLabelClassification.mjs parser; no second registry or post-create PR classifier exists",
     "relevant main changes trigger a bounded provider-label convergence job in the existing open-agent-draft-pr workflow",
@@ -114,5 +115,13 @@
       "state": "PR_CREATE_PROVIDER_BLOCKED_AFTER_PRECREATE_PASS",
       "evidence": "Branch validation, baseline, work-claim correlation, German PR rendering and pre-create label classification all passed. GitHub Actions provider setting blocked createPullRequest."
     }
+  },
+  "hardExitGate": {
+    "id": "FE_PROJECT_LABEL_PROVIDER_READBACK",
+    "label": "project:CAPITAL-AI-FE",
+    "expectedColor": "DC7CA8",
+    "expectedDescription": "🎨 Frontend · CAPITAL-AI-FE",
+    "requiredState": "PROVIDER_READBACK_EXACT",
+    "closureBehavior": "Fail closed. Do not mark GOV-PR-LABEL-01 converged and do not treat Frontend PR creation as unblocked until exact provider readback matches both color and description."
   }
 }
