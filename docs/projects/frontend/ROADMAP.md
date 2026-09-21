@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-21 — PR #1206 merged; mobile/tablet source layout accepted; desktop-only runtime adapter correlated  
-**Baseline:** `main@22541eedb57d5cc690b13bc9b8284ae5a6f07c0c`  
+**Reconciliation:** 2026-09-21 — PR #1206 and PR #1209 merged; pinned presentation + desktop adapter reconciled; productive landing runtime binding is the active FE continuation  
+**Baseline:** `main@a54f54c43fd7e33e9a77b61542f75947e6deb23c`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -46,7 +46,7 @@ After #1206 merged, the owner clarified the device contract: the synchronized mo
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** Frontend presentation only; affected rendered `PVC-01..PVC-18` output may be used as presentation/adaptation scope; no productive PVC ownership  
 **Desktop breakpoint:** `>=1024px`  
-**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
+**Status:** `MERGED / RECONCILED ON MAIN`
 
 The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance adapts only desktop presentation through `frontend-port.css`:
 
@@ -59,6 +59,26 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 - marker drift fails closed with a desktop-adapter correlation error so a future sync cannot silently restore the phone preview on desktop.
 
 The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
+
+
+## FE-LF-03-LANDING-RUNTIME-BINDING — Productive data and logic projection
+
+**Canonical identity:** `FE-LF-03-LANDING-RUNTIME-BINDING`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Consumed productive authority:** `CAPITAL-AI-FINTECH / PVC-09..17` plus existing Auth/Entitlement gates  
+**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
+
+The accepted graphical landing is now connected through a Finance-owned adapter outside the exact-source-locked `frontend-port`.
+
+- pinned design source and `source-lock.json` remain unchanged;
+- presentation fixtures are neutralized before productive interaction and never become Finance evidence;
+- market cards map to canonical Finance asset identities and hydrate only the selected asset through `verified-asset-display/1.0.0`;
+- the adapter performs no direct provider calls and no browser-local scoring;
+- landing analysis CTAs consume the existing `PublicCryptoScoringPreview`, with public/Free scope fixed to BTC;
+- protected module actions remain behind their existing login/server entitlement gates;
+- FINTECH remains the sole data/scoring authority for the consumed `PVC-09..17` outputs.
+
+Detailed scope and exit evidence: `work-packages/FE_LF_03_LANDING_RUNTIME_BINDING_2026-09-21.md`.
 
 ## Preserved frontend invariants
 
