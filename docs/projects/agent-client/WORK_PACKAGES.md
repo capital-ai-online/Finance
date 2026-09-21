@@ -1,7 +1,7 @@
 # CAPITAL-AI-CLIENT — Work Packages
 
-**Baseline:** `main@e9b2551a4e2e24c5fed3dac72362b8bf1727bf42`  
-**Correlation date:** `2026-09-10`  
+**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
+**Correlation date:** `2026-09-21`  
 **Scope:** `PVC-01 — Agent Client`  
 **Primary Owner:** `CAPITAL-AI-CLIENT`
 
@@ -139,6 +139,28 @@ Validation boundary:
 - no physical CLIENT runtime module;
 - no new registry/control plane;
 - no runtime test `PASS` claim for absent code.
+
+## CLIENT-LF-01 — Landing-First client/request boundary readiness
+
+**State:** `DEPENDENCY_HELD / LF-01_NOT_EVIDENCED`
+
+Fresh Owner direction in the 2026-09-21 interaction establishes the shared landing sequence and explicitly requires every project to hold productive landing integration until `LF-01_STATIC_VISUAL_LANDING_PASS`, except work strictly required for LF-00/LF-01 or independent Security/Compliance/QM verification. For PVC-01 this produces a contract/evidence-only work package.
+
+Current-main evidence:
+- `/AGENTS.md@CURRENT_MAIN` remains the sole execution authority;
+- `CAPITAL-AI-CLIENT / PVC-01` remains the single client/request Primary Owner;
+- repository search on `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f` finds no `LF-01_STATIC_VISUAL_LANDING_PASS` and no `STATIC_VISUAL_BASELINE` evidence;
+- current CLIENT runtime mapping remains `NO_PHYSICAL_RUNTIME_TRIGGER`;
+- open FE PR #1195 is a foreign presentation writer and currently includes productive session/subscription, pricing/checkout and scorer coupling, so it is dependency/handover evidence rather than permission for CLIENT to create a parallel writer.
+
+Acceptance:
+- no productive CLIENT landing integration begins before LF-01 PASS;
+- CLIENT does not modify FE landing presentation, OPS lifecycle/runtime correlation, FINTECH scoring/data authority, billing/entitlement authority, or provider activation;
+- placeholders and static visual surfaces never become CLIENT business authority;
+- a later landing phase may activate PVC-01 implementation only when both the shared phase prerequisite and `CLIENT-RUNTIME-01` physical trigger are satisfied on then-current main;
+- foreign-owner findings are handed over rather than implemented locally.
+
+Evidence: `docs/projects/agent-client/evidence/CLIENT_LANDING_FIRST_CORRELATION_2026-09-21.md`.
 
 ## Physical runtime gate
 
