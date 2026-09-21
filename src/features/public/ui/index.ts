@@ -1,11 +1,6 @@
 // Canonical Public / Access UI facade.
 export { LandingPage } from './LandingPage';
 export { LoginPage } from './LoginPage';
-export { FaqPage } from './FaqPage';
-export { LegalPageShell } from './LegalPageShell';
+export { LegalAndFaqPages, type LegalRoute } from './LegalAndFaqPages';
 export { LoginPageRedirect } from './LoginPageRedirect';
 export { PasskeyLoginPanel } from './PasskeyLoginPanel';
-
-// Transitional legal-page compatibility exports.
-export { Datenschutz } from '../../../components/Datenschutz';
-export { ImpressumAgb } from '../../../components/ImpressumAgb';

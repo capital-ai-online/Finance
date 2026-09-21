@@ -28,8 +28,8 @@ describe('ADR-0095 privacy governance', () => {
 
   it('keeps public legal UI free of obsolete controller identities and self-certification claims', () => {
     const publicLegalUi = [
-      read('src/components/Datenschutz.tsx'),
-      read('src/components/ImpressumAgb.tsx'),
+      read('src/features/public/ui/LegalAndFaqPages.tsx'),
+      read('src/features/public/content/publicLegalContent.ts'),
       read('src/components/ComplianceConsentModal.tsx'),
     ].join('\n');
 
@@ -49,9 +49,9 @@ describe('ADR-0095 privacy governance', () => {
   });
 
   it('uses DDG rather than the obsolete TMG imprint reference', () => {
-    const imprint = read('src/components/ImpressumAgb.tsx');
-    expect(imprint).toContain('§ 5 DDG');
-    expect(imprint).not.toContain('§ 5 TMG');
+    const legalPages = read('src/features/public/ui/LegalAndFaqPages.tsx');
+    expect(legalPages).toContain('§ 5 DDG');
+    expect(legalPages).not.toContain('§ 5 TMG');
   });
 
   it('keeps every processing activity transparent enough for the public registry', () => {
