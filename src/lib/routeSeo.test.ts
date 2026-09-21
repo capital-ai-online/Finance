@@ -15,13 +15,16 @@ describe('routeSeo (WP-D2)', () => {
 
   it('returns unique titles for all public routes', () => {
     const home = getRouteSeo('/');
+    const universe = getRouteSeo('/universe');
     const learning = getRouteSeo('/learning-platform');
     const impressum = getRouteSeo('/impressum');
     const agb = getRouteSeo('/agb');
     const datenschutz = getRouteSeo('/datenschutz');
 
-    const titles = new Set([home.title, learning.title, impressum.title, agb.title, datenschutz.title]);
-    expect(titles.size).toBe(5);
+    const titles = new Set([home.title, universe.title, learning.title, impressum.title, agb.title, datenschutz.title]);
+    expect(titles.size).toBe(6);
+    expect(home.title).toContain('Marktdaten verstehen');
+    expect(universe.canonicalPath).toBe('/universe');
     expect(learning.title).toContain('Capital-AI Learning Platform');
     expect(learning.canonicalPath).toBe('/learning-platform');
     expect(impressum.title).toContain('Impressum');
@@ -42,15 +45,16 @@ describe('routeSeo (WP-D2)', () => {
     expect(unknown.canonicalPath).toBe('/');
   });
 
-  it('lists the five public SEO routes', () => {
+  it('lists the six current public SEO routes', () => {
     const paths = listPublicRouteSeoPaths();
     expect(paths).toEqual(expect.arrayContaining([
       '/',
+      '/universe',
       '/learning-platform',
       '/impressum',
       '/agb',
       '/datenschutz',
     ]));
-    expect(paths).toHaveLength(5);
+    expect(paths).toHaveLength(6);
   });
 });
