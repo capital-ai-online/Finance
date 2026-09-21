@@ -67,13 +67,15 @@ describe('landing productive runtime binding', () => {
     }
   });
 
-  it('routes analysis actions to the canonical public scorer with BTC fixed', () => {
-    expect(runtime).toContain("const PUBLIC_SCORER_SYMBOL = 'BTC' as const");
-    expect(runtime).toContain('PublicCryptoScoringPreview');
-    expect(runtime).toContain('selectedSymbol={PUBLIC_SCORER_SYMBOL}');
-    expect(runtime).toContain('subscriptionTier="Free"');
-    expect(runtime).not.toContain("fetch('/api/crypto/score'");
-    expect(runtime).not.toContain('score =');
+  it('keeps productive landing scoring fail-closed until FIN-LF-01 dependencies are proven', () => {
+    expect(runtime).toContain("const FINTECH_LANDING_SCORER_GATE = 'FIN-LF-01' as const");
+    expect(runtime).toContain('LF-02_AUTH_PROFILE_PASS');
+    expect(runtime).toContain('LF-03_PRICING_ENTITLEMENTS_PASS');
+    expect(runtime).toContain('SEC_REVIEW_READY');
+    expect(runtime).toContain('QM_VALIDATION_READY');
+    expect(runtime).not.toContain('PublicCryptoScoringPreview');
+    expect(runtime).not.toContain('/api/crypto/score');
+    expect(runtime).not.toContain('/api/landing/quick-analysis');
   });
 
   it('keeps protected module actions behind the existing login boundary', () => {
