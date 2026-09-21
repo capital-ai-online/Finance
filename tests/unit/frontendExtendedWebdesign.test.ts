@@ -93,6 +93,7 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(routes).not.toContain('<LegalPageShell activeRoute=');
     expect(legalPages).not.toContain('VERSION 0.6.0');
     expect(legalPages).not.toContain('DESIGN: CAPITAL-AI-FE');
+    expect(legalPages).not.toContain('Fachinhalt: CAPITAL-AI-COMP');
     expect(legalPages).toContain('data-design-source="SvenKulessa/FRONTEND"');
     expect(legalPages).toContain('data-content-owner="CAPITAL-AI-COMP"');
     expect(legalPages).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
