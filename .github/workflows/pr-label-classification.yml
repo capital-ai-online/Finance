@@ -1,39 +1,22 @@
-name: PR Label Classification
-run-name: >-
-  PR #${{ github.event.pull_request.number }} – classify complete label set
+name: PR Label Classification (SUPERSEDED)
+run-name: PR Label Classification — SUPERSEDED / no runner
 
+# OWNER-DIRECTED SUPERSESSION — 2026-09-21
+#
+# Live PR classification moved into the trusted pre-create PR path.
+# This tombstone intentionally has no automatic event and allocates no runner.
+# It is retained because the workflow deletion gate permits physical deletion
+# only for already-unused dispatch-only stubs.
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review, converted_to_draft]
+  workflow_dispatch:
 
-permissions:
-  contents: read
-  pull-requests: read
-
-concurrency:
-  group: pr-label-classification-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-  cancel-in-progress: true
+permissions: {}
 
 jobs:
-  classify:
-    name: Classify PR labels
+  superseded:
+    name: PR label classification retired — no runner allocation
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
-      - name: PR-Head ohne persistierte Zugangsdaten auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Node.js einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
-        with:
-          node-version: '24.18.0'
-
-      - name: Vollständiges Label-Set deterministisch klassifizieren
-        id: labels
-        env:
-          PR_LABELS_JSON: ${{ toJSON(github.event.pull_request.labels) }}
-        run: node scripts/pr/prLabelClassification.mjs --fail-on-drift
+      - name: Inert supersession marker
+        run: echo "PR label classification is pre-create metadata; this workflow is intentionally unreachable."
