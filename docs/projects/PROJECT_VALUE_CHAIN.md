@@ -56,6 +56,7 @@ Until a separately authorized multi-project namespace migration is completed:
 10. `PVC-16 -> PVC-17` preserves canonical scoring before ranking/decision support.
 11. `PVC-18` is a read-only Runtime/Evidence/Traceability projection for development handover visibility; it does not approve, merge, mutate Authority, replace `/AGENTS.md` or authorize business/release/deployment decisions.
 12. No implicit `PVC-19` is introduced by Governance, Quality, Security, Compliance, Frontend, SEO, Social or Knowledge projections.
+13. `CAPITAL-AI-FE` MAY relate to any applicable `PVC-01..18` output as `presentation_consumer` and implement FE-owned rendering, responsive/device adaptation, accessibility and interaction changes on Frontend surfaces. This relationship never changes the productive PVC Primary Owner, domain truth or contract semantics; upstream mockup/device-preview chrome is reference evidence, not a production viewport contract.
 
 ## Development execution model
 
@@ -63,7 +64,7 @@ The PVC defines ownership and routing only. It is **not** a development lifecycl
 
 All development execution across `PVC-01..18` resolves exclusively through `/AGENTS.md@CURRENT_MAIN`. Historical DevelopmentChain, bounded foreign-execution delegation, standalone PR/CI sequencing and other procedural overlays have no execution or fallback role.
 
-A relationship may be classified as `primary_pvc`, `cross_cutting` or `foreign_execution`. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition as required by the trust root.
+A relationship may be classified as `primary_pvc`, `cross_cutting`, `presentation_consumer` or `foreign_execution`. `presentation_consumer` permits a cross-cutting project such as CAPITAL-AI-FE to adapt how owner-correct outputs are rendered on its own surfaces without mutating their semantics or ownership. `foreign_execution` is a relationship classification, not permission to seize foreign Owner scope. If implementation/Authority belongs elsewhere, the current project emits an owner-correct correlation-ID handover with dependencies, evidence, exit gate and continuation condition as required by the trust root.
 
 ## Transitional repository state
 
