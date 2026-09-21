@@ -26,13 +26,14 @@
 /*
  * Finance-owned responsive adapter for the pinned FRONTEND presentation.
  *
- * Mobile and tablet keep the upstream preview behavior exactly as adopted in
- * PR #1206. On desktop, the production landing must render as a website rather
- * than as an iPhone mockup. The upstream React tree remains byte-identical;
- * only its desktop container presentation is adapted here.
+ * <1024px keeps the upstream mobile/tablet presentation. >=1024px is a real
+ * website layout: the React composition switches to fullscreen and this
+ * adapter expands typography, spacing and card rails for desktop. This avoids
+ * using an iPhone-preview tree as the desktop rendering mode.
  */
 @media (min-width: 1024px) {
   .capital-ai-frontend-port > div {
+    width: 100%;
     align-items: stretch;
   }
 
@@ -42,7 +43,7 @@
 
   .capital-ai-frontend-port > div > main {
     width: 100%;
-    max-width: 1280px !important;
+    max-width: 1440px !important;
     margin: 0 auto !important;
     border-width: 0 !important;
     border-radius: 0 !important;
@@ -54,53 +55,129 @@
     display: none !important;
   }
 
-  /* Bound real website content inside the desktop canvas. */
   .capital-ai-frontend-port > div > main > header,
   .capital-ai-frontend-port > div > main > section,
   .capital-ai-frontend-port > div > main > footer {
-    width: min(calc(100% - 64px), 1180px);
+    width: min(calc(100% - 96px), 1240px);
     margin-left: auto;
     margin-right: auto;
   }
 
+  .capital-ai-frontend-port > div > main > header {
+    min-height: 76px;
+    padding: 18px 0 14px !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
   .capital-ai-frontend-port > div > main > section:first-of-type {
-    min-height: clamp(36rem, 72vh, 46rem);
-    padding-top: clamp(4rem, 7vw, 7rem) !important;
-    padding-bottom: 4rem !important;
+    min-height: clamp(40rem, 76vh, 52rem);
+    padding-top: clamp(5rem, 8vw, 8rem) !important;
+    padding-bottom: 5rem !important;
+    display: grid;
+    align-items: center;
   }
 
   .capital-ai-frontend-port > div > main > section:first-of-type > .relative.z-10 {
-    max-width: 46rem;
+    width: min(100%, 48rem);
+    max-width: 48rem;
   }
 
   .capital-ai-frontend-port > div > main > section:first-of-type h1 {
-    font-size: clamp(3.25rem, 5vw, 5.25rem) !important;
-    line-height: 0.98 !important;
+    font-size: clamp(3.75rem, 5.6vw, 5.75rem) !important;
+    line-height: 0.96 !important;
+    margin-bottom: 1.5rem !important;
   }
 
   .capital-ai-frontend-port > div > main > section:first-of-type p {
-    max-width: 42rem !important;
-    font-size: 1rem !important;
+    max-width: 44rem !important;
+    font-size: 1.125rem !important;
+    line-height: 1.7 !important;
   }
 
-  /* Mobile horizontal card rails become real desktop card grids only on desktop. */
+  .capital-ai-frontend-port > div > main > section:first-of-type .relative.z-10 > div:last-child {
+    max-width: 38rem !important;
+    flex-direction: row !important;
+    align-items: stretch;
+  }
+
+  .capital-ai-frontend-port #hero-start-analysis-btn,
+  .capital-ai-frontend-port #hero-explore-product-btn {
+    min-width: 230px;
+  }
+
+  .capital-ai-frontend-port > div > main > section:nth-of-type(2) {
+    padding-top: 2rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:nth-of-type(2) > .grid {
+    gap: 1.5rem !important;
+    padding: 1.25rem 0;
+  }
+
+  .capital-ai-frontend-port > div > main > section:nth-of-type(2) > .grid > * {
+    min-height: 9rem;
+    justify-content: center;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(6, 12, 29, 0.55);
+    padding: 1.5rem !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:nth-of-type(3),
+  .capital-ai-frontend-port > div > main > section:nth-of-type(4) {
+    padding-top: 2.75rem !important;
+    padding-bottom: 2.75rem !important;
+  }
+
+  .capital-ai-frontend-port > div > main > section:nth-of-type(3) h2,
+  .capital-ai-frontend-port > div > main > section:nth-of-type(4) h2 {
+    font-size: clamp(1.5rem, 2vw, 2rem) !important;
+  }
+
   .capital-ai-frontend-port > div > main .snap-mandatory {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem !important;
     overflow: visible !important;
     scroll-snap-type: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .capital-ai-frontend-port > div > main .snap-mandatory > * {
     width: auto !important;
     min-width: 0 !important;
+    min-height: 13rem;
     scroll-snap-align: none !important;
   }
 
-  /* Source-preview iOS home indicator is not desktop website chrome. */
+  .capital-ai-frontend-port > div > main > footer {
+    margin-top: 3rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 3rem !important;
+  }
+
   .capital-ai-frontend-port > div > main > footer > :last-child {
     display: none !important;
+  }
+}
+
+@media (min-width: 1440px) {
+  .capital-ai-frontend-port > div > main {
+    max-width: 1560px !important;
+  }
+
+  .capital-ai-frontend-port > div > main > header,
+  .capital-ai-frontend-port > div > main > section,
+  .capital-ai-frontend-port > div > main > footer {
+    width: min(calc(100% - 128px), 1360px);
   }
 }
 
