@@ -13,11 +13,14 @@ const authenticatedTransport = read('src/features/news/authenticatedNewsFetch.ts
 const entitlement = read('server/middleware/realtimeAiNewsfeedEntitlement.ts');
 const subscriptionEntitlements = read('src/config/subscriptionEntitlements.ts');
 
-describe('LANDING-INTEGRATION-02 canonical AI Newsfeed binding', () => {
-  it('composes the news capability at the app layer instead of creating a cross-feature dependency in LandingPage', () => {
-    expect(routes).toContain("import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';");
-    expect(routes).toContain('newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}');
-    expect(landing).toContain('{newsfeed}');
+describe('LANDING-FIRST LF-01 news integration gate', () => {
+  it('keeps productive news outside the LF-01 root while preserving an explicit static presentation slot', () => {
+    expect(routes).not.toContain("import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';");
+    expect(routes).not.toContain('newsfeed={<LandingRealtimeAiNewsfeed');
+    expect(landing).not.toContain('{newsfeed}');
+    expect(landing).toContain('data-static-slot="news"');
+    expect(landing).toContain('LF-05 Vorschau');
+    expect(landing).toContain('Keine Live-News-Anfrage in LF-01.');
     expect(landing).not.toContain('LandingRealtimeAiNewsfeed');
     expect(landing).not.toMatch(/from\s+['"][^'"]*features\/news/);
   });

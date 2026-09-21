@@ -63,26 +63,26 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
     expect(shell).toContain('app-shell-frame');
   });
 
-  it('keeps the public landing token-driven while applying the Owner-directed fixed-BTC Universe surface', () => {
+  it('keeps the landing token-driven as an LF-01 static visual baseline', () => {
     expect(landing).toContain('bg-background');
     expect(landing).toContain('text-brand-primary');
     expect(landing).toContain('border-border');
     expect(landing).toContain('ui-panel');
-    expect(landing).toContain('{preview}');
-    expect(landing).toContain('BTC · Public Fixed');
-    expect(landing).not.toContain('loadPreview');
-    expect(landing).not.toContain('WorkbenchActivationState');
-    expect(landing).not.toContain('IntersectionObserver');
-    expect(landing).not.toContain('bg-[#');
-    expect(landing).not.toContain('text-[#');
+    expect(landing).toContain('data-static-slot="news"');
+    expect(landing).toContain('data-static-slot="scorer"');
+    expect(landing).toContain('data-static-slot="pricing"');
+    expect(landing).not.toContain('{preview}');
+    expect(landing).not.toContain('{newsfeed}');
+    expect(landing).not.toContain('{pricing}');
+    expect(landing).not.toContain('fetch(');
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
     expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
-    expect(publicWorkbench).toContain("lg:grid-cols-[88px_minmax(0,1fr)]");
-    expect(publicWorkbench).toContain("lg:grid-cols-[300px_minmax(0,1fr)]");
+    expect(publicWorkbench).not.toContain('onSelectSymbol={setSelectedSymbol}');
   });
 
   it('renders the design-first landing sections in the owner-directed order without fake data', () => {
     const orderedMarkers = [
+      'data-landing-section="mobile-mockup-hero"',
       'data-landing-section="application-description"',
       'data-landing-section="ai-newsfeed-slot"',
       'data-landing-section="hero"',
@@ -90,6 +90,7 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
       'data-landing-section="market-overview-slot"',
       'data-landing-section="core-modules-slot"',
       'data-landing-section="scoring-analysis-slot"',
+      'data-landing-section="pricing"',
       'data-landing-section="how-it-works"',
       'data-landing-section="trust-and-evidence"',
       'data-landing-section="footer"',
@@ -102,7 +103,7 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
       previous = current;
     }
 
-    expect(landing).toContain('{newsfeed}');
+    expect(landing).toContain('data-static-slot="news"');
     expect(landing).toContain('Kanonischer News-Zugang');
     expect(landing).not.toContain('NEWSFEED_SLOTS');
     expect(landing).toContain('Live-Marktprojektionen');
@@ -112,12 +113,18 @@ describe('GOV-CHAT-079 16.08 appearance contract', () => {
 
   it('aligns the public landing shell with the approved desktop and mobile visual direction', () => {
     expect(landing).toContain('AI-driven market intelligence');
+    expect(landing).toContain('data-landing-section="mobile-mockup-hero"');
+    expect(landing).toContain("capital-ai-mobile-landing.jpg");
+    expect(landing).toContain('aspect-[9/16]');
+    expect(landing).toContain('md:hidden');
     expect(landing).toContain('Live markets. Real insights.');
     expect(landing).toContain('Marktdaten <span className="text-brand-primary">verstehen.</span>');
     expect(landing).toContain('Chancen besser erkennen.');
     expect(landing).toContain('Produkt entdecken');
     expect(landing).toContain('Globale Märkte im Überblick');
     expect(landing).toContain('Enterprise Scorer');
+    expect(landing).toContain('Profil / Abo');
+    expect(landing).toContain('data-static-slot="pricing"');
     expect(landing).toContain('Buffett Value Check');
     expect(landing).toContain('Vocabulary');
     expect(landing).toContain('NeuralBackground');

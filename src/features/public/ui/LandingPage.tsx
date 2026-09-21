@@ -15,14 +15,13 @@ import {
   Menu,
   Play,
   ShieldCheck,
+  UserRound,
   Users,
 } from 'lucide-react';
 import { CapitalAiLogo } from '../../../shared/branding';
 import { NeuralBackground } from '../../../shared/visuals/NeuralBackground';
 
 interface LandingPageProps {
-  preview: React.ReactNode;
-  newsfeed: React.ReactNode;
   onLoginNavigate?: () => void;
 }
 
@@ -126,13 +125,21 @@ function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void })
       >
         <Menu size={20} aria-hidden="true" />
       </summary>
-      <div className="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-brand-primary/20 bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+      <div className="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-brand-primary/20 bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+        <div data-static-slot="profile-subscription" className="mb-3 rounded-xl border border-border bg-surface/45 p-3">
+          <div className="flex items-center gap-2 text-xs font-black text-text-primary">
+            <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+            <span>Profil &amp; Abo</span>
+          </div>
+          <span className="mt-2 inline-flex rounded-full border border-border px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">
+            LF-02 · noch nicht angebunden
+          </span>
+        </div>
         <nav className="grid gap-1 text-sm" aria-label="Mobile Hauptnavigation">
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#produkt">Produkt</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#analysis-workbench">Analysen</a>
-          <span className="min-h-11 rounded-xl px-3 py-3 text-text-secondary/55">Preise</span>
+          <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="#pricing">Preise &amp; Abo</a>
           <a className="min-h-11 rounded-xl px-3 py-3 font-bold hover:bg-surface" href="/learning-platform">Learning</a>
-          <span className="min-h-11 rounded-xl px-3 py-3 text-text-secondary/55">Über uns</span>
           <a
             className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-3 font-black text-brand-primary"
             href="/login"
@@ -153,12 +160,12 @@ function MobileNavigation({ onLoginNavigate }: { onLoginNavigate?: () => void })
  * surfaces (Newsfeed access + analysis workbench) so the dependency direction remains app -> features.
  * Authentication stays on /login; this component creates no session and defines no scoring/data authority.
  */
-export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageProps) {
+export function LandingPage({ onLoginNavigate }: LandingPageProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-text-primary selection:bg-brand-primary/30 selection:text-text-primary">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,color-mix(in_srgb,var(--color-brand-primary)_9%,transparent),transparent_30%),radial-gradient(circle_at_90%_20%,color-mix(in_srgb,var(--color-decorative-purple)_8%,transparent),transparent_30%),radial-gradient(circle_at_52%_72%,color-mix(in_srgb,var(--color-decorative-cyan)_4%,transparent),transparent_34%)]" />
 
-      <header className="sticky top-0 z-40 border-b border-brand-primary/20 bg-background/88 backdrop-blur-xl shadow-[0_8px_32px_color-mix(in_srgb,var(--color-brand-primary)_7%,transparent)]">
+      <header className="sticky top-0 z-40 hidden border-b border-brand-primary/20 bg-background/88 backdrop-blur-xl shadow-[0_8px_32px_color-mix(in_srgb,var(--color-brand-primary)_7%,transparent)] md:block">
         <div className="mx-auto flex min-h-20 max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-6">
           <a
             href="/"
@@ -189,9 +196,12 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
             >
               Analysen
             </a>
-            <span className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary/55" title="Noch keine kanonische Zielroute freigegeben">
-              Preise
-            </span>
+            <a
+              href="#pricing"
+              className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+            >
+              Preise &amp; Abo
+            </a>
             <a
               href="/learning-platform"
               className="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-xs font-bold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
@@ -204,6 +214,15 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
           </nav>
 
           <div className="flex items-center gap-2">
+            <div data-static-slot="profile-subscription" className="hidden items-center gap-2 xl:flex" aria-label="Vorgesehene Position für Profil und Abonnement">
+              <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface/35 px-3 py-2 text-xs font-bold text-text-secondary">
+                <UserRound size={15} className="text-brand-primary" aria-hidden="true" />
+                Profil / Abo
+              </span>
+              <span className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 py-2 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">
+                LF-02
+              </span>
+            </div>
             <a
               href="/login"
               onClick={onLoginNavigate}
@@ -224,6 +243,36 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
       </header>
 
       <main className="relative z-10 mx-auto max-w-[1480px] space-y-5 px-3 py-4 sm:px-6 sm:py-6 lg:space-y-6">
+        <section
+          data-landing-section="mobile-mockup-hero"
+          aria-label="CAPITAL-AI Mobile Startansicht nach freigegebenem Mockup"
+          className="relative left-1/2 aspect-[9/16] w-screen -translate-x-1/2 overflow-hidden bg-[url('/brand/hero/capital-ai-mobile-landing.jpg')] bg-cover bg-top bg-no-repeat shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_10%,transparent)] md:hidden"
+        >
+          <span className="sr-only">
+            Mobile CAPITAL-AI Startansicht. Die dargestellte Grafik ist das freigegebene Layout-Mockup; Finanzdaten und Scoring bleiben an die nachfolgenden kanonischen Laufzeitflächen gebunden.
+          </span>
+          <div data-static-slot="mobile-profile-subscription" className="absolute right-3 top-3 z-10 flex max-w-[72%] flex-wrap justify-end gap-2">
+            <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-background/85 px-3 py-2 text-[10px] font-black text-text-secondary backdrop-blur-md">
+              <UserRound size={13} className="text-brand-primary" aria-hidden="true" />
+              Profil / Abo · LF-02
+            </span>
+          </div>
+          <a
+            href="#analysis-workbench"
+            aria-label="Analyse starten"
+            className="absolute left-[11%] top-[44.6%] h-[5.4%] w-[45%] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            <span className="sr-only">Analyse starten</span>
+          </a>
+          <a
+            href="#core-modules"
+            aria-label="Produkt entdecken"
+            className="absolute left-[11%] top-[50.4%] h-[4.9%] w-[45%] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+          >
+            <span className="sr-only">Produkt entdecken</span>
+          </a>
+        </section>
+
         <section
           data-landing-section="application-description"
           aria-label="CAPITAL-AI Anwendungsbeschreibung"
@@ -263,15 +312,23 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
               </div>
             </div>
           </div>
-          <div className="p-4 sm:p-5">
-            {newsfeed}
+          <div data-static-slot="news" className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5" aria-label="Statische News-Vorschau">
+            {['Markt-News', 'Unternehmens-News', 'Makro & Research'].map((label) => (
+              <article key={label} className="min-h-28 rounded-xl border border-border bg-background/45 p-4">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-accent">LF-05 Vorschau</span>
+                <h3 className="mt-3 text-sm font-black text-text-primary">{label}</h3>
+                <div className="mt-4 h-2 w-full rounded-full bg-surface" aria-hidden="true" />
+                <div className="mt-2 h-2 w-3/4 rounded-full bg-surface" aria-hidden="true" />
+                <p className="mt-4 text-[10px] text-text-secondary">Keine Live-News-Anfrage in LF-01.</p>
+              </article>
+            ))}
           </div>
         </section>
 
         <section
           id="produkt"
           data-landing-section="hero"
-          className="ui-panel relative overflow-hidden border-brand-primary/25 bg-surface/30 shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)]"
+          className="ui-panel relative hidden overflow-hidden border-brand-primary/25 bg-surface/30 shadow-[0_28px_90px_color-mix(in_srgb,var(--color-brand-primary)_8%,transparent)] md:block"
         >
           <NeuralBackground intensity="standard" className="opacity-35" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_74%_48%,color-mix(in_srgb,var(--color-brand-primary)_16%,transparent),transparent_25%),linear-gradient(90deg,color-mix(in_srgb,var(--color-background)_94%,transparent)_0%,color-mix(in_srgb,var(--color-background)_70%,transparent)_55%,transparent_100%)]" />
@@ -430,15 +487,55 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
                   Enterprise Scorer & Bewertungstools im neuen Landing-Shell
                 </h2>
                 <p className="text-sm leading-relaxed text-text-secondary">
-                  Der öffentliche Enterprise Scorer bleibt über die bestehende Injection-Boundary eingebunden. Lazy Loading, BTC-Fixierung sowie Login- und Entitlement-Grenzen werden durch diesen Design-Slice nicht verändert.
+                  Diese Fläche zeigt ausschließlich die spätere Enterprise-Scorer-Position. In LF-01 wird keine Scoring-Anfrage ausgeführt und kein synthetischer Score als produktiv dargestellt.
                 </p>
               </div>
               <div className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-brand-accent/25 bg-brand-accent/[0.08] px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary lg:self-auto">
                 <Activity size={13} className="text-brand-accent" aria-hidden="true" />
-                BTC · Public Fixed
+                BTC · statische Vorschau
               </div>
             </div>
-            {preview}
+            <div data-static-slot="scorer" className="grid gap-4 rounded-2xl border border-border bg-background/45 p-4 md:grid-cols-[220px_minmax(0,1fr)]">
+              <aside className="space-y-3 rounded-xl border border-border bg-surface/35 p-4">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">LF-04 Vorschau</span>
+                {['Enterprise Scorer', 'Ranking', 'Value Check'].map((label) => (
+                  <div key={label} className="rounded-lg border border-border px-3 py-2 text-xs font-bold text-text-secondary">{label}</div>
+                ))}
+              </aside>
+              <div className="rounded-xl border border-border bg-surface/25 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">Asset</p>
+                    <p className="mt-1 text-lg font-black text-text-primary">BTC</p>
+                  </div>
+                  <span className="rounded-full border border-border px-3 py-1 font-mono text-[9px] font-black uppercase tracking-wider text-text-secondary">Preview · nicht live</span>
+                </div>
+                <div className="mt-6 space-y-3" aria-hidden="true">
+                  <div className="h-3 w-full rounded-full bg-surface" />
+                  <div className="h-3 w-5/6 rounded-full bg-surface" />
+                  <div className="h-3 w-2/3 rounded-full bg-surface" />
+                </div>
+                <p className="mt-5 text-xs leading-relaxed text-text-secondary">Keine produktive Scoring-, Evidence-, DQ- oder Ranking-Ausgabe in dieser Phase.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="pricing"
+          data-landing-section="pricing"
+          aria-label="Pricing und Abonnement"
+          className="scroll-mt-24"
+        >
+          <div data-static-slot="pricing" className="grid gap-4 md:grid-cols-3" aria-label="Statische Pricing-Vorschau">
+            {['Starter', 'Pro', 'Enterprise'].map((tier) => (
+              <article key={tier} className="ui-panel min-h-44 border-border bg-surface/30 p-5">
+                <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-primary">LF-03 Vorschau</span>
+                <h2 className="mt-3 text-xl font-black text-text-primary">{tier}</h2>
+                <p className="mt-3 text-xs leading-relaxed text-text-secondary">Tarif- und Entitlement-Daten werden erst nach LF-02 aus der kanonischen Backend-Authority angebunden.</p>
+                <span className="mt-5 inline-flex min-h-10 items-center rounded-xl border border-border px-3 py-2 text-[10px] font-black uppercase tracking-wider text-text-secondary">Noch nicht buchbar</span>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -514,7 +611,7 @@ export function LandingPage({ preview, newsfeed, onLoginNavigate }: LandingPageP
             <div className="max-w-3xl">
               <h2 className="text-sm font-black text-text-primary">CAPITAL-AI – quantitative Multi-Asset-Analyse</h2>
               <p className="mt-2 leading-relaxed">
-                CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Fehlende oder nicht freigegebene Finanzdaten werden nicht durch Demo- oder synthetische Werte ersetzt. Die öffentliche Workbench erzeugt keine persistierte anonyme Supabase-/IAM-Session.
+                CAPITAL-AI dient der Analyse und Bildung und stellt keine Anlageberatung dar. Fehlende oder nicht freigegebene Finanzdaten werden nicht durch Demo- oder synthetische Werte ersetzt. Die LF-01-Landingpage ist eine statische visuelle Baseline; produktive Scoring-, News-, Pricing- und Subscription-Anbindungen folgen erst nach ihren jeweiligen Gates.
               </p>
             </div>
 
