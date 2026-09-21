@@ -1,0 +1,30 @@
+.capital-ai-frontend-port {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #02050e;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+.capital-ai-frontend-port .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.capital-ai-frontend-port .no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes capitalAiFrontendPortPulseSlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.capital-ai-frontend-port .animate-pulse-slow {
+  animation: capitalAiFrontendPortPulseSlow 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capital-ai-frontend-port .animate-pulse-slow {
+    animation: none !important;
+  }
+}
