@@ -1,0 +1,85 @@
+name: Supabase URL Configuration Control
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+concurrency:
+  group: supabase-url-config-control
+  cancel-in-progress: false
+
+jobs:
+  apply-url-config:
+    name: Owner-controlled Supabase URL configuration
+    if: >-
+      github.event.issue.number == 1192 &&
+      github.actor == 'SvenKulessa' &&
+      (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'MEMBER') &&
+      startsWith(github.event.comment.body, '/supabase-url-config')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: Fail-closed Report initialisieren
+        env:
+          REPORT_PATH: ${{ runner.temp }}/supabase-url-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n'             '### ❌ Supabase URL Configuration nicht geändert'             ''             'Fail-closed: Mutation wurde nicht erfolgreich verifiziert.'             > "${REPORT_PATH}"
+
+      - name: Management-Zugang fail-closed pruefen
+        id: access
+        continue-on-error: true
+        env:
+          SUPABASE_MANAGEMENT_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN }}
+          REPORT_PATH: ${{ runner.temp }}/supabase-url-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_MANAGEMENT_ACCESS_TOKEN}" ]]; then
+            printf '%s\n'               '### ❌ Supabase URL Configuration nicht geändert'               ''               'Fail-closed reason: `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN_MISSING`'               > "${REPORT_PATH}"
+            exit 1
+          fi
+
+      - name: URL Configuration lesen, atomar aktualisieren und verifizieren
+        id: apply
+        if: steps.access.outcome == 'success'
+        continue-on-error: true
+        env:
+          SUPABASE_MANAGEMENT_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN }}
+          SUPABASE_URL_CONFIG_REPORT_PATH: ${{ runner.temp }}/supabase-url-config-report.md
+        run: node scripts/operations/supabaseUrlConfigControl.mjs
+
+      - name: Ergebnis im Control Issue dokumentieren
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_PATH: ${{ runner.temp }}/supabase-url-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api             --method POST             "repos/${GITHUB_REPOSITORY}/issues/1192/comments"             -f "body=$(cat "${REPORT_PATH}")"             >/dev/null
+
+      - name: Fehlgeschlagene Mutation als Workflow-Fehler markieren
+        if: steps.access.outcome != 'success' || steps.apply.outcome != 'success'
+        shell: bash
+        run: |
+          echo "::error::Supabase URL Configuration wurde nicht erfolgreich und verifiziert aktualisiert."
+          exit 1
