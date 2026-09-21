@@ -1,12 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Database, ExternalLink, ShieldCheck } from 'lucide-react';
-import { PublicCryptoScoringPreview } from '../../../crypto/ui/public';
+import { Database, LockKeyhole, ShieldCheck, X } from 'lucide-react';
 import { CORE_MODULES, MARKET_ASSETS } from '../frontend-port/data/mockData';
 import type { CoreModule, MarketAsset } from '../frontend-port/types';
 
-const PUBLIC_SCORER_SYMBOL = 'BTC' as const;
 const VERIFIED_DISPLAY_CONTRACT = 'verified-asset-display/1.0.0' as const;
+const FINTECH_LANDING_SCORER_GATE = 'FIN-LF-01' as const;
 
 const DESIGN_ASSETS = MARKET_ASSETS.map((asset) => ({ ...asset }));
 const DESIGN_MODULES = CORE_MODULES.map((module) => ({
@@ -95,26 +94,26 @@ function neutralizePinnedPresentationFixtures() {
       low24h: '—',
       volume24h: '—',
       aiScore: 0,
-      aiRating: 'Kanonischer Score nur aus FINTECH-Evidence',
+      aiRating: 'Scoring-Aktivierung noch dependency-gated',
       description:
         'Die gepinnte Designkarte enthält keine produktiven Finanzwerte. Reale Marktwerte werden erst bei Auswahl über den verifizierten Finance-Display-Vertrag geladen.',
     })),
   );
 
   replaceModuleFixture('enterprise-scorer', {
-    description: 'Kanonisches FINTECH-Scoring mit sichtbarer Evidence- und Modell-Lineage.',
-    tagline: 'Produktiver Enterprise Scorer · öffentlicher Modus BTC',
+    description: 'Kanonischer FINTECH-Scorer-Vertrag; Landing-Aktivierung bleibt bis zu den Pflicht-Gates gehalten.',
+    tagline: 'FIN-LF-01 · produktive Aktivierung noch HELD',
     details: {
       useCase:
-        'Verwendet den bestehenden kanonischen FINTECH-Scorer. Auf der öffentlichen Landingpage bleibt die Asset-Auswahl bewusst auf BTC fixiert; es entsteht keine zweite Scoring-Logik.',
+        'Der bestehende FINTECH-Scorer bleibt die einzige Scoring-Authority. Die Landing aktiviert ihn erst nach LF-02 Auth, LF-03 Pricing/Entitlements sowie SEC- und QM-Freigabe.',
       features: [
-        'Kanonischer FINTECH-Scorer statt lokaler Frontend-Berechnung',
-        'Evidence-, Provider- und Modell-Lineage bleiben sichtbar',
-        'Fehlende Daten bleiben fail-closed statt durch Demo-Werte ersetzt zu werden',
+        'Keine browser-lokale oder zweite Scoring-Implementierung',
+        'BTC-only Public-Vertrag bleibt vorbereitet, aber noch nicht aktiviert',
+        'Fehlende Gate-Evidence bleibt fail-closed statt durch Demo-Scores ersetzt zu werden',
       ],
       sampleMetrics: [
-        { label: 'Öffentlicher Asset-Scope', value: 'BTC', score: 'Kanonischer Scorer' },
         { label: 'Scoring Authority', value: 'CAPITAL-AI-FINTECH', score: 'PVC-13..17' },
+        { label: 'Landing-Aktivierung', value: 'HELD', score: FINTECH_LANDING_SCORER_GATE },
       ],
       newsItems: [],
     },
@@ -232,16 +231,62 @@ function formatTimestamp(value: string | null): string {
   }).format(new Date(value));
 }
 
+function ScorerGateModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/85 p-0 backdrop-blur-md sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Enterprise Scorer Integrationsstatus">
+      <div className="w-full max-w-xl rounded-t-3xl border border-amber-500/25 bg-[#070e22] p-6 shadow-2xl sm:rounded-3xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-amber-400">
+              <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+              {FINTECH_LANDING_SCORER_GATE}
+            </div>
+            <h2 className="mt-1 text-xl font-black text-white">Enterprise Scorer · Integration vorbereitet</h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Die gepinnte Mock-Analyse ist deaktiviert. Der produktive FINTECH-Scorer wird auf der Landing erst aktiviert, wenn alle kanonischen Pflicht-Gates belegt sind.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Integrationsstatus schließen" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:text-white">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-2">
+          {[
+            'LF-02_AUTH_PROFILE_PASS',
+            'LF-03_PRICING_ENTITLEMENTS_PASS',
+            'SEC_REVIEW_READY',
+            'QM_VALIDATION_READY',
+          ].map((gate) => (
+            <div key={gate} className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-[#040816] px-3 py-2.5">
+              <span className="font-mono text-xs text-slate-200">{gate}</span>
+              <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">EVIDENCE_PENDING</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs leading-relaxed text-slate-400">
+          FINTECH bleibt Scoring-Authority. Es wird kein lokaler Score berechnet und kein Quick-Analysis-Endpunkt zur Scoring-Authority umgedeutet.
+        </p>
+
+        <button type="button" onClick={onClose} className="mt-5 min-h-11 w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-700">
+          Schließen
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function VerifiedAssetModal({
   asset,
   loadState,
   onClose,
-  onOpenScorer,
+  onOpenScorerGate,
 }: {
   asset: MarketAsset;
   loadState: AssetLoadState;
   onClose: () => void;
-  onOpenScorer: () => void;
+  onOpenScorerGate: () => void;
 }) {
   const canonicalSymbol = CANONICAL_SYMBOL_BY_DESIGN_ID[asset.id] ?? asset.symbol.replace('/', '');
   const data = loadState.state === 'ready' ? loadState.data : null;
@@ -318,10 +363,9 @@ function VerifiedAssetModal({
         )}
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          {canonicalSymbol === PUBLIC_SCORER_SYMBOL && (
-            <button type="button" onClick={onOpenScorer} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-black text-black hover:bg-amber-300">
-              Enterprise Scorer öffnen
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          {canonicalSymbol === 'BTC' && (
+            <button type="button" onClick={onOpenScorerGate} className="min-h-11 flex-1 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm font-black text-amber-200 hover:bg-amber-400/15">
+              Scorer-Integrationsstatus
             </button>
           )}
           <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-700">
@@ -333,34 +377,8 @@ function VerifiedAssetModal({
   );
 }
 
-function CanonicalAnalysisModal({ onClose }: { onClose: () => void }) {
-  const [timeframe, setTimeframe] = useState('1 tag');
-  return (
-    <div className="fixed inset-0 z-[95] overflow-y-auto bg-black/85 p-3 backdrop-blur-md sm:p-6" role="dialog" aria-modal="true" aria-label="Öffentlicher Enterprise Scorer">
-      <div className="mx-auto w-full max-w-6xl rounded-3xl border border-amber-500/25 bg-[#02050e] p-4 shadow-2xl sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-800 pb-4">
-          <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-400">Kanonische Produktivlogik</div>
-            <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">Enterprise Scorer · BTC</h2>
-            <p className="mt-1 text-xs text-slate-400">Öffentlicher Modus: BTC fixiert. Scoring-, Evidence- und Modell-Authority bleiben bei CAPITAL-AI-FINTECH.</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Enterprise Scorer schließen" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:text-white">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <PublicCryptoScoringPreview
-          selectedSymbol={PUBLIC_SCORER_SYMBOL}
-          timeframe={timeframe}
-          onChangeTimeframe={setTimeframe}
-          subscriptionTier="Free"
-        />
-      </div>
-    </div>
-  );
-}
-
 export function useLandingRuntimeBinding() {
-  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [scorerGateOpen, setScorerGateOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<MarketAsset | null>(null);
   const [assetLoadState, setAssetLoadState] = useState<AssetLoadState>(INITIAL_ASSET_STATE);
   const requestSequence = useRef(0);
@@ -408,16 +426,16 @@ export function useLandingRuntimeBinding() {
     const button = target.closest('button');
     const buttonText = normalizeText(button?.textContent);
 
-    const opensPublicScorer =
+    const opensScorerGate =
       buttonText.includes('Analyse starten') ||
       buttonText === 'Analyse' ||
       buttonText.includes('KI-Marktanalyse') ||
       buttonText.includes('Enterprise Scorer');
 
-    if (opensPublicScorer) {
+    if (opensScorerGate) {
       event.preventDefault();
       event.stopPropagation();
-      setAnalysisOpen(true);
+      setScorerGateOpen(true);
       return;
     }
 
@@ -426,7 +444,7 @@ export function useLandingRuntimeBinding() {
       event.stopPropagation();
       const module = resolveModuleFromDialog(target, event.currentTarget);
       if (module?.id === 'enterprise-scorer') {
-        setAnalysisOpen(true);
+        setScorerGateOpen(true);
       } else {
         window.location.assign('/login');
       }
@@ -447,9 +465,9 @@ export function useLandingRuntimeBinding() {
     setAssetLoadState(INITIAL_ASSET_STATE);
   }, []);
 
-  const openScorerFromAsset = useCallback(() => {
+  const openScorerGateFromAsset = useCallback(() => {
     closeAsset();
-    setAnalysisOpen(true);
+    setScorerGateOpen(true);
   }, [closeAsset]);
 
   const overlays = typeof document === 'undefined'
@@ -461,10 +479,10 @@ export function useLandingRuntimeBinding() {
               asset={selectedAsset}
               loadState={assetLoadState}
               onClose={closeAsset}
-              onOpenScorer={openScorerFromAsset}
+              onOpenScorerGate={openScorerGateFromAsset}
             />
           )}
-          {analysisOpen && <CanonicalAnalysisModal onClose={() => setAnalysisOpen(false)} />}
+          {scorerGateOpen && <ScorerGateModal onClose={() => setScorerGateOpen(false)} />}
         </>,
         document.body,
       );
