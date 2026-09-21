@@ -1,6 +1,6 @@
 {
   "name": "capital-ai-brandmark",
-  "version": "2.1.0-frontend-cyber-earth-geometry",
+  "version": "2.0.0-frontend-logo-v6.2-branding",
   "manifestVersion": "6.2",
   "designTokenSource": "docs/frontend/design-tokens.json",
   "geometrySource": {
@@ -12,7 +12,7 @@
   },
   "namingAuthority": "capital-ai-online/Finance",
   "colorAuthority": "docs/frontend/design-tokens.json",
-  "description": "Canonical CAPITAL-AI Cyber-Earth / planetary neural-grid logo geometry adopted from SvenKulessa/FRONTEND while Finance retains naming, color, typography and semantic branding authority.",
+  "description": "Canonical CAPITAL-AI Cyber-Earth / planetary neural-grid runtime logo geometry adopted from SvenKulessa/FRONTEND while Finance retains naming, color, typography and semantic branding authority. Existing first-party public brand projections retain their v6.2 asset version until separately regenerated.",
   "viewBox": [
     0,
     0,
