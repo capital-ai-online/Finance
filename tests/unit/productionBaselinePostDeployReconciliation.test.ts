@@ -97,7 +97,7 @@ describe('production baseline post-deploy reconciliation', () => {
     expect(yaml).toContain('BASELINE_CHANGED: ${{ steps.refresh.outputs.changed }}');
     expect(yaml).toContain('kein automatischer Re-Run');
     expect(yaml).toContain('keine nachgewiesene Baseline-/Metadata-Mutation');
-    expect(yaml).toContain('max-parallel: 4');
+    expect(yaml).toContain('max-parallel: 1');
   });
 
   it('keeps privileged actions immutable and explicit', () => {

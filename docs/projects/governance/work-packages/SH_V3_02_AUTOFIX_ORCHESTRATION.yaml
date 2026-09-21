@@ -1,12 +1,19 @@
-schema_version: "3.0.0"
+schema_version: "3.1.0"
 work_package: "SH-V3-02"
 project: "CAPITAL-AI-GOV"
 title: "Control Panel Autofix Orchestration Watchdog"
 authority:
   trust_root: "/AGENTS.md@CURRENT_MAIN"
+  role: "NON_AUTHORIZING_WORK_PACKAGE_PROJECTION"
+
 objective: >
-  Close Finding→Repairer Dispatch→Mutation→Readback→Verification so the
-  Control Panel can prove that an eligible repair was actually started.
+  Close Finding→Repairer Dispatch→Mutation→Readback→Verification and extend the
+  convergence path so every completed Human Owner merge or policy-compliant
+  GitHub auto-merge becomes the same post-merge CURRENT_MAIN generation trigger.
+  The Control Panel must prove which generation is current, which next PR was
+  selected, why it is eligible or blocked, and whether a provider-managed
+  auto-merge may be armed without creating a second merge authority.
+
 states:
   - FINDING_OBSERVED
   - ELIGIBILITY_CLASSIFIED
@@ -17,33 +24,182 @@ states:
   - MUTATION_READBACK
   - VERIFYING
   - CONVERGED
+  - MERGE_OBSERVED
+  - MAIN_GENERATION_READBACK
+  - QUEUE_INVALIDATED
+  - NEXT_PR_SELECTED
+  - NEXT_PR_SYNCHRONIZING
+  - NEXT_PR_VERIFYING
+  - AUTO_MERGE_EVALUATED
+  - HUMAN_DECISION_REQUIRED
+  - AUTO_MERGE_ARMED
+  - POST_MERGE_READBACK
   - ESCALATED
+
 failure_classes:
   ORCHESTRATION_TRIGGER_MISSING:
     condition: "eligible finding has no matching controller run/readback"
     action: "fail closed; emit evidence; do not pretend remediation started"
+
   TEST_CONTRACT_DRIFT:
     action: "dispatch only an explicitly registered deterministic repairer"
+
   PR_TEMPLATE_BOOTSTRAP_DRIFT:
-    condition: "markerless or legacy body cannot yet be consumed by the v1.7 Decision Evidence Reconciler"
+    condition: "markerless or legacy body cannot yet be consumed by the canonical v1.8 Decision Evidence Reconciler"
     action: "delegate only to the existing PR Production Baseline Auto-Refresh bounded template/bootstrap repair path"
+
   PR_TEMPLATE_DRIFT:
-    condition: "canonical v1.7 Decision/Evidence projection is stale"
+    condition: "canonical v1.8 Decision/Evidence projection is stale"
     action: "delegate exclusively to canonical Decision Evidence Reconciler"
+
   PROTECTED_ACTIONS_MINUTES_BLOCKER:
     condition: "the protected 45,000-minute GitHub Actions blocker is active"
     action: "do not repair or rerun; emit protected blocker evidence and require the configured unblock condition"
+
   BASELINE_METADATA_RACE:
     action: "delegate to existing bounded baseline reconciliation path"
+
+  STALE_MERGE_QUEUE_GENERATION:
+    condition: "a PR merged or CURRENT_MAIN/head/base changed after the queue snapshot was computed"
+    action: "invalidate the entire prior queue generation and recompute from fresh CURRENT_MAIN before selecting or arming another PR"
+
+  AUTO_MERGE_CONTRACT_NOT_SATISFIED:
+    condition: "one or more AGENTS.md Auto-Merge Safety Contract conditions are missing, stale, ambiguous or failed"
+    action: "keep or return the PR to HUMAN_MERGE_REQUIRED; never fall back to direct agent merge"
+
+  MERGE_ORIGIN_READBACK_MISSING:
+    condition: "a merged PR cannot be bound to a concrete merged PR, merge result and resulting CURRENT_MAIN generation"
+    action: "fail closed; do not advance the successor lane"
+
+merge_continuation_contract:
+  purpose: >
+    Treat Human Owner merges and GitHub provider-managed auto-merges as equivalent
+    triggers for post-merge convergence while preserving their different pre-merge
+    authorization paths.
+
+  accepted_merge_origins:
+    - HUMAN_OWNER_MERGE
+    - GITHUB_AUTO_MERGE
+
+  merge_origin_invariants:
+    - "Merge origin affects pre-merge authorization only; after merge both origins enter the same CURRENT_MAIN readback path."
+    - "Agent direct merge is never a valid merge origin."
+    - "A green check, approval, label, comment or elapsed time is not proof that a merge occurred."
+    - "A merge is observed only from repository state and must be attributable to the merged PR and resulting main generation."
+
+  required_sequence:
+    - READ_CURRENT_MAIN_AFTER_MERGE
+    - BIND_MERGED_PR_AND_RESULTING_MAIN_GENERATION
+    - VERIFY_MERGED_EXIT_EVIDENCE
+    - INVALIDATE_PREVIOUS_QUEUE_GENERATION
+    - RELOAD_ALL_OPEN_PULL_REQUESTS
+    - RECOMPUTE_DEPENDENCIES_AND_WRITER_OVERLAP
+    - RECOMPUTE_HEAD_BASE_ANCESTRY
+    - SELECT_AT_MOST_ONE_NEXT_PR
+    - SYNCHRONIZE_SELECTED_PR_TO_CURRENT_MAIN_IF_REQUIRED
+    - WAIT_FOR_EXACT_HEAD_REQUIRED_CHECKS
+    - REEVALUATE_SECURITY_COMPLIANCE_AND_PRODUCTION_BASELINE
+    - REEVALUATE_AUTO_MERGE_SAFETY_CONTRACT
+    - HUMAN_DECISION_REQUIRED_OR_ARM_GITHUB_AUTO_MERGE
+    - OBSERVE_NEXT_MERGE
+    - POST_MERGE_READBACK
+
+  generation_model:
+    generation_key: "resulting CURRENT_MAIN SHA"
+    invalidates_on:
+      - "main head movement"
+      - "selected PR head movement"
+      - "selected PR base movement"
+      - "new or changed open writer affecting dependency/file/semantic/namespace/authority overlap"
+      - "required-check set change"
+      - "Security/Compliance/domain gate change"
+    stale_generation_behavior: "no successor merge action; recompute first"
+
+  selection_policy:
+    maximum_selected_successor_per_generation: 1
+    ordering: "dependency-correct before FIFO; FIFO only among otherwise equivalent eligible PRs"
+    blocked_selected_pr: >
+      Do not skip a dependency-significant blocked selected PR merely to keep the
+      lane moving. Independent side-lane PRs may proceed only after fresh proof
+      that they do not share mutation, authority, namespace, ownership or dependency
+      boundaries with the blocked lane.
+    current_main_ancestry_required: true
+
+  auto_merge:
+    enforcement_surface: "GitHub provider-managed auto-merge only"
+    eligibility_source: "/AGENTS.md@CURRENT_MAIN Auto-Merge Safety Contract"
+    explicit_declaration_required: "AUTO_MERGE_ELIGIBLE"
+    exact_head_and_base_required: true
+    all_required_checks_terminal_success_required: true
+    overlap_free_required: true
+    security_compliance_domain_pass_required: true
+    production_baseline_provenance_required_when_applicable: true
+    protected_classes_default: "HUMAN_MERGE_REQUIRED"
+    arm_only_after_fresh_correlation: true
+    agent_direct_merge: false
+    failed_arm_behavior: "record failure evidence; never direct-merge as fallback"
+    after_auto_merge: "enter the same post-merge CURRENT_MAIN readback sequence as a Human Owner merge"
+
+  human_merge:
+    after_human_merge: "enter the same post-merge CURRENT_MAIN readback sequence as a GitHub auto-merge"
+    no_extra_chat_prompt_required_for_active_canonical_continuation: true
+
+current_queue_snapshot:
+  role: "NON_AUTHORIZING_GENERATION_BOUND_EVIDENCE"
+  current_main: "896722e55ab1304bd798da6fc8c6f2d9b178a12e"
+  captured_date: "2026-09-21"
+  primary_convergence_lane:
+    - 1199
+    - 1209
+    - 1201
+    - 1202
+    - 1205
+    - 1211
+  primary_lane_rationale:
+    - "#1199 owns current SH-V3-02 workflow sequencing and must converge before dependent PR repair lanes rely on it."
+    - "#1209 is the remaining desktop landing stabilization dependency."
+    - "#1201 → #1202 → #1205 preserves compliance gate → general client consumer → FINTECH scorer consumer progression."
+    - "#1211 depends on the accepted responsive landing baseline for final desktop/CWV evidence."
+  independent_frontend_language_lane:
+    - 1212
+    - 1213
+  frontend_language_lane_rationale:
+    - "#1212 materializes the canonical VOC-FRONTEND registry identities."
+    - "#1213 consumes those identities in the canonical component inventory."
+    - "This lane may interleave with the primary lane only after fresh no-overlap/dependency proof for the current generation."
+  invalidation_rule: >
+    This snapshot is immediately stale after any Human or auto-merge, any relevant
+    PR head/base movement, or any new writer that changes the dependency/overlap
+    graph. The Control Panel must then recompute rather than preserve these numbers
+    as permanent merge authority.
+
+implementation_boundary:
+  existing_writer_dependency:
+    pr: 1199
+    scope: >
+      PR #1199 remains the active implementation writer for branch synchronization,
+      controlled PR CI autofix, baseline specialists and PR autofix controller sequencing.
+    rule: "This work-package extension does not duplicate or overwrite its workflow files."
+  future_runtime_change: >
+    Any implementation needed beyond PR #1199 must be selected only after #1199 reaches
+    a terminal outcome and CURRENT_MAIN is re-read. This projection alone does not
+    authorize a second workflow/controller.
+
 guardrails:
   - "No generic rerun for unchanged failed Governance."
   - "Governance rerun requires a proven baseline write or deterministic metadata repair."
-  - "Markerless template bootstrap and canonical v1.7 Decision/Evidence reconciliation remain separate existing specialist writers."
+  - "Markerless template bootstrap and canonical v1.8 Decision/Evidence reconciliation remain separate existing specialist writers."
   - "The protected 45,000-minute Actions blocker is never an autofix candidate."
   - "No recursive self-authorization."
   - "No second PR-body writer."
+  - "No second branch-synchronization writer."
+  - "No second merge authority."
   - "Attempt budget keyed by PR + generation + failure signature + repairer."
   - "Missing or stale run evidence is not PASS."
+  - "A previous queue position is evidence only after CURRENT_MAIN changes."
+  - "Human merge and GitHub auto-merge have one shared post-merge path, never separate successor authorities."
+  - "Protected P0/Governance/Security/IAM/Secret/database/Production classes remain fail-closed to Human/CODEOWNER unless CURRENT_MAIN explicitly changes that rule."
+
 control_panel:
   expose:
     - finding_id
@@ -55,8 +211,33 @@ control_panel:
     - verification_status
     - escalation_reason
     - protected_blocker
+    - merge_origin
+    - merged_pr_number
+    - previous_main_sha
+    - current_main_sha
+    - queue_generation
+    - queue_invalidated
+    - selected_next_pr
+    - selected_next_head_sha
+    - selected_next_base_sha
+    - selected_next_behind_by
+    - dependency_reason
+    - overlap_state
+    - required_check_state
+    - auto_merge_eligibility
+    - auto_merge_state
+    - human_decision_required
+
 exit_gate:
   - "eligible autofix dispatch has positive run readback"
   - "missing dispatch becomes ORCHESTRATION_TRIGGER_MISSING"
   - "repair outcome is exact-head verified"
   - "protected Actions-minute blockers never enter remediation"
+  - "every observed merge is bound to the resulting CURRENT_MAIN generation"
+  - "the previous queue generation is invalidated after every merge"
+  - "at most one next successor is selected per generation"
+  - "selected successor is synchronized to current main before merge readiness"
+  - "required checks and Security/Compliance/domain evidence are exact-head/current-base evidence"
+  - "auto-merge is armed only when every CURRENT_MAIN safety-contract condition passes"
+  - "otherwise the successor remains HUMAN_MERGE_REQUIRED"
+  - "Human and auto-merge both complete through the same post-merge readback path"
