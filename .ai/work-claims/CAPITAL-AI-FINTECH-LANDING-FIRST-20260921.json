@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-LANDING-FIRST-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "FIN-LF-01: materialize the FINTECH-owned landing scorer consumer contract and dependency gate without activating productive landing integration before LF-01.",
+  "startedAt": "2026-09-21T14:51:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "fintech/landing-first-consumer-contract-20260921",
+  "projectId": "CAPITAL-AI-FINTECH",
+  "projectFolder": "docs/projects/fintech/",
+  "projectStage": "PVC-09..PVC-17",
+  "priority": "P1",
+  "priorityReason": "Owner-directed landing-first program requires FINTECH scoring integration to remain dependency-gated until the static visual landing baseline passes.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-LANDING-FIRST-20260921.json",
+    "docs/projects/fintech/ROADMAP.md",
+    "docs/projects/fintech/WORK_PACKAGES.md",
+    "docs/projects/fintech/CROSS_PROJECT_DEPENDENCIES.md",
+    "docs/projects/fintech/work-packages/FIN_LF_01_LANDING_SCORER_CONSUMER_CONTRACT_2026-09-21.md"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
+}
