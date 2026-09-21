@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "policyId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-01",
   "source": {
     "repository": "SvenKulessa/FRONTEND",
@@ -55,14 +55,33 @@
     "import\\.meta\\.env",
     "(?:^|/)data/mockData"
   ],
-  "textExtensions": [".tsx", ".ts", ".css", ".svg"],
-  "binaryExtensions": [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"],
+  "textExtensions": [
+    ".tsx",
+    ".ts",
+    ".css",
+    ".svg"
+  ],
+  "binaryExtensions": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".avif",
+    ".gif"
+  ],
   "maxFileBytes": 5242880,
   "maxTotalBytes": 26214400,
   "runtimePromotion": {
     "automatic": false,
     "destinationUnderSrcAllowed": false,
     "adapterReviewRequired": true,
-    "financeComponentsBindAfterArchitectureAdoption": true
+    "financeComponentsBindAfterArchitectureAdoption": true,
+    "responsiveAdapterRequired": true,
+    "previewShellPromotionAllowed": false,
+    "deviceClasses": [
+      "mobile",
+      "tablet",
+      "desktop"
+    ]
   }
 }
