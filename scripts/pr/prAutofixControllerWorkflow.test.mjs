@@ -14,7 +14,7 @@ test('controller uses completed workflow_run for initial runs and reruns with de
 });
 
 test('classifier is read-only and binds exact same-repository PR head to current main', () => {
-  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  const block = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     'actions: read',
     'contents: read',
@@ -32,7 +32,7 @@ test('classifier is read-only and binds exact same-repository PR head to current
 });
 
 test('controller derives a bounded PR metadata shape before semantic delegation', () => {
-  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  const block = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     "core.setOutput('pr_metadata_shape', prMetadataShape)",
     'CURRENT_V18_CANONICAL',
@@ -48,7 +48,7 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
 });
 
 test('v1.8 legacy-baseline shape detection is exact and bounded', () => {
-  const block = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  const block = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     "v18Headings.length === 4",
     "v18Headings[3] === '## 7. Maschinenlesbare Baseline'",
@@ -59,7 +59,7 @@ test('v1.8 legacy-baseline shape detection is exact and bounded', () => {
 });
 
 test('completed source binding accepts every valid run_attempt without polling', () => {
-  const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  const classify = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     'Abgeschlossenen Source-Run exakt binden',
     "context.payload.action !== 'completed'",
@@ -122,12 +122,13 @@ test('write is exact-head/main, non-force and CI redispatch is after the branch 
   for (const token of [
     "pr.state !== 'open' || pr.base.ref !== 'main'",
     'normalizeSha(pr.head.sha) !== expectedHead',
-    'normalizeSha(pr.base.sha) !== expectedBase',
     'normalizeSha(main.commit.sha) !== expectedBase',
+    "workflow_id: 'sync-agent-pr-branches.yml'",
+    "basehead: \`${expectedBase}...${expectedHead}\`",
     'force: false',
     "workflow_id: 'ci.yml'",
     'expected_head_sha: commit.sha',
-    'expected_base_sha: expectedBase',
+    'expected_base_sha: postMainSha',
   ]) assert.ok(write.includes(token), 'missing write guard: ' + token);
   assert.ok(write.indexOf('updateRef') < write.indexOf('createWorkflowDispatch'));
 });
@@ -146,7 +147,7 @@ test('repeat-autofix signature trailer remains a loop-prevention boundary', () =
 
 
 test('controller materializes one immutable PR convergence generation from trusted main', () => {
-  const classify = workflow.split('  classify:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  const classify = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     'Kanonische PR-Generation aus Trusted Main materialisieren',
     'node scripts/pr/prConvergenceGeneration.mjs',
@@ -161,7 +162,9 @@ test('registered writer is serialized by the shared per-PR writer lease', () => 
   const write = workflow.split('  write:\n')[1];
   assert.ok(write.includes('group: ${{ needs.classify.outputs.writer_lease_key }}'));
   assert.ok(write.includes('cancel-in-progress: false'));
-  assert.ok(workflow.includes('capital-ai-pr-writer-') === false, 'lease construction belongs to the trusted generation helper, not duplicated workflow literals');
+  const sync = workflow.split('  sync-before-fix:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  assert.ok(sync.includes('group: capital-ai-pr-writer-${{ needs.classify.outputs.pr_number }}'));
+  assert.ok(sync.includes("workflow_id: 'sync-agent-pr-branches.yml'"));
 });
 
 test('write-time readback recomputes and verifies the exact generation before mutation', () => {
@@ -177,4 +180,14 @@ test('write-time readback recomputes and verifies the exact generation before mu
     'CAPITAL_AI_PR_GENERATION:',
   ]) assert.ok(write.includes(token), 'missing generation readback guard: ' + token);
   assert.ok(write.indexOf('PR generation drift before autofix write') < write.indexOf('createCommit'));
+});
+
+test('stale PR generations are synchronized before any Governance or test fix', () => {
+  const classify = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
+  const sync = workflow.split('  sync-before-fix:\n')[1].split('\n  delegate_pr_metadata:\n')[0];
+  assert.ok(classify.includes("basehead: \`${mainSha}...${headSha}\`"));
+  assert.ok(classify.includes("core.setOutput('sync_required', 'true')"));
+  assert.ok(classify.includes("core.setOutput('base_sha', mainSha)"));
+  assert.ok(sync.includes("workflow_id: 'sync-agent-pr-branches.yml'"));
+  assert.ok(sync.includes('CURRENT_MAIN correlation dispatched before any Governance/test fix.'));
 });
