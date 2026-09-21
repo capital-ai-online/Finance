@@ -23,10 +23,10 @@ export const CapitalAiEmblem: React.FC<{
         <defs>
           {/* Earth 3D Sphere Shading: Deep Cosmic Space to Illuminated Rim */}
           <radialGradient id="globeSphereGrad" cx="36%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#1E293B" />
-            <stop offset="35%" stopColor="#0F172A" />
-            <stop offset="70%" stopColor="#070D1F" />
-            <stop offset="100%" stopColor="#02050E" />
+            <stop offset="0%" stopColor="var(--color-surface)" />
+            <stop offset="35%" stopColor="var(--color-surface)" />
+            <stop offset="70%" stopColor="var(--color-background)" />
+            <stop offset="100%" stopColor="var(--color-background)" />
           </radialGradient>
 
           {/* Atmosphere Rim Luminescence (Gold + Emerald + Magenta + Purple) */}
