@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-CURRENT-LANDING-DATA-BINDING-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Bind the current f2a101 landing composition to existing verified Finance market-data contracts while preserving the newly promoted graphical architecture and keeping productive landing scoring fail-closed behind FIN-LF-01.",
+  "startedAt": "2026-09-22T01:11:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9c8a3e80c4451ed0b6ea45f368175604608f6f4b",
+  "branch": "frontend/current-landing-data-binding-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation consumer; consumes CAPITAL-AI-FINTECH PVC-09..17 outputs without productive PVC ownership",
+  "claimedPaths": [
+    "src/features/public/ui/frontend-port/ReferenceApp.tsx",
+    "src/features/public/ui/runtime/CurrentLandingRuntimeBinding.tsx",
+    "tests/unit/currentLandingRuntimeBinding.test.ts",
+    "docs/projects/frontend/work-packages/FE_LF_04_CURRENT_LANDING_DATA_BINDING_2026-09-22.md",
+    ".ai/work-claims/CAPITAL-AI-FE-CURRENT-LANDING-DATA-BINDING-20260922.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b",
+    "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d remains the current graphical reference",
+    "verified-asset-display/1.0.0 remains the progressive per-symbol display contract",
+    "CAPITAL-AI-FINTECH remains owner for PVC-09..17",
+    "FIN-LF-01 remains HELD until LF-02_AUTH_PROFILE_PASS, LF-03_PRICING_ENTITLEMENTS_PASS, SEC_REVIEW_READY and QM_VALIDATION_READY"
+  ],
+  "exitEvidence": [
+    "current f2a101 graphical generation is preserved",
+    "all exact-source graphical components remain byte-locked",
+    "all 15 visible market identities map to canonical Finance identities",
+    "only selected assets hydrate through /api/registry/assets/:symbol/verified-display",
+    "no direct provider endpoint is called from the landing composition",
+    "pinned mock analysis is not used as productive scoring",
+    "AI Newsfeed fixture is not presented as productive live data",
+    "current login/subclass/all-markets routing remains intact",
+    "focused regression and required exact-head checks pass"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
