@@ -297,11 +297,16 @@ function upsertDecisionSummaryRow(bodyText, label, value) {
   const evidenceStart = body.indexOf('## 2. ✅ Evidence', decisionStart + 1);
   if (decisionStart < 0 || evidenceStart < 0) return null;
   const section = body.slice(decisionStart, evidenceStart);
-  const ownerExpression = /^\|\s*Owner-Aktion\s*\|.*\|$/m;
-  if (!ownerExpression.test(section)) return null;
+  const anchorExpressions = [
+    /^\|\s*Owner-Aktion\s*\|.*\|$/gm,
+    /^\|\s*Human-\/CODEOWNER-Entscheidung\s*\|.*\|$/gm,
+  ];
+  const anchors = anchorExpressions.flatMap((expression) => [...section.matchAll(expression)]);
+  if (anchors.length !== 1) return null;
+  const anchorRow = anchors[0][0];
   const updatedSection = section.replace(
-    ownerExpression,
-    `| ${label} | ${compactCell(value)} |\n$&`,
+    anchorRow,
+    `| ${label} | ${compactCell(value)} |\n${anchorRow}`,
   );
   return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
 }
