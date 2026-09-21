@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-GRAPHICAL-LANGUAGE-INVENTORY-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Inventory graphical elements and components with canonical professional names and bind the Frontend inventory to the canonical VOC-FRONTEND terminology without modifying live presentation code.",
+  "startedAt": "2026-09-21T18:38:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "896722e55ab1304bd798da6fc8c6f2d9b178a12e",
+  "branch": "frontend/graphical-language-inventory-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-GRAPHICAL-LANGUAGE-INVENTORY-20260921.json",
+    "docs/frontend/COMPONENT_INVENTORY.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/frontend/FRONTEND_ARCH.md remains normative and is not modified while stale writer metadata is being released by PR #1209",
+    "PR #1212 provides owner-correct ESS-0017/ADR-0078 VOC-FRONTEND registry materialization",
+    "docs/frontend/design-tokens.json remains branding/design-token authority"
+  ],
+  "exitEvidence": [
+    "COMPONENT_INVENTORY version 1.10.0 maps 43 graphical concepts to current implementation paths and states",
+    "every mapped concept uses the same VOC-FRONTEND identity as PR #1212",
+    "semantic naming does not trigger source-file mass renames",
+    "no runtime, data, scoring, evidence, IAM, billing, compliance or deployment authority changes",
+    "FRONTEND_ARCH writer overlap is avoided while PR #1209 releases the terminal upstream-sync claim"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
