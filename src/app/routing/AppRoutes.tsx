@@ -17,6 +17,11 @@ const PublicAnalysisWorkbench = lazy(() =>
     default: module.PublicAnalysisWorkbench,
   })),
 );
+const LandingPricingPanel = lazy(() =>
+  import('../public/LandingPricingPanel').then((module) => ({
+    default: module.LandingPricingPanel,
+  })),
+);
 const LearningVocabulary = lazy(() =>
   import('../../features/learning/ui/LearningVocabulary').then((module) => ({
     default: module.LearningVocabulary,
@@ -107,10 +112,10 @@ function PublicPreviewBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PublicAnalysisPreview() {
+function PublicAnalysisPreview({ userSession }: { userSession: UserSession | null }) {
   return (
     <PublicPreviewBoundary>
-      <PublicAnalysisWorkbench />
+      <PublicAnalysisWorkbench userSession={userSession} />
     </PublicPreviewBoundary>
   );
 }
@@ -261,22 +266,25 @@ export function AppRoutes({
   }
 
   if (currentPath === '/') {
-    if (userSession) {
-      return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
-    }
-
     return (
       <LandingPage
+        profile={userSession ? { name: userSession.name, subscriptionTier: userSession.subscriptionTier } : null}
+        onLogout={userSession ? handleLogout : undefined}
         onLoginNavigate={clearJustLoggedOut}
         newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}
-        preview={<PublicAnalysisPreview />}
+        preview={<PublicAnalysisPreview userSession={userSession} />}
+        pricing={
+          <RouteLoadingBoundary>
+            <LandingPricingPanel userSession={userSession} />
+          </RouteLoadingBoundary>
+        }
       />
     );
   }
 
   if (currentPath === '/login') {
     if (userSession) {
-      return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+      return <RouteRedirect to="/" label="Zur Landingpage" />;
     }
     return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
   }
@@ -314,7 +322,7 @@ export function AppRoutes({
   }
 
   if (userSession) {
-    return <RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />;
+    return <RouteRedirect to="/" label="Zur Landingpage" />;
   }
 
   if (authBootstrapPending) {
