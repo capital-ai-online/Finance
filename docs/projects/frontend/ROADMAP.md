@@ -59,50 +59,6 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 
 The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
 
-## FE-DESKTOP-PVC-SYNC-01 — Desktop-only PVC presentation adaptation
-
-**Canonical identity:** `FE-DESKTOP-PVC-SYNC-01`  
-**Resolved Owner:** `CAPITAL-AI-FE`  
-**Project/PVC relationship:** existing `cross_cutting` presentation scope across rendered `PVC-01..PVC-18`; no productive PVC ownership transfer  
-**Mobile/Tablet:** preserve the synchronized source presentation  
-**Desktop:** from `1024px`, remove source preview/phone constraints and render the actual website composition  
-**Sync invariant:** `responsiveRuntimeAdapter` is required and revalidated on every upstream sync/promotion
-
-### Exit evidence
-
-- source lock and upstream component blobs remain unchanged;
-- `frontend-port.css` adapts only desktop widths and retains the sub-desktop source presentation;
-- the sync contract requires `DESKTOP_VIEWPORT_ADAPTER` and points to the focused regression test;
-- project/PVC routing explicitly permits FE-owned responsive/layout/accessibility/interaction adaptation without moving Primary PVC semantics;
-- exact-head required checks pass before Human/CODEOWNER merge.
-
-## FE-DESKTOP-RESPONSIVE-01 — Device-correct landing promotion
-
-**Owner:** `CAPITAL-AI-FE`  
-**PVC usage:** presentation/review scope only for applicable rendered PVC outputs; no productive PVC ownership  
-**Runtime writer:** PR #1209  
-**Status:** `IMPLEMENTED_PENDING_EXACT_HEAD_EVIDENCE`
-
-Current-main correlation proves the pinned `SvenKulessa/FRONTEND` source is synchronized correctly. Its source application is also a design-preview shell whose larger-screen default is an iPhone frame. Fresh Human/Owner direction preserves the existing Mobile/Tablet presentation and requires only the Desktop website view to adapt.
-
-### Bounded implementation
-
-- keep the PR #1206 source lock and Finance branding boundary unchanged;
-- preserve Mobile/Tablet behavior;
-- at `>=1024px`, suppress preview toolbar and phone status chrome and render the landing as a website container;
-- bind future upstream promotions to a device policy in `.github/frontend-upstream-sync.json`;
-- allow FE to use an affected PVC as presentation-adaptation scope while consuming the Primary Owner's contract unchanged;
-- hand off any non-presentation semantic change to the Primary Owner.
-
-### Exit evidence
-
-1. Desktop no longer renders inside the upstream 412px iPhone frame.
-2. Mobile/Tablet source behavior remains unchanged.
-3. Upstream source blobs and `source-lock.json` remain unchanged.
-4. Future upstream promotion requires the desktop website adapter and cannot silently treat preview chrome as viewport authority.
-5. FE project documentation exposes PVC presentation scope without modifying Primary PVC routing.
-6. Focused regression plus exact-head required checks pass.
-
 ## Preserved frontend invariants
 
 - `docs/frontend/FRONTEND_ARCH.md` remains the Finance runtime dependency/presentation boundary.
