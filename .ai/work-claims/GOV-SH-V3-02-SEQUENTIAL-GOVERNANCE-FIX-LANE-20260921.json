@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-SH-V3-02-SEQUENTIAL-GOVERNANCE-FIX-LANE-20260921",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "owner": "CAPITAL-AI-GOV",
+  "primaryProductivePvc": [
+    "PVC-05"
+  ],
+  "branchName": "governance/sh-v3-02-sequential-governance-fix-lane-20260921",
+  "baseBranch": "main",
+  "baseSha": "60f703365cb3bceb51fdb32325d17457ce9c32ec",
+  "workItem": "Serialize PR Governance/Test Fix execution and require CURRENT_MAIN correlation before Update Branch, every PR test fix, and ordered next-PR continuation.",
+  "approvedScope": "Reuse the existing canonical branch-sync and autofix writers. Before any PR test/governance fix, prove CURRENT_MAIN ancestry or dispatch exact Update Branch and defer mutation. After each fix commit, re-read CURRENT_MAIN and either run exact-head CI or re-sync first. Post-merge/post-deploy baseline refresh advances at most one FIFO eligible PR. Manual unscoped dispatch advances exactly one FIFO PR.",
+  "claimedPaths": [
+    ".github/workflows/sync-agent-pr-branches.yml",
+    ".github/workflows/controlled-pr-ci-autofix.yml",
+    ".github/workflows/current-state-baseline-autofix.yml",
+    ".github/workflows/pr-autofix-controller.yml",
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    "scripts/pr/controlledPrCiAutofixWorkflow.test.mjs",
+    "scripts/pr/currentStateBaselineAutofixWorkflow.test.mjs",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
+    "scripts/pr/prEventSnapshotConcurrency.test.mjs",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN sections 4-7",
+    "Existing sync-agent-pr-branches.yml remains the sole branch synchronization writer",
+    "Existing specialist autofix writers remain single-owner"
+  ],
+  "exitEvidence": [
+    "Every productive PR test/autofix lane proves CURRENT_MAIN ancestry before mutation",
+    "Stale PR heads dispatch the canonical exact-PR Update Branch lane and do not receive a stale fix",
+    "Every fix commit is re-correlated before CI revalidation",
+    "Post-merge/post-deploy Governance baseline refresh targets at most one FIFO eligible PR",
+    "Unscoped manual synchronization advances exactly one FIFO eligible PR",
+    "Hosted governance/security/tests pass for the exact PR head"
+  ],
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "startedAt": "2026-09-21T14:30:00+02:00",
+  "recorrelatedAt": "2026-09-21T14:30:00+02:00"
+}
