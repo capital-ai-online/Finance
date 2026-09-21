@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-ROOT-ROUTING-CORRELATION-2026-09-21",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Owner-directed OPS correlation update for canonical authenticated root landing routing.",
+  "startedAt": "2026-09-21T14:38:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "operations/auth-root-routing-correlation-20260921",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-08/PVC-18 correlation and runtime evidence",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-ROOT-ROUTING-CORRELATION-2026-09-21.json",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/authLifecycleCorrelation.test.ts",
+    "docs/projects/operations/work-packages/OPS_AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md",
+    "docs/projects/operations/evidence/AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md"
+  ],
+  "foreignWriterDependencies": [
+    {
+      "pr": 1195,
+      "project": "CAPITAL-AI-FE",
+      "relationship": "read-only consumer dependency"
+    }
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
