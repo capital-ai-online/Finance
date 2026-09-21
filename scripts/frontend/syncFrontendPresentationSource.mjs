@@ -13,7 +13,7 @@ function fail(message) {
 
 function readConfig() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-  if (config?.schemaVersion !== '1.0.0') fail('unsupported config schema');
+  if (config?.schemaVersion !== '1.1.0') fail('unsupported config schema');
   if (!config?.source?.repository || !config?.destination) fail('source/destination missing');
   if (String(config.destination).startsWith('src/')) fail('destination must remain outside runtime src/');
   if (config?.runtimePromotion?.automatic !== false) fail('automatic runtime promotion must stay disabled');
@@ -37,12 +37,11 @@ function matchesAny(value, patterns = []) {
 }
 
 function isAllowedPath(file, config) {
-  if (config.allowedExactPaths.includes(file)) return true;
-  return matchesAny(file, config.allowedPathPatterns);
+  return config.allowedExactPaths.includes(file) || matchesAny(file, config.allowedPathPatterns);
 }
 
-function isDeniedPath(file, config) {
-  return matchesAny(file, config.neverCopyPathPatterns);
+function isVisualFixture(file, config) {
+  return config.visualFixtureExactPaths.includes(file);
 }
 
 function destinationFor(file, config) {
@@ -58,6 +57,16 @@ function contentPromotionBlocks(buffer, file, config) {
   return config.promotionBlockContentPatterns.filter((pattern) => new RegExp(pattern, 'm').test(text));
 }
 
+function sourceRole(file, config) {
+  if (isVisualFixture(file, config)) return 'VISUAL_FIXTURE_ONLY';
+  if (file === 'src/App.tsx' || file === 'src/main.tsx') return 'PRESENTATION_ARCHITECTURE';
+  if (file === 'src/index.css') return 'VISUAL_STYLE';
+  if (file === 'src/types.ts') return 'PRESENTATION_TYPE_SHAPE';
+  if (file.startsWith('src/components/')) return 'GRAPHICAL_COMPONENT';
+  if (file.includes('/ui/')) return 'UI_SLICE';
+  return 'VISUAL_ASSET';
+}
+
 const config = readConfig();
 const sourceDir = process.env.FRONTEND_UPSTREAM_DIR;
 const expectedSha = process.env.FRONTEND_UPSTREAM_SHA;
@@ -68,16 +77,17 @@ if (!expectedSha || !/^[0-9a-f]{40}$/i.test(expectedSha)) fail('FRONTEND_UPSTREA
 const observedSha = git(sourceDir, ['rev-parse', 'HEAD']);
 if (observedSha !== expectedSha) fail(`upstream SHA mismatch: expected=${expectedSha} observed=${observedSha}`);
 
-const tracked = git(sourceDir, ['ls-files', '-z'])
-  .split('\0')
-  .filter(Boolean)
-  .map(safeRelativePath);
+const tracked = git(sourceDir, ['ls-files', '-z']).split('\0').filter(Boolean).map(safeRelativePath);
+
+for (const required of config.architectureRoots) {
+  if (!tracked.includes(required)) fail(`required presentation architecture root missing upstream: ${required}`);
+}
 
 const selected = tracked.filter((file) => isAllowedPath(file, config));
 if (selected.length === 0) fail('allowlist selected no upstream presentation files');
 
 for (const file of selected) {
-  if (isDeniedPath(file, config)) fail(`allowlist/denylist conflict for ${file}`);
+  if (matchesAny(file, config.neverCopyPathPatterns)) fail(`allowlist/denylist conflict for ${file}`);
 }
 
 fs.rmSync(config.destination, { recursive: true, force: true });
@@ -101,46 +111,48 @@ for (const file of selected.sort()) {
   fs.writeFileSync(targetPath, buffer);
 
   const promotionBlockPatterns = contentPromotionBlocks(buffer, file, config);
+  const fixtureOnly = isVisualFixture(file, config);
   manifestFiles.push({
     sourcePath: file,
     mirroredPath: targetPath.replaceAll('\\', '/'),
+    role: sourceRole(file, config),
     bytes: stat.size,
-    runtimePromotionEligible: promotionBlockPatterns.length === 0,
-    promotionBlockPatterns,
+    runtimePromotionEligible: !fixtureOnly && promotionBlockPatterns.length === 0,
+    promotionBlockPatterns: fixtureOnly
+      ? ['VISUAL_FIXTURE_ONLY', ...promotionBlockPatterns]
+      : promotionBlockPatterns,
   });
 }
 
 const manifest = {
-  schemaVersion: '1.0.0',
+  schemaVersion: '1.1.0',
   policyId: config.policyId,
   sourceRepository: config.source.repository,
   sourceRef: config.source.ref,
   sourceSha: observedSha,
+  adoptionMode: 'FULL_PRESENTATION_ARCHITECTURE_SNAPSHOT',
   destination: config.destination,
   runtimePromotionAutomatic: false,
+  financeComponentsBindAfterArchitectureAdoption: true,
   totalBytes,
   files: manifestFiles,
 };
 
-fs.writeFileSync(
-  path.join(config.destination, 'manifest.json'),
-  `${JSON.stringify(manifest, null, 2)}\n`,
-  'utf8',
-);
+fs.writeFileSync(path.join(config.destination, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
 fs.writeFileSync(
   path.join(config.destination, 'README.md'),
-  `# Mirrored FRONTEND presentation source
+  `# Mirrored FRONTEND presentation architecture
 
-This directory is an inert, generated presentation-source snapshot from \`${config.source.repository}@${observedSha}\`.
+This directory is the complete allowlisted presentation-architecture snapshot from \`${config.source.repository}@${observedSha}\`.
 
-It is **not runtime code** and is intentionally outside \`src/\`. Text sources are stored with a \`.source\` suffix so TypeScript/Vite cannot compile them by accident. The hourly sync copies only allowlisted graphical components, UI slices, visual assets, the composition blueprint and stylesheet. It does not copy upstream data, API, provider, auth, billing, scoring, entitlement, server, package or environment files.
+It contains the upstream application composition, entry point, stylesheet, presentation type shapes, every graphical component/UI slice selected by the presentation allowlist, visual assets, and explicitly declared visual fixtures needed to preserve the design as a reproducible reference.
 
-A mirrored file with \`runtimePromotionEligible=false\` contains a dependency pattern that must be removed or replaced by a Finance-owned adapter before any separately reviewed runtime promotion. Automatic promotion to production code is forbidden.
+It is **not Finance runtime code** and remains outside \`src/\`. Text sources use a \`.source\` suffix. \`src/data/mockData.ts\` is mirrored only as \`VISUAL_FIXTURE_ONLY\`; its values and claims are never productive market, news or scoring evidence.
+
+After architecture adoption, existing Finance-owned components are connected to this visual architecture through separate owner-correct adapter work. Upstream source is never executed directly and automatic runtime promotion is forbidden.
 `,
   'utf8',
 );
 
-console.log(
-  `[FRONTEND-UPSTREAM-SYNC] mirrored ${manifestFiles.length} presentation file(s), ${totalBytes} bytes, upstream=${observedSha}`,
-);
+console.log(`[FRONTEND-UPSTREAM-SYNC] mirrored ${manifestFiles.length} presentation architecture file(s), ${totalBytes} bytes, upstream=${observedSha}`);
