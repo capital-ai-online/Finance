@@ -15,6 +15,9 @@ interface LandingPageProps {
  * The referenced App/components/data/types/assets are copied byte-for-byte and verified by
  * frontendReferenceDesignLock.test.ts. CAPITAL-AI routing and productive runtime authority remain
  * outside the imported design snapshot.
+ *
+ * Mobile remains the source presentation baseline. The Finance-owned responsive adapter activates
+ * the website desktop canvas at >=1024px without changing the pinned FRONTEND component tree.
  */
 export function LandingPage(_props: LandingPageProps) {
   return (
@@ -23,6 +26,8 @@ export function LandingPage(_props: LandingPageProps) {
       data-landing-section="frontend-reference-design-port"
       data-landing-design-repository="SvenKulessa/FRONTEND"
       data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"
+      data-mobile-view="active"
+      data-desktop-view="responsive-active"
     >
       <ReferenceApp />
     </section>
