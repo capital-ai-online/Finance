@@ -34,6 +34,5 @@
   "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
   "lifecycle": "superseded",
   "activeWriter": false,
-  "releasedAt": "2026-09-21T16:45:00Z",
   "releaseReason": "Human Owner superseded the post-create runner-backed label classifier with pre-create project-label resolution. The prior implementation is terminal historical evidence and must not remain an active writer."
 }
