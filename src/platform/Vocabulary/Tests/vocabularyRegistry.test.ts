@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultVocabularyRegistry } from '../index';
+import { createDefaultVocabularyRegistry, frontendPresentationConcepts } from '../index';
 import { VocabularyRegistry } from '../Registry/VocabularyRegistry';
 import type { VocabularyConcept } from '../Domain/VocabularyConcept';
 
@@ -152,7 +152,7 @@ describe('VocabularyRegistry contracts', () => {
 
   it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
     const registry = createDefaultVocabularyRegistry();
-    expect(registry.list()).toHaveLength(69);
+    expect(registry.list()).toHaveLength(69 + frontendPresentationConcepts.length);
     for (const item of registry.list()) {
       expect(item.adrReferences).toContain('ADR-0078');
       expect(item.adrReferences).not.toContain('ADR-0046');
@@ -163,6 +163,22 @@ describe('VocabularyRegistry contracts', () => {
     expect(registry.resolveTerm('GHEC')?.canonicalCodeTerm).toBe('GitHubEnterpriseCloud');
     expect(registry.getById('VOC-BILLING-0003')?.displayNameEN).toBe('GitHub Advanced Security');
     expect(registry.getById('VOC-BILLING-0004')?.displayNameEN).toBe('GitHub Enterprise Cloud');
+  });
+
+  it('provides canonical frontend presentation terminology with architecture traceability', () => {
+    const registry = createDefaultVocabularyRegistry();
+
+    expect(frontendPresentationConcepts).toHaveLength(43);
+    expect(registry.resolveTerm('Navigations-Drawer')?.canonicalCodeTerm).toBe('NavigationDrawer');
+    expect(registry.resolveTerm('Modaler Dialog')?.canonicalCodeTerm).toBe('ModalDialog');
+    expect(registry.resolveTerm('Primäre Handlungsaufforderung')?.canonicalCodeTerm).toBe('PrimaryCallToAction');
+    expect(registry.resolveTerm('Hero-Bereich')?.canonicalCodeTerm).toBe('HeroSection');
+
+    const navigationDrawer = registry.resolveTerm('Navigation drawer');
+    expect(navigationDrawer?.traceabilityReferences).toContain('docs/frontend/FRONTEND_ARCH.md');
+    expect(navigationDrawer?.traceabilityReferences).toContain('docs/frontend/COMPONENT_INVENTORY.md');
+    expect(navigationDrawer?.essReferences).toContain('ESS-0017');
+    expect(navigationDrawer?.adrReferences).toContain('ADR-0078');
   });
 
   it('provides the canonical AI Development Chat & Execution Terminology category', () => {

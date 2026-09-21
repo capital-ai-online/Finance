@@ -8,6 +8,7 @@ export type { IVocabularyRegistry } from './Interfaces/IVocabularyRegistry';
 export { VocabularyRegistry } from './Registry/VocabularyRegistry';
 export { seedConcepts } from './Registry/seedConcepts';
 export { securityVerificationConcepts } from './Registry/securityVerificationConcepts';
+export { frontendPresentationConcepts } from './Registry/frontendPresentationConcepts';
 export {
   pvcProjectConcepts,
   pvcStageThesaurus,
@@ -50,6 +51,7 @@ export { createMessageDeliveryAdapters, type MessageDeliveryAdapters } from './D
 import { VocabularyRegistry } from './Registry/VocabularyRegistry';
 import { seedConcepts } from './Registry/seedConcepts';
 import { securityVerificationConcepts } from './Registry/securityVerificationConcepts';
+import { frontendPresentationConcepts } from './Registry/frontendPresentationConcepts';
 import { pvcProjectConcepts } from './Registry/pvcProjectConcepts';
 import { UiMessageCatalog } from './Messages/UiMessageCatalog';
 import { seedMessages } from './Messages/seedMessages';
@@ -57,7 +59,7 @@ import { migrationMessages } from './Messages/migrationMessages';
 
 export function createDefaultVocabularyRegistry(): VocabularyRegistry {
   const registry = new VocabularyRegistry();
-  registry.registerAll([...seedConcepts, ...securityVerificationConcepts, ...pvcProjectConcepts]);
+  registry.registerAll([...seedConcepts, ...securityVerificationConcepts, ...pvcProjectConcepts, ...frontendPresentationConcepts]);
   return registry;
 }
 
