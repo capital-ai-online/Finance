@@ -8,6 +8,8 @@ const read = (relativePath: string) =>
 const routes = read('src/app/routing/AppRoutes.tsx');
 const landingPage = read('src/features/public/ui/LandingPage.tsx');
 const publicWorkbench = read('src/app/public/PublicAnalysisWorkbench.tsx');
+const landingPricing = read('src/app/public/LandingPricingPanel.tsx');
+const checkout = read('src/features/billing/ui/Checkout.tsx');
 const publicCryptoFacade = read('src/features/crypto/ui/public.ts');
 const publicScorerPreview = read('src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
 const scorerPresentationContext = read('src/features/crypto/ui/EnterpriseScorerPresentationContext.tsx');
@@ -37,10 +39,12 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).toContain("import('../public/PublicAnalysisWorkbench')");
     expect(routes).toContain("import { LandingRealtimeAiNewsfeed } from '../../features/news/ui/LandingRealtimeAiNewsfeed';");
     expect(routes).toContain('default: module.PublicAnalysisWorkbench');
-    expect(routes).toContain('function PublicAnalysisPreview()');
+    expect(routes).toContain('function PublicAnalysisPreview({ userSession }');
     expect(rootBlock).toContain('<LandingPage');
     expect(rootBlock).toContain('newsfeed={<LandingRealtimeAiNewsfeed onLoginNavigate={clearJustLoggedOut} />}');
-    expect(rootBlock).toContain('preview={<PublicAnalysisPreview />}');
+    expect(rootBlock).toContain('preview={<PublicAnalysisPreview userSession={userSession} />}');
+    expect(rootBlock).toContain('<LandingPricingPanel userSession={userSession} />');
+    expect(rootBlock).toContain('profile={userSession ? { name: userSession.name, subscriptionTier: userSession.subscriptionTier } : null}');
     expect(rootBlock).not.toContain('<Dashboard');
     expect(landingPage).toContain('{newsfeed}');
     expect(landingPage).toContain('{preview}');
@@ -75,12 +79,15 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicWorkbench).not.toContain("type: 'guest'");
   });
 
-  it('keeps the public Enterprise Scorer fixed to BTC while preserving server/login boundaries', () => {
+  it('keeps the Enterprise Scorer visible for everyone while limiting users without a paid subscription to BTC', () => {
     expect(publicWorkbench).toContain("const PUBLIC_FIXED_SYMBOL = 'BTC' as const");
-    expect(publicWorkbench).toContain('selectedSymbol={PUBLIC_FIXED_SYMBOL}');
-    expect(publicWorkbench).not.toContain('onSelectSymbol={setSelectedSymbol}');
-    expect(publicWorkbench).toContain('Public Asset:');
-    expect(publicWorkbench).toContain('fixiert');
+    expect(publicWorkbench).toContain("userSession?.type === 'registered' && userSession.subscriptionTier !== 'Free'");
+    expect(publicWorkbench).toContain('const activeSymbol = hasPaidSubscription ? selectedSymbol : PUBLIC_FIXED_SYMBOL');
+    expect(publicWorkbench).toContain('selectedSymbol={activeSymbol}');
+    expect(publicWorkbench).toContain('onSelectSymbol={hasPaidSubscription ? setSelectedSymbol : undefined}');
+    expect(publicWorkbench).toContain("'Ohne aktives Abo bleibt der Enterprise Scorer auf BTC fixiert.'");
+    expect(publicWorkbench).toContain("'Mit aktivem Abo ist die Asset-Auswahl im Enterprise Scorer freigeschaltet.'");
+    expect(publicWorkbench).toContain("hasPaidSubscription ? 'Abo-Auswahl' : 'ohne Abo fixiert'");
     expect(publicWorkbench).toContain("id: 'enterprise-scorer'");
     expect(publicWorkbench).toContain("id: 'ranking-board'");
     expect(publicWorkbench).toContain("id: 'buffett-value'");
@@ -122,7 +129,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).toContain('name="Öffentliche Analyse-Workbench"');
     expect(routes).toContain('function PublicPreviewBoundary');
     expect(routes).toContain('Bewertungstools vorübergehend nicht verfügbar');
-    expect(routes).toContain('<PublicAnalysisWorkbench />');
+    expect(routes).toContain('<PublicAnalysisWorkbench userSession={userSession} />');
     expect(landingPage).toContain('id="analysis-workbench"');
     expect(landingPage).toContain('{preview}');
     expect(landingPage).not.toContain('IntersectionObserver');
@@ -140,6 +147,18 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(publicGuard).toBeGreaterThanOrEqual(0);
     expect(authenticatedEndpoint).toBeGreaterThan(publicGuard);
     expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
+  });
+
+  it('projects pricing and subscription on root from the existing backend/billing authorities', () => {
+    expect(routes).toContain("import('../public/LandingPricingPanel')");
+    expect(landingPage).toContain('id="pricing"');
+    expect(landingPage).toContain('{pricing}');
+    expect(landingPricing).toContain("fetch('/api/entitlements/plans'");
+    expect(landingPricing).toContain('<Abonnements');
+    expect(landingPricing).toContain('currentTier={projectedTier}');
+    expect(checkout).toContain('successUrl: `${window.location.origin}/?checkout=pending`');
+    expect(checkout).toContain('cancelUrl: `${window.location.origin}/?checkout=cancelled`');
+    expect(checkout).not.toContain('/dashboard?checkout=');
   });
 
   it('uses LoginPage exclusively at the dedicated /login route', () => {
@@ -163,12 +182,12 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(loginPageRedirect).toContain('href="/login"');
   });
 
-  it('protects dashboard/application deep links and redirects authenticated login sessions', () => {
+  it('protects dashboard/application deep links while returning authenticated login sessions to root', () => {
     expect(routes).toContain("if (currentPath === '/dashboard')");
     expect(routes).toContain("if (currentPath === '/media-studio')");
     expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
-    expect(routes).toContain('<RouteRedirect to="/dashboard" label="Weiter zum Dashboard" />');
+    expect(routes).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
   });
 
   it('serves /login and protected app routes through the production SPA fallback', () => {
@@ -208,7 +227,7 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).not.toContain('@capital-ai.online');
     expect(routes).not.toContain('@guest');
     expect(landingPage).not.toContain('UserSession');
-    expect(publicWorkbench).not.toContain('UserSession');
+    expect(publicWorkbench).toContain("import type { UserSession } from '../types/UserSession';");
     expect(sessionComposition).toContain('session.user.is_anonymous');
     expect(sessionComposition).toContain('rejectAnonymousSession');
   });
@@ -220,14 +239,15 @@ describe('canonical landing, public analysis workbench, login and protected-rout
     expect(routes).toContain("import('../public/PublicAnalysisWorkbench')");
   });
 
-  it('keeps the authenticated Dashboard separate from the public analysis workbench', () => {
+  it('keeps the Dashboard as a protected deep link while root remains the authenticated landing surface', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
 
-    expect(rootBlock).not.toContain('userSession=');
-    expect(rootBlock).not.toContain('handleLogin');
-    expect(rootBlock).not.toContain('handleRegister');
+    expect(rootBlock).toContain('profile={userSession ?');
+    expect(rootBlock).toContain('preview={<PublicAnalysisPreview userSession={userSession} />}');
+    expect(rootBlock).not.toContain('<Dashboard');
+    expect(routes).toContain("if (currentPath === '/dashboard')");
     expect(routes).toContain('const Dashboard = lazy');
     expect(routes).toContain('const PublicAnalysisWorkbench = lazy');
   });
