@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Apply the desktop-only landing fix and make it a persistent per-sync CAPITAL-AI-FE presentation adaptation across rendered PVC-01..18 outputs, while preserving Mobile/Tablet and all Primary PVC/domain ownership.",
+  "workItem": "Apply the bounded desktop-only responsive landing fix, harden future FRONTEND sync promotion against desktop preview-shell reuse, and document CAPITAL-AI-FE's existing PVC-01..18 coverage as project-local presentation/adaptation scope without changing Primary PVC routing.",
   "startedAt": "2026-09-21T17:53:00+02:00",
   "baseBranch": "main",
   "baseSha": "d6be9db867d058d057c39df6e93e49fe3c875145",
@@ -20,30 +20,26 @@
     "src/features/public/ui/frontend-port/frontend-port.css",
     "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
     ".github/frontend-upstream-sync.json",
-    "scripts/frontend/syncFrontendPresentationSource.mjs",
     "tests/unit/frontendUpstreamPresentationSync.test.ts",
+    "docs/projects/frontend/README.md",
     "docs/projects/frontend/ROADMAP.md",
-    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json",
-    ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json",
-    "docs/frontend/FRONTEND_ARCH.md",
-    "docs/projects/README.md",
-    "docs/projects/PROJECT_VALUE_CHAIN.md",
-    "docs/projects/frontend/README.md"
+    ".ai/work-claims/CAPITAL-AI-FE-DESKTOP-RESPONSIVE-20260921.json"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
     "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07 remains the pinned graphical source",
     "src/features/public/ui/frontend-port/source-lock.json remains unchanged",
+    "docs/projects/PROJECT_VALUE_CHAIN.md Primary Owners remain unchanged",
     "Finance branding authority remains unchanged"
   ],
   "exitEvidence": [
-    "desktop widths >= 1024px render as the actual website rather than the upstream iPhone preview",
-    "mobile and tablet source presentation remain unchanged",
-    "every upstream sync/promotion requires and revalidates the DESKTOP_VIEWPORT_ADAPTER",
-    "CAPITAL-AI-FE may adapt presentation of rendered PVC-01..18 outputs without taking productive PVC/domain ownership",
-    "ReferenceApp/source lock and Finance branding boundary remain unchanged",
-    "focused regression plus required repository checks pass on the exact PR head",
-    "Human/CODEOWNER merge remains required"
+    "desktop widths >= 1024px render the landing as a website container rather than an iPhone mockup",
+    "desktop preview control and smartphone status chrome are hidden",
+    "mobile and tablet presentation rules are not changed",
+    "ReferenceApp and all locked upstream component blobs remain unchanged",
+    "future upstream promotion requires a desktop website adapter and preserves mobile/tablet behavior",
+    "CAPITAL-AI-FE project documentation permits PVC outputs as presentation/adaptation scope without changing Primary PVC ownership",
+    "focused regression plus required repository checks pass on the exact PR head"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
