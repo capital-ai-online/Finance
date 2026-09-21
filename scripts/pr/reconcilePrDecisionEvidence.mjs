@@ -283,8 +283,38 @@ function upsertLiveDashboard(bodyText, gates, decisionStatus) {
 
   const section = body.slice(decisionStart, evidenceStart);
   const pattern = /### 📡 Live Dashboard\s*\n\s*\| Live-Signal \| Zustand \|\s*\n\|---\|---\|\s*\n\| Status \|[^\n]*\|\s*\n\| Synchronität \|[^\n]*\|\s*\n\| Nächster Schritt \|[^\n]*\|/m;
-  if (!pattern.test(section)) return null;
-  const updatedSection = section.replace(pattern, dashboard);
+  if (pattern.test(section)) {
+    const updatedSection = section.replace(pattern, dashboard);
+    return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
+  }
+
+  // Bounded recovery for a uniquely identifiable v1.8 dashboard table that drifted
+  // from the canonical three-row projection. This is intentionally narrower than a
+  // generic markdown rewrite: only the single Live Dashboard table directly before
+  // the canonical Human Decision table may be replaced.
+  const decisionTableHeader = '| Frage | Ergebnis |';
+  const decisionTableCount = section.split(decisionTableHeader).length - 1;
+  const markerIndex = section.indexOf(marker);
+  const decisionTableIndex = section.indexOf(decisionTableHeader, markerIndex + marker.length);
+  if (decisionTableCount !== 1 || markerIndex < 0 || decisionTableIndex < 0) return null;
+
+  const candidate = section.slice(markerIndex, decisionTableIndex).trim();
+  const candidateLines = candidate.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (
+    candidateLines[0] !== marker ||
+    candidateLines.length < 3 ||
+    candidateLines.length > 20 ||
+    candidateLines.slice(1).some((line) => !/^\|.*\|$/.test(line)) ||
+    candidateLines.filter((line) => line === '| Live-Signal | Zustand |').length !== 1
+  ) {
+    return null;
+  }
+
+  const updatedSection =
+    section.slice(0, markerIndex) +
+    dashboard +
+    '\n\n' +
+    section.slice(decisionTableIndex);
   return body.slice(0, decisionStart) + updatedSection + body.slice(evidenceStart);
 }
 
