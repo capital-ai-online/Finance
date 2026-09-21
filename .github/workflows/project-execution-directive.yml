@@ -1,0 +1,70 @@
+name: Project Execution Directive Validation
+run-name: >-
+  Project execution directive validation @${{ github.event.pull_request.head.sha || github.sha }}
+
+# Read-only implementation check for the non-authorizing three-part projection.
+# Execution authority remains exclusively /AGENTS.md@CURRENT_MAIN.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'docs/projects/**'
+      - 'scripts/governance/validateProjectExecutionDirective.mjs'
+      - 'scripts/governance/validateProjectExecutionDirective.test.mjs'
+      - '.github/workflows/project-execution-directive.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'docs/projects/**'
+      - 'scripts/governance/validateProjectExecutionDirective.mjs'
+      - 'scripts/governance/validateProjectExecutionDirective.test.mjs'
+      - '.github/workflows/project-execution-directive.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-execution-directive-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Drei Projektions-Teile und Authority-Bindung validieren
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - name: Exakten Kandidatenstand read-only auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js 24.18.0 bereitstellen
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Maschinenlesbare Projektanweisung fail-closed validieren
+        run: node scripts/governance/validateProjectExecutionDirective.mjs
+
+      - name: Validator-Vertrag testen
+        run: node --test scripts/governance/validateProjectExecutionDirective.test.mjs
+
+      - name: Evidence zusammenfassen
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Project Execution Directive'
+            echo
+            echo '- Authority: `/AGENTS.md@CURRENT_MAIN`'
+            echo '- Projection: `3 × NON_AUTHORIZING_PROJECTION`'
+            echo '- Scope: all canonical project folders from `docs/projects/README.md`'
+            echo '- Idle contract: exactly 3 PVC units'
+            echo '- Workflow permissions: read-only'
+            echo '- Repository mutation: none'
+          } >> "$GITHUB_STEP_SUMMARY"
