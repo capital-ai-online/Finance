@@ -26,6 +26,7 @@ Der maschinenlesbare Panel-Datenvertrag bleibt `QualityCenterReport` (`quality-c
 - `Coverage/CoverageCollector.ts` — reale Belegung der sieben Pflicht-Testbereiche plus optionale echte Code-Coverage;
 - `Scoring/QualityScoreCalculator.ts` — sieben 0..100-Messachsen ohne erfundene Ersatzwerte;
 - `TechnicalDebt/TechnicalDebtRegister.ts` — evidenzpflichtiges Debt-Management;
+- `Findings/UnifiedFindingContract.ts` — einheitlicher, stabil fingerprintbarer Evidence-Vertrag fuer Gitleaks, OSV, Vitest-Coverage, Knip und jscpd; die Findings sind nicht-autorisierend und werden ausserhalb des Runtime-Hot-Paths erzeugt;
 - `Validators/DocumentationConsistencyValidator.ts` — QM-Dokument-/Manifest-Konsistenz;
 - `ValueChain/FintechValueChainQualityProjection.ts` — read-only Homogenitaetsprojektion der aktuellen 18-stufigen SC-MD-SPT-FinTech-Wertschoepfungskette;
 - `Orchestration/QualityCenterOrchestrator.ts` — einheitlicher `QualityCenterReport`;
@@ -106,7 +107,7 @@ Der `CoverageCollector` misst `tests/unit`, `tests/integration`, `tests/contract
 
 `coverage/coverage-summary.json` oder `.quality/coverage-summary.json` wird nur eingelesen, wenn das Artefakt real existiert. Fehlt es, bleibt Statements/Branches/Functions/Lines `NOT_AVAILABLE`.
 
-Der aktuelle Dependency-Graph installiert keinen verpflichtenden Vitest-Coverage-Provider. Eine neue Coverage-Dependency, Lockfile-Aenderung, CI-Kosten und ein moegliches Threshold-Gate werden deshalb nicht implizit in dieser Operationalisierung eingefuehrt.
+Der Projekt-Dependency-Graph installiert weiterhin keinen verpflichtenden Coverage-Provider. Der separate, read-only `OSS Quality Assurance`-Workflow erzeugt jedoch fuer relevante Pull Requests reale V8-Coverage mit exakt `vitest@4.1.11` + `@vitest/coverage-v8@4.1.11` als ephemer gepinnter Toolchain und schreibt `.quality/coverage-summary.json`. Anschliessend liest der bestehende `CoverageCollector` genau dieses Artefakt und der bestehende Quality-Center-Snapshot muss `codeCoverage.status=AVAILABLE` bestaetigen. Ausserhalb einer tatsaechlich ausgefuehrten Coverage-Lane bleibt fehlende Evidence korrekt `NOT_AVAILABLE`; es wird kein synthetischer Coverage-Wert erzeugt.
 
 ## Quality Scoring
 
