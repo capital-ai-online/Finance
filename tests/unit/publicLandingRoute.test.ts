@@ -153,7 +153,9 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');
     expect(loginPage).toContain('Canonical authentication page for `/login`');
     expect(loginPage).toContain('href="/"');
-    expect(loginPage).toContain('← Zurück zur Landingpage');
+    expect(loginPage).toContain('Zurück zur Übersicht');
+    expect(loginPage).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(loginPage).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
   });
 
@@ -210,6 +212,11 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain("if (currentPath === '/datenschutz')");
     expect(routes).toContain("if (currentPath === '/agb')");
     expect(routes).toContain("if (currentPath === '/impressum')");
+    expect(routes).toContain("if (currentPath === '/faq')");
+    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
+    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
+    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
+    expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
   });
 
   it('does not create a presentation visitor session and still rejects anonymous Supabase sessions', () => {
