@@ -81,18 +81,6 @@ function formatTimestamp(value: string | null): string {
   }).format(new Date(value));
 }
 
-export function CurrentLandingDataNotice() {
-  return (
-    <div
-      className="mx-5 mb-1 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-slate-400"
-      data-current-landing-data-binding="verified-on-selection"
-    >
-      Marktwerte und Evidence werden bei Auswahl eines Assets über den verifizierten Finance-Datenvertrag geladen.
-      Die grafische FRONTEND-Quelle bleibt unverändert und ist keine Daten- oder Scoring-Authority.
-    </div>
-  );
-}
-
 function VerifiedAssetModal({
   loadState,
   onClose,
