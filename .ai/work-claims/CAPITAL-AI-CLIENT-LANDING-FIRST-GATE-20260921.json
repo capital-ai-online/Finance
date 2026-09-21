@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-CLIENT-LANDING-FIRST-GATE-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate the Owner-directed Landing-First program into CAPITAL-AI-CLIENT/PVC-01 as a dependency-held client/request boundary work package, without introducing productive landing runtime before LF-01 PASS.",
+  "startedAt": "2026-09-21T14:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
+  "branch": "agent-client/landing-first-consumer-gate-20260921",
+  "projectId": "CAPITAL-AI-CLIENT",
+  "projectFolder": "docs/projects/agent-client/",
+  "projectStage": "PVC-01 — Agent Client",
+  "priority": "P1",
+  "priorityReason": "Landing-First ordering is a fresh Owner direction and CLIENT must fail closed against premature productive landing integration while preserving the canonical request/client boundary.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-CLIENT-LANDING-FIRST-GATE-20260921.json",
+    "docs/projects/agent-client/ROADMAP.md",
+    "docs/projects/agent-client/WORK_PACKAGES.md",
+    "docs/projects/agent-client/RUNTIME_MAPPING.md",
+    "docs/projects/agent-client/evidence/CLIENT_LANDING_FIRST_CORRELATION_2026-09-21.md"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
