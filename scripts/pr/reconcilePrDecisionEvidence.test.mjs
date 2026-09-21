@@ -213,6 +213,64 @@ test('reconciler repairs missing v1.8 Decision/Evidence projections without touc
   assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
 });
 
+test('reconciler repairs the observed v1.8 human-decision anchor and stale evidence rows from PR #1193', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const technical = canonicalBody().split('## 3. 🔍 Technical Evidence')[1];
+  const damaged = canonicalBody()
+    .replace('| Evidence | alte manuelle Evidence |\n', '')
+    .replace('| Blocker | alte Blocker |\n', '')
+    .replace(
+      '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+      '| Human-/CODEOWNER-Entscheidung | Erforderlich — geschützter Merge |',
+    )
+    .replace(
+      '| Overlap | 🟢 PASS — stale annotation |',
+      '| Changed-file overlap | 🟢 PASS — stale annotation |',
+    )
+    .replace('| Production Baseline | N/A — stale manual classification |\n', '');
+
+  const repaired = reconcileDecisionBody(damaged, gates);
+  assert.equal(repaired.eligible, true);
+  assert.equal(repaired.changed, true);
+  assert.equal(repaired.reason, 'decision-evidence-reconciled');
+  assert.match(repaired.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
+  assert.match(repaired.body, /^\| Blocker \| Keine \|$/m);
+  assert.match(repaired.body, /^\| Owner-Aktion \| Human\/CODEOWNER Merge erforderlich \|$/m);
+  assert.doesNotMatch(repaired.body, /^\| Human-\/CODEOWNER-Entscheidung \|/m);
+  assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.doesNotMatch(repaired.body, /^\| Changed-file overlap \|/m);
+  assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
+});
+
+test('reconciler keeps summary insertion fail-closed when both supported human-action anchors exist', () => {
+  const damaged = canonicalBody()
+    .replace('| Evidence | alte manuelle Evidence |\n', '')
+    .replace('| Blocker | alte Blocker |\n', '')
+    .replace(
+      '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+      '| Human-/CODEOWNER-Entscheidung | Erforderlich |\n| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    );
+  const result = reconcileDecisionBody(damaged, {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'decision-evidence-summary-boundary-missing');
+});
+
 test('reconciler refuses ambiguous duplicate Decision section boundaries', () => {
   const damaged = canonicalBody().replace(
     '## 3. 🔍 Technical Evidence',
