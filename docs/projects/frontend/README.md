@@ -6,7 +6,6 @@
 **Role:** cross-cutting presentation consumer, Frontend architecture and UX execution project  
 **Primary Productive PVC ownership:** `[]`  
 **Coverage:** presentation/interaction overlay across applicable `PVC-01..PVC-18` outputs  
-**PVC relationship:** `cross_cutting` presentation adaptation across rendered `PVC-01..PVC-18` outputs; no productive PVC ownership  
 **Trust root:** `/AGENTS.md`  
 **Status:** ACTIVE PROJECT EXECUTION PROJECTION — NON-AUTHORIZING
 
@@ -53,25 +52,11 @@ Frontend does not own:
 - release/deployment/production authority;
 - a second feature-domain architecture merely because UI consumes it.
 
-## PVC presentation-adaptation scope
-
-The existing **Coverage** of applicable `PVC-01..PVC-18` outputs may be used by CAPITAL-AI-FE as presentation/review scope when a Frontend surface renders or interacts with that output. This does **not** add a Primary PVC, change `docs/projects/PROJECT_VALUE_CHAIN.md`, or create a new relationship/authority class.
-
-For an FE-owned presentation adjustment, the work item records the affected PVC (when known), its current Primary Owner, the consumed owner-correct contract/evidence, the Frontend surface being changed, the device/accessibility behavior being adapted and the exact verification evidence. FE may then change its own layout, responsive CSS, interaction, accessibility and presentation adapter. If the required change alters data, scoring, evidence, entitlement, IAM, Governance, release or production semantics, FE hands that portion back to the current Primary Owner.
-
-For synchronized graphical repositories, device-preview chrome is reference input rather than production viewport authority. The current landing keeps mobile/tablet behavior unchanged and applies the Finance-owned website adapter only at desktop width; later syncs must preserve that device policy unless fresh Human/Owner direction changes it.
-
 ## Cross-project execution model
 
 Frontend consumes contracts from productive Primary Owners and renders them without redefining their semantics. When a presentation change requires a domain contract change, that change is routed to the relevant owner rather than implemented as hidden Frontend business logic.
 
 In particular, `CAPITAL-AI-FINTECH` retains productive `PVC-09..17` ownership, including data ingestion/evidence/Data Quality and downstream business/scoring stages; `CAPITAL-AI-DATA` is superseded as an independent productive PVC owner and remains a historical/compatibility surface only; Governance and Operations retain their respective control and runtime responsibilities.
-
-### PVC presentation adaptation contract
-
-For any rendered `PVC-01..PVC-18` output, CAPITAL-AI-FE may implement or repair the **Frontend-owned presentation projection** when the change is limited to layout, responsive/device behavior, visual composition, accessibility, interaction and presentation quality. The underlying PVC remains owned by its listed Primary Project Owner.
-
-For `SvenKulessa/FRONTEND`, the current sub-desktop presentation remains unchanged. Desktop website adaptation starts at `1024px` and must remain effective after every upstream sync/promotion. If a sync invalidates the adapter, FE repairs the adapter before productive promotion rather than changing the source PVC's semantics.
 
 ## Project navigation
 
