@@ -60,9 +60,9 @@ Detailed current planning semantics are maintained in `ROADMAP.md`; atomic execu
 
 ## FIN-LF-01 — Landing Scorer Consumer Contract
 
-**Status:** `HELD / PREPARATION_ONLY / LF-01_DEPENDENCY`  
+**Status:** `HELD / LANDING_BASELINE_PRESENT / LATER_PHASE_DEPENDENCY`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..17`  
 **Scope:** define and preserve the minimal future landing scoring consumer contract without activating productive integration.  
-**Dependency:** `LF-01_STATIC_VISUAL_LANDING_PASS` before any productive landing scoring; LF-04 further requires LF-02/LF-03 plus SEC/QM readiness.  
+**Dependency:** Landing creation/presentation is satisfied by merged #1195/#1206 and is no longer a blocker. Productive LF-04 still requires LF-02/LF-03 plus relevant #1209 desktop stabilization and SEC/QM readiness.  
 **Exit:** BTC-only free/no-paid consumer behavior is bound to the existing ScoringDispatcher/CanonicalScoreResult chain with evidence/DQ/error semantics, no synthetic fallback and no duplicate authority.  
 **Detail:** `work-packages/FIN_LF_01_LANDING_SCORER_CONSUMER_CONTRACT_2026-09-21.md`.
