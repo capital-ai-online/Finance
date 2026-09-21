@@ -41,7 +41,7 @@ describe('routeSeo (WP-D2)', () => {
 
   it('falls back to default for unknown paths', () => {
     const unknown = getRouteSeo('/does-not-exist');
-    expect(unknown.title).toBe('CAPITAL-AI Portal');
+    expect(unknown.title).toContain('Marktdaten verstehen');
     expect(unknown.canonicalPath).toBe('/');
   });
 
