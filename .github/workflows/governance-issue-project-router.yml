@@ -318,6 +318,9 @@ jobs:
 
       - name: Nicht routbare Projektpräfixe fail-closed melden
         if: steps.snapshot.outputs.routable == 'true' && steps.route.outputs.route_state == 'ROUTING_BLOCKED'
+        env:
+          ISSUE_NUMBER: ${{ matrix.issue_number }}
+          ROUTE_REASON: ${{ steps.route.outputs.route_reason }}
         run: |
-          echo "Issue #${{ matrix.issue_number }} routing blocked: ${{ steps.route.outputs.route_reason }}" >&2
+          echo "Issue #$ISSUE_NUMBER routing blocked: $ROUTE_REASON" >&2
           exit 1
