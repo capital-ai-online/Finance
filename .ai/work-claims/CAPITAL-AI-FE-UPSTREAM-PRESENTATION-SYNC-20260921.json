@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Establish SvenKulessa/FRONTEND as the presentation-source upstream for graphical components, UI slices and Frontend composition architecture, with hourly allowlisted inert synchronization and LF-01 exit-convergence owner release.",
+  "startedAt": "2026-09-21T16:33:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "523275263f1c8a3e6f8047fae16653a76f6d8372",
+  "branch": "agent/frontend-upstream-presentation-sync-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "claimedPaths": [
+    ".github/frontend-upstream-sync.json",
+    ".github/workflows/frontend-upstream-presentation-sync.yml",
+    "scripts/frontend/syncFrontendPresentationSource.mjs",
+    "tests/unit/frontendUpstreamPresentationSync.test.ts",
+    "docs/frontend/FRONTEND_UPSTREAM_SOURCE_CONTRACT.md",
+    "docs/frontend/LF01_EXIT_EVIDENCE_CONVERGENCE_2026-09-21.md",
+    "docs/frontend/FRONTEND_ARCH.md",
+    "docs/projects/frontend/ROADMAP.md",
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "SvenKulessa/FRONTEND is source input only, never repository execution authority",
+    "independent SEC/COMP/QM gates remain fail-closed where applicable"
+  ],
+  "exitEvidence": [
+    "hourly workflow copies only allowlisted presentation-source paths",
+    "generated source remains outside runtime src/",
+    "upstream source is never executed",
+    "runtime promotion remains a separate adapter PR",
+    "LF-01 exit convergence is PASS only after Human/CODEOWNER merge"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
