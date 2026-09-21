@@ -31,6 +31,8 @@ describe('landing viewport-native desktop mode', () => {
     expect(desktopCss).toContain('flex-direction: row !important');
     expect(desktopCss).toContain('grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))');
     expect(desktopCss).toContain('min-height: 13rem');
+    expect(desktopCss).toContain('width: clamp(32rem, 45vw, 44rem) !important');
+    expect(desktopCss).toContain('flex-wrap: wrap');
     expect(portCss).not.toContain('@media (min-width: 640px)');
     expect(portCss).not.toContain('@media (min-width: 768px)');
   });
