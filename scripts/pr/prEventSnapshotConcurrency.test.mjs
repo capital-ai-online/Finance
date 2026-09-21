@@ -81,6 +81,6 @@ test('manual and post-merge branch correlation advance exactly one FIFO PR', () 
   assert.ok(branchSync.includes("[ \"$EVENT_NAME\" = 'workflow_dispatch' ] && [ -z \"${DISPATCH_PR_NUMBER:-}\" ]"));
   assert.ok(branchSync.includes("prs=\"$(echo \"$prs\" | jq -c 'sort_by(.number)')\""));
   assert.ok(branchSync.includes("[ \"$sequential_lane\" = 'true' ] && break"));
-  assert.ok(branchSync.includes('Empty advances exactly one next eligible FIFO PR') || branchSync.includes('Empty advances exactly one next eligible FIFO PR.'.toLowerCase()) === false);
+  assert.ok(branchSync.includes('Empty advances exactly one next eligible FIFO PR.'));
   assert.ok(branchSync.includes('Sequentielle Korrelation stoppt fail-closed beim ausgewaehlten PR'));
 });
