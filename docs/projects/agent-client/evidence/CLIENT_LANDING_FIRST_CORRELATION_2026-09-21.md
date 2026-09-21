@@ -4,8 +4,8 @@
 **Project folder:** `docs/projects/agent-client/`  
 **Primary Owner / PVC:** `CAPITAL-AI-CLIENT / PVC-01`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN` Control Plane v4.8.0  
-**CURRENT_MAIN:** `bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`  
-**Correlation result:** `DEPENDENCY_HELD / LF-01_NOT_EVIDENCED / NO_PHYSICAL_RUNTIME_TRIGGER`
+**CURRENT_MAIN:** `896722e55ab1304bd798da6fc8c6f2d9b178a12e`  
+**Correlation result:** `LANDING_BASELINE_PRESENT / DEPENDENCY_HELD / NO_PHYSICAL_RUNTIME_TRIGGER`
 
 ## Owner direction correlated
 
@@ -15,12 +15,13 @@ For CLIENT, the direction is bounded to preserving client/request boundaries and
 
 ## Current-main observations
 
-- GitHub default branch is `main`; exact correlation SHA is `bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`.
+- GitHub default branch is `main`; exact correlation SHA is `896722e55ab1304bd798da6fc8c6f2d9b178a12e`.
 - `docs/projects/PROJECT_VALUE_CHAIN.md` resolves `PVC-01` to `CAPITAL-AI-CLIENT`.
 - Current CLIENT Roadmap and Runtime Mapping retain `NO_PHYSICAL_RUNTIME_TRIGGER`.
-- Repository search on current main returned no `LF-01_STATIC_VISUAL_LANDING_PASS`.
-- Repository search on current main returned no `STATIC_VISUAL_BASELINE`.
-- No open Pull Request is a CLIENT-owned writer.
+- PR #1195 is merged and established the root/static landing semantics.
+- PR #1206 is merged and established the pinned FRONTEND presentation.
+- PR #1209 is the remaining FE desktop-only stabilization writer.
+- The former "landing must first be created" blocker is superseded and no longer blocks CLIENT.
 
 ## Open writer correlation
 
@@ -32,30 +33,20 @@ For CLIENT, the direction is bounded to preserving client/request boundaries and
 
 The existing historical CLIENT claim `CAPITAL-AI-CLIENT-CONTRACT-BASELINE-R2-2026-09-01` is `released` and is not an active writer.
 
-## PR #1195 semantic correlation
+## Landing baseline correlation
 
-Observed PR #1195 changed files include `LandingPricingPanel.tsx`, `PublicAnalysisWorkbench.tsx`, `AppRoutes.tsx`, `Checkout.tsx` and `LandingPage.tsx`.
-
-Its current diff contains, among other things:
-
-- `userSession` projection into the public analysis workbench;
-- subscription-tier projection and paid/unpaid scorer selection behavior;
-- `fetch('/api/entitlements/plans'...)` through the landing pricing panel;
-- checkout success/cancel return routing;
-- the existing realtime news surface on root.
-
-Those are broader productive integration couplings than a strict LF-01 static visual baseline. They remain FE/other-owner re-scope and handover evidence. They do not create a CLIENT runtime trigger and do not authorize a duplicate PVC-01 writer.
+Merged #1195 and #1206 are terminal evidence that the landing and its pinned presentation exist on CURRENT_MAIN. Open #1209 addresses only the remaining desktop-responsive presentation issue. None of these FE artifacts transfers PVC-01 ownership or creates a CLIENT runtime trigger.
 
 ## CLIENT decision
 
 `CLIENT-LF-01` is created as a dependency-held contract/evidence work package.
 
-Before independent LF-01 PASS evidence, CLIENT may:
+With the landing baseline present, CLIENT may:
 - maintain request/client boundary contracts;
 - maintain correlation/evidence;
 - receive owner-correct handoffs.
 
-Before independent LF-01 PASS evidence, CLIENT must not:
+CLIENT must still not:
 - create a new landing runtime adapter;
 - initialize providers for root render;
 - create browser-local business, entitlement, billing, scoring or ranking authority;
@@ -67,9 +58,9 @@ Before independent LF-01 PASS evidence, CLIENT must not:
 
 CLIENT implementation becomes eligible only after:
 
-1. `LF-01_STATIC_VISUAL_LANDING_PASS` is independently evidenced on then-current main;
+1. the existing root landing remains correlated on then-current main and any remaining presentation/SEC/QM gates relevant to that later phase are satisfied;
 2. the dependency-ready later landing phase actually requires a canonical PVC-01 capability;
 3. `CLIENT-RUNTIME-01` records a concrete current-main physical trigger;
 4. changed-file, semantic, authority, Security/Compliance and open-writer correlation passes on the exact branch head.
 
-Until then the truthful state is `DEPENDENCY_HELD / NO_PHYSICAL_RUNTIME_TRIGGER`.
+Until a concrete PVC-01 trigger exists, the truthful state is `LANDING_BASELINE_PRESENT / DEPENDENCY_HELD / NO_PHYSICAL_RUNTIME_TRIGGER`.
