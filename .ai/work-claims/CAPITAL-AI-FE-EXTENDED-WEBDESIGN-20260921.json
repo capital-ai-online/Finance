@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-EXTENDED-WEBDESIGN-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Synchronize SvenKulessa/FRONTEND through f2a1013, bind the latest login/legal/FAQ design and canonical public paths, keep mobile+desktop active, and guarantee symbol coverage for every asset already visible on the landing without transferring Auth, Compliance, FinTech, SEO or Operations authority.",
+  "startedAt": "2026-09-21T21:19:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+  "branch": "frontend/extended-webdesign-sync-20260921",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "claimedPaths": [
+    "docs/frontend/upstream-source/SvenKulessa-FRONTEND/**",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/LegalPageShell.tsx",
+    "src/features/public/ui/frontend-port/frontend-port.css",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/features/public/ui/FaqPage.tsx",
+    "src/features/public/ui/index.ts",
+    "src/app/routing/AppRoutes.tsx",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/frontendLandingAssetSymbols.test.ts",
+    ".ai/work-claims/CAPITAL-AI-FE-EXTENDED-WEBDESIGN-20260921.json"
+  ],
+  "foreignOwnerHandoffs": [
+    "CAPITAL-AI-OPS / issue #1221: bind/configure auth lifecycle to the synchronized /login presentation",
+    "CAPITAL-AI-COMP / issue #1222: own and maintain all productive legal/FAQ wording, claims and versions on /impressum, /datenschutz, /agb and /faq",
+    "CAPITAL-AI-OPS / issue #1223: add /faq and any separately approved public aliases to production SPA fallback without weakening traversal/soft-404 controls",
+    "CAPITAL-AI-SEO / PR #1211 or successor: bind /faq into canonical SEO/prerender/sitemap lifecycle",
+    "CAPITAL-AI-FINTECH: retain canonical asset taxonomy/data/scoring authority; FE only renders existing asset symbols"
+  ],
+  "exitEvidence": [
+    "fresh branch baseline rebased without overlapping main changes onto main@a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+    "upstream presentation snapshot pinned to SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d",
+    "latest upstream App/Login/LegalAndFaq source changes mirrored as inert design evidence",
+    "productive /impressum, /datenschutz, /agb and /faq routes share the synchronized FE design shell while CAPITAL-AI-COMP remains content owner",
+    "/login exposes links to all four canonical legal/FAQ paths while Finance auth handlers remain intact",
+    "mobile-first landing remains active and responsive desktop landing remains active at >=1024px",
+    "all 15 assets already visible in the landing MARKET_ASSETS model have non-empty symbols/tickers and MarketOverview renders asset.symbol",
+    "upstream sample legal copy is explicitly prohibited from automatic productive promotion",
+    "owner-correct issues #1221/#1222/#1223 remain the continuation surfaces for Auth, Compliance and production SPA fallback",
+    "final open-writer, exact-main and project-label correlation must pass immediately before PR creation",
+    "required exact-head checks remain truthful after PR creation"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "selfHealingCorrelation": {
+    "pattern": "finding -> bounded FE action -> readback -> owner-correct handover -> convergence",
+    "findings": [
+      "stale upstream sourceSha 64a0c24",
+      "legal/FAQ visual surface was not shared across all canonical legal routes",
+      "asset symbol coverage existed in data/UI but had no regression contract"
+    ],
+    "readbackRequired": true,
+    "noForeignAuthorityTransfer": true
+  }
+}

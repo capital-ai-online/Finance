@@ -16,6 +16,9 @@ interface LandingPageProps {
  * The referenced App/components/data/types/assets remain source-locked. Productive Finance data and
  * scoring are projected through the Finance-owned runtime binding outside the pinned design tree,
  * so the graphical source cannot become a second Data/Scoring authority.
+ *
+ * Mobile remains the source presentation baseline. The Finance-owned responsive adapter activates
+ * the website desktop canvas at >=1024px without changing the pinned FRONTEND component tree.
  */
 export function LandingPage(_props: LandingPageProps) {
   const { onClickCapture, overlays } = useLandingRuntimeBinding();
@@ -27,6 +30,8 @@ export function LandingPage(_props: LandingPageProps) {
       data-landing-design-repository="SvenKulessa/FRONTEND"
       data-landing-design-commit="8f6b629c985ca2e46c822ff911f53741d0141e07"
       data-landing-runtime-binding="verified-asset-display/1.0.0"
+      data-mobile-view="active"
+      data-desktop-view="responsive-active"
       onClickCapture={onClickCapture}
     >
       <ReferenceApp />
