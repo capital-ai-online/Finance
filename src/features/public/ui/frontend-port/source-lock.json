@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceRepository": "SvenKulessa/FRONTEND",
+  "sourceBranch": "main",
+  "sourceCommit": "8f6b629c985ca2e46c822ff911f53741d0141e07",
+  "sourceTree": "bceb7721ad825508d8c4fc39e7217011d927d6e7",
+  "lockMode": "EXACT_GIT_BLOB",
+  "canonicalLanding": "src/features/public/ui/LandingPage.tsx",
+  "componentInventory": [
+    "AllMarketsModal.tsx",
+    "AnalysisModal.tsx",
+    "AssetDetailModal.tsx",
+    "BrandLogo.tsx",
+    "CoreModules.tsx",
+    "Footer.tsx",
+    "Header.tsx",
+    "Hero.tsx",
+    "KeyPillars.tsx",
+    "MarketOverview.tsx",
+    "ModuleDetailModal.tsx",
+    "ProductTourModal.tsx",
+    "StatusBar.tsx"
+  ],
+  "entries": [
+    {
+      "sourcePath": "src/App.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/ReferenceApp.tsx",
+      "blobSha": "7984ef556d74d87ef124065e40baf6a6e9b7380a"
+    },
+    {
+      "sourcePath": "src/components/AllMarketsModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/AllMarketsModal.tsx",
+      "blobSha": "197313ddd46898e501b7dc8fa2e2a903e2371571"
+    },
+    {
+      "sourcePath": "src/components/AnalysisModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/AnalysisModal.tsx",
+      "blobSha": "6351d719ba1896d968cb3acdd6dedaec7bcce5cc"
+    },
+    {
+      "sourcePath": "src/components/AssetDetailModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/AssetDetailModal.tsx",
+      "blobSha": "023b6864ec9bc6631a5720069e62b256988c0b4a"
+    },
+    {
+      "sourcePath": "src/components/BrandLogo.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/BrandLogo.tsx",
+      "blobSha": "49e3580466cc4566068c5fdcc1dfa94ead3a31dd"
+    },
+    {
+      "sourcePath": "src/components/CoreModules.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/CoreModules.tsx",
+      "blobSha": "af686f7c2aa159adc9ef5d3e63f31b25c0f5ba2d"
+    },
+    {
+      "sourcePath": "src/components/Footer.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/Footer.tsx",
+      "blobSha": "bad202e9a134c5cb4c28cc7061da658a49e527a9"
+    },
+    {
+      "sourcePath": "src/components/Header.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/Header.tsx",
+      "blobSha": "f7235695ed07edf7cb4d7b4613ebf1c4508a2f43"
+    },
+    {
+      "sourcePath": "src/components/Hero.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/Hero.tsx",
+      "blobSha": "5d70ceef3931a4e72daa2ad1500e900b4f47fa9f"
+    },
+    {
+      "sourcePath": "src/components/KeyPillars.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/KeyPillars.tsx",
+      "blobSha": "bcc955667dfd604f8f066b3deeaecc3327f86244"
+    },
+    {
+      "sourcePath": "src/components/MarketOverview.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/MarketOverview.tsx",
+      "blobSha": "c0805cb8b370fae15c80c10a506a92b9c4cce80b"
+    },
+    {
+      "sourcePath": "src/components/ModuleDetailModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/ModuleDetailModal.tsx",
+      "blobSha": "50ac040bc3bdad2c97da665557816393769fee71"
+    },
+    {
+      "sourcePath": "src/components/ProductTourModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/ProductTourModal.tsx",
+      "blobSha": "ecfef4a6b90af92ad465f6c541073305c4a223dc"
+    },
+    {
+      "sourcePath": "src/components/StatusBar.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/StatusBar.tsx",
+      "blobSha": "998312d2e6d0daeaf27c5c22d64ca51555eaa5ad"
+    },
+    {
+      "sourcePath": "src/data/mockData.ts",
+      "targetPath": "src/features/public/ui/frontend-port/data/mockData.ts",
+      "blobSha": "359509da66ad8aa2ead5f3403079ad10191277eb"
+    },
+    {
+      "sourcePath": "src/types.ts",
+      "targetPath": "src/features/public/ui/frontend-port/types.ts",
+      "blobSha": "90b6d0ef522cba2ed659cb57bcf8fd520acde626"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
+      "blobSha": "d8f075aacfe55d1fc6abf4b8e00b920f02cc4ceb"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_full_logo_1789997869885.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_full_logo_1789997869885.jpg",
+      "blobSha": "7045c96fbc706ed0becc3be0737d6c46e3a89d13"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_wide_banner_1789999064950.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_wide_banner_1789999064950.jpg",
+      "blobSha": "8db4a4da0f87a703c4bd3c1c2d165f9e362d8350"
+    },
+    {
+      "sourcePath": "src/assets/images/glowing_earth_nodes_1789997454893.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/glowing_earth_nodes_1789997454893.jpg",
+      "blobSha": "9bd051fcbbf1bf30d38a98795638c7cf80c84ac4"
+    },
+    {
+      "sourcePath": "src/index.css",
+      "targetPath": "src/features/public/ui/frontend-port/source-index.css",
+      "blobSha": "b2fa4526c5f6ac5bcfbbc2eb815f3bcb2d57fc51"
+    }
+  ],
+  "styleAdapter": {
+    "path": "src/features/public/ui/frontend-port/frontend-port.css",
+    "purpose": "Scope the source body/no-scrollbar/pulse presentation helpers without importing a second Tailwind runtime."
+  }
+}
