@@ -80,6 +80,67 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       : 'The root route still diverts authenticated users away from the canonical landing page.',
   ));
 
+  const loginBlock = sliceCurrentPathBlock(appRoutes, '/login', '/dashboard');
+  const authenticatedLoginToRoot =
+    loginBlock.includes('if (userSession)') &&
+    loginBlock.includes('to="/"') &&
+    !loginBlock.includes('to="/dashboard"');
+  findings.push(finding(
+    'authenticated_login_root_handoff',
+    authenticatedLoginToRoot ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    'An authenticated session visiting /login converges to / rather than /dashboard.',
+    authenticatedLoginToRoot
+      ? 'The authenticated /login branch redirects to the canonical root landing page.'
+      : 'The authenticated /login branch does not converge to the canonical root landing page.',
+  ));
+
+  const dashboardBlock = sliceCurrentPathBlock(appRoutes, '/dashboard', '/media-studio');
+  const dashboardRendererStart = appRoutes.indexOf('const renderAuthenticatedDashboard = () => {');
+  const dashboardRendererEnd =
+    dashboardRendererStart >= 0
+      ? appRoutes.indexOf("if (currentPath === '/datenschutz')", dashboardRendererStart)
+      : -1;
+  const dashboardRenderer =
+    dashboardRendererStart >= 0
+      ? appRoutes.slice(
+          dashboardRendererStart,
+          dashboardRendererEnd > dashboardRendererStart ? dashboardRendererEnd : undefined,
+        )
+      : '';
+  const protectedDashboard =
+    dashboardBlock.includes('renderAuthenticatedDashboard()') &&
+    dashboardRenderer.includes('if (!userSession)') &&
+    dashboardRenderer.includes('<RouteRedirect to="/login"');
+  findings.push(finding(
+    'dashboard_protected_deep_link',
+    protectedDashboard ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    '/dashboard remains a protected deep link and unauthenticated access converges to /login.',
+    protectedDashboard
+      ? 'The dashboard route delegates to an auth-gated renderer with an unauthenticated /login redirect.'
+      : 'The protected-dashboard deep-link contract is missing or divergent.',
+  ));
+
+  const unknownAuthenticatedStart = appRoutes.lastIndexOf('if (userSession)');
+  const unknownAuthenticatedBlock =
+    unknownAuthenticatedStart >= 0 ? appRoutes.slice(unknownAuthenticatedStart) : '';
+  const unknownAuthenticatedToRoot =
+    unknownAuthenticatedBlock.includes('to="/"') &&
+    !unknownAuthenticatedBlock.includes('to="/dashboard"');
+  findings.push(finding(
+    'authenticated_unknown_route_root_handoff',
+    unknownAuthenticatedToRoot ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/routing/AppRoutes.tsx'],
+    'Unsupported authenticated routes converge to / and never use /dashboard as the implicit default.',
+    unknownAuthenticatedToRoot
+      ? 'The authenticated unknown-route fallback converges to /.'
+      : 'The authenticated unknown-route fallback still targets /dashboard or lacks a canonical-root handoff.',
+  ));
+
   const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
   findings.push(finding(
     'logout_local_default',
