@@ -17,11 +17,16 @@ const indexHtml = read('index.html');
 const workPackage = read('docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md');
 
 describe('frontend auth lifecycle remediation', () => {
-  it('hands an authenticated canonical root to the dashboard without bypassing session gates', () => {
-    expect(routes).toMatch(
-      /if \(currentPath === '\/'\) \{\s+if \(userSession\) \{\s+return <RouteRedirect to="\/dashboard"/,
-    );
-    expect(routes).toContain('<LandingPage');
+  it('keeps authenticated users on the canonical root without bypassing session gates', () => {
+    const rootStart = routes.indexOf("if (currentPath === '/')");
+    const loginStart = routes.indexOf("if (currentPath === '/login')");
+    const rootBlock = routes.slice(rootStart, loginStart);
+
+    expect(rootStart).toBeGreaterThanOrEqual(0);
+    expect(loginStart).toBeGreaterThan(rootStart);
+    expect(rootBlock).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
+    expect(rootBlock).not.toContain('/dashboard');
+    expect(routes).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
     expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(session)');
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
     expect(sessionComposition).toContain('setPendingStepUpSession(session)');

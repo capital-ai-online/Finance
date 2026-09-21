@@ -24,7 +24,10 @@
     "src/app/routing/AppRoutes.tsx",
     "src/features/public/ui/LandingPage.tsx",
     "tests/unit/publicLandingRoute.test.ts",
-    "tests/unit/frontend1608AppearanceContract.test.ts"
+    "tests/unit/frontend1608AppearanceContract.test.ts",
+    "tests/unit/authLifecycleRemediation.test.ts",
+    "tests/unit/frontendReliabilityComposition.test.ts",
+    "tests/unit/landingNewsfeedIntegration.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
   "lastSyncedMainSha": "bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f",
@@ -34,5 +37,10 @@
     "LF-03 pricing/entitlement provider integration",
     "LF-04 Enterprise Scorer runtime integration",
     "LF-05 news/data runtime integration"
+  ],
+  "ciExpectationDriftRepair": [
+    "auth root expectation updated from authenticated / -> /dashboard to authenticated stay-on-root",
+    "public workbench recovery expectation moved out of LF-01 root while preserving reusable feature-local boundary",
+    "landing news integration expectation changed from productive composition to explicit static LF-05 presentation slot"
   ]
 }
