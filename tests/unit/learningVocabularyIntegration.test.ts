@@ -52,7 +52,9 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(routes).toContain('const LearningVocabulary = lazy(() =>');
     expect(routes).toContain("import('../../features/learning/ui/LearningVocabulary')");
     expect(routes).toContain('default: module.LearningVocabulary');
-    expect(routes).toContain("window.location.pathname.replace(/\\/+$/, '') || '/'");
+    expect(routes).toContain('function normalizeRoutePath(rawPath: string): string');
+    expect(routes).toContain("replace(/\\/+$/, '') || '/'");
+    expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
     expect(routes).toContain("currentPath === '/learning-platform'");
     expect(routes).toContain('CAPITAL-AI / LEARNING');
     expect(routes).toContain('<LearningVocabulary />');
