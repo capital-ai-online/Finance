@@ -28,6 +28,8 @@ export function LandingPage(_props: LandingPageProps) {
       data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"
       data-mobile-view="active"
       data-desktop-view="responsive-active"
+      data-market-data-binding="verified-on-selection"
+      data-landing-scorer-gate="FIN-LF-01"
     >
       <ReferenceApp />
     </section>
