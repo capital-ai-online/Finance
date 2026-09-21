@@ -3,15 +3,17 @@
 **Project:** CAPITAL-AI-SEC  
 **Canonical project folder:** docs/projects/security/  
 **Work Package ID:** SEC-WEB-HARDENING-01  
-**Status:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
+**Status:** MATERIALIZED_MAIN / PROMOTED_TO_SEC_ROADMAP / IMPLEMENTATION_OPEN  
 **Priority:** P0/P1 security program  
-**Baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
+**Roadmap promotion baseline:** main@8a64644ad6257f2c295959f6d79a80cc29a51b28  
 **Trust root:** /AGENTS.md@CURRENT_MAIN  
 **Security direction:** SECURITY_FOUNDATION_FIRST  
 **Security owner:** CAPITAL-AI-SEC for threat/risk/control definition, findings, testing requirements and independent verification  
 **Implementation owners:** owner-correct by affected surface; primarily CAPITAL-AI-OPS for release/production/runtime, CAPITAL-AI-FE for browser/landing implementation, CAPITAL-AI-GOV for repository protection, CAPITAL-AI-CLIENT where client/session semantics are affected, CAPITAL-AI-COMP for supply-chain/compliance requirements  
 **Independent assurance:** CAPITAL-AI-QM  
-**Human boundary:** final Pull Request merge remains Human Owner only under /AGENTS.md@CURRENT_MAIN
+**Human boundary:** final Pull Request merge remains subject to /AGENTS.md@CURRENT_MAIN and the active merge-safety contract
+**Roadmap projection:** docs/projects/security/ROADMAP.md + docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md
 
 ## 1. Objective
 

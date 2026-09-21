@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-WEB-HARDENING-01-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "docs/projects/security/",
   "owner": "CAPITAL-AI-SEC",
@@ -50,5 +50,7 @@
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
   "initialBaseSha": "a98399cf60ba95ce2d7232ba36b855bdf8d1db16",
-  "recorrelatedAt": "2026-09-20T20:19:00+02:00"
+  "recorrelatedAt": "2026-09-20T20:19:00+02:00",
+  "releasedAt": "2026-09-21T13:12:00+02:00",
+  "releaseReason": "Original SEC-WEB-HARDENING-01 materialization merged via PR #1165; stale active coordination claim released during SEC Roadmap promotion."
 }
