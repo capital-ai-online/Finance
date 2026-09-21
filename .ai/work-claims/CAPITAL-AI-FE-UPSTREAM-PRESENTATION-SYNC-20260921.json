@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Establish SvenKulessa/FRONTEND as the presentation-source upstream for graphical components, UI slices and Frontend composition architecture, with hourly allowlisted inert synchronization and LF-01 exit-convergence owner release.",
+  "workItem": "Adopt the complete current SvenKulessa/FRONTEND presentation architecture in PR #1206, maintain it through hourly review-only sync, then bind existing Finance-owned components to the graphical architecture through separate adapters.",
   "startedAt": "2026-09-21T16:33:00+02:00",
   "baseBranch": "main",
   "baseSha": "523275263f1c8a3e6f8047fae16653a76f6d8372",
@@ -16,6 +16,7 @@
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
   "projectStage": "cross-cutting presentation; no productive PVC",
+  "upstreamSnapshot": "SvenKulessa/FRONTEND@8f6b629c985ca2e46c822ff911f53741d0141e07",
   "claimedPaths": [
     ".github/frontend-upstream-sync.json",
     ".github/workflows/frontend-upstream-presentation-sync.yml",
@@ -23,21 +24,24 @@
     "tests/unit/frontendUpstreamPresentationSync.test.ts",
     "docs/frontend/FRONTEND_UPSTREAM_SOURCE_CONTRACT.md",
     "docs/frontend/LF01_EXIT_EVIDENCE_CONVERGENCE_2026-09-21.md",
+    "docs/frontend/upstream-source/SvenKulessa-FRONTEND/**",
     "docs/frontend/FRONTEND_ARCH.md",
     "docs/projects/frontend/ROADMAP.md",
     ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-PRESENTATION-SYNC-20260921.json"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
-    "SvenKulessa/FRONTEND is source input only, never repository execution authority",
+    "SvenKulessa/FRONTEND is presentation source only",
+    "Finance productive authorities remain owner-correct",
     "independent SEC/COMP/QM gates remain fail-closed where applicable"
   ],
   "exitEvidence": [
-    "hourly workflow copies only allowlisted presentation-source paths",
-    "generated source remains outside runtime src/",
-    "upstream source is never executed",
-    "runtime promotion remains a separate adapter PR",
-    "LF-01 exit convergence is PASS only after Human/CODEOWNER merge"
+    "PR contains a pinned physical snapshot of the complete current upstream presentation tree",
+    "all current graphical components and presentation roots are included",
+    "mockData is classified VISUAL_FIXTURE_ONLY",
+    "hourly workflow preserves the same complete presentation scope",
+    "runtime promotion remains separate adapter work",
+    "LF-01 exit convergence becomes PASS only after Human/CODEOWNER merge"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
