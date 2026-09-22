@@ -277,7 +277,7 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     aal2StageZero &&
     registrationGate.includes("isAal2EnabledFor('registration')") &&
     stepUp.includes("isAal2EnabledFor('registration')") &&
-    stepUp.includes('mfa_required_account: registrationAal2Enabled');
+    stepUp.includes('mfa_required_account: registrationAal2Required');
   const registrationOnboarding =
     sessionComposition.includes('RegistrationCompletionGate') &&
     (
@@ -308,11 +308,14 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   const aal2DiagnosticSupersessionContract =
     aal2StageZero &&
     sessionComposition.includes("isAal2EnabledFor('login')") &&
+    sessionComposition.includes("authFetch('/api/auth/aal2/diagnostic-login'") &&
     registrationGate.includes("isAal2EnabledFor('registration')") &&
     stepUp.includes("isAal2EnabledFor('registration')") &&
-    authMiddleware.includes("isAal2EnabledFor('privileged')") &&
-    authMiddleware.includes('export async function verifyProviderAal2') &&
-    authMiddleware.includes("'aal2.diagnostic_supersession_bypass'");
+    stepUp.includes("stepUpRouter.post('/aal2/diagnostic-login'") &&
+    authMiddleware.includes('export async function requireVerifiedAal2') &&
+    authMiddleware.includes('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)') &&
+    !authMiddleware.includes('aal2-superseded') &&
+    aal2Supersession.includes('privilegedServerAal2Unaffected: true');
   findings.push(finding(
     'aal2_diagnostic_supersession_contract',
     aal2DiagnosticSupersessionContract ? 'PASS' : 'FAIL',
@@ -324,10 +327,10 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       'src/components/RegistrationCompletionGate.tsx',
       'server/stepUp.ts',
     ],
-    'AAL2 enforcement is explicitly superseded at Stage 0 across login, registration and privileged server checks while strict provider verification remains implemented for staged reactivation.',
+    'Stage 0 supersedes AAL2 on login and registration authentication only, emits server-side diagnostic checkpoints, preserves enrolled factors, and leaves privileged server AAL2 authorization unchanged.',
     aal2DiagnosticSupersessionContract
-      ? 'Stage 0 is explicit across all AAL2 enforcement surfaces; strict provider AAL2 verification remains present and privileged bypasses are audit-logged.'
-      : 'The AAL2 diagnostic supersession is missing from one or more enforcement surfaces or strict provider verification was removed.',
+      ? 'Login and registration AAL2 are explicitly Stage-0 superseded and observable; the independent privileged requireVerifiedAal2 boundary remains strict.'
+      : 'The diagnostic supersession is missing, not observable, or has crossed the privileged server AAL2 authorization boundary.',
   ));
 
   const subscriptionProjection =
