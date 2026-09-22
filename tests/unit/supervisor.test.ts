@@ -135,6 +135,12 @@ describe('supervisor', () => {
       expect(status.selfHealingContract.valid).toBe(true);
       expect(status.selfHealingContract.enabledActionIds).toContain('FRONTEND_RELOAD_ONCE');
       expect(status.selfHealingContract.heldActionIds).toContain('REDEPLOY_EXACT_SHA');
+      expect(status.capabilities.faultInjectionConvergence).toBe(true);
+      expect(status.faultInjectionConvergence).toMatchObject({
+        complete: true,
+        protectedActionsHeld: true,
+      });
+      expect(status.faultInjectionConvergence.scenarioIds).toContain('CURRENT_STATE_PROJECTION_BASELINE_STALE');
       expect(status.dependencyResilience).toMatchObject({
         valid: true,
         genericSafeRetryActivation: 'HELD',
