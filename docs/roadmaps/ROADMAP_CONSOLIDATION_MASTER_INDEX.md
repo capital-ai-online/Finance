@@ -4,6 +4,7 @@
 **Status:** `ACTIVE — DERIVED PORTFOLIO INDEX`  
 **Folder-to-PVC mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Trust root:** `/AGENTS.md`  
+**Correlation snapshot:** `main@aee799282298596a5f2d9140a4e805edf52783a0` — 2026-09-22; no project-routing change in this reconciliation  
 **DevelopmentChain current-state index (non-authorizing):** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
 **Predecessor snapshot:** repository history before the 2026-09-01 single-source consolidation; predecessor blob `7a2c7fd5997bb2406c12bfb0d55cba3ee2a3a2ee`
 
@@ -14,6 +15,8 @@ This file is a **derived portfolio navigation index**. It no longer maintains an
 Organizational project execution/status is maintained exactly once per canonical project in `docs/projects/<project>/ROADMAP.md`. Detailed domain/program roadmaps remain available for bounded architecture, workstream, finding, migration or historical context. Technical and Governance Authority continues to resolve through `/AGENTS.md`, accepted ADR/ESS/AUTH/CTRL identities, current registries and specific registered authorities.
 
 The withdrawn Roadmap Registry policy surface is not current. Folder-to-PVC ownership is defined only in [`docs/projects/README.md`](../projects/README.md) and [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md).
+
+The 2026-09-22 reconciliation intentionally keeps fast-moving FE/GOV/OPS work-package state out of this portfolio index. Current status remains in each owning project Roadmap; this file changes only its correlation snapshot and authority wording because project routing/navigation is unchanged.
 
 ## Canonical project execution roadmaps
 
@@ -37,7 +40,7 @@ The project-roadmap status label is not automatically `ACTIVE`. Proposed or bloc
 
 | Source | Role |
 |---|---|
-| [`docs/architecture/ROADMAP.md`](../architecture/ROADMAP.md) | `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS` — current DevelopmentChain status authority |
+| [`docs/architecture/ROADMAP.md`](../architecture/ROADMAP.md) | `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS` — current-state index / non-authorizing projection |
 | [`docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`](./SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md) | `SC-MD-SPT-0001` — bounded technical financial value-chain authority |
 | [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md) | organizational PVC ownership/routing model |
 | [`docs/projects/README.md`](../projects/README.md) | canonical folder-to-PVC mapping |
