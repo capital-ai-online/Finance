@@ -43,18 +43,18 @@ const ROUTES = [
     file: 'learning-platform/index.html',
     title: 'Capital-AI Learning Platform – Canonical Vocabulary',
     description:
-      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
+      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Aliasen und Thesaurus-Begriffen bereit.',
     noscript:
-      'Capital-AI Learning Platform: freigegebenes zweisprachiges Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen.',
+      'Capital-AI Learning Platform: freigegebenes zweisprachiges Vocabulary mit Definitionen, Aliasen und Thesaurus-Begriffen.',
   },
   {
     routePath: '/vocabulary',
     file: 'vocabulary/index.html',
     title: 'Market Vocabulary – CAPITAL-AI',
     description:
-      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Concept-IDs und Governance-Referenzen aus der kanonischen Vocabulary Registry.',
+      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Aliase und Thesaurus-Begriffe in der aktuellen Glossar-Oberfläche.',
     noscript:
-      'CAPITAL-AI Market Vocabulary: freigegebene Begriffe und Definitionen aus der kanonischen Vocabulary Registry.',
+      'CAPITAL-AI Market Vocabulary: freigegebene Begriffe, Definitionen, Aliase und Thesaurus-Begriffe.',
   },
   {
     routePath: '/impressum',
