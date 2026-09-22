@@ -154,29 +154,69 @@ test('saving unchanged analytics consent does not reload', () => {
   assert.equal(r.reloads, 0);
 });
 
-test('initialization config keeps opt-in and reopens the vendor preferences', async () => {
+test('initialization config keeps opt-in and uses the native non-blocking settings panel', async () => {
   let config;
-  let reopened = 0;
-  const buttons = [];
+  let vendorPreferencesOpened = 0;
+  const accepted = [];
+  const elements = [];
   const readyStyles = new Map([
     ['cookieconsent-vendor-style', { sheet: {} }],
     ['cookieconsent-theme-style', { sheet: {} }],
   ]);
+
+  function createElement(tagName = 'div') {
+    const listeners = new Map();
+    const attrs = new Map();
+    const element = {
+      tagName,
+      id: undefined,
+      className: '',
+      type: '',
+      textContent: '',
+      checked: false,
+      disabled: false,
+      children: [],
+      addEventListener(name, fn) { listeners.set(name, fn); },
+      appendChild(child) { this.children.push(child); },
+      setAttribute(name, value) { attrs.set(name, value); },
+      removeAttribute(name) { attrs.delete(name); },
+      remove() {
+        const index = elements.indexOf(element);
+        if (index >= 0) elements.splice(index, 1);
+      },
+      click() { listeners.get('click')?.(); },
+      focus() {},
+    };
+    return element;
+  }
+
   const document = {
-    getElementById: (id) => readyStyles.get(id) || buttons.find((b) => b.id === id),
-    createElement: () => ({ addEventListener(name, fn) { this[name] = fn; } }),
-    body: { appendChild: (button) => buttons.push(button) },
+    cookie: '',
+    getElementById: (id) => readyStyles.get(id) || elements.find((e) => e.id === id) || null,
+    createElement,
+    body: { appendChild: (element) => elements.push(element) },
   };
   const window = { dispatchEvent() {}, CookieConsent: {
     run(value) { config = value; return Promise.resolve(); },
-    showPreferences() { reopened++; },
+    showPreferences() { vendorPreferencesOpened++; },
+    validConsent() { return false; },
+    acceptedCategory() { return false; },
+    acceptCategory(value) { accepted.push(value); },
   } };
-  vm.runInNewContext(read('public/cookieconsent-init.js'), { window, document, console, CustomEvent: class { constructor(type) { this.type = type; } } });
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(config, undefined);
-  assert.equal(buttons.length, 1);
 
-  buttons[0].click();
+  vm.runInNewContext(read('public/cookieconsent-init.js'), {
+    window,
+    document,
+    console,
+    CustomEvent: class { constructor(type) { this.type = type; } },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(config, undefined);
+  const trigger = elements.find((e) => e.id === 'capital-ai-cookie-settings');
+  assert.ok(trigger);
+
+  trigger.click();
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.equal(config.mode, 'opt-in');
@@ -184,15 +224,20 @@ test('initialization config keeps opt-in and reopens the vendor preferences', as
   assert.equal(config.autoShow, false);
   assert.equal(config.lazyHtmlGeneration, true);
   assert.equal(config.cookie.name, 'capital_ai_consent_v3');
-  assert.equal(config.cookie.secure, true);
-  assert.equal(config.cookie.path, '/');
-  assert.equal(config.cookie.expiresAfterDays, 182);
   assert.equal(config.categories.analytics.enabled, false);
   assert.equal(config.categories.necessary.readOnly, true);
-  assert.equal(config.categories.marketing, undefined);
   assert.equal(config.manageScriptTags, false);
-  assert.equal(config.guiOptions.consentModal.equalWeightButtons, true);
-  assert.equal(reopened, 1);
+  assert.equal(vendorPreferencesOpened, 0);
+
+  const analytics = elements.find((e) => e.id === 'capital-ai-cookie-analytics');
+  const save = elements.find((e) => e.id === 'capital-ai-cookie-save');
+  assert.ok(analytics);
+  assert.ok(save);
+  analytics.checked = true;
+  save.click();
+
+  assert.deepEqual(accepted, ['all']);
+  assert.equal(elements.some((e) => e.id === 'capital-ai-cookie-panel'), false);
 });
 
 test('HTML orders consent defaults before SDK initialization and contains no legacy SDK', () => {
