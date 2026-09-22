@@ -130,7 +130,7 @@
 - Pilot Brief #02 = `MERGED_SOURCE_BRIEF / NOT_PUBLISHED`; FINTECH #1254 bleibt Domain-Truth-Gate.
 - X/Facebook production account readback = `0/0`; Wave-1 Publishing bleibt `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`.
 - GSC Search Analytics / current six-URL inspection / GA4 / GenAI = echte Provider-Read-Gates; keine synthetischen Werte.
-- Initialer Render-Readback dieses Slices: live `720e4a80904a881e5ef732b66e1303f51a769d8e` vs CURRENT_MAIN `aee799282298596a5f2d9140a4e805edf52783a0` → `PRODUCTION_DRIFT` bis exakte Konvergenz belegt ist.
+- Initialer Render-Readback zeigte Drift; anschließend konvergierte Deploy `dep-dap07drtqb8s73ertcv0` auf exakt `main@aee799282298596a5f2d9140a4e805edf52783a0`. Trigger nach 261 s → `PRODUCTION_FREEZE_PASS` für diesen Snapshot; OPS #1258 bleibt separate Raw-HTML-Verifikation.
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
@@ -144,6 +144,6 @@
 - [ ] `/universe` same-route Client-Reachability — FE #1263 offen
 - [ ] `/faq` Public-SEO-Promotion — OPS #1252 offen, SEO #1233 blockiert
 - [ ] FINTECH public-safe Scoring-Truth für Brief #02 — #1254 offen
-- [ ] Production exact-SHA = CURRENT_MAIN — initialer Readback dieses Slices non-PASS; erneute Provider-Korrelation erforderlich
+- [x] Production exact-SHA = CURRENT_MAIN — Render `dep-dap07drtqb8s73ertcv0` live auf `aee799282298596a5f2d9140a4e805edf52783a0`, Triggerdelta 261 s; Raw-HTML bleibt separat OPS #1258
 - [x] GSC historische Property-/5-URL-Inspection-Evidence bleibt getrennt von aktuellen sechs-URL/Search-Analytics-/GA4-/GenAI-Gates
 - [x] keine FE/OPS/FINTECH/SOCIAL Runtime- oder Provider-Authority durch diesen SEO-Slice übernommen
