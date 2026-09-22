@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-ROOT-ROUTING-CORRELATION-2026-09-21",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -48,5 +48,7 @@
       "LF-06"
     ],
     "laterPhaseState": "WAITING_ON_LF_01"
-  }
+  },
+  "releasedAt": "2026-09-22T08:58:00+02:00",
+  "releaseReason": "Historical root-routing correlation is completed/superseded on CURRENT_MAIN and must not remain an active exclusive writer."
 }

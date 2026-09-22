@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-EMAIL-REGISTRATION-BILLING-SYNC-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the merged backend-first authentication architecture with Supabase email/password registration, email login, confirmation/resend, password recovery/update, and verify the canonical Website -> Supabase -> Stripe subscription identity contract without restoring browser token authority.",
+  "workItemDE": "Backend-first Authentifizierung um E-Mail/Passwort-Registrierung, E-Mail-Login, Bestätigung, Passwort-Reset und den kanonischen Website-Supabase-Stripe-Abovertrag erweitern",
+  "startedAt": "2026-09-22T08:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+  "lastSyncedMainSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+  "branch": "operations/auth-email-registration-billing-sync-20260922",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation with PVC-08 production operations; FE presentation is foreign-owner handover",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "Google authentication is now productive; ordinary email registration/authentication and recovery are the next missing user-access path and must preserve the new backend session/security boundary.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-EMAIL-REGISTRATION-BILLING-SYNC-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-BACKEND-REBUILD-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-ROOT-ROUTING-CORRELATION-2026-09-21.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_EMAIL_REGISTRATION_BILLING_SYNC_2026-09-22.md",
+    "docs/projects/operations/evidence/AUTH_EMAIL_BILLING_PROVIDER_CORRELATION_2026-09-22.md",
+    "server/auth/backendAuth.ts",
+    "server/routes/backendAuthRoutes.ts",
+    "tests/unit/backendEmailAuth.test.ts",
+    "tests/unit/userLifecycleSubscriptionProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Supabase Auth remains the upstream identity authority for Google and email/password accounts.",
+    "Email/password credentials are submitted only to backend auth endpoints; Supabase access/refresh tokens remain inaccessible to browser JavaScript.",
+    "Registration confirmation and password recovery use Supabase email flows and server-side token-hash verification; no access token is placed in a browser URL.",
+    "Existing on_auth_user_created -> public.handle_new_user() remains the profile/subscription initializer for every new auth.users UUID.",
+    "Paid entitlement authority remains stripe.* provider sync -> stripe_subscription_sync_trigger -> public.subscriptions keyed by validated auth.users UUID.",
+    "public.users tier/stripe columns are legacy evidence only and are not introduced as a runtime entitlement authority.",
+    "CAPITAL-AI-FE owns user-visible login/register/reset form materialization and receives an owner-correct API handover.",
+    "No provider-managed Stripe Sync Edge Function is forked or manually narrowed.",
+    "No production Supabase DDL/data mutation occurs before repository/Human gate."
+  ],
+  "evidence": {
+    "currentMain": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+    "mergedFoundation": "PR #1270 merged backend-first Google OAuth and is user-verified productive for two Google accounts.",
+    "liveSupabaseIdentityInvariant": "auth.users.id -> public.profiles.id + public.subscriptions.user_id",
+    "liveStripeInvariant": "stripe.subscriptions.metadata.user_id -> validated auth.users.id -> public.subscriptions.user_id",
+    "legacyDrift": "public.users contains historical tier/stripe values and has no current repository entitlement reader; it is not canonical.",
+    "openWriterOverlap": "No open PR matched registration/password/email-auth/Stripe-subscription scope at branch creation."
+  },
+  "acceptanceCriteria": [
+    "POST /api/auth/register creates a Supabase email/password user after server password-safety validation and returns an enumeration-resistant confirmation-required response.",
+    "POST /api/auth/login/email establishes the same HttpOnly backend session contract as Google OAuth.",
+    "POST /api/auth/password/forgot requests a Supabase recovery email without revealing whether an email exists.",
+    "GET /api/auth/email/confirm verifies Supabase token_hash/type server-side and persists the backend session without exposing tokens to browser JavaScript.",
+    "POST /api/auth/password/update requires a verified backend session, rechecks password safety, updates the Supabase password, and persists any rotated session.",
+    "POST /api/auth/confirmation/resend sends a generic signup-confirmation resend response.",
+    "New auth users continue to receive public.profiles + Free public.subscriptions through the existing database trigger.",
+    "Stripe checkout metadata user_id/plan_id and the live stripe.subscriptions trigger stay aligned with the canonical public.subscriptions projection.",
+    "Focused and full required repository checks pass on the exact PR head.",
+    "Human/CODEOWNER merge remains required; FE presentation is delivered through an owner-correct handover."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment."
+}
