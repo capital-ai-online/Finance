@@ -33,6 +33,12 @@ const ROUTES: Record<string, RouteSeo> = {
       'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
     canonicalPath: '/learning-platform',
   },
+  '/vocabulary': {
+    title: 'Market Vocabulary – CAPITAL-AI',
+    description:
+      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Concept-IDs und Governance-Referenzen aus der kanonischen Vocabulary Registry.',
+    canonicalPath: '/vocabulary',
+  },
   '/impressum': {
     title: 'Impressum – CAPITAL-AI',
     description: 'Impressum und Anbieterkennzeichnung gemäß § 5 DDG für CAPITAL-AI (Sven Kulessa).',
