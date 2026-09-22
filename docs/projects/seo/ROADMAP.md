@@ -1,6 +1,6 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b`
+**Baseline:** `main@123ad5ac7734d363e35d1b7bf945aceae41fbee8`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
