@@ -1,4 +1,2 @@
-// Initial verified facade. Weitere Module werden nach Import-/Contract-Verifikation ergänzt.
-export { LoginStepUpGate } from '../../../components/LoginStepUpGate';
-export { RegistrationCompletionGate } from '../../../components/RegistrationCompletionGate';
+// Canonical user UI facade. Login/session authority moved to backend auth endpoints.
 export { ProfilePage, type UserProfile } from '../../../components/ProfilePage';
