@@ -148,8 +148,12 @@ describe('requireStepUp (gekoppelt an privilegiertes AAL2)', () => {
     expect(getUserMock).not.toHaveBeenCalled();
   });
 
-  it('Stage 0 prueft den purpose-bound Step-Up-Token ohne Provider-AAL2, aber weiterhin mit verifizierter Identitaet', async () => {
+  it('Stage 0 laesst privilegierten Step-Up weiter an Provider-AAL2 gebunden', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    getAalMock.mockResolvedValue({
+      data: { currentLevel: 'aal1', nextLevel: 'aal2' },
+      error: null,
+    });
     stepUpUpdateResultMock.mockResolvedValue({ data: { id: 'token-row-1' }, error: null });
 
     const result = await requireStepUp(
@@ -157,9 +161,9 @@ describe('requireStepUp (gekoppelt an privilegiertes AAL2)', () => {
       'test-purpose',
     );
 
-    expect(result).toBe(true);
-    expect(getAalMock).not.toHaveBeenCalled();
-    expect(stepUpUpdateResultMock).toHaveBeenCalledTimes(1);
+    expect(result).toBe(false);
+    expect(getAalMock).toHaveBeenCalledWith('tok');
+    expect(stepUpUpdateResultMock).not.toHaveBeenCalled();
   });
 
   it('erlaubt bei AAL2 und einem gültigen, ungenutzten, nicht abgelaufenen Token', async () => {
