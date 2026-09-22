@@ -10,6 +10,11 @@ import {
   verifyTotpChallenge,
   registerWebauthnMfaFactor,
 } from '../platform/Security/nativeMfa';
+import {
+  AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+  AAL2_REACTIVATION_STAGE,
+  isAal2EnabledFor,
+} from '../platform/Security/aal2DiagnosticSupersession';
 
 interface RegistrationCompletionGateProps {
   session: { user: any; [key: string]: any };
@@ -32,14 +37,13 @@ type MfaMode = 'choice' | 'totp-setup' | 'totp-verify' | 'passkey';
  * protokolliert mit Zeitstempel + Dokumentversion + gehashter IP (Art. 7 Abs. 1 DSGVO,
  * server/stepUp.ts: POST /api/auth/register/complete).
  *
- * Schritt 2 (mfa): mindestens ein verifizierter Supabase-MFA-Faktor (natives TOTP ODER
- * WebAuthn-MFA/Passkey) MUSS eingerichtet werden, bevor onboarding_required serverseitig auf
- * false gesetzt wird. POST /api/auth/mfa/enrollment-complete verlangt eine echte, unabhaengig
- * re-validierte AAL2-Sitzung - kein Client-Claim wird blind vertraut. Ein Primaerlogin-Passkey
- * (`auth.registerPasskey`) ist davon bewusst getrennt und ersetzt keinen AAL2-MFA-Faktor.
- * Kein Ueberspringen moeglich, nur Abmelden.
+ * Schritt 2 (mfa) bleibt implementiert, ist während der Owner-Diagnose-Supersession Stage 0/1
+ * jedoch deaktiviert. Ab Stage 2 wird die native AAL2-Einrichtung wieder verpflichtend. Die
+ * Supersession löscht keine vorhandenen Faktoren und kann dadurch kontrolliert zurückgenommen
+ * werden.
  */
 export function RegistrationCompletionGate({ session, onComplete, onAbort }: RegistrationCompletionGateProps) {
+  const registrationAal2Enabled = isAal2EnabledFor('registration');
   const [step, setStep] = useState<Step>('profile');
 
   const [country, setCountry] = useState('DE');
@@ -85,6 +89,18 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+
+      if (!registrationAal2Enabled) {
+        console.info('[Auth][AAL2-DIAGNOSTIC-SUPERSESSION]', {
+          supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+          reactivationStage: AAL2_REACTIVATION_STAGE,
+          surface: 'registration',
+          aal2Required: false,
+        });
+        await completeOnboarding();
+        return;
+      }
+
       setStep('mfa');
     } catch (err: any) {
       setProfileError(err.message ?? String(err));
@@ -167,7 +183,7 @@ export function RegistrationCompletionGate({ session, onComplete, onAbort }: Reg
           <h1 className="text-xl font-bold font-display tracking-tight text-white">Konto einrichten</h1>
         </div>
         <p className="text-[11px] text-white/40 text-center font-mono uppercase tracking-widest">
-          Schritt {step === 'profile' ? '1' : '2'} von 2
+          Schritt {step === 'profile' ? '1' : '2'} von {registrationAal2Enabled ? '2' : '1'}
         </p>
 
         {step === 'profile' && (
