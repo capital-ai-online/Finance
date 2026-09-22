@@ -9,7 +9,7 @@
 
 ## Purpose
 
-Temporarily remove AAL2 enforcement from the active authentication lifecycle so the observed post-Google-login stall can be isolated by staged reactivation. This is a diagnostic supersession, not removal of the MFA implementation.
+Temporarily remove AAL2 enforcement from the normal login and registration authentication lifecycle so the observed post-Google-login stall can be isolated by staged reactivation. This is a diagnostic supersession, not removal of the MFA implementation.
 
 Native MFA factors remain enrolled. Primary Supabase identity verification, IAM role checks, bearer validation, rate limiting, subscription authority and other unrelated security controls remain in place.
 
@@ -34,10 +34,9 @@ Repository/runtime correlation:
 
 | Stage | Login | Registration MFA | Privileged server AAL2 | Diagnostic intent |
 |---|---|---|---|---|
-| `0` | OFF | OFF | OFF | isolate all AAL2 enforcement |
-| `1` | account-policy controlled | OFF | OFF | test login-only AAL2 |
-| `2` | account-policy controlled | ON | OFF | add enrollment/onboarding |
-| `3` | account-policy controlled | ON | ON | fully restore provider AAL2 enforcement |
+| `0` | OFF | OFF | ON | isolate user-authentication AAL2 from the login stall |
+| `1` | account-policy controlled | OFF | ON | test login-only AAL2 account by account |
+| `2` | account-policy controlled | ON | ON | restore normal authentication policy |
 
 The implementation authority for stage selection remains the normal branch/PR/Human-CODEOWNER path. No email/user-ID bypass is permitted.
 
@@ -47,9 +46,9 @@ The implementation authority for stage selection remains the normal branch/PR/Hu
 2. Existing `auth.mfa_factors` are not deleted or modified.
 3. Normal login does not call native factor/challenge choreography.
 4. Registration still requires profile/consent completion, but does not require AAL2 enrollment and must not set `mfa_required_account=true`.
-5. `requireVerifiedAal2()` preserves primary bearer/user validation, then records the explicit supersession instead of querying provider AAL.
-6. The strict provider verifier remains separately implemented and tested for later Stage 3 restoration.
-7. Privileged supersession use is runtime/audit logged with the supersession ID and stage.
+5. `requireVerifiedAal2()` remains unchanged and continues to enforce provider AAL2 for privileged server actions.
+6. Login diagnostic checkpoints are written server-side with the supersession ID and stage without blocking the login critical path.
+7. Registration completion records whether the AAL2 requirement was superseded or active and keeps `mfa_required_account=false` while Stage 0/1 is active.
 8. Subscription/Enterprise resolution remains server-authoritative and is not changed by this package.
 
 ## Re-activation diagnostic sequence
@@ -59,8 +58,8 @@ After Stage 0 production convergence:
 1. capture Google-login timing from OAuth return through authoritative subscription projection;
 2. reactivate Stage 1 only and compare latency/logs;
 3. if stable, reactivate Stage 2 and compare registration/onboarding traces;
-4. if stable, reactivate Stage 3 and compare privileged AAL lookup/step-up traces;
-5. the first stage that reproduces the delay becomes the bounded root-cause surface.
+4. privileged server AAL2 remains continuously enforced and can be correlated independently in existing IAM/security logs;
+5. the first authentication stage that reproduces the delay becomes the bounded root-cause surface.
 
 Each stage change requires fresh CURRENT_MAIN correlation, exact-head tests, Security evidence and Human/CODEOWNER merge.
 
@@ -73,7 +72,7 @@ The existing `ProfilePage` already contains the canonical `PasskeySettings` and 
 - Stage 0 code and tests are exact-head PASS;
 - all profiles read back with `mfa_required_account=false`;
 - existing verified factors remain present;
-- no login/registration/privileged path requires provider AAL2 at Stage 0;
-- strict provider AAL2 verification remains available for staged reactivation;
+- no normal login or registration path requires provider AAL2 at Stage 0;
+- privileged server actions continue to require strict provider AAL2 throughout the diagnostic;
 - no new email/UUID bypass exists;
 - Human/CODEOWNER merge remains required.
