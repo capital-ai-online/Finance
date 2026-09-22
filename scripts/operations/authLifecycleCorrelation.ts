@@ -95,7 +95,10 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
 
   const loginBlock = sliceCurrentPathBlock(appRoutes, '/login', '/dashboard');
   const authenticatedLoginToRoot =
-    loginBlock.includes('if (userSession)') &&
+    (
+      loginBlock.includes('if (userSession)') ||
+      loginBlock.includes("if (userSession?.type === 'registered')")
+    ) &&
     loginBlock.includes('to="/"') &&
     !loginBlock.includes('to="/dashboard"');
   findings.push(finding(
