@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-BACKEND-REBUILD-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Replace the browser-owned authentication lifecycle with a backend-first Google OAuth/PKCE session architecture, remove the old client login/MFA/onboarding orchestration from the productive path, preserve server-side identity/entitlement authority, and provide deterministic login/logout/session projection.",
+  "workItemDE": "Browserseitige Login-Logik vollständig aus dem produktiven Pfad entfernen und eine neue backend-first Google-OAuth/PKCE-Sitzungslogik mit sauberem Login/Logout/Session-Vertrag installieren",
+  "startedAt": "2026-09-22T05:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "8cf32de51821a48f58a7bd86b2d6e0222a0f9cde",
+  "lastSyncedMainSha": "8cf32de51821a48f58a7bd86b2d6e0222a0f9cde",
+  "branch": "operations/auth-backend-rebuild-20260922",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation with SEC/FΕ cross-cutting boundaries",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "Productive post-login freezes persist after repeated client-side remediation; Owner directs a clean backend-first rebuild rather than further patching the browser auth lifecycle.",
+  "canonicalIssue": 1237,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-BACKEND-REBUILD-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-SEC-AUTH-AAL2-DIAGNOSTIC-SUPERSESSION-20260922.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_BACKEND_REBUILD_2026-09-22.md",
+    "server/auth/backendAuth.ts",
+    "server/routes/backendAuthRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "server.application.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "src/app/auth/SessionComposition.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/LandingSessionContext.tsx",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "src/app/types/UserSession.ts",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit"
+  ],
+  "scopeBoundary": [
+    "Supabase Auth remains the upstream identity provider; the browser no longer owns Supabase session state or OAuth callback orchestration.",
+    "Google OAuth starts and completes through backend endpoints using PKCE; Supabase tokens are stored only in HttpOnly Secure SameSite=Lax backend session cookies.",
+    "No access/refresh token is exposed through userSession, localStorage, sessionStorage, URL fragments, or browser JavaScript.",
+    "The old LoginStepUpGate/RegistrationCompletionGate/onAuthStateChange login path is removed from the productive composition.",
+    "Normal login has no AAL2/MFA gate during this rebuild; existing privileged server AAL2/step-up authorization remains a separate protected boundary unless a later owner decision changes it.",
+    "Backend session identity is accepted only after Supabase getUser/refresh verification; subscription tier remains server-authoritative by verified user UUID.",
+    "Cookie-based authentication requires the global Origin/CSRF threat model to reject disallowed browser origins for state-changing requests.",
+    "No Stripe billing semantics, MFA factor deletion, DNS, provider secrets, or Human/CODEOWNER merge authority is changed."
+  ],
+  "evidence": {
+    "currentMain": "8cf32de51821a48f58a7bd86b2d6e0222a0f9cde",
+    "priorDiagnostic": "PR #1257 merged; despite client AAL2 supersession the page still freezes after login, so the client-owned auth lifecycle is no longer the selected architecture.",
+    "openWriterOverlap": "No open PR matched auth/login/session backend rebuild scope at branch creation.",
+    "ownerDirection": "Fresh Owner direction explicitly requests removal of the complete existing login logic and installation of a new backend login architecture."
+  },
+  "acceptanceCriteria": [
+    "Google login is initiated only through /api/auth/login/google and callback is handled only by /api/auth/callback.",
+    "Backend stores Supabase session material in HttpOnly Secure SameSite=Lax cookies and refreshes it server-side.",
+    "GET /api/auth/session returns one authoritative user/profile/subscription projection or authenticated=false without hanging the UI.",
+    "POST /api/auth/logout clears backend session cookies and the landing/header expose an explicit logout action.",
+    "SessionComposition contains no supabase.auth.onAuthStateChange, getSession, MFA, onboarding, localStorage auth persistence, or client OAuth logic.",
+    "LoginPage contains no direct Supabase calls, password login, registration, recovery, MFA, or OAuth callback handling.",
+    "Server identity middleware accepts the verified backend session cookie in addition to any still-supported bearer paths needed for compatibility.",
+    "Disallowed browser Origin is rejected server-side so cookie authentication does not reintroduce CSRF via cross-site POSTs.",
+    "Focused and full required tests pass on the exact PR head.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
