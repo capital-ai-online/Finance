@@ -15,8 +15,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 /**
  * OPS-AUTH-BACKEND-01 login presentation.
  *
- * This page contains no Supabase client, password flow, registration, recovery, MFA or OAuth
- * callback logic. The only productive entrypoint is the backend-owned Google OAuth endpoint.
+ * This page contains no Supabase client, password flow, registration, recovery, secondary-factor
+ * or OAuth callback logic. The only productive entrypoint is the backend-owned Google OAuth endpoint.
  */
 export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
   const authError = useMemo(() => {
