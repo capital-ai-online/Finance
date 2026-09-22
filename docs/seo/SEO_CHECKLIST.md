@@ -1,7 +1,7 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project:** CAPITAL-AI  
-**Stand:** 16.09.2026 — GSC provider-read + URL-Inspection reconciliation  
-**Korrelationsbasis:** `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`  
+**Stand:** 22.09.2026 — Post-PR #1253 Content-Quality/Review-Korrelation  
+**Korrelationsbasis:** `main@93893ab46cc0753dc4e86cd7d6120d321bc48651`  
 **Provider-Evidence-Snapshot:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
 **Repository:** `capital-ai-online/Finance`  
 **GOOGLE_VISIBLE_PASS:** **PARTIAL — GSC READ_VERIFIED + URL INSPECTION 5/5 VERIFIED; `/learning-platform` laut Google noch nicht indexiert; Search Analytics/GA4/GenAI-Metriken weiter offen**
@@ -45,10 +45,13 @@
 - [x] Seed Topic Map in 0002.16 angelegt
 - [x] Content-Brief-Contract: Intent, Ziel-URL, first-party Evidence, Who/How/Why, Reviewer, interne Links, Media, Messgröße, Refresh-Gate
 - [ ] echte GSC-/Keyword-Daten zur Priorisierung einlesen — Property Read und URL Inspection allein reichen dafür nicht
-- [ ] erstes Pilot-Brief nach Business Value + Search Intent + Evidence priorisieren
+- [x] erstes Pilot-Brief nach Business Value + Search Intent + Evidence priorisieren — Brief #01 vorhanden; Brief #02 evidence-first Multi-Asset Scoring in PR #1253 gemergt, fachliche Veröffentlichung weiter auf FINTECH #1254 gegatet
 - [ ] Content Decay / Cannibalization / Merge-Refresh-Prune-Backlog aus echten Daten
 
 ## 5. Helpful Content / Spam Guardrails
+- [x] **Fresh 2026-09-22 repository review:** canonical Sitemap/Route-SEO bleibt auf sechs öffentliche URLs begrenzt; die inspizierten SEO-Artefakte erzeugen keine massenhaften Query-/Keyword-Variant-Routen
+- [x] Launch-Briefs #01/#02 führen Quellen-/Evidence-/Reviewer-/Disclosure-Grenzen und enthalten keine erfundenen Ranking-, Traffic-, Conversion- oder Performance-Beweise
+- [ ] externer/public-web Content-Quality-PASS bleibt separat provider-/runtime-gated; Repository-Guardrails allein sind kein Crawl-/Index-/Search-PASS
 - [x] kein scaled-content abuse
 - [x] kein Cloaking
 - [x] keine Doorway-/Query-Variant-Massenseiten
@@ -98,11 +101,12 @@
 - [ ] Preferred Sources nur bei tatsächlich relevanter Publisher-/News-Surface prüfen
 
 ## 12. Monthly Roadmap Review
-- [ ] KPI-Delta seit letztem Review
-- [ ] neue/entfallene Google Search Features prüfen
-- [ ] Impact/Effort/Dependencies neu bewerten
-- [ ] Content Decay und technische Regressionen aufnehmen
-- [ ] höchstens zwei unmittelbar priorisierte Folgeaktionen ausgeben
+- [x] Review-Snapshot 2026-09-22 materialisiert — `WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md`
+- [ ] KPI-Delta seit letztem Review — echte GSC/GA4 Performance-Reads weiterhin nicht verfügbar
+- [ ] neue/entfallene Google Search Features prüfen — provider-read gated
+- [x] Impact/Effort/Dependencies neu bewertet — unmittelbar priorisiert: OPS #1258 Root-HTML-Verifikation und OPS #1252 FAQ-Public-Route-Prerequisite
+- [x] aktuelle technische Regression/Evidence-Lücke aufgenommen — externer Root-Crawl weicht von CURRENT_MAIN-Metadaten ab; OPS #1258 verifiziert Production vs Cache/Deploy
+- [x] genau zwei unmittelbare Folgeaktionen dokumentiert; FINTECH #1254 bleibt fachliche Folgeabhängigkeit ohne vorgezogene Publikationsfreigabe
 
 ## 13. Provider / Governance Gates
 - [x] Search Console Property Read: `READ_VERIFIED` auf realem Codex-Cloud-Host über direkten STDIO-MCP-Pfad; `sc-domain:capital-ai.online` gefunden
@@ -114,6 +118,15 @@
 - [x] Consent Source of Truth und Analytics-/AdSense-Grenzen bleiben durch die then-current Privacy-/Consent-Authority bestimmt; Human-merged PR #961 konkretisiert den datensparsamen Consent-Nachweis als Design/Evidence-Handoff, ohne diese SEO-Synchronisierung zu einer Consent- oder Provider-Mutation zu erweitern
 - [x] externe Google-Write-/Publish-/IAM-Mutationen nicht durch SEO-Roadmap autorisiert
 - [x] Credential-Verzeichnis `~/.capital-ai` Mode `0700`; GSC-Credential-Datei Mode `0600`; Inhalte/`private_key`/`client_email` im Providerlauf weder gelesen noch ausgegeben
+
+### Current continuation correlation — 2026-09-22
+
+- PR #1253 Human/CODEOWNER-gemergt; CURRENT_MAIN = `93893ab46cc0753dc4e86cd7d6120d321bc48651`.
+- Einziger offener fremder Writer bei Branch-Erstellung: SEC PR #1257; kein Changed-File-Overlap mit diesem SEO-Dokumentationsslice.
+- Kanonische indexierbare Repository-Route-/Sitemap-Menge bleibt sechs URLs; `/faq` bleibt bis OPS #1252 bewusst außerhalb des Public-SEO-Sets.
+- Externer Root-Crawl zeigte ältere Metadaten als CURRENT_MAIN; Status = `EXTERNAL_CRAWL_METADATA_DIVERGENCE / OPS_VERIFY_1258`, nicht Production-Failure.
+- Pilot Brief #02 = `MERGED_SOURCE_BRIEF / NOT_PUBLISHED`; FINTECH #1254 bleibt Domain-Truth-Gate.
+- GSC Search Analytics / GA4 / GenAI = weiterhin echte Provider-Read-Gates; keine synthetischen Werte.
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
