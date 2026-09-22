@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { markLoginStepUpPassed } from '../lib/loginStepUp';
 import {
   NativeMfaError,
+  type NativeMfaAssuranceLevel,
   getCurrentAssuranceLevel,
   listVerifiedNativeMfaFactors,
   challengeTotpFactor,
@@ -13,6 +14,7 @@ import {
 
 interface LoginStepUpGateProps {
   session: { user: any; [key: string]: any };
+  initialAssurance?: NativeMfaAssuranceLevel | null;
   onVerified: () => void;
   onAbort: () => void;
 }
@@ -52,7 +54,12 @@ function withMfaTimeout<T>(operation: Promise<T>, operationName: string): Promis
  * of an endless spinner. WebAuthn in this component is the Supabase MFA factor namespace and is
  * intentionally distinct from the primary-login `auth.signInWithPasskey()` API.
  */
-export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
+export function LoginStepUpGate({
+  session,
+  initialAssurance = null,
+  onVerified,
+  onAbort,
+}: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
   const [totpFactorId, setTotpFactorId] = useState('');
   const [totpChallengeId, setTotpChallengeId] = useState('');
@@ -76,10 +83,12 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       }
 
       try {
-        const level = await withMfaTimeout(
-          getCurrentAssuranceLevel(supabase),
-          'AAL-Prüfung',
-        );
+        const level =
+          initialAssurance ??
+          (await withMfaTimeout(
+            getCurrentAssuranceLevel(supabase),
+            'AAL-Prüfung',
+          ));
         if (cancelled) return;
 
         if (level.currentLevel === 'aal2') {
@@ -109,6 +118,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           }
 
           if (totpFactor) {
+            // Render the TOTP prompt as soon as the verified factor is known. Challenge creation
+            // runs while the user can already open the authenticator and enter the code; submit
+            // remains disabled until Supabase has returned the challenge id.
+            setRequirement('totp');
             const challengeId = await withMfaTimeout(
               challengeTotpFactor(supabase, totpFactor.id),
               'MFA-Challenge',
@@ -116,7 +129,6 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
             if (cancelled) return;
 
             setTotpChallengeId(challengeId);
-            setRequirement('totp');
             return;
           }
 
@@ -319,11 +331,15 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
               )}
               <button
                 type="submit"
-                disabled={nativeVerifying || nativeCode.length !== 6}
+                disabled={nativeVerifying || nativeCode.length !== 6 || !totpChallengeId}
                 className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
               >
                 <KeyRound size={16} />
-                {nativeVerifying ? 'Prüfe AAL2…' : 'AAL2 bestätigen'}
+                {nativeVerifying
+                  ? 'Prüfe AAL2…'
+                  : !totpChallengeId
+                    ? 'AAL2 wird vorbereitet…'
+                    : 'AAL2 bestätigen'}
               </button>
             </form>
             {webauthnFactorId && (
