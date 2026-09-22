@@ -62,6 +62,10 @@ export default function App() {
   }, []);
 
   const handleOpenModuleById = (moduleId: string) => {
+    if (moduleId === 'vocabulary') {
+      window.location.assign('/vocabulary');
+      return;
+    }
     const found = CORE_MODULES.find((m) => m.id === moduleId);
     if (found) {
       if (runtimeBinding.handleModuleSelection(found)) return;
@@ -144,6 +148,7 @@ export default function App() {
         <Header
           onOpenAnalysis={runtimeBinding.openScorerGate}
           onOpenModule={handleOpenModuleById}
+          onOpenVocabulary={() => window.location.assign('/vocabulary')}
           onNavigateLogin={() => window.location.assign('/login')}
           onNavigate={(path) => window.location.assign(path)}
           onSelectSubclass={(subclass, category) => setSelectedSubclass({ subclass, category })}
@@ -174,6 +179,10 @@ export default function App() {
         {/* Core Modules ("Unsere Kernmodule") */}
         <CoreModules
           onSelectModule={(module) => {
+            if (module.id === 'vocabulary') {
+              window.location.assign('/vocabulary');
+              return;
+            }
             if (!runtimeBinding.handleModuleSelection(module)) setSelectedModule(module);
           }}
           onViewAllModules={() => handleOpenModuleById('enterprise-scorer')}
@@ -211,6 +220,10 @@ export default function App() {
           setSelectedModule(null);
           if (moduleId === 'enterprise-scorer') runtimeBinding.openScorerGate();
           else window.location.assign('/login');
+        }}
+        onOpenVocabulary={() => {
+          setSelectedModule(null);
+          window.location.assign('/vocabulary');
         }}
       />
 
