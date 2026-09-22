@@ -119,10 +119,22 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(foreignVisibleTokens).toEqual([]);
   });
 
-  it('removes internal version and raw color-code chrome from the mobile menu', () => {
-    expect(header).toContain('System Online');
+  it('removes the internal status/version and raw color-code chrome from the mobile menu', () => {
+    expect(header).not.toContain('System Online');
     expect(header).not.toContain('System v6.0 Online');
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
+  });
+
+  it('binds the new Market Vocabulary route to the existing canonical learning component', () => {
+    expect(routes).toContain("currentPath === '/vocabulary'");
+    expect(routes).toContain('MarketVocabularyModal');
+    expect(routes).toContain('to="/vocabulary"');
+    const vocabularyAdapter = read(
+      'src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx',
+    );
+    expect(vocabularyAdapter).toContain('LearningVocabulary');
+    expect(vocabularyAdapter).toContain('data-vocabulary-mode="READ_ONLY"');
+    expect(vocabularyAdapter).not.toContain('vocabularyData');
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
