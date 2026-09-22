@@ -13,7 +13,7 @@
 
 - Finance Chatterbox uses connected German phrasing with no forced letter-by-letter segment.
 - Generation defaults are explicit and recorded in runtime evidence rather than being implicit library defaults.
-- A same-repository PR on `operations/social-p1-prosody-*` enters the existing budget-gated Modal remediation path automatically.
+- A same-repository PR on `agent/operations-social-p1-prosody-*` enters the existing budget-gated Modal remediation path automatically.
 - The workflow packages the new candidate and immutable sample-4 reference together for direct Human A/B listening.
 - ASR remains technical evidence only; subjective acceptance remains Human/Social-owned.
 
