@@ -105,7 +105,7 @@ vi.mock('../../server/db', () => ({
   getServerSupabase: vi.fn(() => makeServerSupabase(sharedState)),
 }));
 
-import { requireVerifiedAal2 } from '../../src/platform/Security/authMiddleware';
+import { verifyProviderAal2 } from '../../src/platform/Security/authMiddleware';
 import {
   enrollTotpFactor,
   challengeTotpFactor,
@@ -123,7 +123,7 @@ describe('native MFA enroll/challenge/verify -> server AAL2 gate (end-to-end)', 
   });
 
   it('verweigert AAL2 serverseitig, solange kein Faktor verifiziert wurde', async () => {
-    const result = await requireVerifiedAal2(req(VALID_TOKEN));
+    const result = await verifyProviderAal2(req(VALID_TOKEN));
     expect(result.verified).toBe(false);
     expect(result.reason).toBe('insufficient-aal');
   });
@@ -135,7 +135,7 @@ describe('native MFA enroll/challenge/verify -> server AAL2 gate (end-to-end)', 
 
     await expect(verifyTotpChallenge(client, enrollment.factorId, challengeId, '000000')).rejects.toThrow(NativeMfaError);
 
-    const serverResult = await requireVerifiedAal2(req(VALID_TOKEN));
+    const serverResult = await verifyProviderAal2(req(VALID_TOKEN));
     expect(serverResult.verified).toBe(false);
     expect(serverResult.reason).toBe('insufficient-aal');
   });
@@ -152,7 +152,7 @@ describe('native MFA enroll/challenge/verify -> server AAL2 gate (end-to-end)', 
 
     // Die serverseitige Prüfung liest NICHT das Client-Ergebnis, sondern fragt unabhängig über
     // den (in diesem Test denselben, in Produktion per Bearer-Header übertragenen) Token nach.
-    const serverResult = await requireVerifiedAal2(req(VALID_TOKEN));
+    const serverResult = await verifyProviderAal2(req(VALID_TOKEN));
     expect(serverResult).toEqual({ verified: true, userId: USER_ID, currentLevel: 'aal2', reason: 'aal2-verified' });
   });
 
@@ -162,7 +162,7 @@ describe('native MFA enroll/challenge/verify -> server AAL2 gate (end-to-end)', 
     const challengeId = await challengeTotpFactor(client, enrollment.factorId);
     await verifyTotpChallenge(client, enrollment.factorId, challengeId, CORRECT_CODE);
 
-    const serverResult = await requireVerifiedAal2(req('some-other-forged-token'));
+    const serverResult = await verifyProviderAal2(req('some-other-forged-token'));
     expect(serverResult.verified).toBe(false);
     expect(serverResult.reason).toBe('invalid-token');
   });
@@ -173,7 +173,7 @@ describe('native MFA enroll/challenge/verify -> server AAL2 gate (end-to-end)', 
     const challengeId = await challengeTotpFactor(client, enrollment.factorId);
     await verifyTotpChallenge(client, enrollment.factorId, challengeId, CORRECT_CODE);
 
-    const serverResult = await requireVerifiedAal2(req());
+    const serverResult = await verifyProviderAal2(req());
     expect(serverResult.verified).toBe(false);
     expect(serverResult.reason).toBe('no-bearer-token');
   });
