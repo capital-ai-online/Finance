@@ -73,6 +73,15 @@ const ROUTES = [
     noscript:
       'Datenschutzerklärung CAPITAL-AI (DSGVO). Vollständiger Text nach Aktivierung von JavaScript.',
   },
+  {
+    routePath: '/faq',
+    file: 'faq/index.html',
+    title: 'FAQ – CAPITAL-AI',
+    description:
+      'Häufig gestellte Fragen zu CAPITAL-AI, Plattform, Datenqualität, Datenschutz, Konto, Abonnement und rechtlicher Transparenz.',
+    noscript:
+      'CAPITAL-AI FAQ: Fragen und Antworten zu Plattform, Datenqualität, Datenschutz, Konto, Abonnement und rechtlicher Transparenz.',
+  },
 ];
 
 if (!fs.existsSync(indexPath)) {
