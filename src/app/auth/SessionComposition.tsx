@@ -19,7 +19,7 @@ import {
   getSessionBootstrapKey,
   isSessionEstablishmentEvent,
 } from './sessionBootstrap';
-import type { SubscriptionTier, UserSession } from '../types/UserSession';
+import type { UserSession } from '../types/UserSession';
 
 export interface SessionCompositionValue {
   userSession: UserSession | null;
@@ -248,6 +248,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         }
         updateUserSession(null);
         setPendingStepUpSession(null);
+        setPendingStepUpAssurance(null);
         setPendingOnboardingSession(null);
         setAuthBootstrapPending(false);
       })
