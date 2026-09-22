@@ -148,14 +148,14 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
   });
 
-  it('uses LoginPage exclusively at the dedicated /login route without redirecting an existing session', () => {
+  it('uses LoginPage for anonymous /login and converges an established registered session to root', () => {
     expect(routes).toContain("if (currentPath === '/login')");
     expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');
     const loginRouteStart = routes.indexOf("if (currentPath === '/login')");
     const dashboardRouteStart = routes.indexOf("if (currentPath === '/dashboard')");
     const loginRouteBlock = routes.slice(loginRouteStart, dashboardRouteStart);
-    expect(loginRouteBlock).not.toContain('if (userSession)');
-    expect(loginRouteBlock).not.toContain('<RouteRedirect to="/"');
+    expect(loginRouteBlock).toContain("if (userSession?.type === 'registered')");
+    expect(loginRouteBlock).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
     expect(loginPage).toContain('Canonical authentication page for `/login`');
     expect(loginPage).toContain("window.location.replace('/')");
     expect(loginPage).toContain('href="/"');
