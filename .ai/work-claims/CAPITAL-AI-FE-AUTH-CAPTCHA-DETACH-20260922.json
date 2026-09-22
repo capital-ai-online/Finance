@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-AUTH-CAPTCHA-DETACH-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Detach the LoginPage from the hCaptcha browser SDK while preserving the restored registration/login/recovery design.",
+  "workItemDE": "LoginPage vom hCaptcha-Browser-SDK lösen und Registrierungsdesign erhalten",
+  "startedAt": "2026-09-22T13:12:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+  "lastSyncedMainSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+  "branch": "operations/auth-captcha-removal-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-FE",
+  "priority": "P0",
+  "priorityReason": "The user-visible login surface freezes when the CAPTCHA SDK is attached.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-AUTH-CAPTCHA-DETACH-20260922.json",
+    "docs/projects/frontend/work-packages/FE_AUTH_CAPTCHA_DETACH_2026-09-22.md",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/lib/hcaptcha.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/passwordRecoveryLogin.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts"
+  ],
+  "dependencies": [
+    "CAPITAL-AI-OPS companion slice on the same coordinated branch removes backend captchaToken requirements."
+  ],
+  "evidence": {
+    "currentMain": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+    "designAuthority": "SvenKulessa/FRONTEND login design remains unchanged apart from CAPTCHA runtime removal."
+  },
+  "scopeBoundary": [
+    "No hCaptcha script preload, render, execute or token request from LoginPage.",
+    "Preserve visible Anmelden/Registrieren/Passwort vergessen/Google controls.",
+    "Preserve same-origin backend-first requests and legal-link behavior.",
+    "Do not restore direct supabase.auth to the browser.",
+    "Human/CODEOWNER merge required."
+  ],
+  "acceptanceCriteria": [
+    "LoginPage contains no hCaptcha import/runtime/token logic.",
+    "src/lib/hcaptcha.ts is removed.",
+    "Registration/login/recovery remain visible and submit to existing backend routes.",
+    "Focused frontend tests pass on exact head."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment."
+}
