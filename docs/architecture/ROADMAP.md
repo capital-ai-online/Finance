@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.0.0`  
 **Status date:** `2026-09-22`  
-**Baseline:** `main@4a095d7e267b284ed4456750ad031457a2ef9a0a`  
+**Baseline:** `main@14382bccd7276bd7a2b91280e8452d493475f982`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
