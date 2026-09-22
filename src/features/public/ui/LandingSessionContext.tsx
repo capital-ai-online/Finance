@@ -6,22 +6,33 @@ export interface AuthenticatedLandingProfile {
   subscriptionTier: string;
 }
 
-const LandingSessionContext = createContext<AuthenticatedLandingProfile | null>(null);
+interface LandingSessionValue {
+  profile: AuthenticatedLandingProfile | null;
+  onLogout?: () => void | Promise<void>;
+}
+
+const LandingSessionContext = createContext<LandingSessionValue>({ profile: null });
 
 export function LandingSessionProvider({
   profile,
+  onLogout,
   children,
 }: {
   profile: AuthenticatedLandingProfile | null;
+  onLogout?: () => void | Promise<void>;
   children: React.ReactNode;
 }) {
   return (
-    <LandingSessionContext.Provider value={profile}>
+    <LandingSessionContext.Provider value={{ profile, onLogout }}>
       {children}
     </LandingSessionContext.Provider>
   );
 }
 
 export function useLandingSessionProfile(): AuthenticatedLandingProfile | null {
-  return useContext(LandingSessionContext);
+  return useContext(LandingSessionContext).profile;
+}
+
+export function useLandingSessionLogout(): (() => void | Promise<void>) | undefined {
+  return useContext(LandingSessionContext).onLogout;
 }
