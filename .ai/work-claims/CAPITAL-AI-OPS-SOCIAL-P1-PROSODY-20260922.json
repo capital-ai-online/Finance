@@ -39,5 +39,30 @@
     "note": "Open PRs touch auth, SH-02.9 work-package, or governance roadmap files; none touches the claimed TTS runtime/workflow/evidence paths. Operations ROADMAP is intentionally not modified while PR #1271 is an active writer. Work was losslessly moved from the initial operations/* branch to this agent/* branch because the canonical pre-create PR workflow accepts only agent/*, claude/*, grok/* or ai/*."
   },
   "scopeNote": "Existing Chatterbox/Modal path only. Exactly one new German Chatterbox finance candidate; accepted sample 4 is copied as immutable reference. No English regeneration, no new provider, no credentials/IAM/billing mutation, no Human listening PASS fabrication.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "workItemDE": "SOCIAL-P1 Chatterbox-Prosodie für deutsche Finance-Ausgabe gegen Stimme 4 remediieren",
+  "finalCorrelation": {
+    "currentMain": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+    "openPullRequests": [
+      1271,
+      1275,
+      1276,
+      1273,
+      1267
+    ],
+    "changedFileOverlap": false,
+    "semanticOverlap": false,
+    "productionReadback": {
+      "provider": "render",
+      "service": "Finance",
+      "liveCommitSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+      "state": "live"
+    },
+    "preCreateProjectLabel": {
+      "name": "project:CAPITAL-AI-OPS",
+      "color": "845CDC",
+      "description": "✈️ Operations · CAPITAL-AI-OPS",
+      "providerReadback": "verified on live Issue #1274"
+    }
+  }
 }
