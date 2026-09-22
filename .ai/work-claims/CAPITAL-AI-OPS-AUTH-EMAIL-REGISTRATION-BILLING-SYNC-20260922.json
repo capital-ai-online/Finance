@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-EMAIL-REGISTRATION-BILLING-SYNC-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -49,7 +49,8 @@
     "liveSupabaseIdentityInvariant": "auth.users.id -> public.profiles.id + public.subscriptions.user_id",
     "liveStripeInvariant": "stripe.subscriptions.metadata.user_id -> validated auth.users.id -> public.subscriptions.user_id",
     "legacyDrift": "public.users contains historical tier/stripe values and has no current repository entitlement reader; it is not canonical.",
-    "openWriterOverlap": "No open PR matched registration/password/email-auth/Stripe-subscription scope at branch creation."
+    "openWriterOverlap": "No open PR matched registration/password/email-auth/Stripe-subscription scope at branch creation.",
+    "postMergeProductionEvidence": "Email auth backend deployed through main; live legacy billing convergence completed under fresh Owner direction with 2 public.users rows aligned to canonical public.subscriptions while preserving 46 usage_log rows."
   },
   "acceptanceCriteria": [
     "POST /api/auth/register creates a Supabase email/password user after server password-safety validation and returns an enumeration-resistant confirmation-required response.",
@@ -63,5 +64,8 @@
     "Focused and full required repository checks pass on the exact PR head.",
     "Human/CODEOWNER merge remains required; FE presentation is delivered through an owner-correct handover."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment.",
+  "releasedAt": "2026-09-22T11:06:00+02:00",
+  "releaseReason": "Human/CODEOWNER merged PR #1273 into main@eb23384dbb822d941a737d4d91b864b736166167; backend email auth/billing sync is productive. Remaining visible registration work is owner-correct CAPITAL-AI-FE scope.",
+  "mergeCommitSha": "eb23384dbb822d941a737d4d91b864b736166167"
 }

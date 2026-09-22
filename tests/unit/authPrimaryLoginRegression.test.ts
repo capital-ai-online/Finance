@@ -12,15 +12,22 @@ const backendAuth = read('server/auth/backendAuth.ts');
 const authMiddleware = read('src/platform/Security/authMiddleware.ts');
 
 describe('website primary login backend rebuild boundary', () => {
-  it('exposes one backend-owned Google login entrypoint', () => {
+  it('exposes Google plus visible backend-owned email login and registration entrypoints', () => {
     expect(loginPage).toContain('href="/api/auth/login/google?next=%2F"');
     expect(loginPage).toContain('Mit Google anmelden');
     expect(loginPage).toContain('data-auth-architecture="backend-first"');
-    expect(loginPage).not.toContain('supabase');
+    expect(loginPage).toContain('id="tab-mode-login"');
+    expect(loginPage).toContain('id="tab-mode-register"');
+    expect(loginPage).toContain("postAuthJson('/api/auth/login/email'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/register'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
+    expect(loginPage).toContain("type={showLoginPassword ? 'text' : 'password'}");
+    expect(loginPage).toContain("type={showRegPassword ? 'text' : 'password'}");
+    expect(loginPage).not.toContain('supabase.auth');
     expect(loginPage).not.toContain('signInWithPassword');
     expect(loginPage).not.toContain('signUp');
     expect(loginPage).not.toContain('resetPasswordForEmail');
-    expect(loginPage).not.toContain('type="password"');
   });
 
   it('runs Google OAuth and PKCE code exchange only on the backend', () => {

@@ -7,19 +7,24 @@ const loginPage = fs.readFileSync(
   'utf8',
 );
 
-describe('superseded browser password recovery boundary', () => {
-  it('removes password recovery and password authentication from the productive login page', () => {
+describe('backend-first password recovery presentation boundary', () => {
+  it('renders password login and recovery controls without browser auth authority', () => {
+    expect(loginPage).toContain('id="login-password"');
+    expect(loginPage).toContain('id="password-forgot-btn"');
+    expect(loginPage).toContain('id="password-recovery-form"');
+    expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
     expect(loginPage).not.toContain('resetPasswordForEmail');
     expect(loginPage).not.toContain('updateUser({ password');
     expect(loginPage).not.toContain('signInWithPassword');
     expect(loginPage).not.toContain('signUp');
-    expect(loginPage).not.toContain('PASSWORD_RECOVERY_QUERY_PARAM');
-    expect(loginPage).not.toContain('type="password"');
+    expect(loginPage).not.toContain('supabase.auth');
   });
 
-  it('retains only the backend Google login entrypoint', () => {
+  it('keeps Google, registration and confirmation resend on same-origin backend endpoints', () => {
     expect(loginPage).toContain('href="/api/auth/login/google?next=%2F"');
-    expect(loginPage).toContain('Mit Google anmelden');
+    expect(loginPage).toContain('id="tab-mode-register"');
+    expect(loginPage).toContain("postAuthJson('/api/auth/register'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
     expect(loginPage).not.toContain('localStorage');
     expect(loginPage).not.toContain('sessionStorage');
   });
