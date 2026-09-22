@@ -21,6 +21,7 @@ import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimite
 import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../src/platform/Security/secretCrypto';
 import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platform/Security/totp';
 import { rateLimitMiddleware } from '../src/platform/Security/safeIo';
+import { createLogger } from './logger';
 import {
   AAL2_DIAGNOSTIC_SUPERSESSION_ID,
   AAL2_REACTIVATION_STAGE,
