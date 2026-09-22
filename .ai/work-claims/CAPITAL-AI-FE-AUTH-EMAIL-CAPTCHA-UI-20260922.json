@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-AUTH-EMAIL-CAPTCHA-UI-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Reconnect the canonical LoginPage email auth controls to the existing bounded hCaptcha browser bridge and send a fresh captchaToken with each protected same-origin backend auth request.",
+  "workItemDE": "Bestehende hCaptcha-Bridge wieder an Registrierung, E-Mail-Login, Recovery und Confirmation-Resend der LoginPage anbinden",
+  "startedAt": "2026-09-22T12:10:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
+  "lastSyncedMainSha": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
+  "branch": "frontend/auth-email-captcha-ui-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-FE",
+  "priority": "P0",
+  "priorityReason": "Production registration UI is visible but Supabase rejects the request before mail generation because no CAPTCHA token reaches the backend.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-AUTH-EMAIL-CAPTCHA-UI-20260922.json",
+    "docs/projects/frontend/work-packages/FE_AUTH_EMAIL_CAPTCHA_UI_2026-09-22.md",
+    "src/features/public/ui/LoginPage.tsx",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/passwordRecoveryLogin.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/userLifecycleFrontendProjection.test.ts"
+  ],
+  "dependencies": [
+    "CAPITAL-AI-OPS backend companion slice PR #1282 is merged into CURRENT_MAIN and forwards validated captchaToken to Supabase Auth.",
+    "VITE_HCAPTCHA_SITE_KEY remains the existing public build-time configuration; the secret remains in Supabase Auth."
+  ],
+  "evidence": {
+    "currentMain": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
+    "smtpTest": "Production SMTP send to s.kulessa@protonmail.com completed successfully via Render mailer.",
+    "productionFailure": "Supabase Auth rejected registration/resend with no captcha_token found.",
+    "existingBridge": "src/lib/hcaptcha.ts provides preloadHcaptchaSdk() and requestHcaptchaToken().",
+    "designAuthority": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d/src/components/LoginPage.tsx remains the UI authority.",
+    "openWriterOverlap": "PR #1281 will be superseded by this consolidated branch after identical behavior is verified.",
+    "opsDependency": "PR #1282 merged and is contained in CURRENT_MAIN.",
+    "mainIntegration": "PR #1280 is merged and inherited through CURRENT_MAIN; its cbc558 frontend source-lock/test changes are preserved.",
+    "legalLinkIntegration": "PR #1281 legal-link behavior folded into this branch: registration AGB/Datenschutz open in isolated new tabs; its regression test is preserved."
+  },
+  "scopeBoundary": [
+    "Use the existing hCaptcha helper; do not add a second CAPTCHA implementation or dependency.",
+    "Obtain a fresh token immediately before each protected user-initiated request.",
+    "Never persist or log CAPTCHA tokens.",
+    "Send tokens only to same-origin /api/auth endpoints.",
+    "Do not restore direct supabase.auth calls to LoginPage.",
+    "Do not expose hCaptcha secret.",
+    "Human/CODEOWNER merge required."
+  ],
+  "acceptanceCriteria": [
+    "Registration obtains a fresh hCaptcha token and includes captchaToken in /api/auth/register.",
+    "Email login obtains a fresh token and includes it in /api/auth/login/email.",
+    "Password recovery obtains a fresh token and includes it in /api/auth/password/forgot.",
+    "Confirmation resend obtains a fresh token and includes it in /api/auth/confirmation/resend.",
+    "The hCaptcha SDK is preloaded opportunistically without weakening fail-closed behavior.",
+    "No CAPTCHA token is persisted/logged.",
+    "Focused and required checks pass on exact head.",
+    "Human/CODEOWNER merge required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

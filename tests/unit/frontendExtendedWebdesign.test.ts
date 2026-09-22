@@ -76,6 +76,8 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(login).toContain('id="tab-mode-register"');
     expect(login).toContain('id="register-submit-btn"');
     expect(login).toContain('id="password-forgot-btn"');
+    expect(login).toContain("import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha'");
+    expect(login).toContain('const captchaToken = await requestHcaptchaToken();');
     expect(login).not.toContain('supabase.auth');
     expect(login).not.toContain('signInWithPassword');
     expect(login).not.toContain('signUp');

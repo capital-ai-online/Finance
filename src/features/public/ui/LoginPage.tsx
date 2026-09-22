@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { BrandLogo } from './frontend-port/components/BrandLogo';
+import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha';
 
 interface LoginPageProps {
   justLoggedOut?: boolean;
@@ -96,6 +97,11 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     return AUTH_ERROR_MESSAGES[code] ?? 'Die Anmeldung konnte nicht abgeschlossen werden.';
   }, []);
 
+  useEffect(() => {
+    // Latency optimization only. Every protected action still requests a fresh short-lived token.
+    void preloadHcaptchaSdk().catch(() => undefined);
+  }, []);
+
   const resetFeedback = () => {
     setStatusMessage(null);
     setFormError(null);
@@ -113,9 +119,11 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     setIsLoading(true);
 
     try {
+      const captchaToken = await requestHcaptchaToken();
       const result = await postAuthJson('/api/auth/login/email', {
         email: loginEmail,
         password: loginPassword,
+        captchaToken,
       });
 
       if (!result.ok) {
@@ -148,10 +156,12 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
 
     setIsLoading(true);
     try {
+      const captchaToken = await requestHcaptchaToken();
       const result = await postAuthJson('/api/auth/register', {
         name: regName,
         email: regEmail,
         password: regPassword,
+        captchaToken,
       });
 
       if (!result.ok) {
@@ -180,8 +190,10 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     setIsLoading(true);
 
     try {
+      const captchaToken = await requestHcaptchaToken();
       const result = await postAuthJson('/api/auth/password/forgot', {
         email: recoveryEmail || loginEmail,
+        captchaToken,
       });
 
       if (!result.ok) {
@@ -209,8 +221,10 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     setIsLoading(true);
 
     try {
+      const captchaToken = await requestHcaptchaToken();
       const result = await postAuthJson('/api/auth/confirmation/resend', {
         email: pendingConfirmationEmail,
+        captchaToken,
       });
 
       if (!result.ok) {
@@ -559,11 +573,11 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                 />
                 <span>
                   Ich akzeptiere die{' '}
-                  <a href="/agb" className="text-slate-200 underline hover:text-amber-400">
+                  <a href="/agb" target="_blank" rel="noopener noreferrer" className="text-slate-200 underline hover:text-amber-400">
                     Nutzungsbedingungen (AGB)
                   </a>{' '}
                   und die{' '}
-                  <a href="/datenschutz" className="text-slate-200 underline hover:text-emerald-400">
+                  <a href="/datenschutz" target="_blank" rel="noopener noreferrer" className="text-slate-200 underline hover:text-emerald-400">
                     Datenschutzrichtlinie
                   </a>
                   .
