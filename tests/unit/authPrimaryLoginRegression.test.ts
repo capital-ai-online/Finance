@@ -142,6 +142,7 @@ describe('website primary login regression boundary', () => {
     expect(sessionComposition).toContain('if (gatePolicy.onboardingRequired)');
     expect(sessionComposition).toContain("if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount)");
     expect(sessionComposition).toContain('await handleSupabaseSession(session)');
+    expect(sessionComposition).toContain("authFetch('/api/auth/aal2/diagnostic-login'");
     expect(sessionComposition).toContain('const assurance = await getCurrentAssuranceLevel(supabase)');
     expect(sessionComposition).toContain("if (assurance.nextLevel === 'aal2')");
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
@@ -207,7 +208,8 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain("setRequirement('blocked')");
     expect(aal2Supersession).toContain("login: 1");
     expect(aal2Supersession).toContain("registration: 2");
-    expect(aal2Supersession).toContain("privileged: 3");
+    expect(aal2Supersession).toContain('privilegedServerAal2Unaffected: true');
+    expect(aal2Supersession).not.toContain("privileged: 3");
   });
 
   it('obtains hCaptcha tokens without persisting or logging them', () => {
