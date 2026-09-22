@@ -3,7 +3,9 @@
 **Status:** Reviewed implementation evidence / effective with Human Merge  
 **Date:** 2026-08-22  
 **Scope:** Documentary Archive Retention planning + repository-local ChatGPT Sandbox pre-PR execution  
-**Authorities:** `ADR-0096`, `ADR-0097`, `DEVELOPMENT_CHAIN_EXECUTION_POLICY`, `ESS-0019` where AI execution is involved
+**Execution authority:** `/AGENTS.md@CURRENT_MAIN`  
+**Subject-matter constraints:** `ADR-0096`, `ADR-0097`, `ESS-0019` where AI execution is involved  
+**Historical traceability:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` resolves only to `/AGENTS.md@CURRENT_MAIN`; no standalone DevelopmentChain execution policy is active
 
 ## Purpose
 
@@ -12,7 +14,7 @@ This threat model covers the two trust boundaries introduced by the current work
 1. deterministic archive-retention/deletion-eligibility planning; and
 2. local/ChatGPT sandbox execution of existing repository checks before Pull Request creation.
 
-The controls remain subordinate to the existing Governance Control Plane, Documentary Maintenance Control Loop, Agent IAM and DevelopmentChain. Neither boundary authorizes Merge, Release, Deployment, production mutation or external platform mutation.
+The controls remain subordinate to `/AGENTS.md@CURRENT_MAIN` for development execution and to the accepted Governance Control Plane, Documentary Maintenance Control Loop and Agent-IAM/ESS contracts only within their subject-matter scope. Neither boundary authorizes Merge, Release, Deployment, production mutation or external platform mutation.
 
 ## Assets to protect
 
@@ -54,7 +56,7 @@ GitHub-hosted CI remains an independent post-PR verification layer; local sandbo
 | Broad `git add`/implicit mutation hides extra files | Sandbox is read-only with respect to Git staging/commit; repository mutation remains outside the runner |
 | Local PASS masks unexecuted expensive checks | Default profile distinguishes local low-cost checks from explicit `--full`; PR body/hosted CI must state which checks actually ran |
 | Archive plan replay after repository state changes | Physical deletion is not carried by the plan itself; a later maintenance patch must re-evaluate current path/registry/branch evidence |
-| Duplicate Security or Documentary logic | Threat model references existing ADR-0096/0097, Agent IAM and DevelopmentChain controls; no new capability registry, IAM plane, workflow or deletion engine is introduced |
+| Duplicate Security or Documentary logic | Threat model references `/AGENTS.md@CURRENT_MAIN` for execution plus existing ADR-0096/0097 and Agent-IAM subject-matter controls; no new capability registry, IAM plane, workflow or deletion engine is introduced |
 
 ## Negative cases
 

@@ -685,3 +685,98 @@ export function getSelfHealingContractSnapshot(): SelfHealingContractSnapshot {
       .map(action => action.id),
   };
 }
+
+
+export const SELF_HEALING_OBSERVABILITY_CONTRACT_VERSION = 'self-healing-observability/1.0.0' as const;
+
+export interface RecoveryObservationInput {
+  findingId: string;
+  correlationId: string;
+  findingClass: FindingClass;
+  actionId: RemediationActionId;
+  attempt: number;
+  detectedAt: string;
+  verificationStatus: VerificationStatus;
+  convergence: ConvergenceResult;
+}
+
+export interface RecoveryObservation {
+  schema: typeof SELF_HEALING_OBSERVABILITY_CONTRACT_VERSION;
+  findingId: string;
+  correlationId: string;
+  detectedAt: string;
+  classification: FindingClass;
+  selectedAction: RemediationActionId;
+  actionTier: RecoveryTier;
+  attempt: number;
+  verification: {
+    status: VerificationStatus;
+    probe: string;
+    evidencePresent: boolean;
+    readbackRequired: boolean;
+    readbackVerified: boolean;
+  };
+  convergence: {
+    state: TerminalRecoveryState;
+    converged: boolean;
+    reason: ConvergenceReason;
+  };
+}
+
+const SAFE_OBSERVABILITY_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+function requireSafeObservationId(name: string, value: string): string {
+  const normalized = String(value || '').trim();
+  if (!SAFE_OBSERVABILITY_ID.test(normalized)) {
+    throw new Error(`${name}_UNSAFE_OR_INVALID`);
+  }
+  return normalized;
+}
+
+/**
+ * Projects one bounded recovery event for the existing Telemetry/EventMesh path.
+ *
+ * Deliberately excludes raw errors, user/provider payloads, desired/observed
+ * business data, secrets and free-form metadata. Callers may emit this
+ * projection through the existing telemetry plane; this contract creates no
+ * second logger, queue or incident authority.
+ */
+export function projectRecoveryObservation(input: RecoveryObservationInput): RecoveryObservation {
+  const action = ACTIONS[input.actionId];
+  if (!action) throw new Error('ACTION_UNKNOWN');
+  if (!POLICIES[input.findingClass]?.allowedActionIds.includes(input.actionId)) {
+    throw new Error('ACTION_NOT_ALLOWED_FOR_FINDING');
+  }
+  if (!Number.isInteger(input.attempt) || input.attempt < 1 || input.attempt > action.budget.maxAttempts) {
+    throw new Error('ATTEMPT_OUTSIDE_BUDGET');
+  }
+  if (!Number.isFinite(Date.parse(input.detectedAt))) {
+    throw new Error('DETECTED_AT_INVALID');
+  }
+  if (input.verificationStatus !== input.convergence.verification.status) {
+    throw new Error('VERIFICATION_STATUS_MISMATCH');
+  }
+
+  return {
+    schema: SELF_HEALING_OBSERVABILITY_CONTRACT_VERSION,
+    findingId: requireSafeObservationId('FINDING_ID', input.findingId),
+    correlationId: requireSafeObservationId('CORRELATION_ID', input.correlationId),
+    detectedAt: input.detectedAt,
+    classification: input.findingClass,
+    selectedAction: input.actionId,
+    actionTier: action.tier,
+    attempt: input.attempt,
+    verification: {
+      status: input.convergence.verification.status,
+      probe: action.verificationProbe,
+      evidencePresent: Boolean(input.convergence.verification.evidence),
+      readbackRequired: Boolean(input.convergence.verification.evidence?.readback.required),
+      readbackVerified: Boolean(input.convergence.verification.evidence?.readback.verified),
+    },
+    convergence: {
+      state: input.convergence.state,
+      converged: input.convergence.converged,
+      reason: input.convergence.reason,
+    },
+  };
+}
