@@ -7,6 +7,7 @@ import {
   getRemediationPolicies,
   getRemediationPolicy,
   getSelfHealingContractSnapshot,
+  projectRecoveryObservation,
   resolveConvergence,
   validateSelfHealingContract,
   validateVerificationEvidence,
@@ -415,4 +416,126 @@ describe('self-healing contract', () => {
       probe: 'frontend-runtime-rehydrated',
     }, 1)).toMatchObject({ state: 'DEGRADED', converged: false, reason: 'VERIFICATION_FAILED' });
   });
+
+  it('projects SH-02.9 recovery observability without raw payload or PII fields', () => {
+    const convergence = resolveConvergence('FRONTEND_RELOAD_ONCE', {
+      status: 'PASS',
+      probe: 'frontend-runtime-rehydrated',
+      evidenceRef: 'test:observability',
+      evidence: validEvidence(),
+    }, 1);
+
+    const observation = projectRecoveryObservation({
+      findingId: 'finding-001',
+      correlationId: 'corr-001',
+      findingClass: 'FRONTEND_STALE_ASSET',
+      actionId: 'FRONTEND_RELOAD_ONCE',
+      attempt: 1,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'PASS',
+      convergence,
+    });
+
+    expect(observation).toMatchObject({
+      schema: 'self-healing-observability/1.0.0',
+      findingId: 'finding-001',
+      correlationId: 'corr-001',
+      classification: 'FRONTEND_STALE_ASSET',
+      selectedAction: 'FRONTEND_RELOAD_ONCE',
+      actionTier: 'SH-1',
+      verification: {
+        status: 'PASS',
+        probe: 'frontend-runtime-rehydrated',
+        evidencePresent: true,
+        readbackRequired: true,
+        readbackVerified: true,
+      },
+      convergence: { state: 'CONVERGED', converged: true, reason: 'VERIFIED' },
+    });
+    expect(Object.keys(observation)).toEqual([
+      'schema',
+      'findingId',
+      'correlationId',
+      'detectedAt',
+      'classification',
+      'selectedAction',
+      'actionTier',
+      'attempt',
+      'verification',
+      'convergence',
+    ]);
+    expect(JSON.stringify(observation)).not.toContain('source');
+    expect(JSON.stringify(observation)).not.toContain('integrity');
+    expect(JSON.stringify(observation)).not.toContain('evidenceRef');
+  });
+
+  it('fails closed when SH-02.9 observation identity or correlation is unsafe', () => {
+    const convergence = resolveConvergence('OBSERVE_ONLY', {
+      status: 'BLOCKED',
+      probe: 'finding-reobservation',
+    }, 1);
+
+    expect(() => projectRecoveryObservation({
+      findingId: 'user@example.com',
+      correlationId: 'corr-001',
+      findingClass: 'SECURITY_OR_POLICY_BLOCKED',
+      actionId: 'OBSERVE_ONLY',
+      attempt: 1,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'BLOCKED',
+      convergence,
+    })).toThrow('FINDING_ID_UNSAFE_OR_INVALID');
+
+    expect(() => projectRecoveryObservation({
+      findingId: 'finding-002',
+      correlationId: 'corr 002',
+      findingClass: 'SECURITY_OR_POLICY_BLOCKED',
+      actionId: 'OBSERVE_ONLY',
+      attempt: 1,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'BLOCKED',
+      convergence,
+    })).toThrow('CORRELATION_ID_UNSAFE_OR_INVALID');
+  });
+
+  it('fails closed when SH-02.9 observation contradicts policy, budget or verification state', () => {
+    const convergence = resolveConvergence('OBSERVE_ONLY', {
+      status: 'PENDING',
+      probe: 'finding-reobservation',
+    }, 1);
+
+    expect(() => projectRecoveryObservation({
+      findingId: 'finding-003',
+      correlationId: 'corr-003',
+      findingClass: 'FRONTEND_STALE_ASSET',
+      actionId: 'OBSERVE_ONLY',
+      attempt: 2,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'PENDING',
+      convergence,
+    })).toThrow('ATTEMPT_OUTSIDE_BUDGET');
+
+    expect(() => projectRecoveryObservation({
+      findingId: 'finding-004',
+      correlationId: 'corr-004',
+      findingClass: 'SECURITY_OR_POLICY_BLOCKED',
+      actionId: 'FRONTEND_RELOAD_ONCE',
+      attempt: 1,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'PENDING',
+      convergence,
+    })).toThrow('ACTION_NOT_ALLOWED_FOR_FINDING');
+
+    expect(() => projectRecoveryObservation({
+      findingId: 'finding-005',
+      correlationId: 'corr-005',
+      findingClass: 'SECURITY_OR_POLICY_BLOCKED',
+      actionId: 'OBSERVE_ONLY',
+      attempt: 1,
+      detectedAt: '2026-09-22T04:30:00.000Z',
+      verificationStatus: 'PASS',
+      convergence,
+    })).toThrow('VERIFICATION_STATUS_MISMATCH');
+  });
+
 });
