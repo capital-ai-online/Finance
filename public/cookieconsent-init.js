@@ -160,7 +160,10 @@
   installSettingsButton();
 
   if (hasStoredConsentCookie()) {
-    void initializeConsent();
+    void initializeConsent().catch(function () {
+      // Initialization already logged the error; returning users stay fail-closed
+      // without an unhandled rejection affecting the application.
+    });
   } else {
     // A fresh/private visit remains completely independent from the vendor DOM.
     // The GA bridge still receives its fail-closed readiness signal and keeps
