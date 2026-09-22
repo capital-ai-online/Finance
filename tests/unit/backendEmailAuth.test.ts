@@ -37,7 +37,7 @@ describe('OPS-AUTH-EMAIL-01 backend email authentication', () => {
   it('does not reveal account existence through mail initiation endpoints', () => {
     const routes = read('server/routes/backendAuthRoutes.ts');
 
-    expect(routes).toContain('If the address can be registered');
+    expect(routes).toContain('Wenn die Adresse registriert werden kann');
     expect(routes).toContain('Wenn für diese Adresse eine unbestätigte Registrierung existiert');
     expect(routes).toContain('Wenn ein Konto für diese Adresse existiert');
     expect(routes).toContain('emailActionAccepted');
@@ -48,7 +48,7 @@ describe('OPS-AUTH-EMAIL-01 backend email authentication', () => {
     const routes = read('server/routes/backendAuthRoutes.ts');
 
     expect(routes).toContain('token_hash');
-    expect(routes).toContain("type === 'email' || value === 'recovery'");
+    expect(routes).toContain("value === 'email' || value === 'recovery'");
     expect(routes).toContain('supabase.auth.verifyOtp');
     expect(routes).toContain('persistBackendAuthSession(req, res, data.session)');
     expect(routes).not.toContain('access_token=');
