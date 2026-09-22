@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-LANDING-PAGE-ALL-WP-BINDING-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -59,5 +59,8 @@
     "/faq is not inserted into the canonical SEO route set until OPS #1223 preserves the existing route-set equality/security invariant",
     "provider PASS is never inferred from repository state"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority.",
+  "releasedAt": "2026-09-22T03:47:32+02:00",
+  "releaseReason": "Human/CODEOWNER merge of PR #1211 satisfied the release condition; continuation moves to a fresh current-main SEO claim.",
+  "mergeCommitSha": "c01e1096ef0c2595b97daa23e4aca25129b2545c"
 }
