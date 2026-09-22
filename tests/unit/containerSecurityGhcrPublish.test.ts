@@ -27,7 +27,13 @@ describe('GHCR digest publication contract', () => {
   it('publishes the exact scanned image without latest authority', () => {
     expect(workflow).toContain('docker save "capital-ai-security:$SOURCE_SHA"');
     expect(workflow).toContain('docker tag "capital-ai-security:$GITHUB_SHA" "$GHCR_IMAGE:$GITHUB_SHA"');
-    expect(workflow).toContain('test "$pushed_digest" = "$expected_digest"');
+    expect(workflow).toContain("metadata['containerimage.digest']");
+    expect(workflow).toContain('image-config-digest.txt');
+    expect(workflow).toContain("docker image inspect \"capital-ai-security:$GITHUB_SHA\" --format '{{.Id}}'");
+    expect(workflow).toContain('docker buildx imagetools inspect "$GHCR_IMAGE:$GITHUB_SHA"');
+    expect(workflow).toContain('test "$registry_digest" = "$pushed_digest"');
+    expect(workflow).toContain('echo "digest=$registry_digest" >> "$GITHUB_OUTPUT"');
+    expect(workflow).not.toContain('test "$pushed_digest" = "$expected_digest"');
     expect(workflow).not.toContain('$GHCR_IMAGE:latest');
   });
 
