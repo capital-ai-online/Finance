@@ -257,7 +257,7 @@ export interface Aal2Result {
   reason: Aal2DenyReason | 'aal2-verified' | 'aal2-superseded';
 }
 
-export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
+export async function verifyProviderAal2(req: Request): Promise<Aal2Result> {
   if (!isSupabaseConfigured()) {
     return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
   }
@@ -272,37 +272,6 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData?.user) {
       return { verified: false, currentLevel: null, reason: 'invalid-token' };
-    }
-
-    // The diagnostic supersession never bypasses primary identity verification. It only bypasses
-    // the provider AAL2 requirement after the bearer token has resolved to a real Supabase user.
-    // Every bypass is emitted to runtime logs and the IAM audit table so staged reactivation can
-    // be correlated against the original login stall.
-    if (!isAal2EnabledFor('privileged')) {
-      iamLogger.warn('AAL2 diagnostic supersession bypass', {
-        requestId: req.requestId,
-        userId: userData.user.id,
-        supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
-        reactivationStage: AAL2_REACTIVATION_STAGE,
-        surface: 'privileged',
-      });
-      await logIamEvent(
-        userData.user.id,
-        userData.user.id,
-        'aal2.diagnostic_supersession_bypass',
-        null,
-        {
-          supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
-          reactivationStage: AAL2_REACTIVATION_STAGE,
-          surface: 'privileged',
-        },
-      );
-      return {
-        verified: true,
-        userId: userData.user.id,
-        currentLevel: 'superseded',
-        reason: 'aal2-superseded',
-      };
     }
 
     const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(token);
@@ -326,7 +295,62 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
 
     return { verified: true, userId: userData.user.id, currentLevel: 'aal2', reason: 'aal2-verified' };
   } catch (err: any) {
-    iamLogger.error('requireVerifiedAal2 unerwarteter Fehler - fail-closed verweigert', {
+    iamLogger.error('verifyProviderAal2 unerwarteter Fehler - fail-closed verweigert', {
+      requestId: req.requestId,
+      error: err?.message || String(err),
+    });
+    return { verified: false, currentLevel: null, reason: 'internal-error' };
+  }
+}
+
+export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
+  if (isAal2EnabledFor('privileged')) {
+    return verifyProviderAal2(req);
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
+  }
+
+  const token = extractBearerToken(req);
+  if (!token) {
+    return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
+  }
+
+  try {
+    const supabase = getServerSupabase();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return { verified: false, currentLevel: null, reason: 'invalid-token' };
+    }
+
+    iamLogger.warn('AAL2 diagnostic supersession bypass', {
+      requestId: req.requestId,
+      userId: userData.user.id,
+      supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+      reactivationStage: AAL2_REACTIVATION_STAGE,
+      surface: 'privileged',
+    });
+    await logIamEvent(
+      userData.user.id,
+      userData.user.id,
+      'aal2.diagnostic_supersession_bypass',
+      null,
+      {
+        supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+        reactivationStage: AAL2_REACTIVATION_STAGE,
+        surface: 'privileged',
+      },
+    );
+
+    return {
+      verified: true,
+      userId: userData.user.id,
+      currentLevel: 'superseded',
+      reason: 'aal2-superseded',
+    };
+  } catch (err: any) {
+    iamLogger.error('AAL2 diagnostic supersession identity validation failed', {
       requestId: req.requestId,
       error: err?.message || String(err),
     });
