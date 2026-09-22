@@ -110,6 +110,18 @@ describe('CookieConsent stylesheet readiness', () => {
     expect(html).toContain('id="cookieconsent-theme-style"');
   });
 
+  it('keeps a fresh/private first visit non-blocking outside visible consent surfaces', async () => {
+    const r = runtime({ vendorReady: true, themeReady: true });
+    await r.flush();
+
+    expect(r.runCount).toBe(1);
+    expect(r.config?.disablePageInteraction).toBe(false);
+
+    const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
+    expect(theme).toMatch(/#cc-main\s*\{[\s\S]*pointer-events:\s*none;/);
+    expect(theme).toMatch(/#cc-main \.cm,[\s\S]*#cc-main \.pm\s*\{[\s\S]*pointer-events:\s*auto;/);
+  });
+
   it('initializes immediately when both required stylesheets are already ready', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
