@@ -22,7 +22,7 @@ Browser
 Backend
   -> Supabase Google OAuth (PKCE)
 Supabase / Google
-  -> GET /api/auth/callback?code=...
+  -> backend-owned callback (`/api/auth/callback` or marked root compatibility return)
 Backend
   -> exchangeCodeForSession()
   -> HttpOnly cookie session
