@@ -203,6 +203,14 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
 
     const gatePolicy = await readAuthGatePolicy(session);
+
+    // Diagnostic logging is deliberately off the critical login path. The server resolves the
+    // identity/policy again from the bearer token, so this call can be used to correlate each
+    // staged reactivation without trusting browser-supplied policy state.
+    void authFetch('/api/auth/aal2/diagnostic-login', { method: 'POST' }).catch((err) => {
+      console.warn('[Auth][AAL2-DIAGNOSTIC] server checkpoint failed:', err);
+    });
+
     if (gatePolicy.onboardingRequired) {
       setPendingStepUpAssurance(null);
       setPendingOnboardingSession(session);
