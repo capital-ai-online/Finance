@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SOCIAL-P1-PROSODY-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Remediate SOCIAL-P1 Chatterbox German finance prosody against the Human-approved sample-4 reference without creating a second TTS architecture.",
+  "startedAt": "2026-09-22T09:15:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+  "branch": "agent/operations-social-p1-prosody-remediation-20260922",
+  "projectId": "CAPITAL-AI-OPS",
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "priority": "P1",
+  "priorityReason": "Human listening rejected 7/8 benchmark voices as choppy; the bounded runtime remediation is required before rejected P1 audio can be consumed.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SOCIAL-P1-PROSODY-20260922.json",
+    "scripts/operations/socialP1TtsRuntime.py",
+    "scripts/operations/socialP1TtsRuntime.test.py",
+    ".github/workflows/social-p1-asr-evidence.yml",
+    "docs/projects/operations/work-packages/OPS_SOCIAL_P1_PROSODY_REMEDIATION_2026-09-22.md",
+    "docs/projects/operations/evidence/OPS_SOCIAL_P1_PROSODY_REMEDIATION_IMPLEMENTATION_2026-09-22.md"
+  ],
+  "correlation": {
+    "currentMain": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+    "dependency": "Human-merged PR #1236 / SOCIAL-P1-PROSODY-REMEDIATION-20260922",
+    "openPullRequests": [
+      1273,
+      1271,
+      1267
+    ],
+    "overlap": false,
+    "note": "Open PRs touch auth, SH-02.9 work-package, or governance roadmap files; none touches the claimed TTS runtime/workflow/evidence paths. Operations ROADMAP is intentionally not modified while PR #1271 is an active writer. Work was losslessly moved from the initial operations/* branch to this agent/* branch because the canonical pre-create PR workflow accepts only agent/*, claude/*, grok/* or ai/*."
+  },
+  "scopeNote": "Existing Chatterbox/Modal path only. Exactly one new German Chatterbox finance candidate; accepted sample 4 is copied as immutable reference. No English regeneration, no new provider, no credentials/IAM/billing mutation, no Human listening PASS fabrication.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "workItemDE": "SOCIAL-P1 Chatterbox-Prosodie für deutsche Finance-Ausgabe gegen Stimme 4 remediieren",
+  "finalCorrelation": {
+    "currentMain": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+    "openPullRequests": [
+      1271,
+      1275,
+      1276,
+      1273,
+      1267
+    ],
+    "changedFileOverlap": false,
+    "semanticOverlap": false,
+    "productionReadback": {
+      "provider": "render",
+      "service": "Finance",
+      "liveCommitSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
+      "state": "live"
+    },
+    "preCreateProjectLabel": {
+      "name": "project:CAPITAL-AI-OPS",
+      "color": "845CDC",
+      "description": "✈️ Operations · CAPITAL-AI-OPS",
+      "providerReadback": "verified on live Issue #1274"
+    }
+  }
+}
