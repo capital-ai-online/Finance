@@ -1,11 +1,13 @@
 # GROK Post-PR-Merge Continuation Policy
 
+> **Lifecycle:** HISTORICAL / NON-AUTHORIZING / PROVIDER-SPECIFIC PROJECTION. All normative wording below is retained only as historical provenance. Current execution semantics resolve exclusively through `/AGENTS.md@CURRENT_MAIN`; this file cannot instruct Grok, ChatGPT, another agent, CI, merge, release or provider mutation. Productive M10 is `RETIRED / OFF` and no standalone DevelopmentChain/PR policy is current.
+
 **Document ID:** GOV-GROK-POST-MERGE-001  
-**Status:** ACTIVE  
+**Status:** HISTORICAL / NON-AUTHORIZING  
 **Date:** 2026-08-16  
 **Previous:** PROPOSED 2026-08-15  
 **Repository:** `SvenKulessa/Finance`  
-**Authority:**  
+**Historical authority references (non-authorizing):**  
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`  
 - `docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`  
 - `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`  

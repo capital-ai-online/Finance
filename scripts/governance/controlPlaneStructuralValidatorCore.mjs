@@ -64,6 +64,14 @@ const REQUIRED = [
   'scripts/automation/syncReadmeVersions.ts',
   'docs/adr/suspended/ADR-0004-branding-and-panel-removal.md',
   'docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md',
+  'docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md',
+  'docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md',
+  'docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md',
+  'docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md',
+  'docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md',
+  'docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md',
+  'docs/governance/GROK_PR_PROJECT_CONTEXT_TAGGING_POLICY.md',
+  'docs/governance/GROK_GOVERNANCE_AND_COLLABORATION_PROMPT.md',
 ];
 
 for (const file of REQUIRED) assertRequiredFile(file);
@@ -90,6 +98,64 @@ if (errors.length === 0) {
   const packageJson = json('package.json');
   const currentVersion = String(packageJson.version ?? '');
   const currentRoadmap = read('docs/architecture/ROADMAP.md');
+
+  const removedStandalonePolicyPaths = [
+    'docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md',
+    'docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md',
+    'docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md',
+    'docs/governance/GOV_OPS_FOREIGN_PROJECT_EXECUTION_POLICY.md',
+  ];
+  const currentExecutionProjectionPaths = [
+    'docs/architecture/ROADMAP.md',
+    'docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md',
+    'docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md',
+    'docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md',
+    'docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md',
+    'docs/governance/document-registry.json',
+  ];
+  for (const projectionPath of currentExecutionProjectionPaths) {
+    const projection = read(projectionPath);
+    for (const retiredPath of removedStandalonePolicyPaths) {
+      if (projection.includes(retiredPath)) {
+        fail(
+          'CURRENT_PROJECTION_RETIRED_POLICY_REFERENCE',
+          projectionPath + ' must not present retired standalone policy path ' + retiredPath + ' as current execution authority.',
+        );
+      }
+    }
+  }
+
+  if (/PVC-09\.\.11[^\n]*CAPITAL-AI-DATA/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_SUPERSEDED_DATA_OWNER', 'Current-state roadmap must resolve PVC-09..17 to CAPITAL-AI-FINTECH; CAPITAL-AI-DATA is historical only.');
+  }
+  if (!/PVC-09\.\.17[^\n]*FINTECH/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_FINTECH_OWNER_MISSING', 'Current-state roadmap must project CAPITAL-AI-FINTECH ownership for PVC-09..17.');
+  }
+
+  const integratedRoadmap = read('docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md');
+  if (!integratedRoadmap.includes('RETIRED / OFF') || integratedRoadmap.includes('AUTHORIZE_PR_CI = SUSPENDED / OFF')) {
+    fail('INTEGRATED_ROADMAP_M10_STATE_DRIFT', 'Integrated roadmap must project productive M10/AUTHORIZE_PR_CI as RETIRED / OFF.');
+  }
+
+  const historicalProviderProjections = [
+    'docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md',
+    'docs/governance/GROK_PR_PROJECT_CONTEXT_TAGGING_POLICY.md',
+    'docs/governance/GROK_GOVERNANCE_AND_COLLABORATION_PROMPT.md',
+  ];
+  for (const projectionPath of historicalProviderProjections) {
+    const projection = read(projectionPath);
+    if (!projection.includes('HISTORICAL / NON-AUTHORIZING / PROVIDER-SPECIFIC PROJECTION')) {
+      fail('PROVIDER_POLICY_HISTORY_GUARD_MISSING', projectionPath + ' must remain explicitly historical/non-authorizing.');
+    }
+    if (!projection.includes('/AGENTS.md@CURRENT_MAIN')) {
+      fail('PROVIDER_POLICY_TRUST_ROOT_REDIRECT_MISSING', projectionPath + ' must redirect current execution semantics to /AGENTS.md@CURRENT_MAIN.');
+    }
+  }
+
+  const legacyAgentRoadmap = read('docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md');
+  if (!legacyAgentRoadmap.includes('HISTORICAL SNAPSHOT / NON-AUTHORIZING') || !legacyAgentRoadmap.includes('/AGENTS.md@CURRENT_MAIN')) {
+    fail('LEGACY_AGENT_ROADMAP_ACTIVE', 'AI Agent M0-M10 roadmap must remain historical/non-authorizing and point to the current AGENTS trust root.');
+  }
 
   if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(currentVersion)) {
     fail('PLATFORM_VERSION_AUTHORITY_INVALID', `package.json#version must be strict SemVer: ${currentVersion || '<missing>'}`);

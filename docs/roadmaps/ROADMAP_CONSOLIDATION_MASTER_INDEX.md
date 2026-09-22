@@ -4,7 +4,7 @@
 **Status:** `ACTIVE — DERIVED PORTFOLIO INDEX`  
 **Folder-to-PVC mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Trust root:** `/AGENTS.md`  
-**DevelopmentChain current-state authority:** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
+**DevelopmentChain current-state index (non-authorizing):** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
 **Predecessor snapshot:** repository history before the 2026-09-01 single-source consolidation; predecessor blob `7a2c7fd5997bb2406c12bfb0d55cba3ee2a3a2ee`
 
 ## Purpose
