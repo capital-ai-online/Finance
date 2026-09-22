@@ -225,7 +225,7 @@ Human/Owner-Freigabe.
 5. Eine Konfigurationsänderung ist **keine Deployment-Autorisierung**. `render.yaml` hält
    `autoDeployTrigger: off`; die aktuelle Produktions-Promotion erfolgt über verifiziertes
    `main`-CI, Supply-Chain-Attestation, exact-SHA Render Deploy Hook und Post-Deploy-
-   Identitätsprüfung gemäß `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
+   Identitätsprüfung unter `/AGENTS.md@CURRENT_MAIN`; anwendbare Release-/Deployment- und Security-Verträge bleiben fachliche Constraints und erzeugen keine eigene Ausführungs-Authority.
 
 Damit ist die frühere Annahme „10 normale `sync: false`-Variablen + automatischer Render-Redeploy"
 aufgehoben: Client-Secrets und Deployment-Authority folgen inzwischen getrennten kanonischen
