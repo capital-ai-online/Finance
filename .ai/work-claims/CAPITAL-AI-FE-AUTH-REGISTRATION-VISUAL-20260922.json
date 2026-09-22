@@ -45,7 +45,7 @@
     "backendFoundation": "PR #1273 merged email registration/login/recovery backend endpoints.",
     "designSource": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d/src/components/LoginPage.tsx",
     "openWriterOverlap": "No open login/registration/auth PR at branch creation.",
-    "legacyBillingConvergence": "public.users rows were converged to public.subscriptions/stripe.subscriptions while preserving usage_log foreign-key history."
+    "legacyBillingConvergence": "Verified live after mutation: 2 legacy public.users rows, 2 converged, 0 divergent; 46 public.usage_log rows preserved. Enterprise legacy row now mirrors the canonical active subscription/customer; stale GMX Pro/Stripe references were cleared to canonical Free."
   },
   "acceptanceCriteria": [
     "/login visibly exposes Anmelden and Registrieren tabs in the pinned FRONTEND design language.",
