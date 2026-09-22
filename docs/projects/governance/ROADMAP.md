@@ -56,7 +56,7 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 ### Single-writer and protected-blocker rules
 
 - Canonical v1.8 Decision/Evidence drift delegates only to the existing PR Decision Evidence Reconciler; merged PR #1269 also binds missing collapsed Technical Traceability / machine-readable Production-Baseline boundaries to that trusted-main bootstrap path.
-- Markerless/legacy PR-template bootstrap and atomic Production-Baseline repair remain owned by the existing PR Production Baseline Auto-Refresh specialist; this is distinct from v1.7 Decision/Evidence reconciliation.
+- Markerless/legacy PR-template bootstrap and atomic Production-Baseline repair remain owned by the existing PR Production Baseline Auto-Refresh specialist; this is distinct from v1.8 Decision/Evidence reconciliation.
 - Current-State projection baseline drift remains owned by its existing dedicated baseline repair path.
 - Deterministic CI expectation drift is repairable only through an individually registered, evidence-bound repairer.
 - The 45,000-minute GitHub Actions state is a protected blocker and is never an autonomous repair candidate.
