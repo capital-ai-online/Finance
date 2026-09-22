@@ -19,6 +19,7 @@ export const REQUIRED_SH_02_10_SCENARIOS = [
   'API_429',
   'DEPLOYMENT_IDENTITY_MISMATCH',
   'FAILED_EXACT_SHA_REDEPLOY_VERIFICATION',
+  'CURRENT_STATE_PROJECTION_BASELINE_STALE',
   'POLICY_CAPABILITY_BLOCKED',
   'RECOVERY_BUDGET_EXHAUSTION',
 ] as const;
@@ -32,6 +33,7 @@ export type FaultInjectionSurface =
   | 'FRONTEND_MODEL'
   | 'HTTP_MOCK'
   | 'DEPLOYMENT_MODEL'
+  | 'REPOSITORY_MODEL'
   | 'POLICY_MODEL'
   | 'BUDGET_MODEL';
 
@@ -150,6 +152,14 @@ export const SH_02_10_FAULT_MATRIX: readonly FaultInjectionScenario[] = Object.f
     'ESCALATED',
   ),
   scenario(
+    'CURRENT_STATE_PROJECTION_BASELINE_STALE',
+    'Model a stale docs/projects current-state baseline and route it to the single bounded baseline autofix specialist with exact-head readback.',
+    'REPOSITORY_MODEL',
+    'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+    'RECONCILE_REPOSITORY_PROJECTION',
+    'CONVERGED',
+  ),
+  scenario(
     'POLICY_CAPABILITY_BLOCKED',
     'Model a missing external capability and require fail-closed blocking.',
     'POLICY_MODEL',
@@ -171,6 +181,7 @@ export interface FaultInjectionSuiteSnapshot {
   version: typeof SH_02_10_FAULT_SUITE_VERSION;
   scenarioCount: number;
   requiredScenarioCount: number;
+  scenarioIds: FaultInjectionScenarioId[];
   complete: boolean;
   protectedActionsHeld: boolean;
   productionFaultsEnabled: false;
@@ -218,6 +229,7 @@ export function getFaultInjectionSuiteSnapshot(): FaultInjectionSuiteSnapshot {
     version: SH_02_10_FAULT_SUITE_VERSION,
     scenarioCount: SH_02_10_FAULT_MATRIX.length,
     requiredScenarioCount: REQUIRED_SH_02_10_SCENARIOS.length,
+    scenarioIds: SH_02_10_FAULT_MATRIX.map(item => item.id),
     complete: validationErrors.length === 0,
     protectedActionsHeld,
     productionFaultsEnabled: false,
