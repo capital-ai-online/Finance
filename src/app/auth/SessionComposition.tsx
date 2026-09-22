@@ -14,7 +14,7 @@ import {
   type NativeMfaAssuranceLevel,
 } from '../../platform/Security/nativeMfa';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
-import { needsOnboarding as readNeedsOnboarding } from '../../lib/onboarding';
+import { needsOnboarding as readNeedsOnboarding, readAuthGatePolicy } from '../../lib/onboarding';
 import {
   getSessionBootstrapKey,
   isSessionEstablishmentEvent,
@@ -197,29 +197,45 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       throw new Error('[Auth] Supabase ist für die Assurance-Prüfung nicht verfügbar.');
     }
 
-    // Fast path for returning accounts with an enrolled MFA factor. Supabase's AAL check can
-    // determine immediately after the OAuth callback that this session must step up from aal1 to
-    // aal2. In that case the MFA gate is rendered before the profile/onboarding Data-API roundtrip.
-    // The onboarding invariant is rechecked after successful MFA before the session is published.
-    const assurance = await getCurrentAssuranceLevel(supabase);
-    if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
-      setPendingStepUpAssurance(assurance);
-      setPendingStepUpSession(session);
-      setAuthBootstrapPending(false);
-      return;
-    }
-
-    const onboardingRequired = await needsOnboarding(session);
-    if (onboardingRequired) {
+    // Resolve account policy before native-factor choreography. A verified optional factor does
+    // not itself make the normal website login AAL2-mandatory. This keeps the public/Enterprise
+    // session fast for profiles with mfa_required_account=false while preserving the registered
+    // factor for server-enforced privileged Owner/Admin actions.
+    const gatePolicy = await readAuthGatePolicy(session);
+    if (gatePolicy.onboardingRequired) {
       setPendingStepUpAssurance(null);
       setPendingOnboardingSession(session);
       setAuthBootstrapPending(false);
       return;
     }
 
-    setPendingStepUpAssurance(assurance);
-    setPendingStepUpSession(session);
+    if (!gatePolicy.mfaRequiredAccount) {
+      setPendingStepUpAssurance(null);
+      await handleSupabaseSession(session);
+      return;
+    }
+
+    const assurance = await getCurrentAssuranceLevel(supabase);
+    if (assurance.currentLevel === 'aal2') {
+      await handleSupabaseSession(session);
+      return;
+    }
+
+    if (assurance.nextLevel === 'aal2') {
+      setPendingStepUpAssurance(assurance);
+      setPendingStepUpSession(session);
+      setAuthBootstrapPending(false);
+      return;
+    }
+
+    resetAuthProjection();
     setAuthBootstrapPending(false);
+    setAuthError({
+      message:
+        'Für dieses Konto ist MFA verpflichtend, aber Supabase meldet keinen verifizierbaren AAL2-Faktor. Bitte die MFA-Einstellungen prüfen.',
+      code: 'MFA_REQUIRED_FACTOR_MISSING',
+      expectedId: session.user.id,
+    });
   };
 
   const scheduleSessionEstablishment = (session: any) => {
@@ -448,8 +464,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
               return;
             }
 
-            // The fast AAL2 path intentionally skips the pre-MFA profile roundtrip. Revalidate the
-            // onboarding invariant here before exposing an authenticated application session.
+            // Revalidate onboarding after MFA before exposing the authenticated application session.
             const onboardingRequired = await needsOnboarding(liveSession);
             if (onboardingRequired) {
               setPendingOnboardingSession(liveSession);
