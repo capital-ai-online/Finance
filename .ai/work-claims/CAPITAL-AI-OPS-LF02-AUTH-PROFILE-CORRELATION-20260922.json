@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-LF02-AUTH-PROFILE-CORRELATION-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "OPS-LF02-AUTH-PROFILE-CORRELATION — Provider performance, phase-gate and owner-handoff convergence",
+  "startedAt": "2026-09-22T00:26:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d",
+  "branch": "operations/lf02-auth-profile-provider-correlation-20260922",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "priority": "P0",
+  "priorityReason": "Fresh Owner direction requires LF-02 auth/profile integration; OPS must first reconcile runtime/provider readiness and owner-correct FE/SEC handoffs without absorbing foreign implementation authority.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-LF02-AUTH-PROFILE-CORRELATION-20260922.json",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/authLifecycleCorrelation.test.ts",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/OPS_LF02_AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md",
+    "docs/projects/operations/evidence/AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md"
+  ],
+  "externalHandoffs": [
+    "GitHub issue #1237 -> CAPITAL-AI-FE",
+    "GitHub issue #1238 -> CAPITAL-AI-SEC"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge.",
+  "overlapNotes": [
+    "PR #1225 exclusively changes docs/projects/operations/ROADMAP.md; this LF-02 claim intentionally excludes that path."
+  ],
+  "historicalEvidencePreserved": [
+    "docs/projects/operations/work-packages/OPS_AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md",
+    "docs/projects/operations/evidence/AUTH_ROOT_ROUTING_CORRELATION_2026-09-21.md"
+  ]
+}

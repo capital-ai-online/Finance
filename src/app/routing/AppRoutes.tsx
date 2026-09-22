@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Datenschutz, FaqPage, ImpressumAgb, LandingPage, LegalPageShell, LoginPage } from '../../features/public/ui';
+import { LandingPage, LegalAndFaqPages, LoginPage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -131,32 +131,13 @@ export function AppRoutes({
     );
   };
 
-  if (currentPath === '/datenschutz') {
-    return (
-      <LegalPageShell activeRoute="/datenschutz">
-        <Datenschutz />
-      </LegalPageShell>
-    );
-  }
-
-  if (currentPath === '/impressum') {
-    return (
-      <LegalPageShell activeRoute="/impressum">
-        <ImpressumAgb />
-      </LegalPageShell>
-    );
-  }
-
-  if (currentPath === '/agb') {
-    return (
-      <LegalPageShell activeRoute="/agb">
-        <ImpressumAgb initialTab="agb" />
-      </LegalPageShell>
-    );
-  }
-
-  if (currentPath === '/faq') {
-    return <FaqPage />;
+  if (
+    currentPath === '/datenschutz' ||
+    currentPath === '/impressum' ||
+    currentPath === '/agb' ||
+    currentPath === '/faq'
+  ) {
+    return <LegalAndFaqPages route={currentPath} />;
   }
 
   if (currentPath === '/learning-platform') {

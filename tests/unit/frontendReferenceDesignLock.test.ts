@@ -29,7 +29,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
     sourcePath: string;
     targetPath: string;
     blobSha: string;
-    mode: 'EXACT_GIT_BLOB' | 'FINANCE_BRANDING_ADAPTER' | 'FINANCE_COMPOSITION_ADAPTER';
+    mode: 'EXACT_GIT_BLOB' | 'FINANCE_BRANDING_ADAPTER' | 'FINANCE_COMPOSITION_ADAPTER' | 'FINANCE_PRESENTATION_ADAPTER';
   }>;
 };
 
@@ -121,11 +121,21 @@ describe('FRONTEND reference design lock', () => {
       policy: 'UPSTREAM_PRESENTATION_COMPOSITION_WITH_FINANCE_HOST_ROUTING',
     });
     expect(manifest.hostPresentationAdapters.map((entry) => entry.sourcePath)).toEqual(
-      expect.arrayContaining(['src/components/LoginPage.tsx', 'src/components/LegalAndFaqPages.tsx']),
+      expect.arrayContaining(['src/components/Header.tsx', 'src/components/LoginPage.tsx', 'src/components/LegalAndFaqPages.tsx']),
     );
 
+    const headerEntry = manifest.entries.find((entry) => entry.sourcePath === 'src/components/Header.tsx');
+    expect(headerEntry?.mode).toBe('FINANCE_PRESENTATION_ADAPTER');
+    const header = fs.readFileSync(path.join(root, 'src/features/public/ui/frontend-port/components/Header.tsx'), 'utf8');
+    expect(header).toContain('System Online');
+    expect(header).not.toContain('System v6.0 Online');
+    expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
+
     const app = fs.readFileSync(path.join(root, 'src/features/public/ui/frontend-port/ReferenceApp.tsx'), 'utf8');
-    expect(app).toContain("const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')");
+    expect(app).toContain("const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)'");
+    expect(app).toContain("type LandingViewMode = 'mockup' | 'fullscreen'");
+    expect(app).toContain('const [viewMode, setViewMode] = useState<LandingViewMode>(resolveViewportViewMode)');
+    expect(app).toContain("setViewMode(matches ? 'fullscreen' : 'mockup')");
     expect(app).toContain('<Header');
     expect(app).toContain('<Hero');
     expect(app).toContain('<KeyPillars');
