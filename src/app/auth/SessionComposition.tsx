@@ -8,6 +8,11 @@ import { supabase } from '../../supabaseClient';
 import { LoginStepUpGate } from '../../components/LoginStepUpGate';
 import { RegistrationCompletionGate } from '../../components/RegistrationCompletionGate';
 import { authFetch } from '../../lib/authFetch';
+import { isSubscriptionTier } from '../../lib/subscriptionReadback';
+import {
+  getCurrentAssuranceLevel,
+  type NativeMfaAssuranceLevel,
+} from '../../platform/Security/nativeMfa';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
 import { needsOnboarding as readNeedsOnboarding } from '../../lib/onboarding';
 import {
@@ -53,6 +58,8 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
   const [authError, setAuthError] = useState<AuthErrorState | null>(null);
   const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
+  const [pendingStepUpAssurance, setPendingStepUpAssurance] =
+    useState<NativeMfaAssuranceLevel | null>(null);
   const [pendingOnboardingSession, setPendingOnboardingSession] = useState<any | null>(null);
   const [sessionEstablishmentCandidate, setSessionEstablishmentCandidate] = useState<{
     key: string;
@@ -73,6 +80,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     sessionBootstrapKeyRef.current = null;
     setSessionEstablishmentCandidate(null);
     setPendingStepUpSession(null);
+    setPendingStepUpAssurance(null);
     setPendingOnboardingSession(null);
     updateUserSession(null);
   };
@@ -101,53 +109,82 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       email.split('@')[0] ||
       'User';
 
+    // Do not publish a provisional "Free" session. The authenticated server readback is the
+    // subscription authority and already resolves the principal from the live Supabase bearer.
+    // This prevents paid/owner accounts from briefly (or permanently, after a failed enrichment)
+    // appearing as Free after OAuth + MFA.
+    let res: Response;
+    try {
+      res = await authFetch('/api/stripe/user-subscription');
+    } catch (err) {
+      console.error('[Auth] Subscription readback failed:', err);
+      resetAuthProjection();
+      setAuthBootstrapPending(false);
+      setAuthError({
+        message:
+          'Der Abonnementstatus konnte nicht sicher mit der aktiven Sitzung synchronisiert werden. Bitte erneut versuchen.',
+        code: 'SUBSCRIPTION_READBACK_FAILED',
+        expectedId: user.id,
+      });
+      return;
+    }
+
+    if (!res.ok) {
+      console.error('[Auth] Subscription readback returned a non-success status:', res.status);
+      resetAuthProjection();
+      setAuthBootstrapPending(false);
+      setAuthError({
+        message:
+          'Der Abonnementstatus konnte nicht sicher mit der aktiven Sitzung synchronisiert werden. Bitte erneut versuchen.',
+        code: 'SUBSCRIPTION_READBACK_FAILED',
+        expectedId: user.id,
+      });
+      return;
+    }
+
+    const data = await res.json();
+    if (data && data.userId && data.userId !== user.id) {
+      console.error(
+        'CRITICAL SECURITY MISMATCH: Expected User ID',
+        user.id,
+        'but received',
+        data.userId,
+      );
+      resetAuthProjection();
+      setAuthBootstrapPending(false);
+      setAuthError({
+        message:
+          'Sicherheits-Fehler: Es wurde eine Diskrepanz zwischen Ihrer lokalen Benutzer-ID und der Server-ID festgestellt. Um Ihre Daten zu schützen, wurde der Zugriff vorübergehend gesperrt.',
+        code: 'IDENTITY_MISMATCH_DETECTED',
+        expectedId: user.id,
+        receivedId: data.userId,
+      });
+      return;
+    }
+
+    if (!isSubscriptionTier(data?.subscriptionTier)) {
+      console.error('[Auth] Subscription readback returned an invalid tier.');
+      resetAuthProjection();
+      setAuthBootstrapPending(false);
+      setAuthError({
+        message:
+          'Der Abonnementstatus konnte nicht eindeutig verifiziert werden. Bitte erneut versuchen.',
+        code: 'SUBSCRIPTION_READBACK_FAILED',
+        expectedId: user.id,
+      });
+      return;
+    }
+
     const baseSession: UserSession = {
       type: 'registered',
       name,
       email,
-      subscriptionTier: 'Free',
+      subscriptionTier: data.subscriptionTier,
       id: user.id,
     };
     updateUserSession(baseSession);
     setAuthBootstrapPending(false);
     setJustLoggedOut(false);
-
-    // Entitlement enrichment is deliberately detached from the render/auth bootstrap path.
-    void authFetch('/api/stripe/user-subscription')
-      .then(async (res) => {
-        if (res.status === 401 || !res.ok) return;
-
-        const data = await res.json();
-        if (data && data.userId && data.userId !== user.id) {
-          console.error(
-            'CRITICAL SECURITY MISMATCH: Expected User ID',
-            user.id,
-            'but received',
-            data.userId,
-          );
-          resetAuthProjection();
-          setAuthBootstrapPending(false);
-          setAuthError({
-            message:
-              'Sicherheits-Fehler: Es wurde eine Diskrepanz zwischen Ihrer lokalen Benutzer-ID und der Server-ID festgestellt. Um Ihre Daten zu schützen, wurde der Zugriff vorübergehend gesperrt.',
-            code: 'IDENTITY_MISMATCH_DETECTED',
-            expectedId: user.id,
-            receivedId: data.userId,
-          });
-          return;
-        }
-
-        const tier: SubscriptionTier = data?.subscriptionTier || 'Free';
-        setUserSession((current) => {
-          if (!current || current.type !== 'registered' || current.id !== user.id) return current;
-          const next = { ...current, subscriptionTier: tier };
-          localStorage.setItem('mcc_user_session', JSON.stringify(next));
-          return next;
-        });
-      })
-      .catch((err) => {
-        console.warn('[Auth] Subscription enrichment failed; keeping least-privileged Free tier:', err);
-      });
   };
 
   const establishSession = async (session: any) => {
@@ -156,13 +193,31 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       return;
     }
 
+    if (!supabase) {
+      throw new Error('[Auth] Supabase ist für die Assurance-Prüfung nicht verfügbar.');
+    }
+
+    // Fast path for returning accounts with an enrolled MFA factor. Supabase's AAL check can
+    // determine immediately after the OAuth callback that this session must step up from aal1 to
+    // aal2. In that case the MFA gate is rendered before the profile/onboarding Data-API roundtrip.
+    // The onboarding invariant is rechecked after successful MFA before the session is published.
+    const assurance = await getCurrentAssuranceLevel(supabase);
+    if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
+      setPendingStepUpAssurance(assurance);
+      setPendingStepUpSession(session);
+      setAuthBootstrapPending(false);
+      return;
+    }
+
     const onboardingRequired = await needsOnboarding(session);
     if (onboardingRequired) {
+      setPendingStepUpAssurance(null);
       setPendingOnboardingSession(session);
       setAuthBootstrapPending(false);
       return;
     }
 
+    setPendingStepUpAssurance(assurance);
     setPendingStepUpSession(session);
     setAuthBootstrapPending(false);
   };
@@ -259,6 +314,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       sessionBootstrapKeyRef.current = null;
       updateUserSession(null);
       setPendingStepUpSession(null);
+      setPendingStepUpAssurance(null);
       setPendingOnboardingSession(null);
       setAuthBootstrapPending(false);
     };
@@ -327,6 +383,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         onComplete={async () => {
           const session = pendingOnboardingSession;
           setPendingOnboardingSession(null);
+          setPendingStepUpAssurance(null);
           setPendingStepUpSession(session);
         }}
         onAbort={async () => {
@@ -341,10 +398,12 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     return (
       <LoginStepUpGate
         session={pendingStepUpSession}
+        initialAssurance={pendingStepUpAssurance}
         onVerified={async () => {
           const verifiedSession = pendingStepUpSession;
           setAuthBootstrapPending(true);
           setPendingStepUpSession(null);
+          setPendingStepUpAssurance(null);
 
           if (!verifiedSession?.user?.id || !supabase) {
             resetAuthProjection();
@@ -388,6 +447,15 @@ export function SessionComposition({ children }: SessionCompositionProps) {
               return;
             }
 
+            // The fast AAL2 path intentionally skips the pre-MFA profile roundtrip. Revalidate the
+            // onboarding invariant here before exposing an authenticated application session.
+            const onboardingRequired = await needsOnboarding(liveSession);
+            if (onboardingRequired) {
+              setPendingOnboardingSession(liveSession);
+              setAuthBootstrapPending(false);
+              return;
+            }
+
             await handleSupabaseSession(liveSession);
           } catch (err) {
             console.error('[Auth] Post-MFA session handoff failed:', err);
@@ -403,6 +471,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         }}
         onAbort={async () => {
           setPendingStepUpSession(null);
+          setPendingStepUpAssurance(null);
           await handleLogout();
         }}
       />
