@@ -13,6 +13,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
   canonicalLanding: string;
   compositionAdapter: { sourcePath: string; runtimeTarget: string; policy: string };
   hostPresentationAdapters: Array<{ sourcePath: string; runtimeTarget: string; authority: string }>;
+  deferredSourceArtifacts?: Array<{ sourcePath: string; reason: string }>;
   componentInventory: string[];
   brandingAdapter: {
     sourcePath: string;
@@ -43,14 +44,14 @@ function gitBlobSha(buffer: Buffer): string {
 describe('FRONTEND reference design lock', () => {
   it('pins the canonical landing design authority to the current selected FRONTEND commit', () => {
     expect(manifest.sourceRepository).toBe('SvenKulessa/FRONTEND');
-    expect(manifest.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(manifest.sourceTree).toBe('ddd6f578e1c95f98e100978f3841f1627807b6ad');
+    expect(manifest.sourceCommit).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
+    expect(manifest.sourceTree).toBe('41afaf9797754efc760af682b1d1c2ecf67e49ef');
     expect(manifest.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
 
     const landing = fs.readFileSync(path.join(root, manifest.canonicalLanding), 'utf8');
     expect(landing).toContain("import ReferenceApp from './frontend-port/ReferenceApp'");
     expect(landing).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
-    expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(landing).toContain('data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"');
   });
 
   it('contains every graphical component from the pinned source component directory', () => {
@@ -69,6 +70,7 @@ describe('FRONTEND reference design lock', () => {
       'Hero.tsx',
       'KeyPillars.tsx',
       'MarketOverview.tsx',
+      'MarketVocabularyModal.tsx',
       'ModuleDetailModal.tsx',
       'ProductTourModal.tsx',
       'StatusBar.tsx',
@@ -127,7 +129,7 @@ describe('FRONTEND reference design lock', () => {
     const headerEntry = manifest.entries.find((entry) => entry.sourcePath === 'src/components/Header.tsx');
     expect(headerEntry?.mode).toBe('FINANCE_PRESENTATION_ADAPTER');
     const header = fs.readFileSync(path.join(root, 'src/features/public/ui/frontend-port/components/Header.tsx'), 'utf8');
-    expect(header).toContain('System Online');
+    expect(header).not.toContain('System Online');
     expect(header).not.toContain('System v6.0 Online');
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
 
@@ -149,6 +151,31 @@ describe('FRONTEND reference design lock', () => {
     expect(app).toContain('<AllMarketsModal');
     expect(app).toContain('<SubclassDetailModal');
     expect(app).toContain("window.location.assign('/login')");
+    expect(app).toContain("window.location.assign('/vocabulary')");
     expect(fs.existsSync(path.join(root, 'src/features/public/ui/frontend-port/FrontendLandingExperience.tsx'))).toBe(false);
+  });
+
+  it('adapts the upstream Vocabulary surface to the canonical ESS-0017 registry and defers authority-bearing fixtures', () => {
+    const vocabularyEntry = manifest.entries.find(
+      (entry) => entry.sourcePath === 'src/components/MarketVocabularyModal.tsx',
+    );
+    expect(vocabularyEntry?.mode).toBe('FINANCE_PRESENTATION_ADAPTER');
+
+    const vocabulary = fs.readFileSync(
+      path.join(root, 'src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx'),
+      'utf8',
+    );
+    expect(vocabulary).toContain('LearningVocabulary');
+    expect(vocabulary).toContain('data-vocabulary-authority="ESS-0017"');
+    expect(vocabulary).not.toContain('vocabularyData');
+
+    expect(manifest.deferredSourceArtifacts?.map((entry) => entry.sourcePath)).toEqual(
+      expect.arrayContaining([
+        'src/components/KrakenReferralBanner.tsx',
+        'src/data/vocabularyData.ts',
+        'src/data/assets/cryptoAssets.ts',
+        'src/data/assets/stockAssets.ts',
+      ]),
+    );
   });
 });
