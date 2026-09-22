@@ -14,8 +14,8 @@
 
 Dieses Runbook konkretisiert bestehende Authority; es erzeugt keine neue:
 
-- `/AGENTS.md` — `AUTH-GOV-AGENT-TRUST-ROOT`;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` — `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`;
+- `/AGENTS.md@CURRENT_MAIN` — `AUTH-GOV-AGENT-TRUST-ROOT`;
+- `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION` — historical traceability alias resolving exclusively to `/AGENTS.md@CURRENT_MAIN`; no standalone DevelopmentChain execution policy is active;
 - `docs/architecture/adr/ADR-0013-server-composition-root-and-modular-bootstrap.md` — aktuelle Server-Composition-Grenze;
 - `docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md` — CSP-Rollout-/Response-Grenze;
 - aktuelle Render-Promotion-Architektur: Render native Auto Deploy bleibt OFF; verifizierter `main`-CI-Pfad ist Deployment-Authority.
