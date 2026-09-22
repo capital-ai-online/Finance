@@ -36,11 +36,27 @@ describe('SessionComposition zero-blocking auth shell', () => {
     expect(source).toContain('void establishSession(candidate.session)');
   });
 
-  it('resolves persisted Supabase state directly and keeps subscription enrichment off the render path', () => {
+  it('resolves persisted Supabase state directly and publishes only an authoritative subscription tier', () => {
     expect(source).toContain('supabase.auth.getSession()');
-    expect(source).toContain("subscriptionTier: 'Free'");
-    expect(source).toContain("void authFetch('/api/stripe/user-subscription')");
+    expect(source).toContain("res = await authFetch('/api/stripe/user-subscription')");
+    expect(source).toContain('isSubscriptionTier(data?.subscriptionTier)');
+    expect(source).toContain('subscriptionTier: data.subscriptionTier');
+    expect(source).not.toContain("subscriptionTier: 'Free'");
+    expect(source).not.toContain("void authFetch('/api/stripe/user-subscription')");
     expect(source).not.toContain("'subscription handoff'");
+  });
+
+  it('takes the returning-user AAL2 fast path before the onboarding profile roundtrip', () => {
+    const establishStart = source.indexOf('const establishSession = async');
+    const assuranceIndex = source.indexOf('const assurance = await getCurrentAssuranceLevel(supabase)', establishStart);
+    const fastPathIndex = source.indexOf("assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'", assuranceIndex);
+    const onboardingIndex = source.indexOf('const onboardingRequired = await needsOnboarding(session)', fastPathIndex);
+
+    expect(establishStart).toBeGreaterThan(-1);
+    expect(assuranceIndex).toBeGreaterThan(establishStart);
+    expect(fastPathIndex).toBeGreaterThan(assuranceIndex);
+    expect(onboardingIndex).toBeGreaterThan(fastPathIndex);
+    expect(source).toContain('setPendingStepUpAssurance(assurance)');
   });
 
   it('keeps failures fail-closed without timer-based recovery', () => {
