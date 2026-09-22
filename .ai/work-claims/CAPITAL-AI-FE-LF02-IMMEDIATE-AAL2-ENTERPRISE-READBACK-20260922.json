@@ -54,6 +54,6 @@
     "Human/CODEOWNER merge remains required."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
-  "releasedAt": "2026-09-22T05:14:00+02:00",
-  "releaseReason": "Merged in PR #1255 and superseded by Owner-directed SEC-AUTH-DIAG-AAL2-01 diagnostic supersession."
+  "releasedAt": "2026-09-22T05:18:00+02:00",
+  "releaseReason": "Merged via PR #1255 into main@ed008c42b107440c71ccf9bf81f98c5dabcb1ea6; follow-up diagnosis is tracked under SEC-AUTH-DIAG-AAL2-01."
 }
