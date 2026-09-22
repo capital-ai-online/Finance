@@ -24,6 +24,7 @@ export const FINDING_CLASSES = [
   'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
   'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
   'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+  'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
   'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
   'SECURITY_OR_POLICY_BLOCKED',
 ] as const;
@@ -41,6 +42,7 @@ export type RemediationActionId =
   | 'QUARANTINE_WORK_ITEM'
   | 'RECONCILE_REPOSITORY_PROJECTION'
   | 'RECONCILE_PR_DECISION_EVIDENCE'
+  | 'VERIFY_ISSUE_PROJECT_DISPATCH'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
   | 'PROTECTED_ROLLBACK_RESTORE';
@@ -151,6 +153,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'ESCALATED',
     description: 'Delegate canonical v1.7 Decision/Evidence projection drift to the existing PR Decision Evidence Reconciler; no second PR-body writer is created.',
   },
+  VERIFY_ISSUE_PROJECT_DISPATCH: {
+    id: 'VERIFY_ISSUE_PROJECT_DISPATCH',
+    tier: 'SH-0',
+    activation: 'ENABLED',
+    idempotencyClass: 'READ_ONLY',
+    blastRadius: 'OBSERVATION',
+    requiredCapability: null,
+    killSwitch: 'self-healing.issue-project-dispatch',
+    verificationProbe: 'issue-open-project-label-routing-generation-readback',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 5_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Verify GOV issue-routing evidence against the unchanged routing generation, open Issue state and exact canonical project-label provider readback; Issue content never grants execution authority.',
+  },
   RUNTIME_PROCESS_RECYCLE: {
     id: 'RUNTIME_PROCESS_RECYCLE',
     tier: 'SH-2',
@@ -219,6 +234,11 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
     'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
     'RECONCILE_PR_DECISION_EVIDENCE',
     ['RECONCILE_PR_DECISION_EVIDENCE', 'OBSERVE_ONLY'],
+  ),
+  REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT: policy(
+    'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
+    'VERIFY_ISSUE_PROJECT_DISPATCH',
+    ['VERIFY_ISSUE_PROJECT_DISPATCH', 'OBSERVE_ONLY'],
   ),
   PROTECTED_GITHUB_ACTIONS_COST_BLOCKER: policy(
     'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',

@@ -15,9 +15,10 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@53c38dbeaf85262ed1784ce3458d61b54f6da3bb`  
-**Current coordination slice:** `SH-02.7` exact-SHA runtime recovery capability implementation on `agent/operations-sh02-7-exact-sha-runtime-recovery-20260921`  
-**Next functional slice:** `SH-02.7` — Exact-SHA runtime recovery  
+**Current implementation baseline:** `main@4a095d7e267b284ed4456750ad031457a2ef9a0a`  
+**SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
+**Current coordination slice:** `SH-02.9A` — Issue Intake & Project Dispatch integration on `agent/operations-sh02-9a-issue-dispatch-20260922`  
+**Next functional slice:** `SH-02.9` — Observability/SLO/incident convergence  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -42,9 +43,10 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.4 | Backend dependency resilience convergence | affected Primary Owners + OPS runtime | 02.3 | retry/circuit/LKG semantics owner-correct; side effects require idempotency | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1136 / ACTIVATION_HELD |
 | SH-02.5 | Worker/job recovery | OPS / PVC-02,08 | 02.3 | stalled-worker detection, lease/idempotency, bounded retry, quarantine evidence | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1141 / GENERIC_ACTION_HELD |
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1161 |
-| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IN_PROGRESS / CAPABILITY_IMPLEMENTED / ACTIVATION_HELD / HOSTED_VALIDATION_PENDING |
+| SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IMPLEMENTED_ON_MAIN via PR #1187 / PROTECTED ACTIVATION REMAINS HELD |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
-| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | QUEUED |
+| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IN_PROGRESS — SH-02.9A ISSUE INTAKE INTEGRATION |
+| SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING |
 | SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED |
 | SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | QUEUED |
 
