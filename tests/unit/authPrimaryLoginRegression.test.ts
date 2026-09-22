@@ -133,12 +133,15 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain('Stattdessen Authenticator-App verwenden');
   });
 
-  it('routes email/password and Google-created sessions through the existing onboarding and assurance gates', () => {
+  it('routes Google-created sessions through onboarding and account-scoped login MFA policy', () => {
     expect(registrationCompletionGate).toContain('E-Mail/Passwort- UND');
     expect(registrationCompletionGate).toContain('Google-OAuth-Konten');
+    expect(sessionComposition).toContain('const gatePolicy = await readAuthGatePolicy(session)');
+    expect(sessionComposition).toContain('if (gatePolicy.onboardingRequired)');
+    expect(sessionComposition).toContain('if (!gatePolicy.mfaRequiredAccount)');
+    expect(sessionComposition).toContain('await handleSupabaseSession(session)');
     expect(sessionComposition).toContain('const assurance = await getCurrentAssuranceLevel(supabase)');
-    expect(sessionComposition).toContain("assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'");
-    expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(session)');
+    expect(sessionComposition).toContain("if (assurance.nextLevel === 'aal2')");
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
     expect(sessionComposition).toContain('setPendingStepUpSession(session)');
     expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(liveSession)');
@@ -185,7 +188,7 @@ describe('website primary login regression boundary', () => {
     expect(getSessionBootstrapKey({ user: { id: 'anon', is_anonymous: true } })).toBe('');
   });
 
-  it('keeps the application shell interactive while preserving authenticated onboarding/AAL gates', () => {
+  it('keeps the application shell interactive while preserving required onboarding/AAL gates', () => {
     expect(sessionComposition).not.toContain('const [loading, setLoading]');
     expect(sessionComposition).not.toContain('Lade Sicherheits-Modul...');
     expect(sessionComposition).toContain('if (pendingOnboardingSession)');
