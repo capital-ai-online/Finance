@@ -4,7 +4,7 @@
 **PVC:** cross-cutting; no productive PVC  
 **Owner:** CAPITAL-AI-FE  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Baseline:** `main@4d8c6ee4797e763a4c6a006eff17d34a793c3a49`  
+**Baseline:** `main@1b022308c1fbabbca23b6cf6b829edbea0dddbd5`  
 **Priority:** P0
 
 ## Problem
@@ -30,3 +30,11 @@ The owner-correct CAPITAL-AI-OPS companion slice validates and forwards the toke
 ## Exit evidence
 
 Static/focused tests verify fresh token acquisition and payload binding for every protected form action; Human/CODEOWNER merge remains required.
+
+
+## Reconciliation 2026-09-22
+
+- PR #1282 backend CAPTCHA contract is merged and present in CURRENT_MAIN.
+- PR #1280 frontend vocabulary/source-lock changes are inherited from CURRENT_MAIN and preserved.
+- PR #1281 registration legal-link behavior is folded into this slice: AGB and Datenschutz open with `target="_blank"` and `rel="noopener noreferrer"`.
+- The consolidated Exact Head is the only remaining LoginPage writer after #1281 supersession.

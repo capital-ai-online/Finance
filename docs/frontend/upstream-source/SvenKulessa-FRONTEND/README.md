@@ -1,6 +1,6 @@
 # Mirrored FRONTEND presentation architecture
 
-Pinned presentation source: `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d`.
+Pinned presentation source: `SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3`.
 
 This snapshot contains the current allowlisted graphical architecture, including the dedicated login design, legal/FAQ presentation surface, robust public-route normalization, hierarchical asset-class/subclass navigation components, and the existing visual assets.
 
@@ -15,3 +15,7 @@ This snapshot contains the current allowlisted graphical architecture, including
 - Upstream Analytics/SEO runtime code is not promoted by this presentation sync. Finance keeps its existing consent, analytics, SEO, auth, security and compliance controls.
 
 Automatic runtime promotion remains disabled. Productive binding is performed only through bounded Finance adapters with exact-head validation and owner-correct handovers.
+
+## 2026-09-22 vocabulary delta
+
+The pinned source now includes the graphical Market Vocabulary surface and Kraken referral banner. The snapshot is inert evidence only: productive Vocabulary content remains sourced from Finance ESS-0017 via `LearningVocabulary`; the upstream `src/data/vocabularyData.ts` and expanded asset fixture files are not promoted. The Kraken referral surface remains blocked from productive promotion pending CAPITAL-AI-COMP review.

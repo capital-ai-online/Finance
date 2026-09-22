@@ -2,8 +2,8 @@
   "schemaVersion": "1.2.0",
   "sourceRepository": "SvenKulessa/FRONTEND",
   "sourceBranch": "main",
-  "sourceCommit": "f2a101330d74420c373f0ec56fa58caac53d741d",
-  "sourceTree": "ddd6f578e1c95f98e100978f3841f1627807b6ad",
+  "sourceCommit": "cbc558019ae6785f44079fe6fca3403460774df3",
+  "sourceTree": "41afaf9797754efc760af682b1d1c2ecf67e49ef",
   "lockMode": "EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS",
   "canonicalLanding": "src/features/public/ui/LandingPage.tsx",
   "componentInventory": [
@@ -17,6 +17,7 @@
     "Hero.tsx",
     "KeyPillars.tsx",
     "MarketOverview.tsx",
+    "MarketVocabularyModal.tsx",
     "ModuleDetailModal.tsx",
     "ProductTourModal.tsx",
     "StatusBar.tsx",
@@ -26,8 +27,32 @@
     {
       "sourcePath": "src/App.tsx",
       "targetPath": "src/features/public/ui/frontend-port/ReferenceApp.tsx",
-      "blobSha": "f090d0c94ec69a3546744385d0a18af0cd762768",
+      "blobSha": "29189a37e9778ace6e8aac0553f38d400faf1d31",
       "mode": "FINANCE_COMPOSITION_ADAPTER"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
+      "blobSha": "d8f075aacfe55d1fc6abf4b8e00b920f02cc4ceb",
+      "mode": "EXACT_GIT_BLOB"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_full_logo_1789997869885.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_full_logo_1789997869885.jpg",
+      "blobSha": "7045c96fbc706ed0becc3be0737d6c46e3a89d13",
+      "mode": "EXACT_GIT_BLOB"
+    },
+    {
+      "sourcePath": "src/assets/images/capital_ai_wide_banner_1789999064950.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_wide_banner_1789999064950.jpg",
+      "blobSha": "8db4a4da0f87a703c4bd3c1c2d165f9e362d8350",
+      "mode": "EXACT_GIT_BLOB"
+    },
+    {
+      "sourcePath": "src/assets/images/glowing_earth_nodes_1789997454893.jpg",
+      "targetPath": "src/features/public/ui/frontend-port/assets/images/glowing_earth_nodes_1789997454893.jpg",
+      "blobSha": "9bd051fcbbf1bf30d38a98795638c7cf80c84ac4",
+      "mode": "EXACT_GIT_BLOB"
     },
     {
       "sourcePath": "src/components/AllMarketsModal.tsx",
@@ -68,7 +93,7 @@
     {
       "sourcePath": "src/components/Header.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/Header.tsx",
-      "blobSha": "e6f3d75e0bcba1c362ad0b1b0b0c340686da5be1",
+      "blobSha": "71443f436ab0db3d22a279b47e07b41e19dc57f6",
       "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
@@ -90,9 +115,15 @@
       "mode": "EXACT_GIT_BLOB"
     },
     {
+      "sourcePath": "src/components/MarketVocabularyModal.tsx",
+      "targetPath": "src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx",
+      "blobSha": "08624dd693aebcdb4344e22594b5290f15d2f224",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
+    },
+    {
       "sourcePath": "src/components/ModuleDetailModal.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/ModuleDetailModal.tsx",
-      "blobSha": "50ac040bc3bdad2c97da665557816393769fee71",
+      "blobSha": "e0d5362371fa319f423fb11071a2577e6a1e3795",
       "mode": "EXACT_GIT_BLOB"
     },
     {
@@ -116,43 +147,19 @@
     {
       "sourcePath": "src/data/mockData.ts",
       "targetPath": "src/features/public/ui/frontend-port/data/mockData.ts",
-      "blobSha": "7376328236a371681794f08fb0ec24185d6c81dd",
+      "blobSha": "6be88c70c3ea1b29d6eba23df889bbb0933f8dec",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
+    },
+    {
+      "sourcePath": "src/index.css",
+      "targetPath": "src/features/public/ui/frontend-port/source-index.css",
+      "blobSha": "b2fa4526c5f6ac5bcfbbc2eb815f3bcb2d57fc51",
       "mode": "EXACT_GIT_BLOB"
     },
     {
       "sourcePath": "src/types.ts",
       "targetPath": "src/features/public/ui/frontend-port/types.ts",
       "blobSha": "61a544a92ced49f97b7ba8f778c67b03e1d82c13",
-      "mode": "EXACT_GIT_BLOB"
-    },
-    {
-      "sourcePath": "src/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
-      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
-      "blobSha": "d8f075aacfe55d1fc6abf4b8e00b920f02cc4ceb",
-      "mode": "EXACT_GIT_BLOB"
-    },
-    {
-      "sourcePath": "src/assets/images/capital_ai_full_logo_1789997869885.jpg",
-      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_full_logo_1789997869885.jpg",
-      "blobSha": "7045c96fbc706ed0becc3be0737d6c46e3a89d13",
-      "mode": "EXACT_GIT_BLOB"
-    },
-    {
-      "sourcePath": "src/assets/images/capital_ai_wide_banner_1789999064950.jpg",
-      "targetPath": "src/features/public/ui/frontend-port/assets/images/capital_ai_wide_banner_1789999064950.jpg",
-      "blobSha": "8db4a4da0f87a703c4bd3c1c2d165f9e362d8350",
-      "mode": "EXACT_GIT_BLOB"
-    },
-    {
-      "sourcePath": "src/assets/images/glowing_earth_nodes_1789997454893.jpg",
-      "targetPath": "src/features/public/ui/frontend-port/assets/images/glowing_earth_nodes_1789997454893.jpg",
-      "blobSha": "9bd051fcbbf1bf30d38a98795638c7cf80c84ac4",
-      "mode": "EXACT_GIT_BLOB"
-    },
-    {
-      "sourcePath": "src/index.css",
-      "targetPath": "src/features/public/ui/frontend-port/source-index.css",
-      "blobSha": "b2fa4526c5f6ac5bcfbbc2eb815f3bcb2d57fc51",
       "mode": "EXACT_GIT_BLOB"
     }
   ],
@@ -196,11 +203,51 @@
       "sourcePath": "src/components/LegalAndFaqPages.tsx",
       "runtimeTarget": "src/features/public/ui/LegalAndFaqPages.tsx",
       "authority": "FRONTEND design is canonical; CAPITAL-AI-COMP supplies productive legal/FAQ content only"
+    },
+    {
+      "sourcePath": "src/components/MarketVocabularyModal.tsx",
+      "runtimeTarget": "src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx",
+      "authority": "FRONTEND supplies the graphical shell; Finance ESS-0017 canonical Vocabulary and LearningVocabulary remain the only terminology/content authority"
+    },
+    {
+      "sourcePath": "src/data/mockData.ts",
+      "runtimeTarget": "src/features/public/ui/frontend-port/data/mockData.ts",
+      "authority": "Upstream expanded asset fixtures are not promoted as market truth; existing Finance verified-data binding and CAPITAL-AI-FINTECH authority remain unchanged"
     }
   ],
   "analyticsAdapter": {
     "runtimeTarget": "src/features/public/ui/frontend-port/utils/analytics.ts",
     "policy": "NO_THIRD_PARTY_SCRIPT_OR_COOKIE_SIDE_EFFECT",
     "reason": "Exact upstream Header/Footer interaction hooks are bridged into a Finance-owned presentation event only."
-  }
+  },
+  "deferredSourceArtifacts": [
+    {
+      "sourcePath": "src/components/KrakenReferralBanner.tsx",
+      "reason": "Compliance hold: referral/affiliate and regulatory/performance-style claims require CAPITAL-AI-COMP review before productive promotion."
+    },
+    {
+      "sourcePath": "src/data/vocabularyData.ts",
+      "reason": "Not promoted: would duplicate ESS-0017 canonical Vocabulary and contains presentation claims not backed by the canonical Registry."
+    },
+    {
+      "sourcePath": "src/data/assets/commodityAssets.ts",
+      "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    },
+    {
+      "sourcePath": "src/data/assets/cryptoAssets.ts",
+      "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    },
+    {
+      "sourcePath": "src/data/assets/forexAssets.ts",
+      "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    },
+    {
+      "sourcePath": "src/data/assets/indexAssets.ts",
+      "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    },
+    {
+      "sourcePath": "src/data/assets/stockAssets.ts",
+      "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    }
+  ]
 }

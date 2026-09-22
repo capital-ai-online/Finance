@@ -12,8 +12,8 @@
   "workItemDE": "Bestehende hCaptcha-Bridge wieder an Registrierung, E-Mail-Login, Recovery und Confirmation-Resend der LoginPage anbinden",
   "startedAt": "2026-09-22T12:10:00+02:00",
   "baseBranch": "main",
-  "baseSha": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
-  "lastSyncedMainSha": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+  "baseSha": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
+  "lastSyncedMainSha": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
   "branch": "frontend/auth-email-captcha-ui-20260922",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -27,19 +27,23 @@
     "src/features/public/ui/LoginPage.tsx",
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/passwordRecoveryLogin.test.ts",
-    "tests/unit/frontendExtendedWebdesign.test.ts"
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/userLifecycleFrontendProjection.test.ts"
   ],
   "dependencies": [
-    "CAPITAL-AI-OPS backend companion slice must accept/validate and forward captchaToken to Supabase Auth.",
+    "CAPITAL-AI-OPS backend companion slice PR #1282 is merged into CURRENT_MAIN and forwards validated captchaToken to Supabase Auth.",
     "VITE_HCAPTCHA_SITE_KEY remains the existing public build-time configuration; the secret remains in Supabase Auth."
   ],
   "evidence": {
-    "currentMain": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+    "currentMain": "1b022308c1fbabbca23b6cf6b829edbea0dddbd5",
     "smtpTest": "Production SMTP send to s.kulessa@protonmail.com completed successfully via Render mailer.",
     "productionFailure": "Supabase Auth rejected registration/resend with no captcha_token found.",
     "existingBridge": "src/lib/hcaptcha.ts provides preloadHcaptchaSdk() and requestHcaptchaToken().",
     "designAuthority": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d/src/components/LoginPage.tsx remains the UI authority.",
-    "openWriterOverlap": "No open auth/captcha/email PR at claim creation."
+    "openWriterOverlap": "PR #1281 will be superseded by this consolidated branch after identical behavior is verified.",
+    "opsDependency": "PR #1282 merged and is contained in CURRENT_MAIN.",
+    "mainIntegration": "PR #1280 is merged and inherited through CURRENT_MAIN; its cbc558 frontend source-lock/test changes are preserved.",
+    "legalLinkIntegration": "PR #1281 legal-link behavior folded into this branch: registration AGB/Datenschutz open in isolated new tabs; its regression test is preserved."
   },
   "scopeBoundary": [
     "Use the existing hCaptcha helper; do not add a second CAPTCHA implementation or dependency.",
