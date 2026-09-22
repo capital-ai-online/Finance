@@ -133,6 +133,10 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     expect(robots.toLowerCase()).not.toContain('noindex');
   });
 
+  it('keeps Impressum metadata aligned to § 5 DDG', () => {
+    expect(getRouteSeo('/impressum').description).toContain('§ 5 DDG');
+  });
+
   it('keeps the learning platform discoverable from prerendered static HTML without hydration', () => {
     const source = fs.readFileSync(prerenderPath, 'utf8');
     const noscriptTemplate = source.match(/const noscriptBlock = `([\s\S]*?)`;/)?.[1] ?? '';
@@ -142,9 +146,14 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     );
   });
 
-  it('serves /faq through the SPA shell without promoting it into the SEO route set', () => {
-    expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(true);
-    expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(false);
+  it('serves /faq as a canonical public SEO route with its prerender fallback', () => {
+    expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(false);
+    expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(true);
+    expect(listPublicRouteSeoPaths()).toContain('/faq');
+    expect(getRouteSeo('/faq')).toMatchObject({
+      title: 'FAQ – CAPITAL-AI',
+      canonicalPath: '/faq',
+    });
 
     const handler = captureProductionFallbackHandler();
     let sentFile: string | undefined;
@@ -170,7 +179,7 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     handler({ path: '/faq' } as Request, response, () => undefined);
 
     expect(statusCode).toBeUndefined();
-    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'index.html'));
+    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'faq', 'index.html'));
   });
 
   it('returns a real HTTP 404 for an unknown route', () => {
