@@ -89,7 +89,7 @@ function requireAuth(handler: (req: express.Request, res: express.Response, iden
   };
 }
 
-// Read-only diagnostic event for the temporary AAL2 authentication supersession. The browser
+// Read-only diagnostic event for the temporary full AAL2 supersession. The browser
 // sends no identity or policy decision; the server resolves both from the authenticated bearer
 // and current profile, so Render logs can later correlate staged reactivation without trusting
 // client-supplied account state.
@@ -99,7 +99,7 @@ stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identit
     userId: identity.userId,
     supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
     reactivationStage: AAL2_REACTIVATION_STAGE,
-    privilegedServerAal2Unaffected: true,
+    privilegedAal2Required: isAal2EnabledFor('privileged'),
   });
 
   const supabase = getServerSupabase();
@@ -121,7 +121,7 @@ stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identit
     registrationAal2Required: isAal2EnabledFor('registration'),
     accountMfaRequired: profile.mfa_required_account === true,
     onboardingRequired: profile.onboarding_required === true,
-    privilegedServerAal2Unaffected: true,
+    privilegedAal2Required: isAal2EnabledFor('privileged'),
   };
 
   createLogger('aal2-diagnostic', req.requestId).info('AAL2 login diagnostic checkpoint', {
@@ -297,7 +297,7 @@ stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, ident
     reactivationStage: AAL2_REACTIVATION_STAGE,
     registrationAal2Required,
     resultingMfaRequiredAccount: registrationAal2Required,
-    privilegedServerAal2Unaffected: true,
+    privilegedAal2Required: isAal2EnabledFor('privileged'),
   };
 
   createLogger('aal2-diagnostic', req.requestId).info(
