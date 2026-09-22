@@ -273,6 +273,12 @@ export async function resolveVerifiedBackendAuth(
   }
 
   if (!user) {
+    // Only the dedicated session endpoint owns refresh-token rotation because it also has the
+    // Response needed to atomically persist the rotated refresh token. Other server middleware
+    // may validate the current cookie access token but must never rotate a refresh token without
+    // returning the replacement cookie to the browser.
+    if (!res) return null;
+
     const { data, error } = await client.auth.refreshSession({ refresh_token: refreshToken });
     if (error || !data.session || !data.user) return null;
     accessToken = data.session.access_token;
@@ -280,7 +286,7 @@ export async function resolveVerifiedBackendAuth(
     expiresAt = data.session.expires_at ?? Math.floor(Date.now() / 1000) + data.session.expires_in;
     user = data.user;
     refreshed = true;
-    if (res) writeSessionCookie(req, res, data.session);
+    writeSessionCookie(req, res, data.session);
   }
 
   return { user, accessToken, refreshToken, expiresAt, refreshed };
