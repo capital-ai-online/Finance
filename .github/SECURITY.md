@@ -177,8 +177,8 @@ When a reporter follows this policy in good faith, CAPITAL-AI will treat the rep
 
 This policy is intentionally subordinate to and aligned with the current repository model:
 
-- `/AGENTS.md` — repository Trust Root and mandatory development lifecycle;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` — branch, PR, Human approval, merge, protected external mutation, and bounded Security-remediation controls;
+- `/AGENTS.md@CURRENT_MAIN` — sole repository-wide AI/development execution authority, including branch/PR/merge/protected-mutation and bounded self-healing rules;
+- accepted Security/ADR/ESS/contracts — subject-matter constraints only in their declared scope; historical DevelopmentChain authority IDs are traceability aliases that resolve back to `/AGENTS.md@CURRENT_MAIN`;
 - `.ai/skills/ESS-0006-Security-Compliance.md` — Security/Compliance component and authority boundaries;
 - `.ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md` — provider-neutral AI Agent capability/risk/audit boundaries;
 - `docs/projects/security/README.md` — `CAPITAL-AI-SEC` ownership and independent-verification model;
@@ -201,4 +201,4 @@ This file should be reviewed when any of the following materially changes:
 - AI/Agent/MCP/tool trust boundaries;
 - security verification and disclosure process.
 
-Changes to this policy follow the normal CAPITAL-AI branch, correlation, PR-creation approval, hosted-CI, Human/CODEOWNER merge, and evidence lifecycle. Direct edits to `main` are prohibited.
+Changes to this policy follow the normal CAPITAL-AI branch, correlation-gated PR creation, hosted-CI, Human/CODEOWNER merge, and evidence lifecycle. Direct edits to `main` are prohibited.
