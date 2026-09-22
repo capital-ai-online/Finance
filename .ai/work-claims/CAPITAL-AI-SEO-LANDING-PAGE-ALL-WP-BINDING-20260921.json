@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-LANDING-PAGE-ALL-WP-BINDING-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate every active/conditional SEO management work package and website SEO surface to the current canonical frontend generation merged by PR #1241, including root metadata truth and DDG terminology, while preserving owner-correct OPS blocking for /faq production routing.",
+  "startedAt": "2026-09-21T18:14:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9c8a3e80c4451ed0b6ea45f368175604608f6f4b",
+  "branch": "seo/landing-page-all-wp-binding-v2-20260921",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "The public SEO launch candidate must describe and measure the currently merged website rather than superseded frontend snapshots.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-LANDING-PAGE-ALL-WP-BINDING-20260921.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "docs/seo/SEO_LANDING_PAGE_BINDING_2026-09-21.md",
+    "src/lib/routeSeo.ts",
+    "src/lib/routeSeo.test.ts",
+    "scripts/seo/prerender-public-routes.mjs",
+    "index.html",
+    "tests/unit/routeSeo.test.ts",
+    "src/platform/SeoEngine/store/MemorySeoEngineStore.ts"
+  ],
+  "landingTarget": {
+    "canonicalUrl": "https://capital-ai.online/",
+    "route": "/",
+    "role": "PRIMARY_PUBLIC_SEO_ORCHESTRATION_SURFACE",
+    "frontendMergePr": 1241,
+    "frontendMergeSha": "9c8a3e80c4451ed0b6ea45f368175604608f6f4b",
+    "frontendSource": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d",
+    "loginRoute": "/login",
+    "faqRoute": "/faq",
+    "protectedApplicationRoutesRemainSeparate": true
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "PR #1241 is the current merged frontend graphical/runtime baseline",
+    "Issue #1223 / CAPITAL-AI-OPS must add /faq to the finite production SPA fallback before SEO can safely add /faq to the canonical public SEO route set",
+    "Issue #1233 remains the SEO owner-correct route/prerender follow-up and is blocked only on the OPS /faq runtime dependency",
+    "GSC and GA4 provider reads remain independently evidence-gated",
+    "FE/OPS/SOCIAL/GOV/SEC/COMP/FINTECH/QM ownership boundaries remain unchanged"
+  ],
+  "exitEvidence": [
+    "active SEO coordination references PR #1241/current main rather than PR #1206/#1209",
+    "root title/description match the current visible market-intelligence landing",
+    "source HTML, OpenGraph/Twitter and JSON-LD root metadata reflect the current visible landing proposition",
+    "Impressum SEO metadata uses § 5 DDG rather than stale TMG wording",
+    "final CWV remains measurement-gated rather than blocked by a superseded frontend PR",
+    "/faq is not inserted into the canonical SEO route set until OPS #1223 preserves the existing route-set equality/security invariant",
+    "provider PASS is never inferred from repository state"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+}

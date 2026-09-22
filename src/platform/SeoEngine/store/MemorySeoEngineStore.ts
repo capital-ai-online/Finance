@@ -35,7 +35,7 @@ export class MemorySeoEngineStore implements ISeoEngineStore {
       {
         id: 'inv-home',
         path: '/',
-        title: 'CAPITAL-AI Portal',
+        title: 'CAPITAL-AI – Marktdaten verstehen. Chancen besser erkennen.',
         locale: 'de',
         status: 'published',
         lastReviewedAt: now,

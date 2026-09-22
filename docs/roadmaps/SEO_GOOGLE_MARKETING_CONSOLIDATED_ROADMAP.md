@@ -7,10 +7,10 @@
 ## Status
 
 **ACTIVE — CANONICAL EXECUTION ROADMAP (Domain SEO / Google Marketing / Content Distribution)**  
-Stand: 2026-09-21  
-Version: **0002.19**  
-Current-main correlation: `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`  
-Working branch: `agent/seo-management-launch-refresh-20260921`  
+Stand: 2026-09-22  
+Version: **0002.21**  
+Current-main correlation: `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b`  
+Working branch: `seo/landing-page-all-wp-binding-v2-20260921`  
 Repository: `capital-ai-online/Finance`  
 Owner: SvenKulessa / `CAPITAL-AI-SEO` project coordination  
 Primary productive PVC: **N/A — cross-cutting; no productive PVC ownership**  
@@ -23,6 +23,8 @@ Authority-Bindung: current `/AGENTS.md`, anwendbare Accepted ADR / aktive ESS. D
 > **0002.18 Owner-directed launch execution.** Der Owner startet Production-/CTA-Freeze, GSC/GA4-Baseline und die X/Facebook-Wave. Repository-CTA-/URL-Evidence ist materialisiert; Production ist beim Readback nicht exakt auf `CURRENT_MAIN`, GSC/GA4 sind in diesem Chat nicht verbunden und die produktive Social-Account-Tabelle enthält keine X-/Facebook-Verbindung. Deshalb bleiben diese Lanes explizit non-PASS. Detail-Evidence: `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.
 
 > **0002.19 SEO management takeover / launch refresh.** Fresh Owner direction assigns the SEO-management scope to this execution context. The snapshot is re-correlated after merged FE branding work (#1178): Production is exact on `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`, CTA targets remain repository-valid, root metadata/prerender message drift persists, `/universe` lacks a visible landing internal link, GSC/GA4 reads remain connection-gated and X/Facebook production account identities remain absent. SEO-owned topic mapping and the first launch content brief are materialized in the same bounded scope. Detail evidence: `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
+
+> **0002.21 Current Frontend convergence.** Fresh Owner direction on 2026-09-22 binds active website SEO exclusively to current main `9c8a3e80c4451ed0b6ea45f368175604608f6f4b`, the merge of FE PR #1241 and FRONTEND source `f2a101330d74420c373f0ec56fa58caac53d741d`. Root metadata is aligned to the visible market-intelligence landing, stale Impressum metadata is corrected from TMG to § 5 DDG, and Mobile/Desktop CWV is measurement-gated rather than blocked on superseded FE PRs. The current Frontend exposes `/faq`, but canonical SEO/sitemap/prerender promotion remains fail-closed on OPS Issue #1223 so the existing route-set equality/security invariant is preserved; SEO Issue #1233 continues after that dependency.
 
 ## Zweck
 
@@ -101,10 +103,10 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 ### 3.3 Repository-Correlation
 
 - Repository: `capital-ai-online/Finance`.
-- Current-main baseline for this execution slice: `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`.
+- Current-main baseline for the active execution slice: `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b` (FE PR #1241 merge).
 - `/AGENTS.md@CURRENT_MAIN` remains Control Plane `4.6.0`.
 - Current Project: `CAPITAL-AI-SEO`; Project Folder: `docs/projects/seo/`; Primary productive PVC: `N/A — cross-cutting`; Primary Owner: `CAPITAL-AI-SEO`.
-- Human/CODEOWNER-merged PRs `#1153` and `#1159` are part of the repository launch candidate.
+- FE PR `#1241` is the current repository launch-candidate presentation baseline; older FE snapshots are historical evidence only.
 - Open PRs `#1164` (GOV), `#1165` (SEC) and `#1167` (FE claim closure) have no changed-file overlap with this SEO execution slice at branch creation; Security assurance remains an independent final-launch input.
 - Production initially lagged current main, then converged through canonical main CI run `35529208910`: deploy-hook trigger at `18:32:47Z` was 215 s after the main commit and Render deploy `dep-dao2dk0ae00c73aha6c0` is live at exact `79eef34e8cd7cd852305641cb1b49cd90dbd2af5`; snapshot-bound Production freeze is `PASS`.
 - This SEO slice owns launch coordination/evidence only. FE metadata implementation, OPS deployment, SOCIAL provider packages/publication, COMP privacy/legal and QM assurance stay foreign-owner work.
@@ -271,7 +273,7 @@ Für `WP-SEO-TECH-GATE`, `WP-SEO-SCHEMA`, `WP-SEO-CWV`, `WP-SEO-IA`, `WP-SEO-MED
 
 ### NOW — 0–30 Tage
 
-1. `WP-SEO-LAUNCH-01`: aktuellen durch PRs #1153/#1159 geprägten Landing-/CTA-Stand korrelieren; Production-Drift, FE-Metadata-Handoff, GSC/GA4 Read-Gates und X/Facebook Provider-Account-Gate bis zur echten Evidence konvergieren.
+1. `WP-SEO-LAUNCH-01`: aktuellen durch FE PR #1241 geprägten Landing-/CTA-Stand korrelieren; Production-Drift, FE-Metadata-Handoff, GSC/GA4 Read-Gates und X/Facebook Provider-Account-Gate bis zur echten Evidence konvergieren.
 2. `WP-SEO-METRICS` + `WP-SEO-AI-VIS`: echte read-only GSC/GA4-Baseline, falls Owner-Credentials freigegeben/verfügbar.
 3. `WP-SEO-TECH-GATE` + `WP-SEO-SCHEMA`: FE/OPS-Handoff für automatisierbare Crawl-/Canonical-/Structured-Data-Regressions.
 4. `WP-SEO-TOPICS` + `WP-SEO-CONTENT`: Seed Map mit echten Query-/Intent-Daten anreichern und erstes nicht-kommodifiziertes Pilot-Brief priorisieren.
@@ -308,7 +310,7 @@ Für `WP-SEO-TECH-GATE`, `WP-SEO-SCHEMA`, `WP-SEO-CWV`, `WP-SEO-IA`, `WP-SEO-MED
 
 ---
 
-## 10. Definition of Done — 0002.18 Launch Execution Work Item
+## 10. Definition of Done — 0002.21 Current Frontend SEO Work Item
 
 Dieses Work Item ist repository-seitig fertig, wenn:
 
@@ -316,7 +318,7 @@ Dieses Work Item ist repository-seitig fertig, wenn:
 - `WP-SEO-LAUNCH-01` als Detailpaket vorliegt und bestehende SEO-/Social-/Product-Authorities referenziert statt dupliziert;
 - `docs/projects/seo/ROADMAP.md` und diese konsolidierte Programm-Roadmap denselben aktiven Launch-Slice auf die gleiche current-main Baseline projizieren;
 - Web-, Search-, Measurement-, Content-, Social-, Production-, Security-/Compliance- und QM-Gates mit Owner, Evidence und Exit State definiert sind;
-- der durch PRs `#1153` und `#1159` geprägte current-main Landing-Stand als Repository-Produktbaseline behandelt wird, ohne daraus ungeprüfte Production-/Provider-Evidence abzuleiten;
+- der durch FE PR `#1241` geprägte current-main Landing-Stand als Repository-Produktbaseline behandelt wird, ohne daraus ungeprüfte Production-/Provider-Evidence abzuleiten;
 - Production-Drift, Root-Metadata-Drift, GSC/GA4-Connection-Gates und fehlende X/Facebook-Account-Identitäten explizit als non-PASS dokumentiert sind;
 - keine Produktiv-/Provider-/Publishing-/Credential-Mutation aus SEO-Ownership erfolgt;
 - ausgeführte und nicht ausgeführte Checks getrennt dokumentiert sind.
@@ -336,3 +338,4 @@ Das **Gesamtprogramm** bleibt offen, solange der Public-Launch-Exit-Gate, Provid
 | **0002.17** | **2026-09-20** | Owner-directed `WP-SEO-LAUNCH-01` ergänzt: öffentliche Web-/Search-/Social-Launch-Kette, Landing-/CTA-Dependency auf offenen FE-PR #1153, consent-safe Measurement, Social-Package-/Provider-Evidence, T-relativer Launchkalender und same-candidate Launch-Gates; current-main re-korreliert auf `c9980602f691b855fd6f8c66a49822e7a9611b4a` |
 | **0002.18** | **2026-09-20** | Launch-Ausführung gegen `main@79eef34e8cd7cd852305641cb1b49cd90dbd2af5`: CTA-/6-URL-Repository-Freeze, initialer Production-Drift plus canonical exact-SHA Recovery/SLA-PASS, Root-Metadata-Handoff, GSC/GA4 `READ_BLOCKED_NOT_CONNECTED`, reale Supabase-Readback-Evidence ohne X/Facebook-Accounts und owner-korrekte Social-Wave-1-Übergabe materialisiert |
 | **0002.19** | **2026-09-21** | SEO-Management-Übernahme gegen `main@4f2c746a20a8683d784a1cbe54c763a64ddd1da3`: Production exact-SHA PASS, Post-#1178 Landing-Re-Freeze, persistierender Root-Metadata-Handoff, neuer `/universe`-IA-Handoff, GSC/GA4 Provider-Read-Gates, X/Facebook Account-Gate sowie SEO-owned Topic Map + Launch Content Brief materialisiert |
+| **0002.21** | **2026-09-22** | Active website SEO auf FE #1241/current main konvergiert; Root-Metadaten an aktuelle Landing angepasst, TMG→DDG korrigiert, CWV auf Measurement-Gate umgestellt und /faq owner-korrekt auf OPS #1223 → SEO #1233 gebunden. |
