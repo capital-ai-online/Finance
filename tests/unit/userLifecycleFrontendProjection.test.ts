@@ -29,6 +29,21 @@ describe('frontend user lifecycle projection', () => {
     expect(subscriptions).not.toContain('email: profile.email');
   });
 
+  it('opens registration AGB and Datenschutz links in isolated new tabs', () => {
+    const termsStart = login.indexOf('id="registration-terms"');
+    const submitStart = login.indexOf('id="register-submit-btn"');
+    const registrationTerms = login.slice(termsStart, submitStart);
+
+    expect(termsStart).toBeGreaterThanOrEqual(0);
+    expect(submitStart).toBeGreaterThan(termsStart);
+    expect(registrationTerms).toMatch(
+      /href="\/agb"[\s\S]*?target="_blank"[\s\S]*?rel="noopener noreferrer"/,
+    );
+    expect(registrationTerms).toMatch(
+      /href="\/datenschutz"[\s\S]*?target="_blank"[\s\S]*?rel="noopener noreferrer"/,
+    );
+  });
+
   it('uses one backend login entrypoint and explicit logout projection', () => {
     expect(login).toContain('/api/auth/login/google?next=%2F');
     expect(login).not.toContain('supabase');
