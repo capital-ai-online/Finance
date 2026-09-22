@@ -46,17 +46,22 @@ describe('SessionComposition zero-blocking auth shell', () => {
     expect(source).not.toContain("'subscription handoff'");
   });
 
-  it('takes the returning-user AAL2 fast path before the onboarding profile roundtrip', () => {
+  it('honors the account MFA policy before native-factor choreography', () => {
     const establishStart = source.indexOf('const establishSession = async');
-    const assuranceIndex = source.indexOf('const assurance = await getCurrentAssuranceLevel(supabase)', establishStart);
-    const fastPathIndex = source.indexOf("assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'", assuranceIndex);
-    const onboardingIndex = source.indexOf('const onboardingRequired = await needsOnboarding(session)', fastPathIndex);
+    const policyIndex = source.indexOf('const gatePolicy = await readAuthGatePolicy(session)', establishStart);
+    const onboardingIndex = source.indexOf('if (gatePolicy.onboardingRequired)', policyIndex);
+    const optionalMfaIndex = source.indexOf('if (!gatePolicy.mfaRequiredAccount)', onboardingIndex);
+    const directProjectionIndex = source.indexOf('await handleSupabaseSession(session)', optionalMfaIndex);
+    const assuranceIndex = source.indexOf('const assurance = await getCurrentAssuranceLevel(supabase)', optionalMfaIndex);
 
     expect(establishStart).toBeGreaterThan(-1);
-    expect(assuranceIndex).toBeGreaterThan(establishStart);
-    expect(fastPathIndex).toBeGreaterThan(assuranceIndex);
-    expect(onboardingIndex).toBeGreaterThan(fastPathIndex);
+    expect(policyIndex).toBeGreaterThan(establishStart);
+    expect(onboardingIndex).toBeGreaterThan(policyIndex);
+    expect(optionalMfaIndex).toBeGreaterThan(onboardingIndex);
+    expect(directProjectionIndex).toBeGreaterThan(optionalMfaIndex);
+    expect(assuranceIndex).toBeGreaterThan(directProjectionIndex);
     expect(source).toContain('setPendingStepUpAssurance(assurance)');
+    expect(source).toContain("code: 'MFA_REQUIRED_FACTOR_MISSING'");
   });
 
   it('keeps failures fail-closed without timer-based recovery', () => {
