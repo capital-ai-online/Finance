@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-LF02-AUTH-PROFILE-SIDEBOARD-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Fix post-login root convergence and project the established SessionComposition identity plus server-authoritative subscription tier into the landing header/sideboard using Owner-supplied tier badges.",
+  "startedAt": "2026-09-22T03:13:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "123ad5ac7734d363e35d1b7bf945aceae41fbee8",
+  "lastSyncedMainSha": "123ad5ac7734d363e35d1b7bf945aceae41fbee8",
+  "branch": "frontend/lf02-auth-profile-sideboard-badges-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "priority": "P0",
+  "priorityReason": "Productive login completes but the post-login frontend does not visibly converge to authenticated state and can leave the user on the login/redirect presentation.",
+  "canonicalIssue": 1237,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-LF02-AUTH-PROFILE-SIDEBOARD-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-FE-MOBILE-LANDING-MOCKUP-20260921.json",
+    "src/app/routing/AppRoutes.tsx",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/LandingSessionContext.tsx",
+    "src/features/public/ui/SubscriptionStatusBadge.tsx",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "public/brand/subscriptions/starter.webp",
+    "public/brand/subscriptions/pro.webp",
+    "public/brand/subscriptions/enterprise.webp",
+    "public/brand/subscriptions/founder.webp",
+    "tests/unit/landingAuthenticatedProfileProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse SessionComposition as the only browser auth/session composition.",
+    "Reuse /api/stripe/user-subscription as the server-authoritative subscription projection.",
+    "No direct Supabase or Stripe query is added to the pinned landing runtime.",
+    "Uploaded badges are presentation-only and grant no entitlement.",
+    "No Render/Supabase/provider mutation and no Human/CODEOWNER merge authority."
+  ],
+  "evidence": {
+    "productionLogs": "/user-subscription returned successfully during the observed login window; root/login presentation remained the convergence gap.",
+    "supabaseReadback": "5 auth users all have profile rows; 5 subscription rows include Free/Starter/Pro/Enterprise; no missing-profile database blocker.",
+    "openWriterOverlap": "No overlap with remaining open PR #1234; avoids open PR #1211 ReferenceApp.tsx/frontend-port.css paths."
+  },
+  "acceptanceCriteria": [
+    "Authenticated /login converges to /.",
+    "Authenticated / remains on / and receives name/tier projection.",
+    "Header shows Angemeldet instead of Login for an established registered session.",
+    "Sideboard shows the uploaded Starter/Pro/Enterprise/Founder badge matching the server tier; Free has a text fallback.",
+    "Guest login controls remain unchanged.",
+    "No duplicate auth/subscription authority is created.",
+    "Focused LF-02 regression and existing frontend/source-lock checks pass."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
