@@ -96,11 +96,36 @@ export function AppRoutes({
   handleLogout,
   handleGlobalLogout,
 }: AppRoutesProps) {
-  const [currentPath] = useState(() => {
+  const [currentPath, setCurrentPath] = useState(() => {
     return typeof window !== 'undefined'
       ? normalizeRoutePath(window.location.pathname)
       : '/';
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const syncPathFromHistory = () => {
+      setCurrentPath(normalizeRoutePath(window.location.pathname));
+    };
+
+    window.addEventListener('popstate', syncPathFromHistory);
+    return () => window.removeEventListener('popstate', syncPathFromHistory);
+  }, []);
+
+  const navigatePublicRoute = (path: string, replace = false) => {
+    const normalizedPath = normalizeRoutePath(path);
+
+    if (typeof window !== 'undefined') {
+      if (replace) {
+        window.history.replaceState({}, '', normalizedPath);
+      } else {
+        window.history.pushState({}, '', normalizedPath);
+      }
+    }
+
+    setCurrentPath(normalizedPath);
+  };
 
   const renderAuthenticatedDashboard = () => {
     if (!userSession) {
@@ -159,7 +184,7 @@ export function AppRoutes({
           <MarketVocabularyModal
             isOpen
             onClose={() => {
-              if (typeof window !== 'undefined') window.location.assign('/');
+              navigatePublicRoute('/', true);
             }}
           />
         </RouteLoadingBoundary>
