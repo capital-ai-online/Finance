@@ -13,7 +13,7 @@
   "startedAt": "2026-09-22T11:27:00+02:00",
   "baseBranch": "main",
   "baseSha": "1d3fd33c9c58e13de2df5348de2f386107c0218e",
-  "lastSyncedMainSha": "1d3fd33c9c58e13de2df5348de2f386107c0218e",
+  "lastSyncedMainSha": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
   "branch": "frontend/market-vocabulary-cbc5580-20260922",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -53,7 +53,9 @@
     "designSource": "SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3",
     "sourceTree": "41afaf9797754efc760af682b1d1c2ecf67e49ef",
     "sourceDelta": "One upstream commit from f2a1013 to cbc5580 with 12 changed files.",
-    "openWriterOverlap": "PR #1278 touches only cookie-consent assets/tests; PR #1276 is Compliance documentation. No changed-file overlap with this runtime Vocabulary slice at branch creation."
+    "openWriterOverlap": "PR #1278 touches only cookie-consent assets/tests; PR #1276 is Compliance documentation. No changed-file overlap with this runtime Vocabulary slice at branch creation.",
+    "currentMainAfterCorrelation": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+    "mainCorrelation": "Merged six non-overlapping Compliance-only commits from CURRENT_MAIN as a second parent before PR creation."
   },
   "acceptanceCriteria": [
     "Landing source lock and inert source snapshot identify cbc558019ae6785f44079fe6fca3403460774df3.",
