@@ -305,38 +305,50 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
     return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
   }
 
-  const credential = await resolveRequestCredential(req);
-  if (!credential) {
-    return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
-  }
-
   try {
     const supabase = getServerSupabase();
-    const { data: userData, error: userErr } = await supabase.auth.getUser(credential.accessToken);
-    if (userErr || !userData?.user || userData.user.id !== credential.userId) {
-      return { verified: false, currentLevel: null, reason: 'invalid-token' };
+    const bearer = extractBearerToken(req);
+
+    let accessToken: string;
+    let userId: string;
+
+    if (bearer) {
+      const { data: userData, error: userErr } = await supabase.auth.getUser(bearer);
+      if (userErr || !userData?.user) {
+        return { verified: false, currentLevel: null, reason: 'invalid-token' };
+      }
+      accessToken = bearer;
+      userId = userData.user.id;
+    } else {
+      const backend = await resolveVerifiedBackendAuth(req);
+      if (!backend) {
+        return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
+      }
+      accessToken = backend.accessToken;
+      userId = backend.user.id;
     }
 
-    const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(credential.accessToken);
+    const { data: aalData, error: aalErr } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel(accessToken);
     if (aalErr || !aalData) {
       iamLogger.error('AAL2-Lookup fehlgeschlagen - fail-closed verweigert', {
         requestId: req.requestId,
-        userId: userData.user.id,
+        userId,
         error: aalErr?.message || 'no-data',
       });
-      return { verified: false, userId: userData.user.id, currentLevel: null, reason: 'aal-lookup-failed' };
+      return { verified: false, userId, currentLevel: null, reason: 'aal-lookup-failed' };
     }
 
     if (aalData.currentLevel !== 'aal2') {
       return {
         verified: false,
-        userId: userData.user.id,
+        userId,
         currentLevel: aalData.currentLevel,
         reason: 'insufficient-aal',
       };
     }
 
-    return { verified: true, userId: userData.user.id, currentLevel: 'aal2', reason: 'aal2-verified' };
+    return { verified: true, userId, currentLevel: 'aal2', reason: 'aal2-verified' };
   } catch (err: any) {
     iamLogger.error('requireVerifiedAal2 unerwarteter Fehler - fail-closed verweigert', {
       requestId: req.requestId,
