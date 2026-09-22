@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-TOPIC-EVIDENCE-PILOT-BRIEF-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Continue WP-SEO-LAUNCH-01 after PR #1211 by refreshing WP-SEO-TOPICS with real public SERP/competitor evidence, deriving a non-commodity evidence-first scoring Pilot Brief #02, reconciling the canonical SEO roadmap, and preserving the owner-correct FAQ dependency on OPS #1252 without inventing search metrics or taking publication/provider authority.",
+  "startedAt": "2026-09-22T03:52:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1",
+  "branch": "seo/topic-evidence-pilot-brief-20260922",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "The public launch program already has a merged landing SEO baseline; the next dependency-ready SEO-owned slice is evidence-based topic/content differentiation while FAQ public-route promotion and provider measurements remain independently gated.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-TOPIC-EVIDENCE-PILOT-BRIEF-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-LANDING-PAGE-ALL-WP-BINDING-20260921.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/SEO_TOPIC_MAP_PUBLIC_LAUNCH_2026-09-21.md",
+    "docs/seo/SEO_LAUNCH_CONTENT_BRIEF_02_2026-09-22.md",
+    "docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "PR #1211 merged at main@c01e1096ef0c2595b97daa23e4aca25129b2545c; continuation branch is synchronized through FE #1250 and SOCIAL #1234 to CURRENT_MAIN 11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1",
+    "SEO Issue #1233 remains blocked on CAPITAL-AI-OPS Issue #1252 for /faq PUBLIC_SPA_PATHS plus route-specific public HTML promotion",
+    "CAPITAL-AI-FINTECH retains scoring/model/provider/evidence truth authority",
+    "CAPITAL-AI-COMP reviews investment-advice/risk wording before publication",
+    "GSC Search Analytics, GA4 and GenAI visibility remain separately provider-read gated",
+    "Frontend/publishing/provider mutations are outside this SEO documentation slice"
+  ],
+  "exitEvidence": [
+    "stale PR #1211 exclusive claim is released after merge",
+    "SEO roadmap baseline and current execution state reflect the post-merge CURRENT_MAIN",
+    "topic map records current public intent/competitor evidence without invented volumes, ranks or conversion estimates",
+    "Pilot Brief #02 is bounded to actual FINTECH scoring/evidence contracts and explicitly rejects a fabricated universal scoring formula",
+    "FAQ SEO promotion remains fail-closed on OPS #1252 and the strict public-route equality invariant is preserved",
+    "no product route, provider, publishing, analytics or credential mutation occurs in this slice"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+}
