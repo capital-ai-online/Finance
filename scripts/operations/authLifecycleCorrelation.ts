@@ -192,9 +192,6 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     !rootBlock.includes('<LandingPage')
       ? 'canonical root does not render LandingPage'
       : null,
-    rootHasLandingProfileProjection
-      ? 'LF-02 session/profile projection is already wired into the root landing composition'
-      : null,
     productivePricingReachableFromRoot
       ? 'LF-03 pricing/entitlement runtime is reachable from the root landing composition'
       : null,
@@ -217,9 +214,9 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       'src/features/crypto/ui/CryptoScoringEnterprise.tsx',
       'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx',
     ],
-    'LF-01 renders the canonical landing as a presentation-only baseline with no productive scoring, pricing/entitlement or news runtime wired into the root composition and no LF-02 profile/session projection on the landing surface.',
+    'LF-01 remains the accepted presentation baseline while later additive phases may project session/profile state; productive pricing/entitlement, scoring and news runtime must remain outside the LF-01 root dependency chain.',
     staticVisualLandingPass
-      ? 'The root landing composition is static/presentational for LF-01; later productive landing integrations may still proceed only in dependency order with their own owner-correct gates.'
+      ? 'The root landing preserves the accepted LF-01 presentation boundary; an additive LF-02 session/profile projection does not reopen LF-01, while pricing/scoring/news runtime remains separately gated.'
       : `LF-01 is not a static-only baseline: ${lf01Blockers.join('; ')}.`,
   ));
 
@@ -285,6 +282,38 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     registrationOnboarding
       ? 'Profile/consent and MFA onboarding gates are connected end-to-end in repository code.'
       : 'The registration onboarding chain is incomplete or bypassable in repository code.',
+  ));
+
+  const subscriptionProjection =
+    sessionComposition.includes("authFetch('/api/stripe/user-subscription')") &&
+    sessionComposition.includes("subscriptionTier: 'Free'") &&
+    !sessionComposition.includes('/api/stripe/user-subscription?userId=') &&
+    !sessionComposition.includes('/api/stripe/user-subscription?email=');
+  const lf02RepositoryReady =
+    rootHasLandingProfileProjection &&
+    googleOauthRoot &&
+    authenticatedRootLanding &&
+    authenticatedLoginToRoot &&
+    registrationPrimary &&
+    registrationOnboarding &&
+    subscriptionProjection;
+  findings.push(finding(
+    'landing_first_lf02_auth_profile_repository_gate',
+    !rootHasLandingProfileProjection ? 'NOT_AVAILABLE' : lf02RepositoryReady ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    [
+      'src/app/routing/AppRoutes.tsx',
+      'src/features/public/ui/LoginPage.tsx',
+      'src/app/auth/SessionComposition.tsx',
+      'src/components/RegistrationCompletionGate.tsx',
+      'server/stepUp.ts',
+    ],
+    'LF-02 repository wiring projects the existing authenticated session/profile onto the canonical landing while preserving /login, Google OAuth, registration/onboarding and server-authoritative subscription readback; provider Security/QM evidence remains independent.',
+    !rootHasLandingProfileProjection
+      ? 'LF-02 landing profile projection is not on current repository state yet; owner-correct FE handoff is required and final LF-02 PASS must not be inferred from repository readiness alone.'
+      : lf02RepositoryReady
+        ? 'The repository-side LF-02 auth/profile chain is wired without introducing a second auth or subscription authority; provider Security/QM evidence is still required for final phase PASS.'
+        : 'LF-02 profile projection is present but one or more canonical login, OAuth, registration/onboarding or subscription-readback invariants are missing.',
   ));
 
   const roadmapClosed =

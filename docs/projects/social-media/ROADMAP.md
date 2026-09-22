@@ -1,12 +1,12 @@
 # CAPITAL-AI-SOCIAL — Canonical Roadmap
 
-**Baseline:** `main@bf1e8c654332cbc1a01f20a3e9cb5fc6d330ca7f`
+**Baseline:** `main@a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d`
 
 **Project:** `CAPITAL-AI-SOCIAL`  
 **Folder:** `docs/projects/social-media/`  
 **Role:** cross-cutting Social Media distribution planning and channel coordination  
 **Status:** `ACTIVE — FINAL ROADMAP BEFORE ROADMAP-REMOVAL PR`  
-**Reconciliation:** `2026-09-21 — landing-first dependency correlated; historical backlog activation remains removed`  
+**Reconciliation:** `2026-09-22 — Human/Owner TTS listening evidence correlated; landing-first dependency remains preserved`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -53,31 +53,29 @@ Deterministic package mapping, `/generate` integration, provenance/disclosure fa
 
 ### SOCIAL-P1 — Real TTS runtime evidence
 
-**State:** `ACTIVE_CANONICAL / TECHNICAL_RUNTIME_EVIDENCE_PRESENT / HUMAN_LISTENING_REQUIRED`.
+**State:** `ACTIVE_CANONICAL / HUMAN_LISTENING_FAILED_7_OF_8 / PROSODY_REMEDIATION_REQUIRED`.
 
-The provider-neutral TTS request/result contract, profile semantics, tests, sample manifest and benchmark structure are repository materialization. Real owner-routed runtime/WAV evidence and final ASR Required-Term evidence are now present. The remaining bounded exit is **truthful human listening evidence plus the Social acceptance decision**.
+Technical runtime/WAV evidence and final ASR Required-Term evidence remain valid. Human/Owner listening evidence is now present and changes the quality conclusion: seven of eight retained samples are rejected because the delivery is too choppy/staccato. The former 8-sample list is therefore **obsolete as an active voice-quality baseline** and remains only immutable historical evidence.
 
-Required exit evidence:
+The only usable reference is sample 4:
 
-- real synthesis output from the currently authorized runtime/provider path;
-- immutable audio artifact hash;
-- exact model/provider/runtime identity where observable and non-secret;
-- latency/runtime measurements from the actual execution;
-- license/provenance evidence for the produced artifact and any required input asset;
-- reproducible listening/acoustic assessment evidence without synthetic PASS;
-- truthful `NOT RUN`, `BLOCKED` or provider failure where real execution cannot be performed.
+- case: `chatterbox-multilingual-v3::de-dialogue-host-v1`;
+- audio SHA-256: `fa0f6a312095f35607bf470325e643ad3f625c01bd3f3a55e98b0b118afd37b0`;
+- Human/Owner verdict: `PASS / usable reference`.
 
-Protected runtime/provider setup, credentials, IAM, provider activation and other external mutations remain separately authorized and normally OPS-owned. The merged evidence is correlated in `docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_RUNTIME_ACCEPTANCE_2026-09-20.md`. Human listening remains `NOT_RUN`; no subjective PASS is inferred from ASR.
+The exact eight-case listening verdict is materialized in `docs/social-media/CAPITAL-AI-SOCIAL/reports/SOCIAL_P1_HUMAN_LISTENING_2026-09-22.json`. Remediation scope is defined in `docs/social-media/CAPITAL-AI-SOCIAL/work-packages/SOCIAL_P1_PROSODY_REMEDIATION_2026-09-22.md`.
 
-**Exit:** one real `TtsSynthesisResult` and associated immutable evidence satisfy the current contract; no synthetic audio, latency, listening result or provider PASS.
+Protected runtime/model execution remains owner-correctly routed to `CAPITAL-AI-OPS`. The next runtime slice is German-only, preserves sample 4 unchanged as the A/B reference and must investigate natural connected prosody before any new candidate can become accepted. ASR PASS alone cannot override a Human listening FAIL.
+
+**Exit:** the required German production-relevant TTS outputs have immutable technical evidence **and** Human/Owner listening PASS for natural continuous speech. Seven rejected samples cannot be promoted or consumed as accepted P1 audio.
 
 ### SOCIAL-P2 — Short-video + voice-over integration
 
 **State:** `IN_PROGRESS / PREPARATORY_INTEGRATION / P1_LISTENING_GATE_ENFORCED`.
 
-The Human/Owner explicitly started P2 on 2026-09-20. P2 may therefore advance its repository-side integration structure, but consumption of real P1 audio remains fail-closed until the missing Human/Owner listening evidence is bound to the exact audio identity.
+The Human/Owner explicitly started P2 on 2026-09-20. P2 may therefore advance its repository-side integration structure, but consumption of real P1 audio remains fail-closed: Human listening evidence now exists and rejects 7/8 samples. P2 may consume only a later P1 audio identity that has both technical evidence and Human/Owner listening PASS.
 
-The active first slice extends only the existing deterministic Pillow/FFmpeg renderer with a validated voice-over binding. It accepts only local audio with exact audio/request/content hashes, runtime/license evidence and explicit Human/Owner listening `PASS`. It preserves `publishReady=false` and performs no implicit provider publication action.
+The active first slice extends only the existing deterministic Pillow/FFmpeg renderer with a validated voice-over binding. It accepts only local audio with exact audio/request/content hashes, runtime/license evidence and explicit Human/Owner listening `PASS`. Sample 4 may serve as comparison/reference evidence, but the rejected samples are not production-consumable. It preserves `publishReady=false` and performs no implicit provider publication action.
 
 ### SOCIAL-P3 — Publication/analytics evidence completion
 

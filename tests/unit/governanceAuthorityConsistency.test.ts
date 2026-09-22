@@ -63,7 +63,8 @@ describe('governance authority consistency', () => {
   it('labels the governance library as a historical snapshot with a current-authority annotation', () => {
     const library = read('docs/governance/CAPITAL_AI_GOVERNANCE_LIBRARY_REPORT_2026-08-15.md');
     expect(library).toContain('Snapshot date:** 2026-08-15');
-    expect(library).toContain('Current-authority annotation:** 2026-08-19');
+    expect(library).toContain('Current-authority annotation:** 2026-09-22');
+    expect(library).toContain('NON-AUTHORIZING');
     expect(library).toContain('2026-08-16 retired');
   });
 
@@ -99,6 +100,50 @@ describe('governance authority consistency', () => {
     for (const policy of retiredStandalonePolicies) {
       expect(exists(policy), `${policy} must remain retired`).toBe(false);
     }
+  });
+
+  it('keeps active projections converged on the AGENTS trust root and Self-Healing ownership model', () => {
+    const roadmap = read('docs/architecture/ROADMAP.md');
+    expect(roadmap).toMatch(/PVC-09\.\.17[^\n]*FINTECH/i);
+    expect(roadmap).not.toMatch(/PVC-09\.\.11[^\n]*CAPITAL-AI-DATA/i);
+    expect(roadmap).toContain('REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT');
+
+    const removedProjectionPolicies = [
+      ...retiredStandalonePolicies,
+      'docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md',
+    ];
+    const currentProjectionPaths = [
+      'docs/architecture/ROADMAP.md',
+      'docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md',
+      'docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md',
+      'docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md',
+      'docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md',
+      'docs/governance/document-registry.json',
+    ];
+    for (const projectionPath of currentProjectionPaths) {
+      const projection = read(projectionPath);
+      for (const retiredPath of removedProjectionPolicies) {
+        expect(projection, `${projectionPath} still references ${retiredPath}`).not.toContain(retiredPath);
+      }
+    }
+
+    const integrated = read('docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md');
+    expect(integrated).toContain('RETIRED / OFF');
+    expect(integrated).not.toContain('AUTHORIZE_PR_CI = SUSPENDED / OFF');
+
+    for (const projectionPath of [
+      'docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md',
+      'docs/governance/GROK_PR_PROJECT_CONTEXT_TAGGING_POLICY.md',
+      'docs/governance/GROK_GOVERNANCE_AND_COLLABORATION_PROMPT.md',
+    ]) {
+      const projection = read(projectionPath);
+      expect(projection).toContain('HISTORICAL / NON-AUTHORIZING / PROVIDER-SPECIFIC PROJECTION');
+      expect(projection).toContain('/AGENTS.md@CURRENT_MAIN');
+    }
+
+    const legacyAgentRoadmap = read('docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md');
+    expect(legacyAgentRoadmap).toContain('HISTORICAL SNAPSHOT / NON-AUTHORIZING');
+    expect(legacyAgentRoadmap).toContain('/AGENTS.md@CURRENT_MAIN');
   });
 
   it('defines exactly one bounded capability-use projection without creating plugin authority', () => {

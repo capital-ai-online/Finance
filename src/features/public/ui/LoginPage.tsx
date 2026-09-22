@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, CheckCircle2, Globe2, Loader2, Lock, LogIn, Mail, Shield, ShieldCheck, Sparkles, TrendingUp, UserPlus } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Lock, LogIn, Mail, Shield, ShieldCheck, Sparkles, TrendingUp, UserPlus, Zap } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 import { requestHcaptchaToken } from '../../../lib/hcaptcha';
 import {
@@ -11,7 +11,7 @@ import {
   PASSWORD_RECOVERY_QUERY_PARAM,
   isPasswordRecoveryLocation,
 } from '../auth/passwordRecovery';
-import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
+import { BrandLogo } from './frontend-port/components/BrandLogo';
 
 interface LoginPageProps {
   /**
@@ -115,6 +115,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
           options: { captchaToken },
         });
         if (signInError) throw signInError;
+        window.location.replace('/');
         return;
       }
 
@@ -269,11 +270,13 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
       id="main-content"
       data-design-source="SvenKulessa/FRONTEND"
       data-design-source-commit="f2a101330d74420c373f0ec56fa58caac53d741d"
-      className="relative min-h-screen overflow-hidden bg-[#02050e] px-4 pb-16 pt-4 text-slate-100 selection:bg-aif-gold-DEFAULT selection:text-black sm:px-6"
+      data-presentation-source-path="src/components/LoginPage.tsx"
+      className="w-full min-h-screen bg-[#02050e] text-slate-100 flex flex-col items-center justify-start p-4 sm:p-6 pb-16 relative overflow-hidden select-none"
     >
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-10 h-96 w-96 -translate-x-1/2 rounded-full bg-violet-600/10 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-40 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute right-1/4 top-1/2 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col">
         <div className="flex items-center justify-between pb-4 pt-2">
@@ -296,20 +299,19 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
               <Sparkles className="h-3.5 w-3.5" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 sm:text-[11px]">
-              Capital-AI Webanwendung
+              Webanwendungs-Potenzial
             </span>
           </div>
           <h1 className="text-base font-extrabold leading-snug tracking-tight text-white sm:text-lg">
-            Marktintelligenz und Analyse in einer Oberfläche
+            Institutionelle Marktintelligenz für fundierte Entscheidungen
           </h1>
           <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
-            Die Login-Oberfläche folgt der aktuellen grafischen Architektur aus dem FRONTEND-Repository.
-            Authentifizierung, Session-Sicherheit und Recovery bleiben an die produktiven Finance-Verträge gebunden.
+            Capital-AI bündelt Multi-Asset-Marktdaten, quantitative Scoring-Modelle und Analysewerkzeuge in einer konsistenten Oberfläche. Authentifizierung, Session-Sicherheit und Recovery bleiben an die produktiven Finance-Verträge gebunden.
           </p>
           <div className="mt-3.5 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
             <div className="flex items-center gap-2 text-[11px] text-slate-200">
-              <Globe2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-              <span className="font-semibold">Multi-Asset</span>
+              <Zap className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <span className="font-semibold">Realtime-Analyse</span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-200">
               <TrendingUp className="h-3.5 w-3.5 shrink-0 text-fuchsia-400" />
@@ -328,7 +330,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
 
         <section className="relative rounded-3xl border border-amber-500/25 bg-[#070b19]/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(249,191,33,0.12)] backdrop-blur-xl sm:p-8">
           <div className="mb-5 flex flex-col items-center text-center">
-            <CapitalAiLogo size={110} showText={true} />
+            <BrandLogo variant="stacked" size="lg" />
             <h2 className="mt-4 text-xl font-bold tracking-tight text-white">
               {isRecoveryFlow ? 'Passwort sicher setzen' : mode === 'login' ? 'Terminal Anmeldung' : 'Neues Konto erstellen'}
             </h2>

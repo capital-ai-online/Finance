@@ -3,10 +3,10 @@
 **Document ID:** GOV-LIB-2026-08-15  
 **Repo:** `SvenKulessa/Finance`  
 **Snapshot date:** 2026-08-15  
-**Current-authority annotation:** 2026-08-19  
+**Current-authority annotation:** 2026-09-22  
 **Zweck:** Kompakte, dauerhafte Bibliothek für Agenten-Kontext und Audits
 
-> **Lifecycle notice:** This document originated as a 2026-08-15 snapshot. Historical statements remain useful evidence, but current normative interpretation follows Accepted ADR-0069 including its Owner addendum of 2026-08-16, `HUMAN_OWNER_PR_APPROVAL_POLICY.md`, `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`, and `GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md` after Human Merge of ADR-0086.
+> **Lifecycle notice:** This document is a historical 2026-08-15 snapshot and is **NON-AUTHORIZING**. Historical policy/M10 statements below remain provenance only. Current repository execution semantics resolve exclusively through `/AGENTS.md@CURRENT_MAIN`; stable historical policy IDs are aliases back to that trust root. Accepted ADR/ESS/Governance/Security/Compliance/domain contracts constrain only their current declared subject-matter scope.
 
 ## 1. Executive Summary
 

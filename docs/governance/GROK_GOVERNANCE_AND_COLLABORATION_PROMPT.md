@@ -1,13 +1,15 @@
 # CAPITAL AI – GROK GOVERNANCE & COLLABORATION PROMPT
 
+> **Lifecycle:** HISTORICAL / NON-AUTHORIZING / PROVIDER-SPECIFIC PROJECTION. All normative wording below is retained only as historical provenance. Current execution semantics resolve exclusively through `/AGENTS.md@CURRENT_MAIN`; this file cannot instruct Grok, ChatGPT, another agent, CI, merge, release or provider mutation. Productive M10 is `RETIRED / OFF` and no standalone DevelopmentChain/PR policy is current.
+
 **Document ID:** `GOV-GROK-COLLAB-001`  
-**Status:** PROPOSED  
+**Status:** HISTORICAL / NON-AUTHORIZING  
 **Date:** 2026-08-23  
 **Repository:** `SvenKulessa/Finance`  
 **Scope:** Alle Arbeiten von Grok (xAI) und vergleichbaren Agenten am Finance-Repository und an Capital-AI-Projekten, die dieses Repository betreffen  
 **Accountable Owner:** `SvenKulessa`  
 
-**Authority (untergeordnet):**  
+**Historical authority references (non-authorizing):**  
 - `/AGENTS.md` (Single Point of Trust / Agent Trust Root)  
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`  
 - `docs/governance/GROK_PR_PROJECT_CONTEXT_TAGGING_POLICY.md` (GOV-GROK-PR-CONTEXT-001)  

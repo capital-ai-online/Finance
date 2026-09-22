@@ -176,6 +176,51 @@ describe('self-healing contract', () => {
     });
   });
 
+  it('binds Issue project dispatch drift to read-only bounded verification', () => {
+    const policy = getRemediationPolicy('REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT');
+    expect(policy.preferredActionId).toBe('VERIFY_ISSUE_PROJECT_DISPATCH');
+    expect(policy.allowedActionIds).toEqual([
+      'VERIFY_ISSUE_PROJECT_DISPATCH',
+      'OBSERVE_ONLY',
+    ]);
+
+    const action = getRemediationAction('VERIFY_ISSUE_PROJECT_DISPATCH');
+    expect(action).toMatchObject({
+      tier: 'SH-0',
+      activation: 'ENABLED',
+      idempotencyClass: 'READ_ONLY',
+      blastRadius: 'OBSERVATION',
+      requiredCapability: null,
+      killSwitch: 'self-healing.issue-project-dispatch',
+      verificationProbe: 'issue-open-project-label-routing-generation-readback',
+      budget: { maxAttempts: 1 },
+    });
+
+    const eligible = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
+      actionId: 'VERIFY_ISSUE_PROJECT_DISPATCH',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: false,
+      verificationAvailable: true,
+      operationIdempotency: 'READ_ONLY',
+    });
+    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
+
+    const unsafeMutation = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(unsafeMutation).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_NOT_ALLOWED_FOR_FINDING' });
+  });
+
   it('keeps the 45k Actions cost finding protected from autonomous remediation', () => {
     const policy = getRemediationPolicy('PROTECTED_GITHUB_ACTIONS_COST_BLOCKER');
     expect(policy.preferredActionId).toBe('OBSERVE_ONLY');

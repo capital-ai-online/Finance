@@ -142,6 +142,37 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     );
   });
 
+  it('serves /faq through the SPA shell without promoting it into the SEO route set', () => {
+    expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(true);
+    expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(false);
+
+    const handler = captureProductionFallbackHandler();
+    let sentFile: string | undefined;
+    let statusCode: number | undefined;
+
+    const response = {
+      status(code: number) {
+        statusCode = code;
+        return this;
+      },
+      type() {
+        return this;
+      },
+      send() {
+        return this;
+      },
+      sendFile(file: string) {
+        sentFile = file;
+        return this;
+      },
+    } as unknown as Response;
+
+    handler({ path: '/faq' } as Request, response, () => undefined);
+
+    expect(statusCode).toBeUndefined();
+    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'index.html'));
+  });
+
   it('returns a real HTTP 404 for an unknown route', () => {
     const handler = captureProductionFallbackHandler();
     let statusCode: number | undefined;

@@ -148,10 +148,16 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
   });
 
-  it('uses LoginPage exclusively at the dedicated /login route', () => {
+  it('uses LoginPage exclusively at the dedicated /login route without redirecting an existing session', () => {
     expect(routes).toContain("if (currentPath === '/login')");
     expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');
+    const loginRouteStart = routes.indexOf("if (currentPath === '/login')");
+    const dashboardRouteStart = routes.indexOf("if (currentPath === '/dashboard')");
+    const loginRouteBlock = routes.slice(loginRouteStart, dashboardRouteStart);
+    expect(loginRouteBlock).not.toContain('if (userSession)');
+    expect(loginRouteBlock).not.toContain('<RouteRedirect to="/"');
     expect(loginPage).toContain('Canonical authentication page for `/login`');
+    expect(loginPage).toContain("window.location.replace('/')");
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('Zurück zur Übersicht');
     expect(loginPage).toContain('data-design-source="SvenKulessa/FRONTEND"');
@@ -209,13 +215,12 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPort).toContain('Enterprise Scorer');
     expect(landingPort).toContain('Impressum');
     expect(landingPort).toContain('Datenschutz');
-    expect(routes).toContain("if (currentPath === '/datenschutz')");
-    expect(routes).toContain("if (currentPath === '/agb')");
-    expect(routes).toContain("if (currentPath === '/impressum')");
-    expect(routes).toContain("if (currentPath === '/faq')");
-    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
+    expect(routes).toContain("currentPath === '/datenschutz'");
+    expect(routes).toContain("currentPath === '/agb'");
+    expect(routes).toContain("currentPath === '/impressum'");
+    expect(routes).toContain("currentPath === '/faq'");
+    expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
+    expect(routes).not.toContain('<LegalPageShell activeRoute=');
     expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
   });
 

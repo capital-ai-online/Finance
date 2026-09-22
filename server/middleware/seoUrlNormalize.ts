@@ -23,6 +23,7 @@ export const APPLICATION_SPA_PATHS = new Set([
   '/login',
   '/dashboard',
   '/media-studio',
+  '/faq',
 ]);
 
 export function stripTrailingSlashPath(pathname: string): string {

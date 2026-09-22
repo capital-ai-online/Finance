@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "project": "CAPITAL-AI-SOCIAL",
+  "roadmap_item": "SOCIAL-P1",
+  "evidence_class": "HUMAN_OWNER_LISTENING",
+  "reviewed_at": "2026-09-22T00:19:00+02:00",
+  "reviewer_reference": "Human/Owner current chat",
+  "source_runtime_artifact_id": 10594080366,
+  "finance_remediation_artifact_id": 10598205180,
+  "verdict_summary": {
+    "accepted_reference_count": 1,
+    "rejected_count": 7,
+    "prior_list_quality_baseline": "OBSOLETE",
+    "primary_finding": "Seven samples sound too choppy/staccato for continued voice-quality acceptance.",
+    "only_usable_reference": "04_chatterbox_de_dialogue_host"
+  },
+  "cases": [
+    {
+      "index": 1,
+      "benchmark_case_id": "qwen3-tts::de-finance-numbers-v1",
+      "audio_sha256": "52aab9dbd97824dfea3144249ce4ff58f27c15982c7a15e5c9686345f4b179b5",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato"
+    },
+    {
+      "index": 2,
+      "benchmark_case_id": "chatterbox-multilingual-v3::de-finance-numbers-v1",
+      "audio_sha256": "78b1dac9f55bb7cda41b8c57d6fafa6447fe5b9d852c8dec1ad152b2b3ef5303",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato"
+    },
+    {
+      "index": 3,
+      "benchmark_case_id": "qwen3-tts::de-dialogue-host-v1",
+      "audio_sha256": "f4d1210590701c47130b194c050164a7f173edf22ca44219dbec000339a57f20",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato"
+    },
+    {
+      "index": 4,
+      "benchmark_case_id": "chatterbox-multilingual-v3::de-dialogue-host-v1",
+      "audio_sha256": "fa0f6a312095f35607bf470325e643ad3f625c01bd3f3a55e98b0b118afd37b0",
+      "verdict": "PASS",
+      "finding": "usable reference; retain as prosody baseline"
+    },
+    {
+      "index": 5,
+      "benchmark_case_id": "qwen3-tts::en-it-architecture-v1",
+      "audio_sha256": "f5af75ca5147cbd0196a67ec877c2e80a0c0f2f60d1f0beedeb67986b8a5a5f4",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato; historical comparison only"
+    },
+    {
+      "index": 6,
+      "benchmark_case_id": "chatterbox-multilingual-v3::en-it-architecture-v1",
+      "audio_sha256": "554eb207d40297127840122953eb48011dba3b67bc121b9de2780625442df928",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato; historical comparison only"
+    },
+    {
+      "index": 7,
+      "benchmark_case_id": "qwen3-tts::en-dialogue-cohost-v1",
+      "audio_sha256": "e13af8293887fd8bb25629b3bfa2c1d6aa512d832a01129de119004e5bfab026",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato; historical comparison only"
+    },
+    {
+      "index": 8,
+      "benchmark_case_id": "chatterbox-multilingual-v3::en-dialogue-cohost-v1",
+      "audio_sha256": "3ff269a0ca99f7d582d4136250d8e890f460c1ffb7bd7517b1679cade115284f",
+      "verdict": "FAIL",
+      "finding": "too choppy/staccato; historical comparison only"
+    }
+  ],
+  "acceptance_effect": {
+    "social_p1_terminal": false,
+    "social_p1_state": "HUMAN_LISTENING_FAILED_7_OF_8 / PROSODY_REMEDIATION_REQUIRED",
+    "social_p2_real_audio_consumption": "HELD",
+    "technical_runtime_and_asr_evidence": "PRESERVED",
+    "next_reference": {
+      "benchmark_case_id": "chatterbox-multilingual-v3::de-dialogue-host-v1",
+      "audio_sha256": "fa0f6a312095f35607bf470325e643ad3f625c01bd3f3a55e98b0b118afd37b0"
+    }
+  },
+  "truth_boundary": "This evidence records the Human/Owner subjective listening verdict. It does not infer acceptance from ASR and does not authorize provider/runtime mutation."
+}
