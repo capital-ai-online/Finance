@@ -12,7 +12,7 @@
   "startedAt": "2026-09-22T09:15:00+02:00",
   "baseBranch": "main",
   "baseSha": "4c4a88e7f83150191c81134439e7bc9a1145ad4a",
-  "branch": "operations/social-p1-prosody-remediation-20260922",
+  "branch": "agent/operations-social-p1-prosody-remediation-20260922",
   "projectId": "CAPITAL-AI-OPS",
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -36,7 +36,7 @@
       1267
     ],
     "overlap": false,
-    "note": "Open PRs touch auth, SH-02.9 work-package, or governance roadmap files; none touches the claimed TTS runtime/workflow/evidence paths. Operations ROADMAP is intentionally not modified while PR #1271 is an active writer."
+    "note": "Open PRs touch auth, SH-02.9 work-package, or governance roadmap files; none touches the claimed TTS runtime/workflow/evidence paths. Operations ROADMAP is intentionally not modified while PR #1271 is an active writer. Work was losslessly moved from the initial operations/* branch to this agent/* branch because the canonical pre-create PR workflow accepts only agent/*, claude/*, grok/* or ai/*."
   },
   "scopeNote": "Existing Chatterbox/Modal path only. Exactly one new German Chatterbox finance candidate; accepted sample 4 is copied as immutable reference. No English regeneration, no new provider, no credentials/IAM/billing mutation, no Human listening PASS fabrication.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
