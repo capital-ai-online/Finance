@@ -115,6 +115,32 @@
       },
     },
   };
+  var initializationPromise = null;
+
+  function hasStoredConsentCookie() {
+    var cookieName = configuration.cookie.name + '=';
+    return String(document.cookie || '')
+      .split(';')
+      .some(function (entry) { return entry.trim().indexOf(cookieName) === 0; });
+  }
+
+  function initializeConsent() {
+    if (initializationPromise) return initializationPromise;
+
+    initializationPromise = waitForConsentStyles()
+      .then(function () { return consent.run(configuration); })
+      .then(function () {
+        window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
+      })
+      .catch(function (error) {
+        initializationPromise = null;
+        console.error('[Consent] Initialization failed; optional services remain disabled.', error);
+        throw error;
+      });
+
+    return initializationPromise;
+  }
+
   // Available on every SPA route, independently of React/authentication.
   function installSettingsButton() {
     if (document.getElementById('capital-ai-cookie-settings')) return;
@@ -122,20 +148,23 @@
     button.id = 'capital-ai-cookie-settings';
     button.type = 'button';
     button.textContent = 'Cookie-Einstellungen';
-    button.addEventListener('click', function () { consent.showPreferences(); });
+    button.addEventListener('click', function () {
+      initializeConsent()
+        .then(function () { consent.showPreferences(); })
+        .catch(function () {
+          // Initialization already logged the error; optional services stay disabled.
+        });
+    });
     document.body.appendChild(button);
   }
-  try {
-    waitForConsentStyles()
-      .then(function () { return consent.run(configuration); })
-      .then(function () {
-        installSettingsButton();
-        window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
-      })
-      .catch(function (error) {
-        console.error('[Consent] Initialization failed; optional services remain disabled.', error);
-      });
-  } catch (error) {
-    console.error('[Consent] Initialization failed; optional services remain disabled.', error);
+  installSettingsButton();
+
+  if (hasStoredConsentCookie()) {
+    void initializeConsent();
+  } else {
+    // A fresh/private visit remains completely independent from the vendor DOM.
+    // The GA bridge still receives its fail-closed readiness signal and keeps
+    // optional measurement disabled until the user opens settings and consents.
+    window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
   }
 })();
