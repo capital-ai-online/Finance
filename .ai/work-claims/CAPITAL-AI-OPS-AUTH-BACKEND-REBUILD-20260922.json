@@ -59,7 +59,7 @@
     "mainSynchronization": "Merged CURRENT_MAIN 163cdcec7b7dc2aa18ad3c8d8846ed0d4bf15dda into the auth rebuild at ff87163322f46c188ccf5b26f8816d40df0370df after confirming zero changed-file overlap across the 7 intervening SEO/current-main files."
   },
   "acceptanceCriteria": [
-    "Google login is initiated only through /api/auth/login/google and callback is handled only by /api/auth/callback.",
+    "Google login is initiated only through /api/auth/login/google; the OAuth return is handled only by backend-owned callback handling (/api/auth/callback or the explicitly marked root compatibility callback required by the existing provider allow-list).",
     "Backend stores Supabase session material in HttpOnly Secure SameSite=Lax cookies and refreshes it server-side.",
     "GET /api/auth/session returns one authoritative user/profile/subscription projection or authenticated=false without hanging the UI.",
     "POST /api/auth/logout clears backend session cookies and the landing/header expose an explicit logout action.",
