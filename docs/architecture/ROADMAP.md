@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.0.0`  
 **Status date:** `2026-09-22`  
-**Baseline:** `main@7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
+**Baseline:** `main@aee799282298596a5f2d9140a4e805edf52783a0`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -34,6 +34,13 @@ Canonical ownership is resolved from:
 - `docs/projects/PROJECT_VALUE_CHAIN.md`
 
 Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..17` FINTECH. `CAPITAL-AI-DATA` is superseded as an independent productive owner. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
+
+## Current correlation — 2026-09-22
+
+- `main@4a095d7e267b284ed4456750ad031457a2ef9a0a` remains historical merge evidence for FE desktop convergence, but CURRENT_MAIN has advanced to `aee799282298596a5f2d9140a4e805edf52783a0`.
+- SH-02.9A is contained on main through PR #1246 and its post-merge convergence PR #1259. Open PR #1262 is the owner-correct OPS continuation for SH-02.9 and is not promoted to current-main state by this index.
+- The current organizational projection resolves `PVC-09..17` exclusively to `CAPITAL-AI-FINTECH`; no current DATA-owner routing is retained here.
+- FE/GOV work-package status stays in the owning project Roadmaps. This index records repository-wide navigation and invariant state only; it does not duplicate their execution queues.
 
 ## Current invariants projected from AGENTS.md
 
