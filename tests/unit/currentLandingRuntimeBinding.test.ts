@@ -12,11 +12,11 @@ const sourceLock = JSON.parse(
   read('src/features/public/ui/frontend-port/source-lock.json'),
 ) as { sourceCommit: string; lockMode: string };
 
-describe('current f2a101 landing runtime binding', () => {
+describe('current cbc5580 landing runtime binding', () => {
   it('uses the newly promoted FRONTEND generation as the only graphical reference', () => {
-    expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(sourceLock.sourceCommit).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
     expect(sourceLock.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
-    expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(landing).toContain('data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"');
     expect(landing).toContain('data-market-data-binding="verified-on-selection"');
     expect(landing).toContain('data-landing-scorer-gate="FIN-LF-01"');
     expect(referenceApp).toContain('useCurrentLandingRuntimeBinding');
@@ -55,7 +55,7 @@ describe('current f2a101 landing runtime binding', () => {
     expect(runtime).not.toContain('api.coingecko.com');
   });
 
-  it('wires current f2a101 market selection directly into verified hydration', () => {
+  it('wires current cbc5580 market selection directly into verified hydration', () => {
     expect(referenceApp).toContain('onSelectAsset={runtimeBinding.openVerifiedAsset}');
     expect(referenceApp).toContain('runtimeBinding.openVerifiedAsset(asset)');
     expect(referenceApp).not.toContain('onSelectAsset={(asset) => setSelectedAsset(asset)}');
@@ -82,7 +82,7 @@ describe('current f2a101 landing runtime binding', () => {
     expect(runtime).toContain('serverseitige Daten-/Entitlement-Pfad');
   });
 
-  it('keeps login and new subclass navigation from f2a101 intact', () => {
+  it('keeps login and new subclass navigation from cbc5580 intact', () => {
     expect(referenceApp).toContain("window.location.assign('/login')");
     expect(referenceApp).toContain('onSelectSubclass');
     expect(referenceApp).toContain('<SubclassDetailModal');

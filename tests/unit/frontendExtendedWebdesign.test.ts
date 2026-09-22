@@ -42,8 +42,8 @@ const snapshotManifest = JSON.parse(
 
 describe('extended FRONTEND webdesign sync', () => {
   it('pins the synchronized graphical architecture to the latest selected upstream commit', () => {
-    expect(snapshotManifest.sourceSha).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(snapshotManifest.currentGraphicalComponentCount).toBe(16);
+    expect(snapshotManifest.sourceSha).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
+    expect(snapshotManifest.currentGraphicalComponentCount).toBe(18);
     expect(snapshotManifest.presentationSurfaces).toMatchObject({
       login: '/login',
       legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
@@ -119,10 +119,22 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(foreignVisibleTokens).toEqual([]);
   });
 
-  it('removes internal version and raw color-code chrome from the mobile menu', () => {
-    expect(header).toContain('System Online');
+  it('removes the internal status/version and raw color-code chrome from the mobile menu', () => {
+    expect(header).not.toContain('System Online');
     expect(header).not.toContain('System v6.0 Online');
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
+  });
+
+  it('binds the new Market Vocabulary route to the existing canonical learning component', () => {
+    expect(routes).toContain("currentPath === '/vocabulary'");
+    expect(routes).toContain('MarketVocabularyModal');
+    expect(routes).toContain('to="/vocabulary"');
+    const vocabularyAdapter = read(
+      'src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx',
+    );
+    expect(vocabularyAdapter).toContain('LearningVocabulary');
+    expect(vocabularyAdapter).toContain('data-vocabulary-mode="READ_ONLY"');
+    expect(vocabularyAdapter).not.toContain('vocabularyData');
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {

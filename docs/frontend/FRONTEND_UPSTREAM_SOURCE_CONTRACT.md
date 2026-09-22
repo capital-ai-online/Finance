@@ -65,3 +65,17 @@ The hourly workflow mirrors future upstream presentation changes into reviewable
 7. exact-head TypeScript, Frontend architecture, tests/build and applicable SEC/COMP/QM evidence — required before merge.
 
 Human/CODEOWNER merge remains the final merge gate.
+
+
+## Runtime promotion — cbc5580 Vocabulary delta
+
+**Selected source:** `SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3`
+
+The cbc5580 delta is synchronized with explicit owner-correct adapters instead of blind fixture promotion:
+
+- `MarketVocabularyModal.tsx` is adopted as the graphical Vocabulary surface, but its content is supplied by the existing Finance `LearningVocabulary` projection over the canonical ESS-0017 registry;
+- `/vocabulary` is the canonical public path; `/glossar`, `/lexikon`, `/market-vocabulary` and `/dictionary` redirect to it;
+- the source `src/data/vocabularyData.ts` is not promoted because it would create a second terminology authority;
+- expanded source asset fixtures are not promoted as verified market data; CAPITAL-AI-FINTECH retains asset/data/scoring authority and the existing verified selection binding remains unchanged;
+- `KrakenReferralBanner.tsx` is mirrored only as inert source evidence and is not promoted into runtime pending CAPITAL-AI-COMP review of affiliate/referral and public financial claims;
+- the source mobile-first presentation and Finance >=1024px desktop website adapter remain active.
