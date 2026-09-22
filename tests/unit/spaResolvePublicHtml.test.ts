@@ -24,10 +24,12 @@ describe('S2 public HTML files (path-safe)', () => {
     expect(files).toEqual({
       root: path.resolve(dir, 'index.html'),
       universe: path.resolve(dir, 'universe', 'index.html'),
+      learningPlatform: path.resolve(dir, 'learning-platform', 'index.html'),
+      vocabulary: path.resolve(dir, 'vocabulary', 'index.html'),
       impressum: path.resolve(dir, 'impressum', 'index.html'),
       agb: path.resolve(dir, 'agb', 'index.html'),
       datenschutz: path.resolve(dir, 'datenschutz', 'index.html'),
-      learningPlatform: path.resolve(dir, 'learning-platform', 'index.html'),
+      faq: path.resolve(dir, 'faq', 'index.html'),
     });
     for (const candidate of Object.values(files)) {
       expect(isPathInsideRoot(dir, candidate)).toBe(true);
