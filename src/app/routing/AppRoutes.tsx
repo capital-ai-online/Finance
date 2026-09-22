@@ -168,9 +168,6 @@ export function AppRoutes({
   }
 
   if (currentPath === '/login') {
-    if (userSession) {
-      return <RouteRedirect to="/" label="Zur Landingpage" />;
-    }
     return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
   }
 
