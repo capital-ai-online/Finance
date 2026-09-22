@@ -31,6 +31,8 @@ test('delegates v1.8 Decision/Evidence drift only to the live reconciler', () =>
     'Error: PR #1173 behauptet Decision Status EVIDENCE_PENDING, aber die sichtbaren Gate-Zustände ergeben READY_FOR_HUMAN_DECISION. Decision Status darf nicht manuell von der Evidence abweichen.',
     'Error: PR #1173 enthält kein vollständiges proaktives Live Dashboard der Vorlage v1.8.0.',
     'Error: PR #1173 enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard. Dashboard-Projektionen dürfen ausschließlich vom Evidence → Decision Reconciler abgeleitet werden.',
+    'Error: PR #1264 muss technische Traceability in v1.8.0 standardmäßig einklappen.',
+    'Error: PR #1264 muss die maschinenlesbare Baseline in v1.8.0 standardmäßig einklappen.',
   ]) {
     const result = classifyPrAutofixFailure({
       sourceWorkflow: '.github/workflows/pr-governance.yml',

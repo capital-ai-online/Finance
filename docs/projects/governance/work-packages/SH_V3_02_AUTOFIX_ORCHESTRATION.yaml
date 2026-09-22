@@ -64,6 +64,10 @@ failure_classes:
     condition: "canonical v1.8 Decision/Evidence projection is stale"
     action: "delegate exclusively to canonical Decision Evidence Reconciler"
 
+  PR_V18_COLLAPSED_DETAILS_DRIFT:
+    condition: "PR Governance reports that v1.8 technical Traceability or the machine-readable Production Baseline is not collapsed with the canonical details summaries"
+    action: "classify as REPOSITORY_PR_DECISION_EVIDENCE_DRIFT; mark the v1.8 body shape non-canonical; let the existing Decision Evidence Reconciler bootstrap once through the trusted-main renderPullRequestBody.mjs output; then verify the exact-head Governance result"
+
   PROTECTED_ACTIONS_MINUTES_BLOCKER:
     condition: "the protected 45,000-minute GitHub Actions blocker is active"
     action: "do not repair or rerun; emit protected blocker evidence and require the configured unblock condition"
@@ -254,6 +258,7 @@ exit_gate:
   - "missing dispatch becomes ORCHESTRATION_TRIGGER_MISSING"
   - "exact CI workflow_dispatch revalidation re-enters the existing bounded repair/reconciliation listeners"
   - "an incomplete but uniquely bounded table-only v1.8 Live Dashboard is repaired by the existing Decision/Evidence Reconciler"
+  - "v1.8 bodies missing either canonical collapsed Technical Traceability or machine-readable Production Baseline details boundary are detected, bootstrapped by the existing trusted-main Decision/Evidence writer, and exact-head Governance revalidation is required"
   - "production-baseline refresh runs are serialized and never cancelled mid-write by duplicate completion events"
   - "repair outcome is exact-head verified"
   - "protected Actions-minute blockers never enter remediation"
