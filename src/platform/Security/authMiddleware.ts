@@ -18,6 +18,11 @@ import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
 import { createLogger } from '../../../server/logger';
 import { annotateReason, buildDebounceKey, createIamAuditDebounce } from './iamAuditDebounce';
+import {
+  AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+  AAL2_REACTIVATION_STAGE,
+  isAal2EnabledFor,
+} from './aal2DiagnosticSupersession';
 
 const iamLogger = createLogger('iam');
 const MAX_BEARER_TOKEN_LENGTH = 8_192;
@@ -249,7 +254,7 @@ export interface Aal2Result {
   verified: boolean;
   userId?: string;
   currentLevel: string | null;
-  reason: Aal2DenyReason | 'aal2-verified';
+  reason: Aal2DenyReason | 'aal2-verified' | 'aal2-superseded';
 }
 
 export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
@@ -267,6 +272,37 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData?.user) {
       return { verified: false, currentLevel: null, reason: 'invalid-token' };
+    }
+
+    // The diagnostic supersession never bypasses primary identity verification. It only bypasses
+    // the provider AAL2 requirement after the bearer token has resolved to a real Supabase user.
+    // Every bypass is emitted to runtime logs and the IAM audit table so staged reactivation can
+    // be correlated against the original login stall.
+    if (!isAal2EnabledFor('privileged')) {
+      iamLogger.warn('AAL2 diagnostic supersession bypass', {
+        requestId: req.requestId,
+        userId: userData.user.id,
+        supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+        reactivationStage: AAL2_REACTIVATION_STAGE,
+        surface: 'privileged',
+      });
+      await logIamEvent(
+        userData.user.id,
+        userData.user.id,
+        'aal2.diagnostic_supersession_bypass',
+        null,
+        {
+          supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+          reactivationStage: AAL2_REACTIVATION_STAGE,
+          surface: 'privileged',
+        },
+      );
+      return {
+        verified: true,
+        userId: userData.user.id,
+        currentLevel: 'superseded',
+        reason: 'aal2-superseded',
+      };
     }
 
     const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(token);
