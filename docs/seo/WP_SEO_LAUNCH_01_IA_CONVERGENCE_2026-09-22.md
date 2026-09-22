@@ -54,11 +54,22 @@ Initial Render readback during this slice:
 - current main is four commits ahead of the live Render commit;
 - the compare surface between those SHAs changes `public/cookieconsent-theme.css` and `tests/unit/cookieConsentStyleReadiness.test.ts`.
 
-Classification at this observation:
+Classification at the initial observation:
 
 `PRODUCTION_DRIFT / EXACT_SHA_FREEZE_NOT_PASS`
 
-The delta is small, but the launch contract requires exact Production ↔ CURRENT_MAIN identity. No waiver is inferred from file type or apparent impact.
+The canonical GitHub→Render path subsequently recovered without an SEO-side provider bypass:
+
+- Render deploy: `dep-dap07drtqb8s73ertcv0`;
+- deployed commit: `aee799282298596a5f2d9140a4e805edf52783a0`;
+- state: `live`;
+- deploy trigger: `2026-09-22T04:27:35Z`;
+- current-main commit time: `2026-09-22T04:23:14Z`;
+- trigger delta: 261 seconds — within the five-minute SLA.
+
+Current exact-SHA classification: `PRODUCTION_FREEZE_PASS`.
+
+OPS #1258 remains independently open for raw initial-HTML/cache classification; exact deployment identity does not fabricate that separate evidence.
 
 ## 4. Canonical public-route audit
 
@@ -192,7 +203,7 @@ FINTECH Issue #1254 remains open for public-safe scoring truth. SEO does not pro
 | Visible root IA to `/universe` | `OPEN_FE_1263` |
 | Visible root IA to `/learning-platform` | `OPEN_FE_1263` |
 | `/faq` public SEO promotion | `BLOCKED_OPS_1252` |
-| Production exact-SHA freeze | `PRODUCTION_DRIFT` at initial readback |
+| Production exact-SHA freeze | `PASS` after canonical recovery to `dep-dap07drtqb8s73ertcv0` / exact current main |
 | Root Production HTML verification | `OPEN_OPS_1258` |
 | FINTECH scoring truth | `BLOCKED_FINTECH_1254` |
 | GSC current performance | `READ_BLOCKED_NOT_CONNECTED` |
