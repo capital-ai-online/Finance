@@ -65,22 +65,18 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(landingCss).toContain('display: none !important');
   });
 
-  it('uses the latest graphical source for /login while retaining Finance auth handlers', () => {
-    expect(login).toContain('data-design-source="SvenKulessa/FRONTEND"');
-    expect(login).toContain('data-presentation-source-path="src/components/LoginPage.tsx"');
-    expect(login).toContain('Webanwendungs-Potenzial');
-    expect(login).toContain('Institutionelle Marktintelligenz für fundierte Entscheidungen');
+  it('keeps /login on the Finance-owned backend auth surface while preserving the branded shell', () => {
     expect(login).toContain('<BrandLogo variant="stacked" size="lg" />');
-    expect(login).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(login).toContain('supabase.auth.signInWithPassword');
-    expect(login).toContain('supabase.auth.signUp');
-    expect(login).toContain('supabase.auth.signInWithOAuth');
+    expect(login).toContain('Terminal Anmeldung');
+    expect(login).toContain('data-auth-architecture="backend-first"');
+    expect(login).toContain('href="/api/auth/login/google?next=%2F"');
+    expect(login).not.toContain('supabase.auth');
+    expect(login).not.toContain('signInWithPassword');
+    expect(login).not.toContain('signUp');
     expect(login).toContain('href="/impressum"');
     expect(login).toContain('href="/datenschutz"');
     expect(login).toContain('href="/agb"');
-    expect(login).toContain('href="/faq"');
     expect(login).not.toContain('setTimeout(');
-    expect(login).not.toContain('trackEvent(');
   });
 
   it('binds all canonical legal and FAQ paths to the current FRONTEND legal design without transferring content authority', () => {
