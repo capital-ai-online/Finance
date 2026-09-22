@@ -163,25 +163,27 @@ describe('CookieConsent stylesheet readiness', () => {
     expect(html).toContain('id="cookieconsent-theme-style"');
   });
 
-  it('keeps a fresh/private first visit in normal document flow without an auto-shown modal', async () => {
+  it('keeps a fresh/private first visit completely out of consent modal DOM', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
     expect(r.runCount).toBe(1);
     expect(r.config?.disablePageInteraction).toBe(false);
     expect(r.config?.autoShow).toBe(false);
-    expect(r.notices).toHaveLength(1);
+    expect(r.config?.lazyHtmlGeneration).toBe(true);
+    expect(r.notices).toHaveLength(0);
+
+    const init = fs.readFileSync('public/cookieconsent-init.js', 'utf8');
+    expect(init).not.toContain('installFirstVisitNotice');
+    expect(init).not.toContain('capital-ai-consent-notice');
 
     const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
     expect(theme).toMatch(/#cc-main\s*\{[\s\S]*pointer-events:\s*none;/);
     expect(theme).toMatch(/#cc-main \.cm,[\s\S]*#cc-main \.pm\s*\{[\s\S]*pointer-events:\s*auto;/);
-
-    const noticeBlock = theme.match(/#capital-ai-consent-notice\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(noticeBlock).toContain('position: relative;');
-    expect(noticeBlock).not.toContain('position: fixed;');
+    expect(theme).not.toContain('#capital-ai-consent-notice');
   });
 
-  it('does not recreate the first-visit notice when valid consent already exists', async () => {
+  it('keeps the settings trigger available without creating first-visit content', async () => {
     const r = runtime({ vendorReady: true, themeReady: true, validConsent: true });
     await r.flush();
 
