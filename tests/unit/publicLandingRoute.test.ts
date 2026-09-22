@@ -148,10 +148,16 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
   });
 
-  it('uses LoginPage exclusively at the dedicated /login route', () => {
+  it('uses LoginPage exclusively at the dedicated /login route without redirecting an existing session', () => {
     expect(routes).toContain("if (currentPath === '/login')");
     expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');
+    const loginRouteStart = routes.indexOf("if (currentPath === '/login')");
+    const dashboardRouteStart = routes.indexOf("if (currentPath === '/dashboard')");
+    const loginRouteBlock = routes.slice(loginRouteStart, dashboardRouteStart);
+    expect(loginRouteBlock).not.toContain('if (userSession)');
+    expect(loginRouteBlock).not.toContain('<RouteRedirect to="/"');
     expect(loginPage).toContain('Canonical authentication page for `/login`');
+    expect(loginPage).toContain("window.location.replace('/')");
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('Zurück zur Übersicht');
     expect(loginPage).toContain('data-design-source="SvenKulessa/FRONTEND"');
