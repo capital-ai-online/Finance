@@ -1,12 +1,12 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1`
+**Baseline:** `main@93893ab46cc0753dc4e86cd7d6120d321bc48651`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — post-PR #1211 merge readback; FAQ public-SEO dependency reclassified to OPS #1252; topic/content evidence refresh active  
+**Reconciliation:** 2026-09-22 — PR #1253 merged; content-quality/review convergence active; foreign-owner FAQ, scoring-truth and root-HTML verification gates preserved  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -21,7 +21,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / PR_1211_MERGED / POST_SOCIAL1234_SYNC / FAQ_OPS_1252_BLOCKED / TOPIC_CONTENT_EVIDENCE_REFRESH_ACTIVE`.
+**State:** `ACTIVE_CANONICAL / PR_1253_MERGED / CONTENT_QUALITY_REVIEW_ACTIVE / FAQ_OPS_1252_BLOCKED / FINTECH_1254_BLOCKED / ROOT_HTML_OPS_1258_VERIFY`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
@@ -30,7 +30,8 @@ Fresh Human/Owner direction in the current interaction activates one bounded lau
 
 **Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.  
 **Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.  
-**Post-#1211 continuation evidence:** `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`.
+**Post-#1211 continuation evidence:** `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`.  
+**Post-#1253 quality/review evidence:** `docs/seo/WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md`.
 
 Historical launch-execution readback retained for provenance (superseded by the 2026-09-22 current-frontend convergence below):
 
@@ -105,6 +106,26 @@ Current binding evidence:
 - `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`
 - `docs/seo/SEO_TOPIC_MAP_PUBLIC_LAUNCH_2026-09-21.md`
 - `docs/seo/SEO_LAUNCH_CONTENT_BRIEF_02_2026-09-22.md`
+
+## Post-PR #1253 SEO quality / review convergence — 2026-09-22
+
+Human/CODEOWNER merged PR #1253 into `main@93893ab46cc0753dc4e86cd7d6120d321bc48651`. The merged slice completed the qualitative Topic/Content evidence refresh and materialized Pilot Brief #02.
+
+Current bounded state:
+
+- predecessor work claim `CAPITAL-AI-SEO-TOPIC-EVIDENCE-PILOT-BRIEF-20260922` is released in the current continuation because its merge release condition is satisfied;
+- `WP-SEO-SPAM` repository-level negative gates are re-read against the six-route canonical sitemap/route inventory and the two launch briefs; no scaled query-variant route generator, doorway-page program, cloaking path or synthetic ranking/performance claim is introduced by the canonical SEO artifacts inspected in this slice;
+- this is a repository/content-control observation only, not a blanket provider/web PASS;
+- SEO Issue #1233 remains blocked on OPS #1252 for the `/faq` public-route/static-HTML promotion;
+- Pilot Brief #02 remains blocked on FINTECH #1254 before any public scoring-methodology claim can be promoted;
+- an external crawl of `https://capital-ai.online/` observed the older `CAPITAL-AI Portal` presentation while CURRENT_MAIN contains the new `Marktdaten verstehen. Chancen besser erkennen.` initial metadata. The mismatch is routed as bounded OPS verification #1258; SEO does not infer deploy/cache failure without exact runtime evidence;
+- GSC Search Analytics, GA4 and GenAI visibility remain independently provider-read gated.
+
+Immediate review actions are intentionally limited to two:
+1. OPS #1258 — classify Root-HTML metadata as Production match vs cache/deploy drift.
+2. OPS #1252 — complete the public `/faq` runtime/static-HTML prerequisite so SEO #1233 can continue atomically.
+
+FINTECH #1254 remains an active domain-truth dependency for Pilot Brief #02, but publication is not an immediate action until its review returns.
 
 ## Current provider evidence
 
