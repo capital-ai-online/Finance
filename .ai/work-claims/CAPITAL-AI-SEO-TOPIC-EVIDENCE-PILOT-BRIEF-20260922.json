@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-TOPIC-EVIDENCE-PILOT-BRIEF-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -44,5 +44,8 @@
     "FAQ SEO promotion remains fail-closed on OPS #1252 and the strict public-route equality invariant is preserved",
     "no product route, provider, publishing, analytics or credential mutation occurs in this slice"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority.",
+  "releasedAt": "2026-09-22T05:39:00+02:00",
+  "releaseReason": "Human/CODEOWNER merge of PR #1253 satisfied the release condition; SEO continuation moved to the post-merge content-quality/review slice.",
+  "mergeCommitSha": "93893ab46cc0753dc4e86cd7d6120d321bc48651"
 }
