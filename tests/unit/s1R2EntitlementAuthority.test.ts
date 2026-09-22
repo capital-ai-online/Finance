@@ -38,24 +38,21 @@ describe('S1-R2-00 entitlement authority boundary', () => {
     expect(checkout).not.toContain('onSuccess(planId)');
   });
 
-  it('projects subscription tier through the rotation-aware authenticated readback before session publication', () => {
+  it('projects subscription tier through the verified backend session endpoint', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
-    const readback = read('src/lib/subscriptionReadback.ts');
+    const backendRoutes = read('server/routes/backendAuthRoutes.ts');
 
-    expect(session).toContain("import { authFetch } from '../../lib/authFetch'");
-    expect(session).toContain("res = await authFetch('/api/stripe/user-subscription')");
-    expect(session).not.toContain('/api/stripe/user-subscription?userId=');
-    expect(session).not.toContain('Authorization: `Bearer ${session.access_token}`');
-    expect(session).toContain('isSubscriptionTier(data?.subscriptionTier)');
-    expect(session).toContain('subscriptionTier: data.subscriptionTier');
-    expect(session).not.toContain("subscriptionTier: 'Free'");
-    expect(session).not.toContain('withSessionStageTimeout(');
-    expect(session).not.toContain('SESSION_STAGE_TIMEOUT_MS');
-    expect(session).not.toContain('Promise.race([');
+    expect(session).toContain("fetch('/api/auth/session'");
+    expect(session).toContain('isSubscriptionTier(user.subscriptionTier)');
+    expect(session).toContain('subscriptionTier: user.subscriptionTier');
+    expect(session).not.toContain('supabase');
+    expect(session).not.toContain('Authorization');
 
-    expect(readback).toContain("authFetch('/api/stripe/user-subscription')");
-    expect(readback).not.toContain('?email=');
-    expect(readback).not.toContain('?userId=');
+    expect(backendRoutes).toContain('const verified = await resolveVerifiedBackendAuth(req, res)');
+    expect(backendRoutes).toContain('getSubscription(user.id)');
+    expect(backendRoutes).toContain('subscriptionTier: tier');
+    expect(backendRoutes).not.toContain('req.query.userId');
+    expect(backendRoutes).not.toContain('req.query.email');
   });
 
   it('derives protected quota decisions from verified identity plus server subscription state', () => {

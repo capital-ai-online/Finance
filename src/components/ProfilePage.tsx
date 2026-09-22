@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import PasskeySettings from './PasskeySettings';
-import TotpSettings from './TotpSettings';
 import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';
+import { authFetch } from '../lib/authFetch';
 import {
   User,
   Mail,
@@ -74,13 +73,12 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
     setPortalLoading(true);
     setPortalError(null);
     try {
-      const response = await fetch('/api/stripe/create-portal-session', {
+      const response = await authFetch('/api/stripe/create-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: profile.email,
           returnUrl: window.location.href,
         }),
       });
@@ -485,18 +483,22 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         </div>
       </div>
 
-      {/* ADR-0003.5: echte Passkey/WebAuthn-Verwaltung (Supabase Auth Passkey Beta),
-          ersetzt die zuvor nur clientseitig simulierte Proof-of-Concept-Komponente,
-          die im Admin-Panel unter "sicherheit_poc" versteckt war. */}
-      <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-        <PasskeySettings />
-      </div>
-
-      {/* ADR-0003.5 / Audit ARCH-AUDIT-0002 (D9): TOTP-Setup fuer Step-Up-geschuetzte
-          Owner-Aktionen (z.B. Versions-Bump). Ohne diese Oberflaeche gab es keinen Weg,
-          jemals ein Step-Up-Token zu erzeugen. */}
-      <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-        <TotpSettings />
+      {/* OPS-AUTH-BACKEND-01: browser-owned Supabase factor controls are intentionally
+          unavailable during the backend-session rebuild. Existing provider factors remain
+          untouched; a backend-owned security-settings flow will be reintroduced separately. */}
+      <div className="max-w-4xl mx-auto rounded-2xl border border-amber-400/15 bg-amber-400/5 p-5">
+        <div className="flex items-start gap-3">
+          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-amber-300" />
+          <div>
+            <h3 className="text-sm font-bold text-white">Sicherheitseinstellungen werden neu angebunden</h3>
+            <p className="mt-1 text-xs leading-relaxed text-white/55">
+              TOTP- und Passkey-Faktoren bleiben bei Supabase erhalten. Die bisherigen
+              browserseitigen Verwaltungscontrols sind während des Backend-Auth-Cutovers
+              deaktiviert und werden anschließend über einen serverseitig verifizierten Flow
+              wieder freigeschaltet.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -24,8 +24,6 @@ interface AppRoutesProps {
   authBootstrapPending: boolean;
   justLoggedOut: boolean;
   clearJustLoggedOut: () => void;
-  handleLogin: (email: string, password: string) => Promise<void>;
-  handleRegister: (name: string, email: string, password: string) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleGlobalLogout: () => Promise<void>;
 }
@@ -90,8 +88,6 @@ export function AppRoutes({
   authBootstrapPending,
   justLoggedOut,
   clearJustLoggedOut,
-  handleLogin,
-  handleRegister,
   handleLogout,
   handleGlobalLogout,
 }: AppRoutesProps) {
@@ -124,8 +120,6 @@ export function AppRoutes({
             }
           }}
           onRegister={() => undefined}
-          onLoginEmail={handleLogin}
-          onRegisterEmail={handleRegister}
         />
       </RouteLoadingBoundary>
     );
@@ -168,6 +162,10 @@ export function AppRoutes({
       return (
         <LandingPage
           onLoginNavigate={clearJustLoggedOut}
+          onLogout={async () => {
+            await handleLogout();
+            if (typeof window !== 'undefined') window.location.replace('/');
+          }}
           authenticatedProfile={{
             name: userSession.name,
             email: userSession.email,
@@ -185,7 +183,7 @@ export function AppRoutes({
       return <RouteRedirect to="/" label="Zur Landingpage" />;
     }
 
-    return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
+    return <LoginPage justLoggedOut={justLoggedOut} />;
   }
 
   if (currentPath === '/dashboard') {

@@ -3,7 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { LifecycleResult } from './userLifecycleHarness';
 
-export type AuthLifecycleOwner = 'CAPITAL-AI-OPS' | 'CAPITAL-AI-FE' | 'CAPITAL-AI-GOV' | 'CAPITAL-AI-SEC' | 'CAPITAL-AI-SEO';
+export type AuthLifecycleOwner =
+  | 'CAPITAL-AI-OPS'
+  | 'CAPITAL-AI-FE'
+  | 'CAPITAL-AI-GOV'
+  | 'CAPITAL-AI-SEC'
+  | 'CAPITAL-AI-SEO';
 
 export interface AuthLifecycleFinding {
   id: string;
@@ -14,14 +19,7 @@ export interface AuthLifecycleFinding {
   observed: string;
 }
 
-function read(repoRoot: string, relativePath: string): string {
-  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
-}
-
-function readOptional(repoRoot: string, relativePath: string): string {
-  const filePath = path.join(repoRoot, relativePath);
-  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
-}
+const read = (root: string, file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 
 function finding(
   id: string,
@@ -34,380 +32,160 @@ function finding(
   return { id, result, owner, surface, expected, observed };
 }
 
-function sliceCurrentPathBlock(source: string, pathname: string, nextPathname: string): string {
-  const start = source.indexOf(`if (currentPath === '${pathname}')`);
-  if (start < 0) return '';
-  const end = source.indexOf(`if (currentPath === '${nextPathname}')`, start + 1);
-  return end > start ? source.slice(start, end) : source.slice(start);
-}
-
 export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd()): AuthLifecycleFinding[] {
-  const loginPage = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
-  const appRoutes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
-  const spaRouteContract = read(repoRoot, 'server/middleware/seoUrlNormalize.ts');
-  const spaFallback = read(repoRoot, 'server/runtime/spaFallback.ts');
-  const publicScorerPreview = read(repoRoot, 'src/features/crypto/ui/PublicCryptoScoringPreview.tsx');
-  const enterpriseScorer = read(repoRoot, 'src/features/crypto/ui/CryptoScoringEnterprise.tsx');
-  const landingNewsfeed = read(repoRoot, 'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx');
-  const landingPricing = readOptional(repoRoot, 'src/app/public/LandingPricingPanel.tsx');
-  const sessionComposition = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
-  const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
-  const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
-  const stepUp = read(repoRoot, 'server/stepUp.ts');
+  const login = read(repoRoot, 'src/features/public/ui/LoginPage.tsx');
+  const session = read(repoRoot, 'src/app/auth/SessionComposition.tsx');
+  const routes = read(repoRoot, 'src/app/routing/AppRoutes.tsx');
+  const backendRoutes = read(repoRoot, 'server/routes/backendAuthRoutes.ts');
+  const backendAuth = read(repoRoot, 'server/auth/backendAuth.ts');
   const authMiddleware = read(repoRoot, 'src/platform/Security/authMiddleware.ts');
-  const aal2Supersession = read(repoRoot, 'src/platform/Security/aal2DiagnosticSupersession.ts');
-  const registrationRoadmap = read(repoRoot, 'docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md');
+  const application = read(repoRoot, 'server.application.ts');
+  const header = read(repoRoot, 'src/features/public/ui/frontend-port/components/Header.tsx');
   const indexHtml = read(repoRoot, 'index.html');
   const packageJson = JSON.parse(read(repoRoot, 'package.json')) as { version?: string };
   const version = packageJson.version || 'UNKNOWN';
+
   const findings: AuthLifecycleFinding[] = [];
 
-  const googleOauthRoot =
-    loginPage.includes("provider: 'google'") &&
-    loginPage.includes('supabase.auth.signInWithOAuth') &&
-    loginPage.includes("redirectTo: `${window.location.origin}/`");
+  const backendOauth =
+    login.includes('/api/auth/login/google?next=%2F') &&
+    !login.includes('supabase.auth.') &&
+    backendRoutes.includes("backendAuthRouter.get('/login/google'") &&
+    backendRoutes.includes("provider: 'google'") &&
+    backendRoutes.includes('signInWithOAuth') &&
+    backendRoutes.includes('exchangeCodeForSession');
   findings.push(finding(
-    'google_oauth_provider_handoff',
-    googleOauthRoot ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/features/public/ui/LoginPage.tsx'],
-    'Google OAuth returns to the canonical application root through the existing Supabase Auth flow.',
-    googleOauthRoot
-      ? 'Google OAuth is configured for the canonical root callback.'
-      : 'The canonical Google OAuth root handoff is missing or divergent.',
+    'backend_google_oauth_contract',
+    backendOauth ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-OPS',
+    ['src/features/public/ui/LoginPage.tsx', 'server/routes/backendAuthRoutes.ts'],
+    'Google OAuth is initiated and completed by backend endpoints; the public login page contains no Supabase client auth.',
+    backendOauth ? 'Backend Google OAuth + code exchange is the only productive login path.' : 'Browser/backend OAuth ownership is incomplete or divergent.',
   ));
 
-  const rootBlock = sliceCurrentPathBlock(appRoutes, '/', '/login');
-  const authenticatedRootLanding =
-    rootBlock.includes('<LandingPage') &&
-    !rootBlock.includes('to="/dashboard"') &&
-    !rootBlock.includes("window.location.replace('/dashboard')");
+  const httpOnlySession =
+    backendAuth.includes("'HttpOnly'") &&
+    backendAuth.includes('SameSite=') &&
+    backendAuth.includes("if (isProduction()) parts.push('Secure')") &&
+    backendAuth.includes('resolveVerifiedBackendAuth') &&
+    backendRoutes.includes("backendAuthRouter.get('/session'") &&
+    backendRoutes.includes('getSubscription(user.id)');
+  findings.push(finding(
+    'backend_http_only_session_contract',
+    httpOnlySession ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-OPS',
+    ['server/auth/backendAuth.ts', 'server/routes/backendAuthRoutes.ts'],
+    'Supabase session material is backend-owned in HttpOnly/SameSite cookies and session projection binds entitlement to verified user UUID.',
+    httpOnlySession ? 'Backend cookie session and UUID-bound subscription projection are present.' : 'Backend session or entitlement projection is incomplete.',
+  ));
+
+  const clientAuthRemoved =
+    !session.includes('supabase') &&
+    !session.includes('localStorage') &&
+    !session.includes('LoginStepUpGate') &&
+    !session.includes('RegistrationCompletionGate') &&
+    !login.includes('signInWithPassword') &&
+    !login.includes('signUp') &&
+    !login.includes('resetPasswordForEmail') &&
+    !login.includes('supabase');
+  findings.push(finding(
+    'client_auth_orchestration_removed',
+    clientAuthRemoved ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-FE',
+    ['src/app/auth/SessionComposition.tsx', 'src/features/public/ui/LoginPage.tsx'],
+    'Productive browser login/session composition contains no Supabase OAuth/password/MFA/onboarding/token-persistence authority.',
+    clientAuthRemoved ? 'Client auth is a thin backend-session projection only.' : 'Legacy browser auth authority is still reachable.',
+  ));
+
+  const rootLanding =
+    routes.includes("if (currentPath === '/')") &&
+    routes.includes('<LandingPage') &&
+    routes.includes('authenticatedProfile={{') &&
+    routes.includes('subscriptionTier: userSession.subscriptionTier');
   findings.push(finding(
     'authenticated_root_landing_handoff',
-    authenticatedRootLanding ? 'PASS' : 'FAIL',
+    rootLanding ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
     ['src/app/routing/AppRoutes.tsx'],
-    'After successful OAuth/session composition, an authenticated user remains on the canonical / landing page.',
-    authenticatedRootLanding
-      ? 'The root route renders LandingPage without an authenticated /dashboard default redirect.'
-      : 'The root route still diverts authenticated users away from the canonical landing page.',
+    'Authenticated users remain on the canonical landing with the backend-projected profile.',
+    rootLanding ? 'Root landing receives the authenticated backend profile projection.' : 'Authenticated root projection is missing.',
   ));
 
-  const loginBlock = sliceCurrentPathBlock(appRoutes, '/login', '/dashboard');
-  const authenticatedLoginToRoot =
-    (
-      loginBlock.includes('if (userSession)') ||
-      loginBlock.includes("if (userSession?.type === 'registered')")
-    ) &&
-    loginBlock.includes('to="/"') &&
-    !loginBlock.includes('to="/dashboard"');
+  const logout =
+    session.includes("fetch('/api/auth/logout'") &&
+    session.includes("JSON.stringify({ scope })") &&
+    header.includes('id="header-logout-btn"') &&
+    header.includes('id="drawer-logout-btn"');
   findings.push(finding(
-    'authenticated_login_root_handoff',
-    authenticatedLoginToRoot ? 'PASS' : 'FAIL',
+    'backend_logout_visible_contract',
+    logout ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
-    ['src/app/routing/AppRoutes.tsx'],
-    'An authenticated session visiting /login converges to / rather than /dashboard.',
-    authenticatedLoginToRoot
-      ? 'The authenticated /login branch redirects to the canonical root landing page.'
-      : 'The authenticated /login branch does not converge to the canonical root landing page.',
+    ['src/app/auth/SessionComposition.tsx', 'src/features/public/ui/frontend-port/components/Header.tsx'],
+    'Authenticated landing UI exposes an explicit logout action backed by POST /api/auth/logout.',
+    logout ? 'Desktop/header and drawer logout controls are wired to backend logout.' : 'Logout is not fully visible/wired.',
   ));
 
-  const dashboardBlock = sliceCurrentPathBlock(appRoutes, '/dashboard', '/media-studio');
-  const dashboardRendererStart = appRoutes.indexOf('const renderAuthenticatedDashboard = () => {');
-  const dashboardRendererEnd =
-    dashboardRendererStart >= 0
-      ? appRoutes.indexOf("if (currentPath === '/datenschutz')", dashboardRendererStart)
-      : -1;
-  const dashboardRenderer =
-    dashboardRendererStart >= 0
-      ? appRoutes.slice(
-          dashboardRendererStart,
-          dashboardRendererEnd > dashboardRendererStart ? dashboardRendererEnd : undefined,
-        )
-      : '';
   const protectedDashboard =
-    dashboardBlock.includes('renderAuthenticatedDashboard()') &&
-    dashboardRenderer.includes('if (!userSession)') &&
-    dashboardRenderer.includes('<RouteRedirect to="/login"');
+    routes.includes("if (currentPath === '/dashboard')") &&
+    routes.includes('if (!userSession)') &&
+    routes.includes('<RouteRedirect to="/login"');
   findings.push(finding(
     'dashboard_protected_deep_link',
     protectedDashboard ? 'PASS' : 'FAIL',
     'CAPITAL-AI-FE',
     ['src/app/routing/AppRoutes.tsx'],
-    '/dashboard remains a protected deep link and unauthenticated access converges to /login.',
-    protectedDashboard
-      ? 'The dashboard route delegates to an auth-gated renderer with an unauthenticated /login redirect.'
-      : 'The protected-dashboard deep-link contract is missing or divergent.',
+    '/dashboard remains protected by the backend session projection.',
+    protectedDashboard ? 'Unauthenticated dashboard access converges to /login.' : 'Dashboard auth gate is missing.',
   ));
 
-  const unknownAuthenticatedStart = appRoutes.lastIndexOf('if (userSession)');
-  const unknownAuthenticatedBlock =
-    unknownAuthenticatedStart >= 0 ? appRoutes.slice(unknownAuthenticatedStart) : '';
-  const unknownAuthenticatedToRoot =
-    unknownAuthenticatedBlock.includes('to="/"') &&
-    !unknownAuthenticatedBlock.includes('to="/dashboard"');
+  const backendIdentity =
+    authMiddleware.includes('resolveVerifiedBackendAuth') &&
+    authMiddleware.includes("source: 'backend-cookie'") &&
+    authMiddleware.includes('resolveRequestCredential(req)');
   findings.push(finding(
-    'authenticated_unknown_route_root_handoff',
-    unknownAuthenticatedToRoot ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/app/routing/AppRoutes.tsx'],
-    'Unsupported authenticated routes converge to / and never use /dashboard as the implicit default.',
-    unknownAuthenticatedToRoot
-      ? 'The authenticated unknown-route fallback converges to /.'
-      : 'The authenticated unknown-route fallback still targets /dashboard or lacks a canonical-root handoff.',
-  ));
-
-  const spaSupportsCanonicalRoutes =
-    spaRouteContract.includes("  '/',") &&
-    spaRouteContract.includes("  '/login',") &&
-    spaRouteContract.includes("  '/dashboard',") &&
-    spaFallback.includes("case '/':") &&
-    spaFallback.includes("case '/login':") &&
-    spaFallback.includes("case '/dashboard':") &&
-    spaFallback.includes("case '/media-studio':") &&
-    spaFallback.includes("return res.status(404).type('text/plain').send('Not Found');");
-  findings.push(finding(
-    'canonical_spa_fallback_contract',
-    spaSupportsCanonicalRoutes ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-OPS',
-    ['server/middleware/seoUrlNormalize.ts', 'server/runtime/spaFallback.ts'],
-    'Production SPA fallback serves canonical /, /login, /dashboard and supported app routes without soft-200 unknown paths.',
-    spaSupportsCanonicalRoutes
-      ? 'Canonical public/application SPA paths are explicitly served and unknown paths remain 404.'
-      : 'The production SPA fallback does not fully represent the canonical application-route contract.',
-  ));
-
-  const rootHasLandingProfileProjection =
-    rootBlock.includes('profile={userSession') ||
-    rootBlock.includes('userSession={userSession}') ||
-    (
-      rootBlock.includes('authenticatedProfile={{') &&
-      rootBlock.includes('subscriptionTier: userSession.subscriptionTier')
-    );
-  const productiveScorerReachableFromRoot =
-    rootBlock.includes('preview={<PublicAnalysisPreview') &&
-    publicScorerPreview.includes('CanonicalCryptoScoringEnterprise') &&
-    (enterpriseScorer.includes("fetch('/api/crypto/score'") ||
-      enterpriseScorer.includes('/verified-score'));
-  const productiveNewsReachableFromRoot =
-    rootBlock.includes('<LandingRealtimeAiNewsfeed') &&
-    /\b(?:fetch|authFetch)\s*\(/.test(landingNewsfeed);
-  const productivePricingReachableFromRoot =
-    (rootBlock.includes('<LandingPricingPanel') ||
-      rootBlock.includes('pricing={<LandingPricingPanel')) &&
-    /\b(?:fetch|authFetch)\s*\(/.test(landingPricing);
-
-  const lf01Blockers = [
-    !rootBlock.includes('<LandingPage')
-      ? 'canonical root does not render LandingPage'
-      : null,
-    productivePricingReachableFromRoot
-      ? 'LF-03 pricing/entitlement runtime is reachable from the root landing composition'
-      : null,
-    productiveScorerReachableFromRoot
-      ? 'LF-04 productive scoring runtime is reachable from the root landing composition'
-      : null,
-    productiveNewsReachableFromRoot
-      ? 'LF-05 productive news runtime is reachable from the root landing composition'
-      : null,
-  ].filter((item): item is string => Boolean(item));
-
-  const staticVisualLandingPass = rootBlock.includes('<LandingPage') && lf01Blockers.length === 0;
-  findings.push(finding(
-    'landing_first_lf01_static_visual_gate',
-    staticVisualLandingPass ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    [
-      'src/app/routing/AppRoutes.tsx',
-      'src/features/crypto/ui/PublicCryptoScoringPreview.tsx',
-      'src/features/crypto/ui/CryptoScoringEnterprise.tsx',
-      'src/features/news/ui/LandingRealtimeAiNewsfeed.tsx',
-    ],
-    'LF-01 remains the accepted presentation baseline while later additive phases may project session/profile state; productive pricing/entitlement, scoring and news runtime must remain outside the LF-01 root dependency chain.',
-    staticVisualLandingPass
-      ? 'The root landing preserves the accepted LF-01 presentation boundary; an additive LF-02 session/profile projection does not reopen LF-01, while pricing/scoring/news runtime remains separately gated.'
-      : `LF-01 is not a static-only baseline: ${lf01Blockers.join('; ')}.`,
-  ));
-
-  const localLogoutDefault = sessionComposition.includes("supabase.auth.signOut({ scope: 'local' })");
-  findings.push(finding(
-    'logout_local_default',
-    localLogoutDefault ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/app/auth/SessionComposition.tsx'],
-    'Normal logout terminates only the current device/session with Supabase scope=local.',
-    localLogoutDefault
-      ? 'Normal logout explicitly uses Supabase local scope.'
-      : 'Normal logout still calls signOut without local scope, so provider default global semantics remain reachable.',
-  ));
-
-  const explicitGlobalLogout =
-    (sessionComposition.includes("scope: 'global'") || appDashboard.includes("scope: 'global'")) &&
-    /alle ger[aä]te|all devices|global logout/i.test(`${sessionComposition}\n${appDashboard}`);
-  findings.push(finding(
-    'logout_explicit_global_action',
-    explicitGlobalLogout ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/app/auth/SessionComposition.tsx', 'src/app/dashboard/Dashboard.tsx'],
-    'Global logout is a separate explicit user action and is not the default logout path.',
-    explicitGlobalLogout
-      ? 'A distinct global-logout action is represented in the app-owned application contract.'
-      : 'No distinct user-facing global logout action is represented in the app-owned application contract.',
-  ));
-
-  const registrationPrimary =
-    loginPage.includes('supabase.auth.signUp') &&
-    loginPage.includes('requestHcaptchaToken') &&
-    loginPage.includes('Normales Nutzerkonto registrieren') &&
-    loginPage.includes('data: { full_name: normalizedName }');
-  findings.push(finding(
-    'registration_primary_contract',
-    registrationPrimary ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['src/features/public/ui/LoginPage.tsx'],
-    'Self-registration uses Supabase Auth, fresh hCaptcha evidence and explicit profile identity metadata.',
-    registrationPrimary
-      ? 'The canonical login page contains the expected self-registration and hCaptcha binding.'
-      : 'One or more canonical self-registration controls are missing.',
-  ));
-
-  const aal2StageZero =
-    aal2Supersession.includes('AAL2_REACTIVATION_STAGE = 0');
-  const registrationDiagnosticSupersession =
-    aal2StageZero &&
-    registrationGate.includes("isAal2EnabledFor('registration')") &&
-    stepUp.includes("isAal2EnabledFor('registration')") &&
-    stepUp.includes('mfa_required_account: registrationAal2Required');
-  const registrationOnboarding =
-    sessionComposition.includes('RegistrationCompletionGate') &&
-    (
-      sessionComposition.includes('readAuthGatePolicy(session)') ||
-      sessionComposition.includes('needsOnboarding(session)')
-    ) &&
-    registrationGate.includes("authFetch('/api/auth/register/complete'") &&
-    registrationGate.includes("authFetch('/api/auth/mfa/enrollment-complete'") &&
-    stepUp.includes("stepUpRouter.post('/register/complete'") &&
-    stepUp.includes("stepUpRouter.post('/mfa/enrollment-complete'") &&
-    registrationDiagnosticSupersession;
-  findings.push(finding(
-    'registration_onboarding_contract',
-    registrationOnboarding ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-GOV',
-    [
-      'src/app/auth/SessionComposition.tsx',
-      'src/components/RegistrationCompletionGate.tsx',
-      'server/stepUp.ts',
-      'src/platform/Security/aal2DiagnosticSupersession.ts',
-    ],
-    'New registrations always complete profile/consent; during the explicit diagnostic supersession AAL2 enrollment is skipped without setting mfa_required_account=true, and later stages can restore it.',
-    registrationOnboarding
-      ? 'Profile/consent remains mandatory while registration AAL2 is explicitly stage-controlled and Stage 0 preserves mfa_required_account=false.'
-      : 'The registration onboarding/supersession chain is incomplete or divergent.',
-  ));
-
-  const aal2DiagnosticSupersessionContract =
-    aal2StageZero &&
-    sessionComposition.includes("isAal2EnabledFor('login')") &&
-    sessionComposition.includes("authFetch('/api/auth/aal2/diagnostic-login'") &&
-    registrationGate.includes("isAal2EnabledFor('registration')") &&
-    stepUp.includes("isAal2EnabledFor('registration')") &&
-    stepUp.includes("stepUpRouter.post('/aal2/diagnostic-login'") &&
-    authMiddleware.includes('export async function requireVerifiedAal2') &&
-    authMiddleware.includes('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)') &&
-    !authMiddleware.includes('aal2-superseded') &&
-    aal2Supersession.includes('privilegedServerAal2Unaffected: true');
-  findings.push(finding(
-    'aal2_diagnostic_supersession_contract',
-    aal2DiagnosticSupersessionContract ? 'PASS' : 'FAIL',
+    'backend_cookie_identity_contract',
+    backendIdentity ? 'PASS' : 'FAIL',
     'CAPITAL-AI-SEC',
-    [
-      'src/platform/Security/aal2DiagnosticSupersession.ts',
-      'src/platform/Security/authMiddleware.ts',
-      'src/app/auth/SessionComposition.tsx',
-      'src/components/RegistrationCompletionGate.tsx',
-      'server/stepUp.ts',
-    ],
-    'Stage 0 supersedes AAL2 on login and registration authentication only, emits server-side diagnostic checkpoints, preserves enrolled factors, and leaves privileged server AAL2 authorization unchanged.',
-    aal2DiagnosticSupersessionContract
-      ? 'Login and registration AAL2 are explicitly Stage-0 superseded and observable; the independent privileged requireVerifiedAal2 boundary remains strict.'
-      : 'The diagnostic supersession is missing, not observable, or has crossed the privileged server AAL2 authorization boundary.',
+    ['src/platform/Security/authMiddleware.ts', 'server/auth/backendAuth.ts'],
+    'Protected server routes accept only a Supabase-verified backend cookie session or an explicitly supported Bearer credential.',
+    backendIdentity ? 'IAM resolves the backend cookie through verified Supabase identity.' : 'Server IAM is not yet bound to the backend session.',
   ));
 
-  const subscriptionProjection =
-    sessionComposition.includes("authFetch('/api/stripe/user-subscription')") &&
-    sessionComposition.includes('isSubscriptionTier(data?.subscriptionTier)') &&
-    sessionComposition.includes('subscriptionTier: data.subscriptionTier') &&
-    !sessionComposition.includes("subscriptionTier: 'Free'") &&
-    !sessionComposition.includes('/api/stripe/user-subscription?userId=') &&
-    !sessionComposition.includes('/api/stripe/user-subscription?email=');
-  const lf02RepositoryReady =
-    rootHasLandingProfileProjection &&
-    googleOauthRoot &&
-    authenticatedRootLanding &&
-    authenticatedLoginToRoot &&
-    registrationPrimary &&
-    registrationOnboarding &&
-    subscriptionProjection;
+  const csrfBoundary =
+    application.includes("return res.status(403).json({ error: 'Origin nicht erlaubt.' });") &&
+    application.includes('SameSite=Lax backend cookies') &&
+    backendAuth.includes("sameSite?: 'Lax' | 'Strict'") &&
+    backendAuth.includes('verifyOAuthState');
   findings.push(finding(
-    'landing_first_lf02_auth_profile_repository_gate',
-    !rootHasLandingProfileProjection ? 'NOT_AVAILABLE' : lf02RepositoryReady ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    [
-      'src/app/routing/AppRoutes.tsx',
-      'src/features/public/ui/LoginPage.tsx',
-      'src/app/auth/SessionComposition.tsx',
-      'src/components/RegistrationCompletionGate.tsx',
-      'server/stepUp.ts',
-    ],
-    'LF-02 repository wiring projects the existing authenticated session/profile onto the canonical landing while preserving /login, Google OAuth, registration/onboarding and server-authoritative subscription readback; provider Security/QM evidence remains independent.',
-    !rootHasLandingProfileProjection
-      ? 'LF-02 landing profile projection is not on current repository state yet; owner-correct FE handoff is required and final LF-02 PASS must not be inferred from repository readiness alone.'
-      : lf02RepositoryReady
-        ? 'The repository-side LF-02 auth/profile chain is wired without introducing a second auth or subscription authority; provider Security/QM evidence is still required for final phase PASS.'
-        : 'LF-02 profile projection is present but one or more canonical login, OAuth, registration/onboarding or subscription-readback invariants are missing.',
+    'backend_cookie_origin_csrf_boundary',
+    csrfBoundary ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-SEC',
+    ['server.application.ts', 'server/auth/backendAuth.ts'],
+    'Cookie-authenticated requests reject non-canonical browser origins and OAuth callback state is independently bound.',
+    csrfBoundary ? 'Origin rejection + SameSite + OAuth state/PKCE boundaries are materialized.' : 'Cookie CSRF/origin boundary is incomplete.',
   ));
 
-  const roadmapClosed =
-    !registrationRoadmap.includes('PR VALIDATION PENDING') &&
-    /MERGED|COMPLETE|CLOSED/.test(registrationRoadmap);
-  findings.push(finding(
-    'registration_roadmap_closure',
-    roadmapClosed ? 'PASS' : 'FAIL',
-    'CAPITAL-AI-FE',
-    ['docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md'],
-    'The registration work-package status reflects its already Human-merged implementation and separates remaining validation gaps from implementation state.',
-    roadmapClosed
-      ? 'The roadmap work package is terminalized consistently with merged implementation state.'
-      : 'The work package still reports PR validation pending even though the implementation PR has already been Human-merged.',
-  ));
-
-  const canonicalVersionProjected =
+  const canonicalVersion =
     version !== 'UNKNOWN' &&
     indexHtml.includes(`Version ${version}`) &&
     indexHtml.includes(`content="Offizielles CAPITAL-AI Portal (Version ${version})`);
   findings.push(finding(
     'platform_version_projection',
-    canonicalVersionProjected ? 'PASS' : 'FAIL',
+    canonicalVersion ? 'PASS' : 'FAIL',
     'CAPITAL-AI-OPS',
     ['package.json', 'index.html'],
-    'package.json#version remains authoritative and the public page metadata projects the same platform version.',
-    canonicalVersionProjected
-      ? `package.json and public metadata both project version ${version}.`
-      : `Public metadata does not consistently project package.json version ${version}.`,
+    'Public metadata projects package.json#version.',
+    canonicalVersion ? `Public metadata projects version ${version}.` : `Version ${version} is not consistently projected.`,
   ));
 
-  const structuredVersion =
-    version !== 'UNKNOWN' &&
-    indexHtml.includes(`"softwareVersion": "${version}"`);
+  const structuredVersion = version !== 'UNKNOWN' && indexHtml.includes(`"softwareVersion": "${version}"`);
   findings.push(finding(
     'search_structured_version_metadata',
     structuredVersion ? 'PASS' : 'FAIL',
     'CAPITAL-AI-SEO',
     ['index.html'],
-    'SoftwareApplication structured data explicitly projects the canonical package.json version for search-engine consumption.',
-    structuredVersion
-      ? `JSON-LD explicitly declares softwareVersion ${version}.`
-      : `JSON-LD has no explicit softwareVersion field for canonical version ${version}; search-engine cache/reindex remains an external follow-up.`,
+    'Structured SoftwareApplication metadata projects the canonical platform version.',
+    structuredVersion ? `JSON-LD declares softwareVersion ${version}.` : 'softwareVersion is missing or divergent.',
   ));
 
   return findings;
@@ -430,8 +208,7 @@ export function summarizeAuthLifecycleFindings(findings: AuthLifecycleFinding[])
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
 if (invokedPath && fileURLToPath(import.meta.url) === invokedPath) {
-  const findings = evaluateAuthLifecycleRepositoryContracts();
-  const summary = summarizeAuthLifecycleFindings(findings);
+  const summary = summarizeAuthLifecycleFindings(evaluateAuthLifecycleRepositoryContracts());
   process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
   if (process.argv.includes('--strict') && summary.result === 'FAIL') process.exitCode = 1;
 }

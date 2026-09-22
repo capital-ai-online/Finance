@@ -161,10 +161,14 @@ jobs:
               '## 2. ✅ Evidence',
               '## 3. 🔍 Technical Evidence',
             ];
+            const technicalDetailsSummary = '<summary>Technische Details & Traceability</summary>';
+            const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
             const currentV18Canonical =
               currentV18 &&
               v18Headings.length === 3 &&
               expectedV18Headings.every((heading, index) => v18Headings[index] === heading) &&
+              occurrenceCount(technicalDetailsSummary) === 1 &&
+              occurrenceCount(machineBaselineSummary) === 1 &&
               occurrenceCount('{{PRODUCTION_BASELINE_BLOCK}}') === 0 &&
               headingCount(/^## 7\. Maschinenlesbare Baseline\s*$/gm) === 0;
             const currentV18LegacyBaselineSection =

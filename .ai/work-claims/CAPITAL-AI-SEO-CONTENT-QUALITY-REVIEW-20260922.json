@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEO-CONTENT-QUALITY-REVIEW-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -43,5 +43,9 @@
     "external root metadata mismatch is captured as owner-correct OPS verification rather than an inferred SEO/runtime defect",
     "no runtime, provider, publication, credential or foreign-owner implementation mutation occurs"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority.",
+  "releasedAt": "2026-09-22T06:25:00+02:00",
+  "releaseReason": "Human/CODEOWNER merge of PR #1260 satisfied the release condition; fresh CURRENT_MAIN correlation continues WP-SEO-LAUNCH-01 through the IA convergence claim.",
+  "mergeCommitSha": "41d51903273b5171852146c212402f15e8d4cc4b",
+  "postMergeContinuationClaim": "CAPITAL-AI-SEO-LAUNCH-01-IA-CONVERGENCE-20260922"
 }

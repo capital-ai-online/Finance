@@ -42,6 +42,10 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
     'CURRENT_V16_GENERIC_MISSING_SECTIONS',
     'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
     'CURRENT_V16_SECURITY_BOUNDARY_LOOKALIKE',
+    "const technicalDetailsSummary = '<summary>Technische Details & Traceability</summary>';",
+    "const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';",
+    'occurrenceCount(technicalDetailsSummary) === 1',
+    'occurrenceCount(machineBaselineSummary) === 1',
     'PR_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}',
     'REPORT_METADATA_SHAPE: ${{ steps.pr.outputs.pr_metadata_shape }}',
   ]) assert.ok(block.includes(token), 'missing metadata-shape semantic guard: ' + token);

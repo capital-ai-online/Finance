@@ -34,6 +34,7 @@ const loginPage = read('src/features/public/ui/LoginPage.tsx');
 const loginPageRedirect = read('src/features/public/ui/LoginPageRedirect.tsx');
 const legacyLandingBridge = read('src/components/LandingPage.tsx');
 const sessionComposition = read('src/app/auth/SessionComposition.tsx');
+const backendAuthRoutes = read('server/routes/backendAuthRoutes.ts');
 const dashboard = read('src/app/dashboard/Dashboard.tsx');
 const legacyDashboardBridge = read('src/components/Dashboard.tsx');
 const seoRoutes = read('server/middleware/seoUrlNormalize.ts');
@@ -148,20 +149,19 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(enterpriseQuickAnalysis.slice(publicGuard, authenticatedEndpoint)).toContain('return null');
   });
 
-  it('uses LoginPage for anonymous /login and converges an established registered session to root', () => {
+  it('uses the backend-first LoginPage for anonymous /login and converges an established registered session to root', () => {
     expect(routes).toContain("if (currentPath === '/login')");
-    expect(routes).toContain('<LoginPage onLoginEmail={handleLogin}');
+    expect(routes).toContain('<LoginPage justLoggedOut={justLoggedOut} />');
     const loginRouteStart = routes.indexOf("if (currentPath === '/login')");
     const dashboardRouteStart = routes.indexOf("if (currentPath === '/dashboard')");
     const loginRouteBlock = routes.slice(loginRouteStart, dashboardRouteStart);
     expect(loginRouteBlock).toContain("if (userSession?.type === 'registered')");
     expect(loginRouteBlock).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
-    expect(loginPage).toContain('Canonical authentication page for `/login`');
-    expect(loginPage).toContain("window.location.replace('/')");
+    expect(loginPage).toContain('data-auth-architecture="backend-first"');
+    expect(loginPage).toContain('id="backend-google-login"');
+    expect(loginPage).toContain('href="/api/auth/login/google?next=%2F"');
     expect(loginPage).toContain('href="/"');
     expect(loginPage).toContain('Zurück zur Übersicht');
-    expect(loginPage).toContain('data-design-source="SvenKulessa/FRONTEND"');
-    expect(loginPage).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
   });
 
@@ -196,13 +196,15 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(spaFallback).toContain('isApplicationSpaPath(req.path)');
   });
 
-  it('keeps public hydration independent from Supabase bootstrap while retaining authenticated gates', () => {
+  it('keeps public hydration independent from backend session resolution while retaining authenticated gates', () => {
     expect(sessionComposition).toContain('authBootstrapPending');
+    expect(sessionComposition).toContain("fetch('/api/auth/session'");
+    expect(sessionComposition).toContain("credentials: 'same-origin'");
     expect(sessionComposition).not.toContain('AUTH_BOOTSTRAP_TIMEOUT_MS');
     expect(sessionComposition).not.toContain('Lade Sicherheits-Modul...');
-    expect(sessionComposition).not.toContain('if (loading && !renderPublicShellImmediately)');
-    expect(sessionComposition).toContain('if (pendingOnboardingSession)');
-    expect(sessionComposition).toContain('if (pendingStepUpSession)');
+    expect(sessionComposition).not.toContain('pendingOnboardingSession');
+    expect(sessionComposition).not.toContain('pendingStepUpSession');
+    expect(sessionComposition).not.toContain('supabase');
     expect(routes).toContain("if (currentPath === '/')");
     expect(routes).toContain("if (currentPath === '/login')");
   });
@@ -224,7 +226,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain('normalizeRoutePath(window.location.pathname)');
   });
 
-  it('does not create a presentation visitor session and still rejects anonymous Supabase sessions', () => {
+  it('does not create a presentation visitor session and rejects anonymous provider sessions on the backend', () => {
     expect(routes).not.toContain("type: 'guest'");
     expect(routes).not.toContain('PUBLIC_VISITOR_SESSION');
     expect(routes).not.toContain('@capital-ai.online');
@@ -232,8 +234,9 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).not.toContain('UserSession');
     expect(landingPort).not.toContain('UserSession');
     expect(publicWorkbench).not.toContain('UserSession');
-    expect(sessionComposition).toContain('session.user.is_anonymous');
-    expect(sessionComposition).toContain('rejectAnonymousSession');
+    expect(sessionComposition).not.toContain('supabase');
+    expect(backendAuthRoutes).toContain('data.user.is_anonymous');
+    expect(backendAuthRoutes).toContain('clearBackendAuthCookies(req, res)');
   });
 
   it('does not allow the public feature to depend back on application composition', () => {
