@@ -31,6 +31,76 @@
   pointer-events: auto;
 }
 
+#capital-ai-consent-notice {
+  position: relative;
+  z-index: 1001;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border, ButtonBorder);
+  background: var(--color-surface, Canvas);
+  color: var(--color-foreground, CanvasText);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 12%);
+  font: inherit;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__copy {
+  min-width: 0;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__copy strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__copy p {
+  margin: 0;
+  color: var(--color-text-secondary, CanvasText);
+  line-height: 1.45;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, ButtonBorder);
+  border-radius: 8px;
+  background: var(--color-background, ButtonFace);
+  color: var(--color-foreground, ButtonText);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__button:hover {
+  background: var(--color-surface, ButtonFace);
+}
+
+#capital-ai-consent-notice .capital-ai-consent-notice__button:focus-visible {
+  outline: 3px solid var(--color-brand-primary, Highlight);
+  outline-offset: 3px;
+}
+
+@media (min-width: 800px) {
+  #capital-ai-consent-notice {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  #capital-ai-consent-notice .capital-ai-consent-notice__actions {
+    justify-content: flex-end;
+  }
+}
+
 #cc-main button,
 #capital-ai-cookie-settings {
   min-height: 44px;
