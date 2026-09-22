@@ -36,13 +36,7 @@ function runtime({
 } = {}) {
   const vendorStyle = createStylesheet(vendorReady);
   const themeStyle = createStylesheet(themeReady);
-  const buttons: Array<{ id?: string }> = [];
-  const prepended: Array<{
-    id?: string;
-    className?: string;
-    children?: unknown[];
-    remove?: () => void;
-  }> = [];
+  const buttons: Array<{ id?: string; click?: () => void }> = [];
   const errors: unknown[][] = [];
   let runCount = 0;
   let config: Record<string, unknown> | undefined;
@@ -54,46 +48,37 @@ function runtime({
   if (!omitTheme) styles.set('cookieconsent-theme-style', themeStyle);
 
   function createElement() {
+    const listeners = new Map<string, Listener>();
     const children: unknown[] = [];
-    const element: {
-      id?: string;
-      className?: string;
-      type?: string;
-      textContent?: string;
-      children: unknown[];
-      addEventListener: (name: string, listener: Listener) => void;
-      appendChild: (child: unknown) => void;
-      setAttribute: (name: string, value: string) => void;
-      remove: () => void;
-    } = {
+    return {
+      id: undefined as string | undefined,
+      className: undefined as string | undefined,
+      type: undefined as string | undefined,
+      textContent: undefined as string | undefined,
       children,
-      addEventListener() {},
+      addEventListener(name: string, listener: Listener) {
+        listeners.set(name, listener);
+      },
       appendChild(child: unknown) {
         children.push(child);
       },
       setAttribute() {},
-      remove() {
-        const index = prepended.indexOf(element);
-        if (index >= 0) prepended.splice(index, 1);
+      remove() {},
+      click() {
+        listeners.get('click')?.();
       },
     };
-    return element;
   }
 
   const document = {
+    cookie: validConsent ? 'capital_ai_consent_v3=stored-choice' : '',
     getElementById(id: string) {
-      return styles.get(id)
-        ?? buttons.find((button) => button.id === id)
-        ?? prepended.find((element) => element.id === id)
-        ?? null;
+      return styles.get(id) ?? buttons.find((button) => button.id === id) ?? null;
     },
     createElement,
     body: {
-      appendChild(button: { id?: string }) {
+      appendChild(button: ReturnType<typeof createElement>) {
         buttons.push(button);
-      },
-      prepend(element: ReturnType<typeof createElement>) {
-        prepended.unshift(element);
       },
     },
   };
@@ -112,8 +97,6 @@ function runtime({
       },
       acceptCategory() {
         hasConsent = true;
-        const onFirstConsent = config?.onFirstConsent;
-        if (typeof onFirstConsent === 'function') onFirstConsent();
       },
     },
   };
@@ -141,12 +124,8 @@ function runtime({
     vendorStyle,
     themeStyle,
     buttons,
-    prepended,
     errors,
     flush,
-    get notices() {
-      return prepended.filter((element) => element.id === 'capital-ai-consent-notice');
-    },
     get runCount() {
       return runCount;
     },
@@ -163,46 +142,52 @@ describe('CookieConsent stylesheet readiness', () => {
     expect(html).toContain('id="cookieconsent-theme-style"');
   });
 
-  it('keeps a fresh/private first visit completely out of consent modal DOM', async () => {
+  it('keeps a fresh/private first visit completely outside the vendor runtime', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
-    expect(r.runCount).toBe(1);
-    expect(r.config?.disablePageInteraction).toBe(false);
-    expect(r.config?.autoShow).toBe(false);
-    expect(r.config?.lazyHtmlGeneration).toBe(true);
-    expect(r.notices).toHaveLength(0);
+    expect(r.runCount).toBe(0);
+    expect(r.buttons).toHaveLength(1);
 
     const init = fs.readFileSync('public/cookieconsent-init.js', 'utf8');
+    expect(init).toContain('lazyHtmlGeneration: true');
+    expect(init).toContain('autoShow: false');
+    expect(init).toContain('if (hasStoredConsentCookie())');
     expect(init).not.toContain('installFirstVisitNotice');
     expect(init).not.toContain('capital-ai-consent-notice');
 
     const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
-    expect(theme).toMatch(/#cc-main\s*\{[\s\S]*pointer-events:\s*none;/);
-    expect(theme).toMatch(/#cc-main \.cm,[\s\S]*#cc-main \.pm\s*\{[\s\S]*pointer-events:\s*auto;/);
     expect(theme).not.toContain('#capital-ai-consent-notice');
   });
 
-  it('keeps the settings trigger available without creating first-visit content', async () => {
-    const r = runtime({ vendorReady: true, themeReady: true, validConsent: true });
-    await r.flush();
-
-    expect(r.runCount).toBe(1);
-    expect(r.notices).toHaveLength(0);
-    expect(r.buttons).toHaveLength(1);
-  });
-
-  it('initializes immediately when both required stylesheets are already ready', async () => {
+  it('initializes CookieConsent only after an explicit settings click on a fresh visit', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
+    await r.flush();
+    expect(r.runCount).toBe(0);
+
+    r.buttons[0]?.click?.();
     await r.flush();
 
     expect(r.runCount).toBe(1);
     expect(r.config?.mode).toBe('opt-in');
+    expect(r.config?.disablePageInteraction).toBe(false);
+    expect(r.config?.autoShow).toBe(false);
+    expect(r.config?.lazyHtmlGeneration).toBe(true);
+  });
+
+  it('restores a previously stored consent choice without showing startup UI', async () => {
+    const r = runtime({ vendorReady: true, themeReady: true, validConsent: true });
+    await r.flush();
+
+    expect(r.runCount).toBe(1);
+    expect(r.config?.mode).toBe('opt-in');
+    expect(r.config?.autoShow).toBe(false);
+    expect(r.config?.lazyHtmlGeneration).toBe(true);
     expect(r.buttons).toHaveLength(1);
   });
 
-  it('waits for both stylesheet load events before initializing', async () => {
-    const r = runtime();
+  it('waits for required stylesheets only when a stored choice requires vendor initialization', async () => {
+    const r = runtime({ validConsent: true });
     await r.flush();
     expect(r.runCount).toBe(0);
 
@@ -213,25 +198,24 @@ describe('CookieConsent stylesheet readiness', () => {
     r.themeStyle.dispatch('load');
     await r.flush();
     expect(r.runCount).toBe(1);
-    expect(r.buttons).toHaveLength(1);
   });
 
-  it('fails closed when a required stylesheet is missing', async () => {
-    const r = runtime({ vendorReady: true, omitTheme: true });
+  it('keeps the page available when returning-consent initialization lacks a required stylesheet', async () => {
+    const r = runtime({ vendorReady: true, omitTheme: true, validConsent: true });
     await r.flush();
 
     expect(r.runCount).toBe(0);
-    expect(r.buttons).toHaveLength(0);
+    expect(r.buttons).toHaveLength(1);
     expect(String(r.errors[0]?.[1])).toContain('Required stylesheet missing');
   });
 
-  it('fails closed when a required stylesheet errors', async () => {
-    const r = runtime({ vendorReady: true });
+  it('keeps the page available when returning-consent stylesheet loading fails', async () => {
+    const r = runtime({ vendorReady: true, validConsent: true });
     r.themeStyle.dispatch('error');
     await r.flush();
 
     expect(r.runCount).toBe(0);
-    expect(r.buttons).toHaveLength(0);
+    expect(r.buttons).toHaveLength(1);
     expect(String(r.errors[0]?.[1])).toContain('Required stylesheet failed to load');
   });
 });
