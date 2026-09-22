@@ -16,13 +16,14 @@ import {
   DollarSign,
   Flame,
   LogIn,
+  LogOut,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrandLogo } from './BrandLogo';
 import { ASSET_CLASSES } from '../data/mockData';
 import { MainCategory, AssetSubclass } from '../types';
 import { trackLoginClick } from '../utils/analytics';
-import { useLandingSessionProfile } from '../../LandingSessionContext';
+import { useLandingSessionLogout, useLandingSessionProfile } from '../../LandingSessionContext';
 import { SubscriptionStatusBadge } from '../../SubscriptionStatusBadge';
 
 interface HeaderProps {
@@ -45,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedClass, setExpandedClass] = useState<MainCategory | null>('KRYPTO');
   const authenticatedProfile = useLandingSessionProfile();
+  const logout = useLandingSessionLogout();
 
   const renderClassIcon = (id: MainCategory) => {
     switch (id) {
@@ -107,20 +109,32 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Productive auth projection: identity comes exclusively from SessionComposition. */}
         {authenticatedProfile ? (
-          <button
-            id="header-session-btn"
-            type="button"
-            onClick={() => onNavigate?.('/dashboard')}
-            className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-400/30 hover:border-emerald-300/50 text-emerald-200 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
-            aria-label={`Angemeldet als ${authenticatedProfile.name}. Zum Dashboard`}
-            title="Angemeldet · Zum Dashboard"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Angemeldet</span>
-            <span className="hidden md:inline max-w-28 truncate text-white/70">
-              {authenticatedProfile.name}
-            </span>
-          </button>
+          <>
+            <button
+              id="header-session-btn"
+              type="button"
+              onClick={() => onNavigate?.('/dashboard')}
+              className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-400/30 hover:border-emerald-300/50 text-emerald-200 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+              aria-label={`Angemeldet als ${authenticatedProfile.name}. Zum Dashboard`}
+              title="Angemeldet · Zum Dashboard"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Angemeldet</span>
+              <span className="hidden md:inline max-w-28 truncate text-white/70">
+                {authenticatedProfile.name}
+              </span>
+            </button>
+            <button
+              id="header-logout-btn"
+              type="button"
+              onClick={() => void logout?.()}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-400/25 bg-rose-500/10 text-rose-200 transition hover:bg-rose-500/20 hover:text-white"
+              aria-label="Abmelden"
+              title="Abmelden"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </>
         ) : (
           <a
             id="header-login-btn"
@@ -217,6 +231,21 @@ export const Header: React.FC<HeaderProps> = ({
                       >
                         <span>Zum Dashboard</span>
                         <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
+                      </button>
+                      <button
+                        id="drawer-logout-btn"
+                        type="button"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          void logout?.();
+                        }}
+                        className="mt-2 w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/20 text-rose-200 hover:text-white font-bold text-xs transition-all"
+                      >
+                        <span className="flex items-center gap-2">
+                          <LogOut className="h-4 w-4" />
+                          <span>Abmelden</span>
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (

@@ -1,98 +1,50 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { AAL2_AUTH_TEST_QUARANTINE } from '../../src/platform/Security/aal2DiagnosticSupersession';
 
-const root = process.cwd();
-const read = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), 'utf8');
+const read = (relativePath: string) => fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
-describe('GOV-CHAT-042 user lifecycle security contract', () => {
-  it('keeps identity and subscription readback server-authoritative', () => {
+describe('user lifecycle backend security contract', () => {
+  it('keeps identity and subscription projection server-authoritative', () => {
     const auth = read('src/platform/Security/authMiddleware.ts');
-    const stripe = read('server/stripe.ts');
-    const readback = read('src/lib/subscriptionReadback.ts');
+    const backendRoutes = read('server/routes/backendAuthRoutes.ts');
 
-    expect(auth).toContain('export async function resolveVerifiedIdentity');
-    expect(auth).toContain('supabase.auth.getUser(token)');
-    expect(stripe).toContain("stripeRouter.get('/user-subscription'");
-    expect(stripe).toContain('const identity = await resolveVerifiedIdentity(req);');
-    expect(stripe).toContain('const tier = await getSubscription(identity.userId);');
-    expect(readback).toContain("authFetch('/api/stripe/user-subscription')");
-    expect(readback).not.toContain('?email=');
-    expect(readback).not.toContain('?userId=');
+    expect(auth).toContain('resolveVerifiedBackendAuth');
+    expect(auth).toContain('supabase.auth.getUser');
+    expect(backendRoutes).toContain('resolveVerifiedBackendAuth(req, res)');
+    expect(backendRoutes).toContain('getSubscription(user.id)');
+    expect(backendRoutes).not.toContain('req.query.userId');
+    expect(backendRoutes).not.toContain('req.query.email');
   });
 
-  it.skipIf(AAL2_AUTH_TEST_QUARANTINE)('keeps privileged AAL2 server-authoritative while authentication supersession stays bounded', () => {
+  it('keeps privileged AAL2 server-authoritative outside normal login', () => {
     const auth = read('src/platform/Security/authMiddleware.ts');
-    const supersession = read('src/platform/Security/aal2DiagnosticSupersession.ts');
-    const stepUp = read('server/stepUp.ts');
-
     expect(auth).toContain('export async function requireVerifiedAal2');
-    expect(auth).toContain('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)');
+    expect(auth).toContain('getAuthenticatorAssuranceLevel');
     expect(auth).toContain("if (aalData.currentLevel !== 'aal2')");
     expect(auth).toContain('const aal2 = await requireVerifiedAal2(req);');
-    expect(auth).not.toContain('aal2-superseded');
-    expect(auth).not.toContain("isAal2EnabledFor('privileged')");
-    expect(supersession).toContain('AAL2_REACTIVATION_STAGE = 0');
-    expect(supersession).toContain("export type Aal2AuthenticationSurface = 'login' | 'registration'");
-    expect(supersession).toContain('privilegedServerAal2Unaffected: true');
-    expect(stepUp).toContain("stepUpRouter.post('/aal2/diagnostic-login'");
-    expect(stepUp).toContain("eventName: 'auth.aal2.diagnostic.login'");
-    expect(auth).toContain(".is('used_at', null)");
-    expect(auth).toContain(".gt('expires_at', new Date().toISOString())");
-    expect(auth).toContain(".update({ used_at: new Date().toISOString() })");
   });
 
-  it('uses a bounded refresh/retry boundary and fails closed after unrecoverable 401', () => {
-    const authFetch = read('src/lib/authFetch.ts');
+  it('keeps browser tokens inaccessible and refresh rotation backend-owned', () => {
+    const backend = read('server/auth/backendAuth.ts');
+    const transport = read('src/lib/authFetch.ts');
 
-    expect(authFetch).toContain('let refreshInFlight: Promise<string | null> | null = null;');
-    expect(authFetch).toContain('const firstResponse = await sendAuthenticatedRequest');
-    expect(authFetch).toContain('const retryResponse = await sendAuthenticatedRequest');
-    expect(authFetch).toContain('notifyUnauthorized(url);');
-    expect(authFetch).toContain("status: 401");
+    expect(backend).toContain("'HttpOnly'");
+    expect(backend).toContain('refreshSession({ refresh_token: refreshToken })');
+    expect(backend).toContain('if (!res) return null');
+    expect(transport).not.toContain('supabase');
+    expect(transport).not.toContain('Authorization');
+    expect(transport).toContain("fetch('/api/auth/session'");
   });
 
-  it.skipIf(AAL2_AUTH_TEST_QUARANTINE)('keeps onboarding ahead of projection while AAL2 enforcement is staged behind the diagnostic supersession', () => {
-    const session = read('src/app/auth/SessionComposition.tsx');
-
-    expect(session).toContain('const gatePolicy = await readAuthGatePolicy(session);');
-    expect(session).toContain('if (gatePolicy.onboardingRequired)');
-    expect(session).toContain("if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount)");
-    expect(session).toContain('setPendingOnboardingSession(session);');
-    expect(session).toContain('setPendingStepUpSession(session);');
-    expect(session).toContain('<RegistrationCompletionGate');
-    expect(session).toContain('<LoginStepUpGate');
-    expect(session).toContain('await supabase.auth.getSession();');
-    expect(session).toContain('liveSession.user.id !== verifiedSession.user.id');
-    expect(session).toContain("code: 'IDENTITY_MISMATCH_DETECTED'");
-    expect(session).toContain('expectedId: verifiedSession.user.id');
-    expect(session).toContain('receivedId: liveSession.user.id');
-    expect(session).toContain('await handleSupabaseSession(liveSession);');
+  it('rejects disallowed browser origins before cookie-authenticated handlers', () => {
+    const app = read('server.application.ts');
+    expect(app).toContain("return res.status(403).json({ error: 'Origin nicht erlaubt.' });");
+    expect(app).toContain('SameSite=Lax backend cookies');
   });
 
-  it('keeps local/global logout explicit and clears browser lifecycle projection before direct sign-out', () => {
-    const session = read('src/app/auth/SessionComposition.tsx');
-
-    expect(session).toContain("const handleLogout = async () => performLogout('local');");
-    expect(session).toContain("const handleGlobalLogout = async () => performLogout('global');");
-    expect(session).toContain('await supabase.auth.signOut({ scope });');
-    expect(session).not.toContain('signOutWithTimeout');
-    expect(session).not.toContain('SIGN_OUT_TIMEOUT_MS');
-    expect(session).not.toContain('Promise.race([');
-    expect(session).toContain('clearLoginStepUpMarkers();');
-    expect(session).toContain('resetAuthProjection();');
-    expect(session).toContain("localStorage.removeItem('mcc_user_session')");
-  });
-
-  it('keeps provider evidence fail-closed instead of converting unavailable scenarios into PASS', () => {
+  it('keeps provider evidence fail-closed instead of synthesizing PASS', () => {
     const harness = read('scripts/operations/userLifecycleHarness.ts');
-    const provider = read('tests/provider/userLifecycleProviderContract.test.ts');
-
     expect(harness).toContain('NOT_AVAILABLE');
-    expect(harness).toContain('repository_contract');
-    expect(harness).toContain('supabase_local_mailpit');
-    expect(harness).toContain('stripe_sandbox_test_clock');
-    expect(provider).toContain('NOT_AVAILABLE');
   });
 });

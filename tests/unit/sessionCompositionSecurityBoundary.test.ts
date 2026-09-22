@@ -7,35 +7,32 @@ const source = fs.readFileSync(
   'utf8',
 );
 
-describe('SessionComposition authentication boundary', () => {
-  it('does not restore authenticated UI state from the custom localStorage cache', () => {
-    expect(source).not.toContain("const localSessionJson = localStorage.getItem('mcc_user_session')");
-    expect(source).not.toContain('setUserSession(parsed)');
-    expect(source).not.toContain('using authenticated local cache state');
+describe('SessionComposition backend-session security boundary', () => {
+  it('does not restore authenticated UI state from browser persistence', () => {
+    expect(source).not.toContain("localStorage.getItem('mcc_user_session')");
+    expect(source).not.toContain('sessionStorage');
+    expect(source).not.toContain('access_token');
+    expect(source).not.toContain('refresh_token');
   });
 
-  it('fails closed without making Supabase initialization a global UI wait state', () => {
-    expect(source).toContain('const resetAuthProjection = () => {');
-    expect(source).toContain(
-      'if (!supabase) {\n      resetAuthProjection();\n      setAuthBootstrapPending(false);\n      return;',
-    );
-    expect(source).not.toContain('const [loading, setLoading]');
-    expect(source).not.toContain('Lade Sicherheits-Modul...');
-
-    const failureStart = source.indexOf('void establishSession(candidate.session)');
-    const failureEnd = source.indexOf('    return () => {', failureStart);
-    const failureHandler = source.slice(failureStart, failureEnd);
-
-    expect(failureHandler).toContain(
-      "console.error('[Auth] Session establishment failed:', err);",
-    );
-    expect(failureHandler).toContain('updateUserSession(null);');
-    expect(failureHandler).toContain('setPendingStepUpSession(null);');
-    expect(failureHandler).toContain('setPendingOnboardingSession(null);');
-    expect(failureHandler).toContain('setAuthBootstrapPending(false);');
+  it('fails closed on backend session readback without making public routes wait', () => {
+    expect(source).toContain("fetch('/api/auth/session'");
+    expect(source).toContain("credentials: 'same-origin'");
+    expect(source).toContain('if (!response.ok)');
+    expect(source).toContain('setUserSession(null)');
+    expect(source).toContain('finally');
+    expect(source).toContain('setAuthBootstrapPending(false)');
+    expect(source).not.toContain('supabase');
+    expect(source).not.toContain('LoginStepUpGate');
+    expect(source).not.toContain('RegistrationCompletionGate');
   });
 
-  it('does not persist a Supabase access token in the application UserSession projection', () => {
-    expect(source).not.toContain('accessToken: session.access_token');
+  it('clears the browser projection before backend logout cleanup', () => {
+    const logoutStart = source.indexOf('const performLogout');
+    const logout = source.slice(logoutStart);
+    expect(logoutStart).toBeGreaterThan(-1);
+    expect(logout.indexOf('setUserSession(null)')).toBeLessThan(logout.indexOf("fetch('/api/auth/logout'"));
+    expect(logout).toContain("performLogout('local')");
+    expect(logout).toContain("performLogout('global')");
   });
 });

@@ -34,7 +34,7 @@ describe('Frontend orchestrator graphical wiring', () => {
   });
 
   it('projects QualityCenterOrchestrator build evidence through the read-only QualityCenterPanel rather than executing it in the request path', () => {
-    expect(qualityCenter).toContain("fetch('/api/admin/quality-center'");
+    expect(qualityCenter).toContain("authFetch('/api/admin/quality-center'");
     expect(qualityCenter).toContain('Read-only Projektion des bestehenden QualityCenterReport');
     expect(routeComposition).toContain("app.use('/api/admin/quality-center', qualityCenterRouter)");
     expect(qualityCenterRoute).toContain("qualityCenterRouter.get('/'");
