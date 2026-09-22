@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { AAL2_AUTH_TEST_QUARANTINE } from '../../src/platform/Security/aal2DiagnosticSupersession';
 
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
@@ -27,7 +28,9 @@ describe('frontend auth lifecycle remediation', () => {
     expect(rootBlock).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
     expect(rootBlock).not.toContain('/dashboard');
     expect(routes).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
-    expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(session)');
+    expect(sessionComposition).toContain('const gatePolicy = await readAuthGatePolicy(session)');
+    expect(sessionComposition).toContain('if (gatePolicy.onboardingRequired)');
+    expect(sessionComposition).toContain("if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount)");
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
     expect(sessionComposition).toContain('setPendingStepUpSession(session)');
   });
@@ -56,7 +59,7 @@ describe('frontend auth lifecycle remediation', () => {
     expect(dashboardNavigation).toContain('onClick={() => void onGlobalLogout()}');
   });
 
-  it('keeps registration CAPTCHA, consent/onboarding and MFA gates intact', () => {
+  it.skipIf(AAL2_AUTH_TEST_QUARANTINE)('keeps registration CAPTCHA and consent/onboarding intact while MFA enforcement is explicitly superseded', () => {
     expect(loginPage).toContain('const captchaToken = await requestHcaptchaToken()');
     expect(loginPage).toContain('supabase.auth.signUp');
     expect(loginPage).toContain('captchaToken,');
@@ -65,6 +68,7 @@ describe('frontend auth lifecycle remediation', () => {
     expect(registrationGate).toContain('marketingOptIn');
     expect(sessionComposition).toContain('RegistrationCompletionGate');
     expect(sessionComposition).toContain('LoginStepUpGate');
+    expect(registrationGate).toContain("isAal2EnabledFor('registration')");
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
   });
 

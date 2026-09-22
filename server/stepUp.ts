@@ -21,6 +21,12 @@ import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimite
 import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../src/platform/Security/secretCrypto';
 import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platform/Security/totp';
 import { rateLimitMiddleware } from '../src/platform/Security/safeIo';
+import { createLogger } from './logger';
+import {
+  AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+  AAL2_REACTIVATION_STAGE,
+  isAal2EnabledFor,
+} from '../src/platform/Security/aal2DiagnosticSupersession';
 
 export const stepUpRouter = express.Router();
 stepUpRouter.use(rateLimitMiddleware({ name: 'step-up', maxRequests: 40, windowMs: 60_000 }));
@@ -82,6 +88,57 @@ function requireAuth(handler: (req: express.Request, res: express.Response, iden
     }
   };
 }
+
+// Read-only diagnostic event for the temporary full AAL2 supersession. The browser
+// sends no identity or policy decision; the server resolves both from the authenticated bearer
+// and current profile, so Render logs can later correlate staged reactivation without trusting
+// client-supplied account state.
+stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identity) => {
+  createLogger('aal2-diagnostic', req.requestId).info('AAL2 login diagnostic request entered', {
+    eventName: 'auth.aal2.diagnostic.login.start',
+    userId: identity.userId,
+    supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+    reactivationStage: AAL2_REACTIVATION_STAGE,
+    privilegedAal2Required: true,
+  });
+
+  const supabase = getServerSupabase();
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('onboarding_required, mfa_required_account')
+    .eq('id', identity.userId)
+    .maybeSingle();
+
+  if (error || !profile) {
+    return res.status(500).json({ error: 'AAL2-Diagnosestatus konnte nicht gelesen werden.' });
+  }
+
+  const diagnosticState = {
+    supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+    reactivationStage: AAL2_REACTIVATION_STAGE,
+    loginAal2Required:
+      isAal2EnabledFor('login') && profile.mfa_required_account === true,
+    registrationAal2Required: isAal2EnabledFor('registration'),
+    accountMfaRequired: profile.mfa_required_account === true,
+    onboardingRequired: profile.onboarding_required === true,
+    privilegedAal2Required: true,
+  };
+
+  createLogger('aal2-diagnostic', req.requestId).info('AAL2 login diagnostic checkpoint', {
+    eventName: 'auth.aal2.diagnostic.login',
+    userId: identity.userId,
+    ...diagnosticState,
+  });
+  await logIamEvent(
+    identity.userId,
+    identity.userId,
+    'aal2.diagnostic_login_checkpoint',
+    null,
+    diagnosticState,
+  );
+
+  res.json({ success: true, ...diagnosticState });
+}));
 
 // 1. TOTP-Setup starten: erzeugt ein neues Secret, speichert es nur als "pending"
 //    (noch nicht aktiv), bis der Nutzer einen Code erfolgreich verifiziert.
@@ -211,26 +268,59 @@ stepUpRouter.post('/register/complete', requireAuth(async (req, res, identity) =
 // die Pflicht nicht durch sofortiges Entfernen des gerade eingerichteten Faktors wirkungslos -
 // src/lib/mfaLastFactorGuard.ts verweigert danach das Entfernen des letzten verbleibenden Faktors.
 stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, identity) => {
-  const aal2 = await requireVerifiedAal2(req);
-  if (!aal2.verified) {
-    return res.status(428).json({
-      error: 'Verpflichtende MFA-Einrichtung erfordert eine gueltige native TOTP- oder Passkey-Bestaetigung (AAL2) dieser Sitzung.',
-      code: 'aal2_required',
-    });
+  const registrationAal2Required = isAal2EnabledFor('registration');
+
+  if (registrationAal2Required) {
+    const aal2 = await requireVerifiedAal2(req);
+    if (!aal2.verified) {
+      return res.status(428).json({
+        error: 'Verpflichtende MFA-Einrichtung erfordert eine gueltige native TOTP- oder Passkey-Bestaetigung (AAL2) dieser Sitzung.',
+        code: 'aal2_required',
+      });
+    }
   }
 
   const supabase = getServerSupabase();
   const { error } = await supabase
     .from('profiles')
-    .update({ onboarding_required: false, mfa_required_account: true })
+    .update({
+      onboarding_required: false,
+      mfa_required_account: registrationAal2Required,
+    })
     .eq('id', identity.userId);
   if (error) {
     return res.status(500).json({ error: 'Status konnte nicht aktualisiert werden.' });
   }
 
-  await logIamEvent(identity.userId, identity.userId, 'mfa.enrollment_completed', null, {});
+  const diagnosticState = {
+    supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+    reactivationStage: AAL2_REACTIVATION_STAGE,
+    registrationAal2Required,
+    resultingMfaRequiredAccount: registrationAal2Required,
+    privilegedAal2Required: true,
+  };
 
-  res.json({ success: true });
+  createLogger('aal2-diagnostic', req.requestId).info(
+    registrationAal2Required
+      ? 'AAL2 registration requirement active'
+      : 'AAL2 registration requirement superseded',
+    {
+      eventName: 'auth.aal2.diagnostic.registration',
+      userId: identity.userId,
+      ...diagnosticState,
+    },
+  );
+  await logIamEvent(
+    identity.userId,
+    identity.userId,
+    registrationAal2Required
+      ? 'mfa.enrollment_completed'
+      : 'mfa.enrollment_superseded',
+    null,
+    diagnosticState,
+  );
+
+  res.json({ success: true, ...diagnosticState });
 }));
 
 // 3. Step-Up-Verifikation: gültiger TOTP-Code -> kurzlebiges, einmaliges Step-Up-Token
