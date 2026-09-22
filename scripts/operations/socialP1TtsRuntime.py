@@ -35,6 +35,16 @@ EXPECTED_SEED = 42
 QWEN_MODEL_ID = "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign"
 CHATTERBOX_MODEL_ID = "ResembleAI/chatterbox"
 CHATTERBOX_T3_MODEL = "t3_mtl23ls_v3.safetensors"
+CHATTERBOX_GENERATION_PARAMETERS = {
+    "exaggeration": 0.5,
+    "cfg_weight": 0.5,
+    "temperature": 0.8,
+    "repetition_penalty": 1.2,
+    "min_p": 0.05,
+    "top_p": 1.0,
+}
+CHATTERBOX_PROSODY_REFERENCE_CASE_ID = "chatterbox-multilingual-v3::de-dialogue-host-v1"
+CHATTERBOX_PROSODY_REFERENCE_AUDIO_SHA256 = "fa0f6a312095f35607bf470325e643ad3f625c01bd3f3a55e98b0b118afd37b0"
 
 LANGUAGE_MAP_QWEN = {
     "de-DE": "German",
@@ -225,18 +235,16 @@ def _synthesis_text(sample: dict[str, Any], candidate: str) -> tuple[str, str]:
 
     if candidate == "chatterbox-multilingual-v3":
         pronunciation_clause = (
-            "Sprich B T C klar aus. "
-            "Danach einzeln: E, Tee, Haa. "
-            "Danach einzeln: Capital, A, I."
+            "BTC, ETH und CAPITAL-AI gehören hier in einen natürlichen, zusammenhängenden Satzfluss."
         )
-        projection = "de_finance_pronunciation_projection_v3_chatterbox_segmented"
+        projection = "de_finance_pronunciation_projection_v4_chatterbox_natural_prosody"
     else:
         pronunciation_clause = "Sprich B T C, E T H und Capital A I klar aus."
         projection = "de_finance_pronunciation_projection_v1"
 
     text = (
         "Aussprachetest: zwölf Komma fünf Prozent und eintausendzweihundertvierunddreißig Euro "
-        "und sechsundfünfzig Cent sind hier reine Testwerte, keine Marktdaten. "
+        "und sechsundfünfzig Cent sind hier reine Testwerte und keine Marktdaten. "
         f"{pronunciation_clause} Dies ist keine Anlageberatung."
     )
     return text, projection
@@ -292,7 +300,11 @@ def _chatterbox_run(
     _sync_cuda(torch_module, device)
     started = time.perf_counter()
     synthesis_text, pronunciation_projection = _synthesis_text(sample, "chatterbox-multilingual-v3")
-    wav = model.generate(synthesis_text, language_id=language)
+    wav = model.generate(
+        synthesis_text,
+        language_id=language,
+        **CHATTERBOX_GENERATION_PARAMETERS,
+    )
     _sync_cuda(torch_module, device)
     total_ms = (time.perf_counter() - started) * 1000.0
     if hasattr(wav, "detach"):
@@ -303,6 +315,12 @@ def _chatterbox_run(
         "synthesis_text": synthesis_text,
         "synthesis_text_sha256": _sha256_text(synthesis_text),
         "pronunciation_projection": pronunciation_projection,
+        "generation_parameters": dict(CHATTERBOX_GENERATION_PARAMETERS),
+        "prosody_reference": {
+            "benchmark_case_id": CHATTERBOX_PROSODY_REFERENCE_CASE_ID,
+            "audio_sha256": CHATTERBOX_PROSODY_REFERENCE_AUDIO_SHA256,
+            "human_listening_verdict": "PASS_USABLE_REFERENCE",
+        },
         "style_gap": "Chatterbox Multilingual V3 does not consume the Social designed-persona text instruction; human listening review must assess suitability.",
         "first_audio_measurement": "non_streaming_completion_proxy",
     }
