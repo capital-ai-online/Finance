@@ -1,12 +1,12 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@005174692f0f1db3dd91e9a12e73c461584ff7d0`
+**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-20 — Self-Healing v3 convergence, current-main PR orchestration and runtime-recovery continuation correlated  
+**Reconciliation:** 2026-09-22 — SH-V3/v1.8 Self-Healing state and merged SH-02.9 re-correlated to CURRENT_MAIN; OPS post-merge continuation remains owner-correct  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -20,7 +20,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ## GOV-SH-V3 — Self-Healing Convergence Program
 
-**State:** `ACTIVE / PR #1179 / CONTRACT_FOUNDATION`  
+**State:** `ACTIVE / FOUNDATIONS_MERGED / OWNER-CORRECT CONTINUATION`  
 **Priority:** `P0 🔴 Kritisch`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
@@ -37,21 +37,26 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 - PR #1174 — universal PR build/test autofix orchestration;
 - PR #1176 — PR1174 reconciliation-test convergence;
 - PR #1177 — standardized pre/post-merge PR convergence.
+- PR #1179 — SH-V3 convergence milestones/work-package foundation;
+- PR #1198 / #1199 / #1214 / #1218 — SH-V3-02 ancestry, serialized repair, merge-continuation and dispatched-CI convergence;
+- PR #1229 — bounded Issue intake → canonical project dispatch on the Governance side; productive Self-Healing integration remains OPS-owned.
+- PR #1269 — SH-V3-02 v1.8 collapsed Technical-Traceability/Production-Baseline drift recognition and trusted-main bootstrap convergence.
 
 ### Active dependency chain
 
-1. `SH-V3-01 — Convergence Readback & Overlap Recovery`: exact CURRENT_MAIN/head readback, dependency scan, overlap classification and bounded synchronization.
-2. `SH-V3-02 — Control Panel Autofix Orchestration Watchdog`: prove Finding → classifier → canonical repairer → dispatch → mutation/readback → exact-head verification.
-3. `SH-V3-03 — Exact-SHA Runtime Recovery`: continue SH-02.7 through the existing protected deployment path for an already merged provenance-valid SHA.
-4. `SH-02.8 — Protected rollback/restore contracts`: `HELD` until SH-02.7 recovery evidence plus SEC/COMP/QM prerequisites exist.
-5. `SH-02.9 — Observability/SLO/incident convergence`: dependency-ready only after the preceding recovery boundary.
-6. `SH-02.10 — Fault injection/convergence suite`: follows verified SH-02.4..02.9 behavior.
-7. `SH-02.11 — Staged production activation`: follows verification of all enabled tiers.
+1. `SH-V3-01 — Convergence Readback & Overlap Recovery`: `FOUNDATION_MERGED / CONTINUOUS_INVARIANT` via PR #1179; reused by later convergence, not reopened as branch work.
+2. `SH-V3-02 — Control Panel Autofix Orchestration Watchdog`: `IMPLEMENTED_ON_MAIN / CONTINUOUS_WATCHDOG` through PR #1198, #1199, #1214, #1218 and #1269; v1.8 collapsed-details drift now re-enters the existing trusted-main Decision/Evidence repair path, and future findings remain evidence-bound to registered repairers.
+3. `SH-V3-03 — Exact-SHA Runtime Recovery`: `IMPLEMENTED_ON_MAIN` through owner-correct OPS PR #1187; repository implementation is distinct from any later production/readback evidence.
+4. `SH-02.8 — Protected rollback/restore contracts`: `HELD` until its explicit recovery-evidence plus SEC/COMP/QM prerequisites are satisfied; merge of SH-02.7 alone does not synthesize that evidence.
+5. `SH-02.9A — Issue Intake & Project Dispatch`: `DONE_MAIN / TERMINAL` through OPS PR #1246 and post-merge convergence PR #1259, consuming the Governance-side dispatch contract from PR #1229.
+6. `SH-02.9 — Observability/SLO/incident convergence`: `IMPLEMENTED_ON_MAIN` through merged OPS PR #1262. Open OPS PR #1271 owns the post-merge projection/convergence readback and does not overlap this GOV roadmap reconciliation.
+7. `SH-02.10 — Fault injection/convergence suite`: remains dependency-held until the owner-correct SH-02.9 post-merge projection in PR #1271 reaches verified terminal evidence.
+8. `SH-02.11 — Staged production activation`: dependency-held until the enabled preceding tiers are verified.
 
 ### Single-writer and protected-blocker rules
 
-- Canonical v1.7 Decision/Evidence drift delegates only to the existing PR Decision Evidence Reconciler.
-- Markerless/legacy PR-template bootstrap and atomic Production-Baseline repair remain owned by the existing PR Production Baseline Auto-Refresh specialist; this is distinct from v1.7 Decision/Evidence reconciliation.
+- Canonical v1.8 Decision/Evidence drift delegates only to the existing PR Decision Evidence Reconciler; merged PR #1269 also binds missing collapsed Technical Traceability / machine-readable Production-Baseline boundaries to that trusted-main bootstrap path.
+- Markerless/legacy PR-template bootstrap and atomic Production-Baseline repair remain owned by the existing PR Production Baseline Auto-Refresh specialist; this is distinct from v1.8 Decision/Evidence reconciliation.
 - Current-State projection baseline drift remains owned by its existing dedicated baseline repair path.
 - Deterministic CI expectation drift is repairable only through an individually registered, evidence-bound repairer.
 - The 45,000-minute GitHub Actions state is a protected blocker and is never an autonomous repair candidate.
@@ -62,7 +67,7 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 
 These are coordination references only and do not transfer productive ownership:
 
-- `CAPITAL-AI-FE`: PR #1178 is merged evidence on current main; subsequent landing/branding work remains FE-owned.
+- `CAPITAL-AI-FE`: landing/runtime/data/desktop work is merged through PR #1241/#1243/#1245 and the incognito consent interaction fix through #1261; all presentation/runtime status remains FE-owned.
 - `CAPITAL-AI-SEO`: `WP-SEO-LAUNCH-01` remains the canonical public Web/Search/Social launch coordination package.
 - `CAPITAL-AI-FINTECH`: data, scoring and orchestrator work remains FINTECH-owned under PVC-09..PVC-17.
 - `CAPITAL-AI-SEC`, `CAPITAL-AI-COMP`, `CAPITAL-AI-QM`: independent security/compliance/assurance gates remain owner-correct and cannot be absorbed by GOV.
