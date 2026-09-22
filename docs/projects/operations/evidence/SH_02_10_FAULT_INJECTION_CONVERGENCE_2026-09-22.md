@@ -5,7 +5,7 @@
 **Primary PVC:** `PVC-08`  
 **Supporting PVCs:** `PVC-04`, `PVC-18`  
 **Independent assurance:** `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`  
-**Correlation baseline:** `main@d5829ff2fd40228cc938d07638563f56e178dfa6`  
+**Correlation baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`  
 **Branch:** `agent/operations-sh02-10-fault-convergence-v2-20260922`  
 **Status:** `IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING`
 
@@ -54,12 +54,29 @@ The suite does **not**:
 | API_429 | frontendDegradedMode | bounded retry for safe reads; mutation methods never auto-retried |
 | DEPLOYMENT_IDENTITY_MISMATCH | selfHealingContract | exact-SHA action classified but held |
 | FAILED_EXACT_SHA_REDEPLOY_VERIFICATION | convergence contract | READBACK_FAILED => ESCALATED |
+| CURRENT_STATE_PROJECTION_BASELINE_STALE | Current-State Baseline Autofix + selfHealingContract | classify as repository current-state projection drift; one bounded idempotent specialist attempt; exact-head CI/Governance readback required |
 | POLICY_CAPABILITY_BLOCKED | eligibility contract | missing external capability => fail-closed BLOCKED |
 | RECOVERY_BUDGET_EXHAUSTION | eligibility contract | no further attempt admitted |
 
 The canonical matrix is implemented in
 `src/platform/Supervisor/faultInjectionConvergence.ts` and exercised by
 `tests/unit/faultInjectionConvergence.test.ts`.
+
+## Observed #1289 baseline-drift case
+
+CI run `35724329044` observed
+`CURRENT_STATE_PROJECTION_BASELINE_STALE` for
+`docs/projects/operations/ROADMAP.md`: branch projection
+`main@d5829ff2fd40228cc938d07638563f56e178dfa6` did not match
+`CURRENT_MAIN c3181b37987598511b3eb3e2d313102458fed415`.
+
+The repair is the existing bounded path, not a new writer:
+`REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`.
+The action remains SH-1, idempotent, maximum one attempt, capability-bound to
+`repository.pr.autofix`, and requires
+`exact-pr-head-ci-governance-readback`. The Supervisor Control Panel exposes
+this coverage read-only; it cannot commit, merge, alter required checks, or
+grant the autofix capability.
 
 ## Assurance boundary
 
