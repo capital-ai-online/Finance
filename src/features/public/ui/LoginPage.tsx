@@ -115,6 +115,7 @@ export function LoginPage({ justLoggedOut }: LoginPageProps) {
           options: { captchaToken },
         });
         if (signInError) throw signInError;
+        window.location.replace('/');
         return;
       }
 
