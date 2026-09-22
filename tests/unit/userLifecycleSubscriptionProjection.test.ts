@@ -45,4 +45,18 @@ describe('User-Lifecycle subscription projection identity authority', () => {
     expect(sql).toContain('ON CONFLICT (user_id) DO UPDATE SET');
     expect(sql).not.toContain('ON CONFLICT (email)');
   });
+
+  it('maps the Stripe Sync Engine subscription columns used by the canonical projection', () => {
+    const sql = migration();
+
+    expect(sql).toContain('NEW.id');
+    expect(sql).toContain('NEW.status');
+    expect(sql).toContain('NEW.current_period_end');
+    expect(sql).toContain("NEW.metadata->>'user_id'");
+    expect(sql).toContain("NEW.metadata->>'plan_id'");
+    expect(sql).toContain("NEW.items->'data'->0->'price'->>'id'");
+    expect(sql).toContain('stripe_subscription_id = EXCLUDED.stripe_subscription_id');
+    expect(sql).toContain('current_period_end = EXCLUDED.current_period_end');
+    expect(sql).toContain('tier = EXCLUDED.tier');
+  });
 });
