@@ -159,10 +159,10 @@ app.use((req, res, next) => {
       logBlockedOrigin(origin, req).catch((err) => {
         console.error('[SECURITY] logBlockedOrigin fehlgeschlagen:', err);
       });
-      if (req.method === 'OPTIONS') {
-        return res.status(403).json({ error: 'Origin nicht erlaubt.' });
-      }
-      // Kein ACAO-Header -> der Browser blockiert die Antwort clientseitig.
+      // Cookie-basierte Backend-Sessions werden vom Browser automatisch mitgesendet. Deshalb
+      // reicht "kein ACAO-Header" nicht mehr: die Anwendung muss den Request selbst ablehnen,
+      // bevor ein zustandsändernder Handler erreicht werden kann.
+      return res.status(403).json({ error: 'Origin nicht erlaubt.' });
     }
   }
 
@@ -204,19 +204,13 @@ app.use((req, res, next) => {
   // sich die Middleware-Reihenfolge je verschoben, waere die Produktion still auf eine Policy ohne
   // object-src/base-uri/form-action zurueckgefallen. Eine einzige Quelle schliesst das aus.
 
-  // Audit ARCH-AUDIT-0002 (N7, CSRF-Anteil): kein CSRF-Token-Mechanismus implementiert,
-  // weil er hier keine reale Schutzwirkung haette - dieses Ergebnis, nicht eine
-  // Unterlassung. Klassisches CSRF nutzt aus, dass Browser Session-Cookies automatisch
-  // an denselben Origin anhaengen; diese Anwendung setzt und liest an keiner Stelle
-  // Cookies (grep ueber src/ und server/ bestaetigt: 0 Treffer fuer res.cookie/
-  // req.cookies/document.cookie/cookie-parser), der Supabase-Client
-  // (src/supabaseClient.ts) nutzt die Standardkonfiguration mit localStorage-basierter
-  // Session, und jede geschuetzte Route verlangt einen expliziten
-  // `Authorization: Bearer <token>`-Header (server/iam/authMiddleware.ts), den ein
-  // fremder Origin nicht automatisch mitschicken kann. Ein CSRF-Token waere daher
-  // Security-Theater fuer ein Bedrohungsmodell, das hier nicht zutrifft. Sollte
-  // zukuenftig Cookie-basierte Session-Authentifizierung eingefuehrt werden, muss
-  // diese Einschaetzung neu bewertet werden.
+  // OPS-AUTH-BACKEND-01 / CSRF boundary: productive website sessions now use HttpOnly,
+  // Secure (production), SameSite=Lax backend cookies. Because cookies are attached by the
+  // browser, every request that presents an Origin header is rejected above unless the Origin is
+  // canonical. SameSite=Lax additionally prevents the session cookies on normal cross-site POSTs.
+  // Requests without Origin remain possible for non-browser integrations/webhooks and must still
+  // satisfy their route-specific authentication/signature controls. OAuth callback integrity is
+  // independently bound to a short-lived HttpOnly PKCE verifier + state cookie.
 
   // Strict-Transport-Security (HSTS) in production
   if (isProductionEnv) {
