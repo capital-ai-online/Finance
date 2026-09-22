@@ -5,8 +5,8 @@
 **Primary PVC:** `PVC-08`  
 **Supporting PVCs:** `PVC-04`, `PVC-18`  
 **Independent assurance:** `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`  
-**Correlation baseline:** `main@4db896ecde4fa9ce434178befeae358e02798b8d`  
-**Branch:** `agent/operations-sh02-10-fault-convergence-20260922`  
+**Correlation baseline:** `main@d5829ff2fd40228cc938d07638563f56e178dfa6`  
+**Branch:** `agent/operations-sh02-10-fault-convergence-v2-20260922`  
 **Status:** `IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING`
 
 ## Dependency convergence
@@ -19,8 +19,7 @@ PR #1271 as `886486e057fea2fe833104b23f7a36d05d0b9b58`. Its exact head
 `d282aa38f7d658b2dadc3641c54415c402c03e61` completed CI, Governance,
 Container Security and Project Execution Directive validation successfully.
 
-Therefore the historical blocker "SH-02.9 post-merge projection pending" is terminal
-and SH-02.10 is dependency-ready.
+Therefore the historical blocker "SH-02.9 post-merge projection pending" is terminal. SH-02.10 is dependency-ready for deterministic non-destructive verification. SH-02.8 remains HELD and is exercised only as a negative-control capability state; no rollback/restore activation is inferred.
 
 ## Injection boundary
 
