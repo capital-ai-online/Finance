@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-MARKET-VOCABULARY-CBC5580-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Synchronize SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3 into the productive public presentation while binding Market Vocabulary to the existing canonical ESS-0017 Vocabulary registry.",
+  "workItemDE": "FRONTEND@cbc5580 synchronisieren, Market Vocabulary produktiv als neue Präsentationsoberfläche einbinden und ausschließlich an das bestehende kanonische ESS-0017 Vocabulary anbinden",
+  "startedAt": "2026-09-22T11:27:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "1d3fd33c9c58e13de2df5348de2f386107c0218e",
+  "lastSyncedMainSha": "1d3fd33c9c58e13de2df5348de2f386107c0218e",
+  "branch": "frontend/market-vocabulary-cbc5580-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-FE",
+  "priority": "P1",
+  "priorityReason": "Owner requested immediate synchronization of the latest graphical source and production exposure of the new Vocabulary entry without duplicating canonical terminology authority.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-MARKET-VOCABULARY-CBC5580-20260922.json",
+    "docs/projects/frontend/work-packages/FE_MARKET_VOCABULARY_CBC5580_2026-09-22.md",
+    "docs/frontend/FRONTEND_UPSTREAM_SOURCE_CONTRACT.md",
+    "docs/frontend/upstream-source/SvenKulessa-FRONTEND/**",
+    "src/app/routing/AppRoutes.tsx",
+    "src/features/public/ui/LandingPage.tsx",
+    "src/features/public/ui/frontend-port/ReferenceApp.tsx",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "src/features/public/ui/frontend-port/components/MarketVocabularyModal.tsx",
+    "src/features/public/ui/frontend-port/components/ModuleDetailModal.tsx",
+    "src/features/public/ui/frontend-port/source-lock.json",
+    "tests/unit/currentLandingRuntimeBinding.test.ts",
+    "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/frontendReferenceDesignLock.test.ts",
+    "tests/unit/frontendUpstreamAppearanceContract.test.ts"
+  ],
+  "scopeBoundary": [
+    "SvenKulessa/FRONTEND is presentation source only; /AGENTS.md@CURRENT_MAIN remains execution authority.",
+    "The public Market Vocabulary UI consumes the existing LearningVocabulary projection backed by src/platform/Vocabulary (ESS-0017).",
+    "The upstream src/data/vocabularyData.ts is not promoted and cannot become a second terminology authority.",
+    "KrakenReferralBanner.tsx is mirrored only as inert source evidence and remains excluded from productive runtime pending CAPITAL-AI-COMP review.",
+    "Expanded source asset fixture files remain excluded from productive market truth pending CAPITAL-AI-FINTECH owner-correct verified-data binding.",
+    "Existing verified asset hydration, scorer gates, auth/session, legal/compliance, branding and desktop adapters remain authoritative.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMainAtBranchCreation": "1d3fd33c9c58e13de2df5348de2f386107c0218e",
+    "designSource": "SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3",
+    "sourceTree": "41afaf9797754efc760af682b1d1c2ecf67e49ef",
+    "sourceDelta": "One upstream commit from f2a1013 to cbc5580 with 12 changed files.",
+    "openWriterOverlap": "PR #1278 touches only cookie-consent assets/tests; PR #1276 is Compliance documentation. No changed-file overlap with this runtime Vocabulary slice at branch creation."
+  },
+  "acceptanceCriteria": [
+    "Landing source lock and inert source snapshot identify cbc558019ae6785f44079fe6fca3403460774df3.",
+    "Sideboard exposes Market Vocabulary and no longer renders the System Online/version/color-code status panel.",
+    "/vocabulary is public and canonical; common glossary aliases redirect to it.",
+    "Market Vocabulary renders the existing LearningVocabulary component and therefore the canonical ESS-0017 registry.",
+    "No upstream vocabularyData fixture, referral banner or expanded mock asset universe becomes productive authority.",
+    "Mobile-first behavior and the >=1024px Finance desktop website adapter remain active.",
+    "Exact-head TypeScript/frontend/unit/build/governance evidence passes before merge.",
+    "Human/CODEOWNER merge remains required before production deployment."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
