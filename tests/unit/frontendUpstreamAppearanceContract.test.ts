@@ -39,12 +39,12 @@ const port = readTypeScriptTree('src/features/public/ui/frontend-port');
 describe('FRONTEND upstream appearance contract', () => {
   it('treats SvenKulessa/FRONTEND as the leading graphical source for the landing', () => {
     expect(sourceLock.sourceRepository).toBe('SvenKulessa/FRONTEND');
-    expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(sourceLock.sourceCommit).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
     expect(sourceLock.canonicalLanding).toBe('src/features/public/ui/LandingPage.tsx');
 
     expect(landing).toContain("import ReferenceApp from './frontend-port/ReferenceApp'");
     expect(landing).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
-    expect(landing).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(landing).toContain('data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"');
   });
 
   it('keeps the complete current upstream component composition as the visual target', () => {
@@ -59,6 +59,7 @@ describe('FRONTEND upstream appearance contract', () => {
       'Hero.tsx',
       'KeyPillars.tsx',
       'MarketOverview.tsx',
+      'MarketVocabularyModal.tsx',
       'ModuleDetailModal.tsx',
       'ProductTourModal.tsx',
       'StatusBar.tsx',
@@ -112,6 +113,8 @@ describe('FRONTEND upstream appearance contract', () => {
     }
 
     expect(hero).toContain('glowing_earth_nodes_1789997454893.jpg');
+    expect(port).toContain('Market Vocabulary');
+    expect(port).toContain('data-vocabulary-authority="ESS-0017"');
   });
 
   it('scopes upstream presentation helpers without transferring productive Finance authority', () => {
