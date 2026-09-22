@@ -22,6 +22,10 @@ describe('website primary login backend rebuild boundary', () => {
     expect(loginPage).toContain("postAuthJson('/api/auth/register'");
     expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
     expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
+    expect(loginPage).toContain("import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha'");
+    expect(loginPage).toContain('void preloadHcaptchaSdk().catch(() => undefined)');
+    expect((loginPage.match(/const captchaToken = await requestHcaptchaToken\(\);/g) || []).length).toBe(4);
+    expect((loginPage.match(/captchaToken,/g) || []).length).toBeGreaterThanOrEqual(4);
     expect(loginPage).toContain("type={showLoginPassword ? 'text' : 'password'}");
     expect(loginPage).toContain("type={showRegPassword ? 'text' : 'password'}");
     expect(loginPage).not.toContain('supabase.auth');
