@@ -36,5 +36,9 @@ describe('SupervisorDashboard governance projection', () => {
     expect(source).toContain('no synthetic infrastructure metrics');
     expect(source).toContain('nicht instrumentiert');
     expect(source).toContain('Manuelle Runtime-Toggles und Runtime-Registrierung sind absichtlich nicht verfügbar');
+    expect(source).toContain('Self-Healing Control Panel');
+    expect(source).toContain('CURRENT_STATE_PROJECTION_BASELINE_STALE');
+    expect(source).toContain('RECONCILE_REPOSITORY_PROJECTION');
+    expect(source).toContain('Reparaturen werden hier nicht ausgeführt');
   });
 });
