@@ -15,13 +15,14 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`  
+**Current implementation baseline:** `main@d5829ff2fd40228cc938d07638563f56e178dfa6`  
 **SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
 **SH-02.9A merge:** PR #1246 → `7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
-**Current coordination slice:** `SH-02.9` — post-merge convergence against CURRENT_MAIN; functional implementation merged  
-**Next functional slice:** `SH-02.10` — Fault injection and convergence suite, only after this post-merge projection is Human-merged  
+**SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
+**Current functional slice:** `SH-02.10` — deterministic non-destructive Fault Injection & Convergence on `agent/operations-sh02-10-fault-convergence-v2-20260922`  
+**Next functional slice:** `SH-02.11` — staged production activation only after SH-02.10 exact-head validation and independent QM/Security assurance  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -48,9 +49,9 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1161 |
 | SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IMPLEMENTED_ON_MAIN via PR #1187 / PROTECTED ACTIVATION REMAINS HELD |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
-| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN via PR #1262 / POST_MERGE_PROJECTION_PENDING |
+| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN / POST_MERGE_CONVERGED via PR #1262 + #1271 |
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
-| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED / NOT_STARTED — BLOCKED UNTIL SH-02.9 POST-MERGE PROJECTION CONVERGES |
+| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING |
 | SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | QUEUED |
 
 ## SH-02.9 — Observability/SLO/incident convergence
@@ -63,9 +64,9 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 - rejects unsafe finding/correlation identifiers, policy/action mismatch, attempts outside the action budget and verification/convergence contradictions;
 - remains a pure projection for the existing Telemetry/EventMesh path and creates no second logger, queue, incident registry or control plane.
 
-### Exit evidence still required
+### Exit evidence
 
-PR #1262 was Human-merged as `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`. Its canonical PR body records exact-head Required Checks and Security/Compliance as PASS before merge. This post-merge slice only converges the canonical status projection against CURRENT_MAIN; it does not manufacture new runtime evidence. SH-02.10 remains `QUEUED / NOT_STARTED` until this projection itself passes its Human/CODEOWNER final gate.
+PR #1262 was Human-merged as `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`. The owner-correct post-merge projection was Human-merged through PR #1271 as `886486e057fea2fe833104b23f7a36d05d0b9b58`; exact-head CI, Governance, Container Security and Project Execution Directive validation completed successfully. SH-02.9 is terminal. SH-02.10 is dependency-ready for deterministic non-destructive verification. SH-02.8 remains HELD and is exercised only as blocked-capability negative control; no rollback/restore capability is activated.
 
 ## SH-02.0 — Supersession and architecture baseline
 
@@ -305,6 +306,22 @@ At minimum simulate:
 - failed exact-SHA redeploy verification;
 - blocked policy/capability;
 - recovery-budget exhaustion.
+
+### SH-02.10 branch implementation
+
+- `sh-02.10-fault-convergence/1.0.0` defines exactly twelve deterministic scenarios and creates no second recovery authority.
+- injections are limited to in-memory state, pure model input and mocked HTTP I/O; Production faults, provider mutation, runtime recycle, deployment, rollback and restore are prohibited.
+- fatal process state is injected through the existing process-health seam and must project unhealthy liveness while `RUNTIME_PROCESS_RECYCLE` stays `HELD`.
+- transient and persistent provider failures reuse `dependencyResilience`; provider-native retry/circuit/LKG ownership is preserved and no nested retry executor is created.
+- worker stall reuses the existing `WORKER_STALLED -> QUARANTINE_WORK_ITEM` contract while generic quarantine stays `HELD`.
+- frontend stale-chunk recovery proves exactly one automatic reload per fingerprint/session; persistent render failure remains observe-only.
+- mocked 503/429 responses prove bounded safe-read retry and no automatic mutation-method replay.
+- deployment identity drift and failed exact-SHA readback prove escalation while `REDEPLOY_EXACT_SHA` stays `HELD`.
+- missing capability and exhausted budget are explicit fail-closed scenarios.
+- SH-02.8 protected rollback/restore remains `HELD`; its unavailable capability is a negative-control input, not an activation prerequisite for this non-destructive suite.
+- hosted exact-head validation plus independent QM and Security assurance remain required before SH-02.10 may be terminal and before SH-02.11 may activate production tiers.
+
+Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md`.
 
 ## SH-02.11 — Rollout
 
