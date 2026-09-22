@@ -70,6 +70,12 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(login).toContain('Terminal Anmeldung');
     expect(login).toContain('data-auth-architecture="backend-first"');
     expect(login).toContain('href="/api/auth/login/google?next=%2F"');
+    expect(login).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(login).toContain('data-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(login).toContain('id="tab-mode-login"');
+    expect(login).toContain('id="tab-mode-register"');
+    expect(login).toContain('id="register-submit-btn"');
+    expect(login).toContain('id="password-forgot-btn"');
     expect(login).not.toContain('supabase.auth');
     expect(login).not.toContain('signInWithPassword');
     expect(login).not.toContain('signUp');
