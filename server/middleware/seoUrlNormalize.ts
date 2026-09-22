@@ -9,6 +9,7 @@ export const PUBLIC_SPA_PATHS = new Set([
   '/',
   '/universe',
   '/learning-platform',
+  '/vocabulary',
   '/impressum',
   '/agb',
   '/datenschutz',
@@ -24,6 +25,10 @@ export const APPLICATION_SPA_PATHS = new Set([
   '/login',
   '/dashboard',
   '/media-studio',
+  '/glossar',
+  '/lexikon',
+  '/market-vocabulary',
+  '/dictionary',
 ]);
 
 export function stripTrailingSlashPath(pathname: string): string {
