@@ -15,16 +15,17 @@ const packageJson = JSON.parse(read('package.json')) as {
 const vendorEvidenceValidator = read('scripts/governance/verifyVendorPrivacyEvidence.mjs');
 
 describe('P1 auth authority cleanup', () => {
-  it('keeps the native LoginStepUpGate as the only MFA/AAL decision authority', () => {
-    const legacyHelper = read('src/lib/loginStepUp.ts');
-    const canonicalGate = read('src/components/LoginStepUpGate.tsx');
+  it('keeps normal login backend-owned and privileged AAL2 server-owned', () => {
+    const session = read('src/app/auth/SessionComposition.tsx');
+    const login = read('src/features/public/ui/LoginPage.tsx');
+    const backendAuth = read('server/auth/backendAuth.ts');
+    const authMiddleware = read('src/platform/Security/authMiddleware.ts');
 
-    expect(legacyHelper).not.toContain('loginStepUpRequirement');
-    expect(legacyHelper).not.toContain('supabase.auth.passkey.list');
-    expect(legacyHelper).not.toContain(".select('totp_enabled')");
-    expect(canonicalGate).toContain('getCurrentAssuranceLevel');
-    expect(canonicalGate).toContain("setRequirement('blocked')");
-    expect(canonicalGate).toContain('MFA_OPERATION_TIMEOUT_MS = 10_000');
+    expect(session).not.toContain('supabase');
+    expect(login).not.toContain('supabase');
+    expect(login).toContain('/api/auth/login/google?next=%2F');
+    expect(backendAuth).toContain("flowType: 'pkce'");
+    expect(authMiddleware).toContain('requireVerifiedAal2');
   });
 });
 

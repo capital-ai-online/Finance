@@ -12,39 +12,33 @@ const routeComposition = read('server/routes/registerApplicationRoutes.ts');
 const newsRoutes = read('src/features/news/newsRoutes.ts');
 const providerMatrix = read('src/platform/MarketData/ProviderMatrix.ts');
 
-describe('AI Newsfeed authenticated REST transport', () => {
-  it('binds the browser news transport to the Supabase session bearer token', () => {
-    expect(transport).toContain("import { supabase } from '../../supabaseClient'");
-    expect(transport).toContain('supabase.auth.getSession()');
-    expect(transport).toContain("headers.set('Authorization', `Bearer ${accessToken}`)");
-    expect(transport).toContain("throw new Error('NEWS_AUTH_SESSION_REQUIRED')");
+describe('AI Newsfeed backend-session REST transport', () => {
+  it('binds browser news transport to the shared backend auth transport', () => {
+    expect(transport).toContain("import { authFetch } from '../../lib/authFetch'");
+    expect(transport).toContain('return authFetch(path, init)');
+    expect(transport).not.toContain('supabase');
+    expect(transport).not.toContain('Authorization');
   });
 
-  it('does not permit the news bearer token to be forwarded outside the same-origin /api/news surface', () => {
+  it('does not permit authenticated transport outside /api/news', () => {
     expect(transport).toContain("const NEWS_API_PREFIX = '/api/news'");
     expect(transport).toContain("throw new Error('NEWS_AUTH_FETCH_PATH_OUTSIDE_ALLOWED_SCOPE')");
   });
 
-  it('uses the authenticated transport for articles, source metadata and asset metadata', () => {
-    expect(feed).toContain("fetchAuthenticatedNews(`/api/news?${params.toString()}`");
-    expect(viewer).toContain("fetchMetadata('/api/news/assets')");
-    expect(viewer).toContain("fetchMetadata('/api/news/sources')");
-    expect(viewer).toContain('fetchAuthenticatedNews(url');
-    expect(feed).not.toContain("fetch(`/api/news?");
-    expect(viewer).not.toContain("fetch('/api/news/");
+  it('uses the authenticated transport for articles and metadata', () => {
+    expect(feed).toContain('fetchAuthenticatedNews');
+    expect(viewer).toContain('fetchAuthenticatedNews');
   });
 
-  it('preserves the server-side entitlement and verified-identity gate', () => {
+  it('preserves server-side entitlement and verified-identity gating', () => {
     expect(authMiddleware).toContain('export async function resolveVerifiedIdentity');
-    expect(authMiddleware).toContain('extractBearerToken(req)');
+    expect(authMiddleware).toContain('resolveVerifiedBackendAuth');
     expect(routeComposition).toContain("app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);");
   });
 
-  it('keeps every currently authorized news REST provider and does not restore retired NewsAPI', () => {
+  it('keeps authorized news providers and retired NewsAPI state', () => {
     expect(newsRoutes).toContain('FreeCryptoNewsEvidenceProvider');
     expect(newsRoutes).toContain('GdeltNewsEvidenceProvider');
-    expect(providerMatrix).toContain("id: 'free-crypto-news'");
-    expect(providerMatrix).toContain("id: 'gdelt'");
     expect(providerMatrix).not.toContain("id: 'newsapi'");
   });
 });

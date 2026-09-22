@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-AUTH-AAL2-DIAGNOSTIC-SUPERSESSION-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -65,5 +65,8 @@
     "Focused and full required tests pass on exact head.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-22T05:58:00+02:00",
+  "releaseReason": "Human/CODEOWNER merged PR #1257 into main@8cf32de51821a48f58a7bd86b2d6e0222a0f9cde; fresh Owner direction supersedes the diagnostic client-auth path with a backend-first authentication rebuild.",
+  "mergeCommitSha": "8cf32de51821a48f58a7bd86b2d6e0222a0f9cde"
 }

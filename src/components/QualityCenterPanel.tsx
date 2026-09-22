@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle2, GitCommitHorizontal, RefreshCw, ShieldCheck } from 'lucide-react';
 import type { QualityCenterReport, QualityGateStatus } from '../platform/Quality/Contracts/QualityCenterContract';
-import { supabase } from '../supabaseClient';
+import { authFetch } from '../lib/authFetch';
 
 function statusClass(status: QualityGateStatus | 'COMPLETE' | 'PARTIAL' | 'NOT_AVAILABLE') {
   if (status === 'PASS' || status === 'COMPLETE') return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300';
@@ -22,10 +22,7 @@ export function QualityCenterPanel() {
     setLoading(true);
     setError(null);
     try {
-      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-      const headers: Record<string, string> = {};
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const response = await fetch('/api/admin/quality-center', { headers, cache: 'no-store' });
+      const response = await authFetch('/api/admin/quality-center', { cache: 'no-store' });
       if (response.status === 401 || response.status === 403) throw new Error('Keine Berechtigung für Quality-Center-Evidence.');
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));

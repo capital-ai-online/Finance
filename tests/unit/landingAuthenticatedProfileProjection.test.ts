@@ -25,8 +25,9 @@ describe('LF-02 authenticated landing profile projection', () => {
     const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
     const badge = read('src/features/public/ui/SubscriptionStatusBadge.tsx');
 
-    expect(landing).toContain('<LandingSessionProvider profile={authenticatedProfile}>');
+    expect(landing).toContain('<LandingSessionProvider profile={authenticatedProfile} onLogout={onLogout}>');
     expect(header).toContain('useLandingSessionProfile()');
+    expect(header).toContain('useLandingSessionLogout()');
     expect(header).toContain('data-authenticated-sideboard-profile="true"');
     expect(header).toContain('<SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} />');
     expect(context).not.toContain('supabase');

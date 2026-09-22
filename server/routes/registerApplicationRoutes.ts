@@ -39,6 +39,7 @@ import { createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { createHealthRouter } from './health';
 import { passwordSecurityRouter } from './passwordSecurityRoutes';
+import { backendAuthRootCallback, backendAuthRouter } from './backendAuthRoutes';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -69,6 +70,13 @@ export function registerApplicationRoutes(
   const { ai, anthropic, openai } = providers;
 
   registerTrailingSlashNormalize(app);
+
+  // OPS-AUTH-BACKEND-01: the existing root URL remains the provider allow-listed OAuth return
+  // target. Only the explicit auth_callback marker is intercepted; normal "/" requests continue
+  // to the SPA. Backend auth APIs own login/session/logout from this point onward.
+  app.get('/', backendAuthRootCallback);
+  app.use('/api/auth', backendAuthRouter);
+
   installProductionSoft404Intercept();
 
   // FIN-SEC-02: shared verified_screening quota gate for canonical score/context/batch

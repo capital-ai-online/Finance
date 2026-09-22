@@ -1,20 +1,14 @@
-// Compliance-Review Punkt 5 — zentrale authFetch()-Implementierung für geschützte API-Aufrufe.
+// OPS-AUTH-BACKEND-01 — authenticated browser transport.
 //
-// OAuth, MFA und Supabase-Refresh-Token-Rotation können einen kurzen Übergang erzeugen, in dem
-// ein Request noch mit einem gerade rotierten Access-Token beim Backend ankommt. Ein einzelner
-// 401 darf deshalb nicht mehr sofort die gesamte Anwendungssession zerstören. authFetch() liest
-// weiterhin ausschließlich die live vom Supabase SDK verwaltete Session, führt bei 401 genau
-// einen deduplizierten Refresh durch und wiederholt den Request einmal mit dem neuen Token.
-// Erst wenn auch der Retry 401 liefert, wird global 'auth:unauthorized' ausgelöst.
-
-import { supabase } from '../supabaseClient';
+// Browser code no longer reads, refreshes or forwards Supabase tokens. The backend owns the
+// Supabase session in HttpOnly cookies. On a 401, one bounded /api/auth/session refresh/readback is
+// attempted before retrying the original same-origin request exactly once.
 
 const UNAUTHENTICATED_RESPONSE_BODY = JSON.stringify({ error: 'Anmeldung erforderlich.' });
 
-let refreshInFlight: Promise<string | null> | null = null;
+let sessionRefreshInFlight: Promise<boolean> | null = null;
 
 function notifyUnauthorized(url: string): void {
-  // Guard für Kontexte ohne DOM (Prerender/Tests) — dort gibt es kein window.
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
 }
@@ -26,83 +20,70 @@ function unauthenticatedResponse(): Response {
   });
 }
 
-async function getCurrentAccessToken(): Promise<string | null> {
-  if (!supabase) return null;
+function isSameOriginPath(url: string): boolean {
+  if (url.startsWith('/')) return !url.startsWith('//');
+  if (typeof window === 'undefined') return false;
   try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) return null;
-    return data.session?.access_token || null;
+    return new URL(url, window.location.origin).origin === window.location.origin;
   } catch {
-    return null;
+    return false;
   }
 }
 
-async function refreshAccessToken(): Promise<string | null> {
-  if (!supabase) return null;
+async function sendSameOrigin(url: string, options: RequestInit): Promise<Response> {
+  if (!isSameOriginPath(url)) {
+    throw new Error('AUTH_FETCH_CROSS_ORIGIN_BLOCKED');
+  }
+  return fetch(url, {
+    ...options,
+    credentials: 'same-origin',
+  });
+}
 
-  if (!refreshInFlight) {
-    refreshInFlight = (async () => {
+async function refreshBackendSession(): Promise<boolean> {
+  if (!sessionRefreshInFlight) {
+    sessionRefreshInFlight = (async () => {
       try {
-        const { data, error } = await supabase.auth.refreshSession();
-        if (error) return null;
-        return data.session?.access_token || null;
+        const response = await fetch('/api/auth/session', {
+          method: 'GET',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) return false;
+        const payload = await response.json().catch(() => null);
+        return payload?.authenticated === true;
       } catch {
-        return null;
+        return false;
       }
     })().finally(() => {
-      refreshInFlight = null;
+      sessionRefreshInFlight = null;
     });
   }
-
-  return refreshInFlight;
-}
-
-function withBearerToken(options: RequestInit, accessToken: string): RequestInit {
-  const headers = new Headers(options.headers);
-  headers.set('Authorization', `Bearer ${accessToken}`);
-  return { ...options, headers };
-}
-
-async function sendAuthenticatedRequest(
-  url: string,
-  options: RequestInit,
-  accessToken: string,
-): Promise<Response> {
-  return fetch(url, withBearerToken(options, accessToken));
+  return sessionRefreshInFlight;
 }
 
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  let accessToken = await getCurrentAccessToken();
-
-  // getSession() kann während einer OAuth-/MFA-Token-Rotation kurzzeitig keine verwertbare
-  // Session liefern. Vor einem globalen Logout versuchen wir einmal den SDK-eigenen Refresh.
-  if (!accessToken) {
-    accessToken = await refreshAccessToken();
-  }
-
-  if (!accessToken) {
+  let firstResponse: Response;
+  try {
+    firstResponse = await sendSameOrigin(url, options);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'AUTH_FETCH_CROSS_ORIGIN_BLOCKED') {
+      throw error;
+    }
     notifyUnauthorized(url);
     return unauthenticatedResponse();
   }
 
-  const firstResponse = await sendAuthenticatedRequest(url, options, accessToken);
-  if (firstResponse.status !== 401) {
+  if (firstResponse.status !== 401) return firstResponse;
+
+  const refreshed = await refreshBackendSession();
+  if (!refreshed) {
+    notifyUnauthorized(url);
     return firstResponse;
   }
 
-  // Ein 401 kann durch einen gerade rotierten Access-Token verursacht sein. Genau ein Retry mit
-  // frisch erneuerter Supabase-Session verhindert den OAuth-Logout-Race, ohne Endlosschleifen oder
-  // ein Aufweichen der serverseitigen Authentifizierung einzuführen.
-  const refreshedToken = await refreshAccessToken();
-  if (refreshedToken) {
-    const retryResponse = await sendAuthenticatedRequest(url, options, refreshedToken);
-    if (retryResponse.status !== 401) {
-      return retryResponse;
-    }
-    notifyUnauthorized(url);
-    return retryResponse;
-  }
-
-  notifyUnauthorized(url);
-  return firstResponse;
+  const retryResponse = await sendSameOrigin(url, options);
+  if (retryResponse.status === 401) notifyUnauthorized(url);
+  return retryResponse;
 }
