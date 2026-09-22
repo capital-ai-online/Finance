@@ -165,11 +165,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="mt-4 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-400/10 via-purple-500/10 to-transparent border border-amber-400/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-semibold text-amber-200">System v6.0 Online</span>
+                    <span className="text-xs font-semibold text-amber-200">System Online</span>
                   </div>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded border border-purple-500/30">
-                    #8D26FF
-                  </span>
                 </div>
 
                 {/* Mobile Drawer Login CTA */}

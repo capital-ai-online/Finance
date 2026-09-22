@@ -6,9 +6,23 @@ const read = (relativePath: string) =>
   fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 const routes = read('src/app/routing/AppRoutes.tsx');
-const faq = read('src/features/public/ui/FaqPage.tsx');
-const legalShell = read('src/features/public/ui/LegalPageShell.tsx');
+const legalPages = read('src/features/public/ui/LegalAndFaqPages.tsx');
+const legalDesignSource = read(
+  'docs/frontend/upstream-source/SvenKulessa-FRONTEND/src/components/LegalAndFaqPages.tsx.source',
+);
+
+function classTokens(source: string): Set<string> {
+  const tokens = new Set<string>();
+  for (const match of source.matchAll(/className=(?:["']([^"']*)["']|\{`([\s\S]*?)`\})/g)) {
+    const raw = (match[1] ?? match[2] ?? '').replace(/\$\{[\s\S]*?\}/g, ' ');
+    for (const token of raw.split(/\s+/).filter(Boolean)) {
+      if (!/^\d+$/.test(token)) tokens.add(token);
+    }
+  }
+  return tokens;
+}
 const login = read('src/features/public/ui/LoginPage.tsx');
+const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
 const facade = read('src/features/public/ui/index.ts');
@@ -45,14 +59,18 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(landing).toContain('data-desktop-view="responsive-active"');
 
     expect(landingCss).toContain('@media (min-width: 1024px)');
-    expect(landingCss).toContain('max-width: 1280px !important');
-    expect(landingCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
+    expect(landingCss).toContain('max-width: 1440px !important');
+    expect(landingCss).toContain('grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))');
     expect(landingCss).toContain('.capital-ai-frontend-port > div > main > .hidden.sm\\:block');
     expect(landingCss).toContain('display: none !important');
   });
 
   it('uses the latest graphical source for /login while retaining Finance auth handlers', () => {
     expect(login).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(login).toContain('data-presentation-source-path="src/components/LoginPage.tsx"');
+    expect(login).toContain('Webanwendungs-Potenzial');
+    expect(login).toContain('Institutionelle Marktintelligenz für fundierte Entscheidungen');
+    expect(login).toContain('<BrandLogo variant="stacked" size="lg" />');
     expect(login).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
     expect(login).toContain('supabase.auth.signInWithPassword');
     expect(login).toContain('supabase.auth.signUp');
@@ -65,18 +83,44 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(login).not.toContain('trackEvent(');
   });
 
-  it('binds all canonical legal and FAQ paths to a shared design shell without transferring content authority', () => {
-    expect(facade).toContain("export { FaqPage } from './FaqPage'");
-    expect(facade).toContain("export { LegalPageShell } from './LegalPageShell'");
-    expect(routes).toContain('<LegalPageShell activeRoute="/datenschutz">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/agb">');
-    expect(routes).toContain('<LegalPageShell activeRoute="/impressum">');
-    expect(routes).toContain("if (currentPath === '/faq')");
-    expect(faq).toContain('<LegalPageShell activeRoute="/faq">');
-    expect(legalShell).toContain('data-content-owner="CAPITAL-AI-COMP"');
-    expect(legalShell).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(faq).toContain('Inhaltliche Pflege: CAPITAL-AI-COMP');
-    expect(faq).toContain('Darstellung: CAPITAL-AI-FE');
+  it('binds all canonical legal and FAQ paths to the current FRONTEND legal design without transferring content authority', () => {
+    expect(facade).toContain("export { LegalAndFaqPages, type LegalRoute } from './LegalAndFaqPages'");
+    expect(routes).toContain("currentPath === '/datenschutz'");
+    expect(routes).toContain("currentPath === '/agb'");
+    expect(routes).toContain("currentPath === '/impressum'");
+    expect(routes).toContain("currentPath === '/faq'");
+    expect(routes).toContain('<LegalAndFaqPages route={currentPath} />');
+    expect(routes).not.toContain('<LegalPageShell activeRoute=');
+    expect(legalPages).not.toContain('VERSION 0.6.0');
+    expect(legalPages).not.toContain('DESIGN: CAPITAL-AI-FE');
+    expect(legalPages).not.toContain('Fachinhalt: CAPITAL-AI-COMP');
+    expect(legalPages).toContain('data-design-source="SvenKulessa/FRONTEND"');
+    expect(legalPages).toContain('data-content-owner="CAPITAL-AI-COMP"');
+    expect(legalPages).toContain('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(legalPages).toContain("from './frontend-port/components/BrandLogo'");
+    expect(legalPages).toContain('w-full max-w-4xl');
+    expect(legalPages).toContain('bg-[#02050e]');
+    expect(legalPages).toContain('bg-amber-400/20');
+    expect(legalPages).toContain('bg-emerald-500/20');
+    expect(legalPages).toContain('bg-pink-500/20');
+    expect(legalPages).toContain('bg-purple-500/20');
+  });
+
+  it('prevents visible legal styling from drifting beyond the canonical FRONTEND source', () => {
+    const sourceTokens = classTokens(legalDesignSource);
+    const runtimeTokens = classTokens(legalPages);
+    const accessibilityOnly = new Set(['sr-only']);
+    const foreignVisibleTokens = [...runtimeTokens].filter(
+      (token) => !sourceTokens.has(token) && !accessibilityOnly.has(token),
+    );
+
+    expect(foreignVisibleTokens).toEqual([]);
+  });
+
+  it('removes internal version and raw color-code chrome from the mobile menu', () => {
+    expect(header).toContain('System Online');
+    expect(header).not.toContain('System v6.0 Online');
+    expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
   });
 
   it('adopts robust canonical-path normalization without introducing a second routing authority', () => {
