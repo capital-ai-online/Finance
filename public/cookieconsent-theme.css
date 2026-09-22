@@ -17,7 +17,20 @@
   --cc-separator-border-color: var(--color-border, ButtonBorder);
   --cc-toggle-on-bg: var(--color-brand-primary, Highlight);
   --cc-toggle-readonly-bg: var(--color-text-secondary, GrayText);
+
+  /*
+   * CookieConsent mounts a fixed, maximum-z-index root on first visit.
+   * Keep that transparent root click-through so a fresh/private session cannot
+   * block the application outside the actually visible consent surfaces.
+   */
+  pointer-events: none;
 }
+
+#cc-main .cm,
+#cc-main .pm {
+  pointer-events: auto;
+}
+
 #cc-main button,
 #capital-ai-cookie-settings {
   min-height: 44px;
