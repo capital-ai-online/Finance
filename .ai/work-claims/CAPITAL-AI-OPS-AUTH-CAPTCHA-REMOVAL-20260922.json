@@ -13,7 +13,7 @@
   "startedAt": "2026-09-22T13:12:00+02:00",
   "baseBranch": "main",
   "baseSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
-  "lastSyncedMainSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+  "lastSyncedMainSha": "7ff91e1a84bf7a41d590bd725a93f5692404f25f",
   "branch": "operations/auth-captcha-removal-20260922",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -24,26 +24,35 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-AUTH-CAPTCHA-REMOVAL-20260922.json",
     "docs/projects/operations/work-packages/OPS_AUTH_CAPTCHA_REMOVAL_2026-09-22.md",
+    "docs/projects/frontend/work-packages/FE_AUTH_CAPTCHA_DETACH_2026-09-22.md",
     "server/routes/backendAuthRoutes.ts",
+    "src/features/public/ui/LoginPage.tsx",
+    "src/lib/hcaptcha.ts",
     "Dockerfile",
     "render.yaml",
     ".env.example",
     "server/securityResponse.ts",
-    "tests/unit/backendEmailAuth.test.ts"
+    "tests/unit/backendEmailAuth.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/passwordRecoveryLogin.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/authCaptchaRemoval.test.ts"
   ],
   "evidence": {
-    "currentMain": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+    "currentMain": "7ff91e1a84bf7a41d590bd725a93f5692404f25f",
     "ownerDirection": "Fresh Human Owner direction: detach hCaptcha from the application and retry registration.",
     "productionSymptom": "Login page freezes after hCaptcha was reattached.",
     "smtpEvidence": "Production Render mailer previously completed SMTP send to s.kulessa@protonmail.com successfully.",
-    "providerConstraint": "Supabase Auth CAPTCHA is still provider-side enabled and cannot be toggled by the available Supabase connector/SQL preflight."
+    "providerConstraint": "Supabase Auth CAPTCHA is still provider-side enabled and cannot be toggled by the available Supabase connector/SQL preflight.",
+    "mainSynchronization": "Merged CURRENT_MAIN 7ff91e1a84bf7a41d590bd725a93f5692404f25f after confirming zero changed-file overlap; inherited the #1287 routing-test correction instead of duplicating it."
   },
   "scopeBoundary": [
     "Remove captchaToken requirements and forwarding from backend email auth.",
     "Remove hCaptcha build/runtime projection from Render/Docker/env/CSP.",
     "Do not weaken password policy, rate limits, origin checks, HttpOnly session controls or AAL2 boundaries.",
     "Supabase provider CAPTCHA must be disabled separately before captcha-free registration can succeed.",
-    "Human/CODEOWNER merge required."
+    "Human/CODEOWNER merge required.",
+    "Frontend changes remain CAPITAL-AI-FE-owned presentation scope within this coordinated cutover; no productive PVC ownership transfers."
   ],
   "acceptanceCriteria": [
     "Backend email-auth routes contain no captchaToken/hCaptcha requirement.",
