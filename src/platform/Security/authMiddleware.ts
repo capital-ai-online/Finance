@@ -18,6 +18,7 @@ import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
 import { createLogger } from '../../../server/logger';
 import { annotateReason, buildDebounceKey, createIamAuditDebounce } from './iamAuditDebounce';
+import { resolveVerifiedBackendAuth } from '../../../server/auth/backendAuth';
 
 const iamLogger = createLogger('iam');
 const MAX_BEARER_TOKEN_LENGTH = 8_192;
@@ -94,27 +95,57 @@ export async function runIamSchemaHealthCheck(): Promise<boolean> {
   }
 }
 
-async function resolveRoleFromToken(token: string): Promise<{ role: Role | null; userId?: string }> {
-  if (!isSupabaseConfigured()) return { role: null };
+async function resolveRoleFromUserId(userId: string): Promise<{ role: Role | null; userId: string }> {
+  if (!isSupabaseConfigured()) return { role: null, userId };
   try {
     const supabase = getServerSupabase();
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) return { role: null };
-
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .select('iam_role')
-      .eq('id', userData.user.id)
+      .eq('id', userId)
       .single();
 
-    if (profileErr || !profile) {
-      return { role: null, userId: userData.user.id };
-    }
-    return { role: (profile.iam_role as Role) || 'user', userId: userData.user.id };
+    if (profileErr || !profile) return { role: null, userId };
+    return { role: (profile.iam_role as Role) || 'user', userId };
   } catch (err: any) {
-    console.error(`[IAM][ERROR] resolveRoleFromToken fehlgeschlagen: ${err?.message || err}`);
-    return { role: null };
+    console.error(`[IAM][ERROR] resolveRoleFromUserId fehlgeschlagen: ${err?.message || err}`);
+    return { role: null, userId };
   }
+}
+
+async function resolveRequestCredential(req: Request): Promise<{
+  accessToken: string;
+  userId: string;
+  email: string | null;
+  source: 'bearer' | 'backend-cookie';
+} | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const bearer = extractBearerToken(req);
+  if (bearer) {
+    try {
+      const supabase = getServerSupabase();
+      const { data, error } = await supabase.auth.getUser(bearer);
+      if (error || !data?.user) return null;
+      return {
+        accessToken: bearer,
+        userId: data.user.id,
+        email: data.user.email ?? null,
+        source: 'bearer',
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const backend = await resolveVerifiedBackendAuth(req);
+  if (!backend) return null;
+  return {
+    accessToken: backend.accessToken,
+    userId: backend.user.id,
+    email: backend.user.email ?? null,
+    source: 'backend-cookie',
+  };
 }
 
 const deniedAuditDebounce = createIamAuditDebounce();
@@ -157,16 +188,15 @@ async function logAccess(
 }
 
 export async function resolveVerifiedIdentity(req: Request): Promise<{ userId: string; email: string | null } | null> {
-  if (!isSupabaseConfigured()) return null;
-  const token = extractBearerToken(req);
-  if (!token) return null;
   try {
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) return null;
-    return { userId: data.user.id, email: data.user.email ?? null };
+    const credential = await resolveRequestCredential(req);
+    if (!credential) return null;
+    return { userId: credential.userId, email: credential.email };
   } catch (err: any) {
-    iamLogger.error('resolveVerifiedIdentity fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
+    iamLogger.error('resolveVerifiedIdentity fehlgeschlagen', {
+      requestId: req.requestId,
+      error: err?.message || String(err),
+    });
     return null;
   }
 }
@@ -204,27 +234,45 @@ export async function checkAdminAccess(
       return { authorized: false, role: null, reason: 'rate-limited', actorLabel: clientIp };
     }
 
-    const token = extractBearerToken(req);
-    if (!token) {
-      await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'no-or-malformed-bearer-token' });
+    const credential = await resolveRequestCredential(req);
+    if (!credential) {
+      await logAccess('unknown', zone, 'DENIED', {
+        ip: clientIp,
+        userAgent,
+        reason: 'no-or-invalid-auth-credential',
+      });
       return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
     }
 
-    const { role, userId } = await resolveRoleFromToken(token);
+    const { role, userId } = await resolveRoleFromUserId(credential.userId);
 
     if (role && allowedRoles.includes(role)) {
-      await logAccess(role, zone, 'GRANTED', { tokenRef: token, userId, ip: clientIp, userAgent });
+      await logAccess(role, zone, 'GRANTED', {
+        tokenRef: credential.accessToken,
+        userId,
+        ip: clientIp,
+        userAgent,
+      });
       return { authorized: true, role, reason: 'iam-role', userId, actorLabel: userId || role };
     }
     if (role) {
       await logAccess(role, zone, 'DENIED', {
-        tokenRef: token, userId, ip: clientIp, userAgent,
+        tokenRef: credential.accessToken,
+        userId,
+        ip: clientIp,
+        userAgent,
         reason: `insufficient-role (has: ${role}, needs one of: ${allowedRoles.join(',')})`,
       });
       return { authorized: false, role, reason: 'insufficient-role', actorLabel: userId || role };
     }
 
-    await logAccess('unknown', zone, 'DENIED', { tokenRef: token, userId, ip: clientIp, userAgent, reason: 'token-did-not-resolve-to-role' });
+    await logAccess('unknown', zone, 'DENIED', {
+      tokenRef: credential.accessToken,
+      userId,
+      ip: clientIp,
+      userAgent,
+      reason: 'credential-did-not-resolve-to-role',
+    });
     return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
   } catch (err: any) {
     iamLogger.error('Unerwarteter Fehler in checkAdminAccess', { requestId: req.requestId, zone, error: err?.message || String(err) });
@@ -257,19 +305,19 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
     return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
   }
 
-  const token = extractBearerToken(req);
-  if (!token) {
+  const credential = await resolveRequestCredential(req);
+  if (!credential) {
     return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
   }
 
   try {
     const supabase = getServerSupabase();
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) {
+    const { data: userData, error: userErr } = await supabase.auth.getUser(credential.accessToken);
+    if (userErr || !userData?.user || userData.user.id !== credential.userId) {
       return { verified: false, currentLevel: null, reason: 'invalid-token' };
     }
 
-    const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(token);
+    const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(credential.accessToken);
     if (aalErr || !aalData) {
       iamLogger.error('AAL2-Lookup fehlgeschlagen - fail-closed verweigert', {
         requestId: req.requestId,
