@@ -10,6 +10,11 @@ const deep = fs.readFileSync(deepWorkflowPath, 'utf8');
 test('PR OSS quality stays exact-head, read-only and never pull_request_target', () => {
   assert.match(fast, /pull_request:\n/);
   assert.doesNotMatch(fast, /pull_request_target/);
+  assert.match(fast, /name: OSS quality PR scope/);
+  assert.match(fast, /git diff --name-only "\$BASE_SHA\.\.\.\$SOURCE_SHA"/);
+  assert.match(fast, /needs: scope/);
+  assert.match(fast, /needs\.scope\.outputs\.relevant == 'true'/);
+  assert.doesNotMatch(fast, /pull_request:\n[\s\S]{0,500}?\n\s+paths:/);
   assert.match(fast, /permissions:\s*\{\}/);
   assert.match(fast, /permissions:\n\s+contents: read/);
   assert.doesNotMatch(fast, /contents:\s*write/);

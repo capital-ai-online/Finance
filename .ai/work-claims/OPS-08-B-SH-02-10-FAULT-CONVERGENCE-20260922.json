@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.10 as a deterministic, non-destructive fault-injection and convergence suite over the existing Self-Healing contracts, while terminalizing the stale SH-02.9 post-merge projection in the same bounded work-package slice.",
+  "workItemDE": "SH-02.10 als deterministische, nicht-destruktive Fault-Injection-/Convergence-Suite über den bestehenden Self-Healing-Contracts implementieren und die stale SH-02.9-Post-Merge-Projektion im selben begrenzten Work-Package-Slice terminalisieren.",
+  "priority": "P0",
+  "priorityReason": "PR #1271 is Human-merged and terminal; the remaining blocker is stale projection state. SH-02.10 is the next dependency-ready Self-Healing verification slice before staged activation.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "assuranceOwners": [
+    "CAPITAL-AI-QM",
+    "CAPITAL-AI-SEC"
+  ],
+  "startedAt": "2026-09-22T11:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+  "branch": "agent/operations-sh02-10-fault-convergence-v2-20260922",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922.json",
+    "src/platform/Supervisor/faultInjectionConvergence.ts",
+    "tests/unit/faultInjectionConvergence.test.ts",
+    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/ROADMAP.md"
+  ],
+  "openWriterCorrelation": {
+    "currentMain": "d5829ff2fd40228cc938d07638563f56e178dfa6",
+    "openPullRequests": [
+      1277,
+      1287
+    ],
+    "changedFileOverlap": "NONE",
+    "closedHistoricalPr": 1286,
+    "note": "PR #1277 is Social/TTS-only and PR #1287 is FAQ routing/SEO. Closed PR #1286 is historical evidence only and no longer an active writer."
+  },
+  "dependencyResolution": {
+    "sh02_9": "TERMINAL via PR #1262 + post-merge PR #1271",
+    "sh02_8": "HELD and exercised only as negative-control capability evidence; no activation",
+    "sh02_10": "DEPENDENCY_READY for non-destructive verification"
+  },
+  "scopeNote": "Faults are deterministic in-memory/model/mock injections only. No real production fault, provider mutation, runtime recycle, deploy, rollback, restore or merge is executed.",
+  "activationBoundary": "SH-2/SH-3 and all held generic actions remain HELD. SH-02.10 validates bounded failure behavior only; staged activation remains SH-02.11.",
+  "assuranceBoundary": "QM and Security remain independent assurance owners. OPS may produce reproducible exact-head evidence but cannot self-issue QM/Security VERIFIED or CLOSED states.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+}
