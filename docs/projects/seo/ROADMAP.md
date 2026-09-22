@@ -1,12 +1,12 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@93893ab46cc0753dc4e86cd7d6120d321bc48651`
+**Baseline:** `main@aee799282298596a5f2d9140a4e805edf52783a0`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — PR #1253 merged; content-quality/review convergence active; foreign-owner FAQ, scoring-truth and root-HTML verification gates preserved  
+**Reconciliation:** 2026-09-22 — PR #1260 merged; IA/public-route convergence active; /universe FE #1263, FAQ OPS #1252, FINTECH #1254 and root-HTML OPS #1258 gates preserved  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -21,17 +21,18 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / PR_1253_MERGED / CONTENT_QUALITY_REVIEW_ACTIVE / FAQ_OPS_1252_BLOCKED / FINTECH_1254_BLOCKED / ROOT_HTML_OPS_1258_VERIFY`.
+**State:** `ACTIVE_CANONICAL / PR_1260_MERGED / IA_CONVERGENCE_ACTIVE / UNIVERSE_FE_1263_BLOCKED / FAQ_OPS_1252_BLOCKED / FINTECH_1254_BLOCKED / ROOT_HTML_OPS_1258_VERIFY`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
 **Detailed work package:** `docs/seo/WP_SEO_LAUNCH_01_PUBLIC_WEB_SOCIAL_LAUNCH_2026-09-20.md`  
-**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.21`.
+**Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.22`.
 
 **Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.  
 **Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.  
 **Post-#1211 continuation evidence:** `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`.  
-**Post-#1253 quality/review evidence:** `docs/seo/WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md`.
+**Post-#1253 quality/review evidence:** `docs/seo/WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md`.  
+**Post-#1260 IA/public-route evidence:** `docs/seo/WP_SEO_LAUNCH_01_IA_CONVERGENCE_2026-09-22.md`.
 
 Historical launch-execution readback retained for provenance (superseded by the 2026-09-22 current-frontend convergence below):
 
@@ -126,6 +127,25 @@ Immediate review actions are intentionally limited to two:
 2. OPS #1252 — complete the public `/faq` runtime/static-HTML prerequisite so SEO #1233 can continue atomically.
 
 FINTECH #1254 remains an active domain-truth dependency for Pilot Brief #02, but publication is not an immediate action until its review returns.
+
+## Post-PR #1260 IA / public-route convergence — 2026-09-22
+
+Human/CODEOWNER merged PR #1260. Fresh continuation is correlated to `main@aee799282298596a5f2d9140a4e805edf52783a0`.
+
+Current bounded state:
+
+- stale merged claims from PR #1204 and PR #1260 are released in the continuation branch;
+- the canonical six-route SEO/sitemap/prerender/server set still includes `/universe`;
+- the current hydrated client router `src/app/routing/AppRoutes.tsx` no longer has a `/universe` render branch, creating `BLOCKING_CLIENT_ROUTE_DRIFT`;
+- the current landing has no direct visible navigation to `/universe` or `/learning-platform`; the prerender noscript path still links both;
+- FE handoff #1263 owns client-route restoration and visible internal navigation;
+- `/faq` remains deliberately application-only until OPS #1252 returns the public server/static-HTML prerequisite; SEO #1233 remains blocked;
+- Pilot Brief #02 remains `NOT_PUBLISHED` until FINTECH #1254 returns public-safe scoring truth;
+- current Render readback initially showed drift, then canonical deploy `dep-dap07drtqb8s73ertcv0` converged Production to exact `main@aee799282298596a5f2d9140a4e805edf52783a0`; deploy trigger delta was 261 seconds, so exact-SHA Production freeze is `PASS` for this snapshot; OPS #1258 remains the separate raw-HTML/cache verification lane;
+- X/Facebook production account readback remains 0/0, so Wave-1 publication remains provider-account blocked;
+- GSC Search Analytics, current six-URL inspection, GA4 and GenAI visibility remain independently provider-read gated.
+
+Current immediate SEO-managed follow-ups are limited to two launch blockers: FE #1263 for canonical `/universe`/visible IA convergence and OPS #1252 for the `/faq` public-route prerequisite. OPS #1258 and FINTECH #1254 remain tracked owner-correct dependencies rather than silently absorbed SEO work.
 
 ## Current provider evidence
 
