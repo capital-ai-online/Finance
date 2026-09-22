@@ -210,9 +210,14 @@ jobs:
               '## 2. ✅ Evidence',
               '## 3. 🔍 Technical Evidence',
             ];
+            const occurrenceCount = (needle) => body.split(needle).length - 1;
+            const technicalDetailsSummary = '<summary>Technische Details & Traceability</summary>';
+            const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
             const canonical =
               headings.length === expected.length &&
-              expected.every((heading, index) => headings[index] === heading);
+              expected.every((heading, index) => headings[index] === heading) &&
+              occurrenceCount(technicalDetailsSummary) === 1 &&
+              occurrenceCount(machineBaselineSummary) === 1;
             core.setOutput('bootstrap_required', currentV18 && !canonical ? 'true' : 'false');
             core.setOutput('head_sha', normalizeSha(pr.head.sha));
             core.setOutput('head_ref', String(pr.head.ref || ''));
