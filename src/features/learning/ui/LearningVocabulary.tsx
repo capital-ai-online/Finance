@@ -1,14 +1,20 @@
 import React, { useMemo, useState } from 'react';
 import {
   BookOpen,
-  CheckCircle2,
+  Brain,
+  Check,
+  ChevronDown,
+  ChevronUp,
   Code2,
-  Languages,
-  Orbit,
+  Coins,
+  Copy,
+  Layers,
   Search,
   ShieldCheck,
   Sparkles,
   Tags,
+  TrendingUp,
+  X,
 } from 'lucide-react';
 import {
   createDefaultVocabularyRegistry,
@@ -31,22 +37,12 @@ const CATEGORY_LABELS: Record<VocabularyCategory, string> = {
   'ai-development-chat-execution': 'AI Development & Execution',
 };
 
-const CATEGORY_TONES: Record<VocabularyCategory, string> = {
-  asset: 'border-asset-crypto/25 bg-asset-crypto/[0.07] text-asset-crypto',
-  analytics: 'border-factor-technical/25 bg-factor-technical/[0.07] text-factor-technical',
-  architecture: 'border-brand-cyan/25 bg-brand-cyan/[0.06] text-brand-cyan',
-  billing: 'border-brand-primary/25 bg-brand-primary/[0.07] text-brand-primary',
-  compliance: 'border-brand-success/25 bg-brand-success/[0.07] text-brand-success',
-  documentation: 'border-text-secondary/20 bg-surface/70 text-text-secondary',
-  iam: 'border-status-warning/25 bg-status-warning/[0.07] text-status-warning',
-  platform: 'border-brand-accent/25 bg-brand-accent/[0.07] text-brand-accent',
-  product: 'border-score-ranking/25 bg-score-ranking/[0.07] text-score-ranking',
-  release: 'border-status-info/25 bg-status-info/[0.07] text-status-info',
-  'ai-development-chat-execution': 'border-status-ai/25 bg-status-ai/[0.07] text-status-ai',
-};
-
 const ALL_CATEGORIES = 'all' as const;
 type CategoryFilter = typeof ALL_CATEGORIES | VocabularyCategory;
+
+interface LearningVocabularyProps {
+  onClose?: () => void;
+}
 
 function isVocabularyCategory(value: string): value is VocabularyCategory {
   return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value);
@@ -57,29 +53,60 @@ function parseCategoryFilter(value: string): CategoryFilter {
   return isVocabularyCategory(value) ? value : ALL_CATEGORIES;
 }
 
+function categoryIcon(category: VocabularyCategory) {
+  switch (category) {
+    case 'asset':
+    case 'analytics':
+      return <TrendingUp className="h-3.5 w-3.5 text-amber-400" aria-hidden />;
+    case 'ai-development-chat-execution':
+      return <Brain className="h-3.5 w-3.5 text-[#8D26FF]" aria-hidden />;
+    case 'billing':
+      return <Coins className="h-3.5 w-3.5 text-emerald-400" aria-hidden />;
+    case 'compliance':
+    case 'iam':
+      return <ShieldCheck className="h-3.5 w-3.5 text-amber-300" aria-hidden />;
+    case 'architecture':
+    case 'platform':
+    case 'release':
+      return <Layers className="h-3.5 w-3.5 text-blue-400" aria-hidden />;
+    default:
+      return <BookOpen className="h-3.5 w-3.5 text-amber-400" aria-hidden />;
+  }
+}
+
+function thesaurusTerms(concept: VocabularyConcept): string[] {
+  const primary = normalizeVocabularyTerm(concept.displayNameDE);
+  const seen = new Set<string>();
+
+  return [concept.displayNameEN, concept.canonicalCodeTerm, ...concept.aliases].filter((value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+
+    const normalized = normalizeVocabularyTerm(trimmed);
+    if (!normalized || normalized === primary || seen.has(normalized)) return false;
+
+    seen.add(normalized);
+    return true;
+  });
+}
+
 function searchableText(concept: VocabularyConcept): string {
   return normalizeVocabularyTerm([
     concept.id,
-    concept.canonicalCodeTerm,
     concept.displayNameDE,
     concept.displayNameEN,
+    concept.canonicalCodeTerm,
     concept.definitionDE,
     concept.definitionEN,
-    ...concept.aliases,
+    ...thesaurusTerms(concept),
   ].join(' '));
 }
 
-function governanceReferences(concept: VocabularyConcept): string[] {
-  return Array.from(new Set([
-    ...concept.essReferences,
-    ...concept.adrReferences,
-    ...concept.traceabilityReferences,
-  ])).sort();
-}
-
-export function LearningVocabulary() {
+export function LearningVocabulary({ onClose }: LearningVocabularyProps = {}) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CategoryFilter>(ALL_CATEGORIES);
+  const [expandedConceptId, setExpandedConceptId] = useState<string | null>(null);
+  const [copiedConceptId, setCopiedConceptId] = useState<string | null>(null);
 
   const approvedConcepts = useMemo(
     () =>
@@ -108,201 +135,268 @@ export function LearningVocabulary() {
     });
   }, [approvedConcepts, category, query]);
 
+  const copyConcept = async (concept: VocabularyConcept, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const thesaurus = thesaurusTerms(concept);
+    const text = [
+      concept.displayNameDE,
+      `Definition:\n${concept.definitionDE}`,
+      `Englisch:\n${concept.displayNameEN} — ${concept.definitionEN}`,
+      `Thesaurus:\n${thesaurus.length > 0 ? thesaurus.join(', ') : 'Keine weiteren Begriffe'}`,
+      `Canonical Code Term:\n${concept.canonicalCodeTerm}`,
+    ].join('\n\n');
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      setCopiedConceptId(concept.id);
+      window.setTimeout(() => setCopiedConceptId(null), 2000);
+    }
+  };
+
   return (
-    <section className="relative space-y-6 overflow-hidden" aria-labelledby="learning-vocabulary-title">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[32rem] overflow-hidden" aria-hidden="true">
-        <div className="absolute left-[8%] top-10 h-64 w-64 rounded-full border border-brand-primary/10 bg-brand-primary/[0.035] blur-[1px]" />
-        <div className="absolute right-[6%] top-20 h-72 w-72 rounded-full border border-brand-accent/10 bg-brand-accent/[0.035] blur-[1px]" />
-        <div className="absolute left-1/2 top-0 h-px w-4/5 -translate-x-1/2 bg-gradient-to-r from-transparent via-brand-primary/35 to-transparent" />
-      </div>
-
-      <header className="ui-panel-elevated overflow-hidden border-brand-primary/25">
-        <div className="relative border-b border-border bg-gradient-to-br from-brand-primary/[0.10] via-background/80 to-brand-accent/[0.08] p-6 sm:p-8">
-          <div className="pointer-events-none absolute right-5 top-5 opacity-20" aria-hidden="true">
-            <Orbit size={132} className="text-brand-primary" strokeWidth={0.7} />
+    <section
+      className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-amber-500/30 bg-[#070d1e] text-slate-100 shadow-[0_0_50px_rgba(249,191,33,0.15)] sm:rounded-3xl"
+      aria-labelledby="learning-vocabulary-title"
+    >
+      <header className="flex shrink-0 items-center justify-between border-b border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-[#8D26FF]/10 to-transparent px-5 py-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/15 text-amber-300 shadow-[0_0_15px_rgba(249,191,33,0.25)]">
+            <BookOpen className="h-5 w-5 stroke-[2.2]" aria-hidden />
           </div>
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-brand-primary/30 bg-brand-primary/10 px-3 py-1 text-[10px] font-mono font-black uppercase tracking-[0.2em] text-brand-primary">
-                  <Orbit size={13} aria-hidden />
-                  Universe Knowledge Grid
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-accent/25 bg-brand-accent/[0.07] px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand-accent">
-                  <Sparkles size={12} aria-hidden /> Canonical Vocabulary
-                </span>
-              </div>
-              <div>
-                <h1 id="learning-vocabulary-title" className="font-display text-3xl font-black tracking-tight text-text-primary sm:text-4xl">
-                  CAPITAL-AI Vocabulary Universe
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-secondary">
-                  Begriffe, Architektur- und Plattformkonzepte als navigierbare Knowledge-Nodes – direkt aus der kanonischen Registry. Keine kopierte Begriffswelt und keine zweite fachliche Authority.
-                </p>
-              </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-amber-400">
+                Market Vocabulary Module
+              </span>
+              <span className="rounded border border-[#8D26FF]/40 bg-[#8D26FF]/20 px-1.5 py-0.5 text-[9.5px] font-bold text-purple-300">
+                {approvedConcepts.length} Begriffe
+              </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:min-w-72">
-              <div className="rounded-2xl border border-brand-success/20 bg-background/55 p-4 backdrop-blur-xl">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary">
-                  <CheckCircle2 size={13} className="text-brand-success" aria-hidden />
-                  Freigegeben
-                </div>
-                <div className="mt-2 font-display text-3xl font-black text-text-primary">{approvedConcepts.length}</div>
-              </div>
-              <div className="rounded-2xl border border-brand-accent/20 bg-background/55 p-4 backdrop-blur-xl">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-text-secondary">
-                  <Tags size={13} className="text-brand-accent" aria-hidden />
-                  Universen
-                </div>
-                <div className="mt-2 font-display text-3xl font-black text-text-primary">{categories.length}</div>
-              </div>
-            </div>
+            <h1
+              id="learning-vocabulary-title"
+              className="truncate text-lg font-extrabold tracking-tight text-white sm:text-xl"
+            >
+              Finanz- & Quant-Glossar
+            </h1>
           </div>
         </div>
 
-        <div className="space-y-4 p-5 sm:p-6">
-          <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Vocabulary-Universen">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition-all hover:bg-white/10 hover:text-white active:bg-white/15"
+            aria-label="Glossar schließen"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </header>
+
+      <div className="shrink-0 space-y-3 border-b border-slate-800/80 bg-[#040816]/90 p-4 sm:px-6">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Begriff, Alias, Thesaurus oder Thema suchen …"
+            className="w-full rounded-xl border border-slate-700/80 bg-[#091124] py-2.5 pl-10 pr-9 text-xs text-slate-100 outline-none transition-all placeholder:text-slate-500 hover:border-amber-400/40 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/50 sm:text-sm"
+          />
+          {query && (
             <button
               type="button"
-              onClick={() => setCategory(ALL_CATEGORIES)}
-              aria-pressed={category === ALL_CATEGORIES}
-              className={`ui-hit shrink-0 rounded-xl border px-3 py-2 text-[10px] font-mono font-black uppercase tracking-wider transition ${category === ALL_CATEGORIES ? 'border-brand-primary/40 bg-brand-primary/12 text-brand-primary' : 'border-border bg-background/45 text-text-secondary hover:border-brand-primary/30 hover:text-text-primary'}`}
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              aria-label="Suche zurücksetzen"
             >
-              Alle Universen
+              <X className="h-3.5 w-3.5" />
             </button>
-            {categories.map((item) => (
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1" aria-label="Vocabulary-Kategorien">
+          <button
+            type="button"
+            onClick={() => setCategory(ALL_CATEGORIES)}
+            aria-pressed={category === ALL_CATEGORIES}
+            className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+              category === ALL_CATEGORIES
+                ? 'border-amber-300 bg-amber-400 font-bold text-black shadow-[0_0_12px_rgba(249,191,33,0.3)]'
+                : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+            }`}
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden />
+            <span>Alle</span>
+            <span className={`rounded-full px-1.5 font-mono text-[10px] ${category === ALL_CATEGORIES ? 'bg-black/20 text-black' : 'bg-white/10 text-slate-400'}`}>
+              {approvedConcepts.length}
+            </span>
+          </button>
+
+          {categories.map((item) => {
+            const selected = category === item;
+            const count = approvedConcepts.filter((concept) => concept.category === item).length;
+            return (
               <button
                 key={item}
                 type="button"
                 onClick={() => setCategory(item)}
-                aria-pressed={category === item}
-                className={`ui-hit shrink-0 rounded-xl border px-3 py-2 text-[10px] font-mono font-black uppercase tracking-wider transition ${category === item ? CATEGORY_TONES[item] : 'border-border bg-background/45 text-text-secondary hover:border-white/15 hover:text-text-primary'}`}
+                aria-pressed={selected}
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                  selected
+                    ? 'border-amber-300 bg-amber-400 font-bold text-black shadow-[0_0_12px_rgba(249,191,33,0.3)]'
+                    : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                }`}
               >
-                {CATEGORY_LABELS[item]}
+                {categoryIcon(item)}
+                <span>{CATEGORY_LABELS[item]}</span>
+                <span className={`rounded-full px-1.5 font-mono text-[10px] ${selected ? 'bg-black/20 text-black' : 'bg-white/10 text-slate-400'}`}>
+                  {count}
+                </span>
               </button>
-            ))}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(220px,0.35fr)]">
-            <label className="relative block">
-              <span className="sr-only">Vocabulary durchsuchen</span>
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary" aria-hidden />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Knowledge-Node, Definition, Alias oder Concept-ID suchen …"
-                className="min-h-11 w-full rounded-xl border border-border bg-background/65 py-3 pl-10 pr-4 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20 placeholder:text-text-secondary/60"
-              />
-            </label>
-
-            <label className="block">
-              <span className="sr-only">Vocabulary-Kategorie filtern</span>
-              <select
-                value={category}
-                onChange={(event) => setCategory(parseCategoryFilter(event.target.value))}
-                className="min-h-11 w-full rounded-xl border border-border bg-background/65 px-3 py-3 text-sm text-text-primary outline-none transition focus:border-brand-primary/60 focus:ring-2 focus:ring-brand-primary/20"
-              >
-                <option value={ALL_CATEGORIES}>Alle Kategorien</option>
-                {categories.map((item) => (
-                  <option key={item} value={item}>{CATEGORY_LABELS[item]}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+            );
+          })}
         </div>
-      </header>
-
-      <div className="flex items-start gap-3 rounded-2xl border border-brand-primary/20 bg-brand-primary/[0.045] p-4 text-xs leading-relaxed text-text-secondary backdrop-blur-md">
-        <ShieldCheck size={18} className="mt-0.5 shrink-0 text-brand-primary" aria-hidden />
-        <p>
-          <strong className="text-text-primary">Read-only Knowledge Projection.</strong> Die Vocabulary Registry besitzt keine Finanz-, Scoring-, Ranking-, Eligibility-, IAM-, Billing-, Release- oder Produktions-Mutationsauthority. Fachliche Entscheidungen bleiben in ihren bestehenden kanonischen Systemen.
-        </p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-mono text-text-secondary" aria-live="polite">
-          {filteredConcepts.length} von {approvedConcepts.length} freigegebenen Knowledge-Nodes
-        </p>
-        {(query || category !== ALL_CATEGORIES) && (
-          <button
-            type="button"
-            onClick={() => { setQuery(''); setCategory(ALL_CATEGORIES); }}
-            className="ui-hit self-start rounded-xl border border-border bg-surface/60 px-3 py-2 text-[11px] font-bold text-text-secondary transition hover:border-brand-primary/40 hover:text-text-primary"
-          >
-            Filter zurücksetzen
-          </button>
+      <div className="max-h-[64vh] flex-1 space-y-3 overflow-y-auto p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-3 text-[11px] text-slate-500">
+          <span className="font-mono">{filteredConcepts.length} von {approvedConcepts.length} Begriffen</span>
+          {(query || category !== ALL_CATEGORIES) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setCategory(ALL_CATEGORIES);
+              }}
+              className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-400/20"
+            >
+              Filter zurücksetzen
+            </button>
+          )}
+        </div>
+
+        {filteredConcepts.length === 0 ? (
+          <div className="py-12 text-center">
+            <BookOpen className="mx-auto mb-3 h-10 w-10 text-slate-600" aria-hidden />
+            <h2 className="text-sm font-bold text-slate-300">Keine passenden Fachbegriffe gefunden</h2>
+            <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500">
+              Suche nach einem anderen Begriff, Alias oder Thesaurus-Eintrag.
+            </p>
+          </div>
+        ) : (
+          filteredConcepts.map((concept) => {
+            const expanded = expandedConceptId === concept.id;
+            const copied = copiedConceptId === concept.id;
+            const thesaurus = thesaurusTerms(concept);
+
+            return (
+              <article
+                key={concept.id}
+                className={`rounded-2xl border transition-all ${
+                  expanded
+                    ? 'border-amber-500/30 bg-gradient-to-b from-[#091228] to-[#060c1d] p-4 shadow-[0_0_20px_rgba(249,191,33,0.08)]'
+                    : 'border-transparent p-3 hover:bg-white/[0.02]'
+                }`}
+              >
+                <div
+                  onClick={() => setExpandedConceptId(expanded ? null : concept.id)}
+                  className="flex cursor-pointer select-none items-start justify-between gap-3"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setExpandedConceptId(expanded ? null : concept.id);
+                    }
+                  }}
+                  aria-expanded={expanded}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-300">
+                        {categoryIcon(concept.category)}
+                        <span>{CATEGORY_LABELS[concept.category]}</span>
+                      </span>
+                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 font-mono text-[9.5px] font-bold text-emerald-400">
+                        Freigegeben
+                      </span>
+                      {concept.displayNameEN && (
+                        <span className="font-mono text-[10px] font-semibold text-amber-400/90">
+                          • {concept.displayNameEN}
+                        </span>
+                      )}
+                    </div>
+
+                    <h2 className="text-base font-bold text-white sm:text-lg">{concept.displayNameDE}</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-300 sm:text-[13px]">
+                      {concept.definitionDE}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={(event) => void copyConcept(concept, event)}
+                      className="rounded-lg bg-white/5 p-1.5 text-slate-400 transition-all hover:bg-white/10 hover:text-amber-300"
+                      title="Definition und Thesaurus kopieren"
+                      aria-label="Definition und Thesaurus kopieren"
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-slate-400">
+                      {expanded ? <ChevronUp className="h-4 w-4 text-amber-400" /> : <ChevronDown className="h-4 w-4" />}
+                    </span>
+                  </div>
+                </div>
+
+                {expanded && (
+                  <div className="mt-3 space-y-3 border-t border-slate-800/80 pt-3">
+                    <div>
+                      <div className="mb-1 flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                        <Sparkles className="h-3 w-3 text-amber-400" aria-hidden />
+                        <span>Definition · Englisch</span>
+                      </div>
+                      <p className="rounded-xl border border-slate-800/90 bg-[#040815]/60 p-3 text-xs font-normal leading-relaxed text-slate-300">
+                        {concept.definitionEN}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
+                      <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-400/90">
+                        <Code2 className="h-3 w-3" aria-hidden />
+                        Canonical Code Term
+                      </div>
+                      <code className="text-xs font-semibold text-amber-200">{concept.canonicalCodeTerm}</code>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-700/60 bg-[#091224] p-3">
+                      <div className="mb-2 flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#44DE88]">
+                        <Tags className="h-3 w-3" aria-hidden />
+                        Thesaurus
+                      </div>
+                      {thesaurus.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {thesaurus.map((term) => (
+                            <span
+                              key={`${concept.id}-thesaurus-${term}`}
+                              className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10.5px] font-semibold text-slate-300"
+                            >
+                              {term}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">Keine weiteren freigegebenen Begriffe.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </article>
+            );
+          })
         )}
       </div>
-
-      {filteredConcepts.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {filteredConcepts.map((concept) => (
-            <article key={concept.id} className="group relative overflow-hidden rounded-2xl border border-border bg-surface/55 p-5 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-brand-primary/25 hover:bg-surface/70">
-              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-brand-primary/35 to-transparent opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full border px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider ${CATEGORY_TONES[concept.category]}`}>
-                      {CATEGORY_LABELS[concept.category]}
-                    </span>
-                    <span className="rounded-full border border-brand-success/20 bg-brand-success/10 px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider text-brand-success">
-                      Freigegeben · v{concept.version}
-                    </span>
-                  </div>
-                  <h2 className="mt-3 font-display text-xl font-black text-text-primary">{concept.displayNameDE}</h2>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-text-secondary">
-                    <Languages size={13} aria-hidden />
-                    <span>{concept.displayNameEN}</span>
-                  </div>
-                </div>
-                <div className="shrink-0 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-[10px] font-mono text-text-secondary" title="Stabile Concept-ID">
-                  {concept.id}
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-4 border-t border-border pt-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-border bg-background/35 p-3">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-brand-primary">
-                    <BookOpen size={12} aria-hidden /> Definition · DE
-                  </div>
-                  <p className="text-sm leading-relaxed text-text-secondary">{concept.definitionDE}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-background/35 p-3">
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
-                    <Languages size={12} aria-hidden /> Definition · EN
-                  </div>
-                  <p className="text-sm leading-relaxed text-text-secondary">{concept.definitionEN}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
-                <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-secondary"><Code2 size={12} aria-hidden />Canonical Code Term</div>
-                  <code className="mt-1 block break-all text-xs font-bold text-brand-primary">{concept.canonicalCodeTerm}</code>
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-wider text-text-secondary"><Tags size={12} aria-hidden />Aliase</div>
-                  <p className="mt-1 text-xs text-text-secondary">{concept.aliases.length > 0 ? concept.aliases.join(', ') : 'Keine freigegebenen Aliase'}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4" aria-label="Governance-Referenzen">
-                {governanceReferences(concept).map((reference) => (
-                  <span key={`${concept.id}-${reference}`} className="rounded border border-border bg-background/60 px-2 py-0.5 text-[9px] font-mono text-text-secondary">{reference}</span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-border bg-surface/50 p-10 text-center">
-          <Search size={28} className="mx-auto text-brand-primary" aria-hidden />
-          <h2 className="mt-3 font-display text-base font-black text-text-primary">Kein Knowledge-Node gefunden</h2>
-          <p className="mt-1 text-sm text-text-secondary">Passe Suchbegriff oder Universe-Filter an.</p>
-        </div>
-      )}
     </section>
   );
 }

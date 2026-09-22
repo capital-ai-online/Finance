@@ -12,11 +12,12 @@ const ranking = read('src/features/screening/ui/RankingBoard.tsx');
 const governanceFacade = read('src/features/governance/ui/index.ts');
 
 describe('16.08 Universe presentation recovery', () => {
-  it('keeps Vocabulary on the canonical registry and presents it as the Universe knowledge surface', () => {
+  it('keeps Vocabulary on the canonical registry while using the Market Vocabulary presentation', () => {
     expect(vocabulary).toContain('createDefaultVocabularyRegistry()');
-    expect(vocabulary).toContain('Universe Knowledge Grid');
-    expect(vocabulary).toContain('CAPITAL-AI Vocabulary Universe');
-    expect(vocabulary).toContain('Read-only Knowledge Projection');
+    expect(vocabulary).toContain('Market Vocabulary Module');
+    expect(vocabulary).toContain('Finanz- & Quant-Glossar');
+    expect(vocabulary).toContain('Thesaurus');
+    expect(vocabulary).not.toContain('Governance-Referenzen');
     expect(vocabulary).not.toContain('new Map<string, VocabularyConcept>');
   });
 

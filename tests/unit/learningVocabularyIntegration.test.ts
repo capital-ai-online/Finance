@@ -14,9 +14,14 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(learning).toContain('normalizeVocabularyTerm');
     expect(learning).toContain("from '../../../platform/Vocabulary'");
     expect(learning).toContain("concept.status === 'approved'");
-    expect(learning).toContain('CAPITAL-AI Vocabulary Universe');
-    expect(learning).toContain('Read-only Knowledge Projection.');
+    expect(learning).toContain('Market Vocabulary Module');
+    expect(learning).toContain('Finanz- & Quant-Glossar');
     expect(learning).toContain('CATEGORY_LABELS');
+    expect(learning).toContain('function thesaurusTerms');
+    expect(learning).toContain('Thesaurus');
+    expect(learning).not.toContain('governanceReferences');
+    expect(learning).not.toContain('Governance-Referenzen');
+    expect(learning).not.toContain('Quelle:');
     expect(learning).not.toContain('function normalizeSearch');
     expect(learning).not.toContain("platform/Vocabulary/node");
     expect(learning).not.toContain('node:crypto');
@@ -70,6 +75,10 @@ describe('Capital-AI Learning Platform integration', () => {
     expect(routeSeo).toContain("canonicalPath: '/learning-platform'");
     expect(prerender).toContain("routePath: '/learning-platform'");
     expect(prerender).toContain("file: 'learning-platform/index.html'");
+    expect(routeSeo).toContain('Thesaurus-Begriffen');
+    expect(prerender).toContain('Thesaurus-Begriffen');
+    expect(routeSeo).not.toContain('Governance-Referenzen');
+    expect(prerender).not.toContain('Governance-Referenzen');
     expect(urlNormalize).toContain("'/learning-platform'");
     expect(spaFallback).toContain("case '/learning-platform':");
     expect(spaFallback).toContain("path.resolve(rootDir, 'learning-platform', 'index.html')");

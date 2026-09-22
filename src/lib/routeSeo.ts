@@ -30,13 +30,13 @@ const ROUTES: Record<string, RouteSeo> = {
   '/learning-platform': {
     title: 'Capital-AI Learning Platform – Canonical Vocabulary',
     description:
-      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen read-only bereit.',
+      'Die Capital-AI Learning Platform stellt das freigegebene zweisprachige CAPITAL-AI Vocabulary mit Definitionen, Aliasen und Thesaurus-Begriffen bereit.',
     canonicalPath: '/learning-platform',
   },
   '/vocabulary': {
     title: 'Market Vocabulary – CAPITAL-AI',
     description:
-      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Concept-IDs und Governance-Referenzen aus der kanonischen Vocabulary Registry.',
+      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Aliase und Thesaurus-Begriffe in der aktuellen Glossar-Oberfläche.',
     canonicalPath: '/vocabulary',
   },
   '/impressum': {
