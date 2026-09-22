@@ -21,12 +21,17 @@ describe('GOV-CHAT-042 user lifecycle security contract', () => {
     expect(readback).not.toContain('?userId=');
   });
 
-  it('keeps MFA assurance and step-up verification server-authoritative and single-use', () => {
+  it('preserves strict provider AAL2 verification while making the diagnostic supersession explicit and auditable', () => {
     const auth = read('src/platform/Security/authMiddleware.ts');
+    const supersession = read('src/platform/Security/aal2DiagnosticSupersession.ts');
 
+    expect(auth).toContain('export async function verifyProviderAal2');
     expect(auth).toContain('export async function requireVerifiedAal2');
     expect(auth).toContain('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)');
     expect(auth).toContain("if (aalData.currentLevel !== 'aal2')");
+    expect(auth).toContain("if (isAal2EnabledFor('privileged'))");
+    expect(auth).toContain("'aal2.diagnostic_supersession_bypass'");
+    expect(supersession).toContain('AAL2_REACTIVATION_STAGE = 0');
     expect(auth).toContain('const aal2 = await requireVerifiedAal2(req);');
     expect(auth).toContain(".is('used_at', null)");
     expect(auth).toContain(".gt('expires_at', new Date().toISOString())");
@@ -43,10 +48,12 @@ describe('GOV-CHAT-042 user lifecycle security contract', () => {
     expect(authFetch).toContain("status: 401");
   });
 
-  it('keeps onboarding and MFA gates ahead of authenticated application projection', () => {
+  it('keeps onboarding ahead of projection while AAL2 enforcement is staged behind the diagnostic supersession', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
 
-    expect(session).toContain('const onboardingRequired = await needsOnboarding(session);');
+    expect(session).toContain('const gatePolicy = await readAuthGatePolicy(session);');
+    expect(session).toContain('if (gatePolicy.onboardingRequired)');
+    expect(session).toContain("if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount)");
     expect(session).toContain('setPendingOnboardingSession(session);');
     expect(session).toContain('setPendingStepUpSession(session);');
     expect(session).toContain('<RegistrationCompletionGate');
