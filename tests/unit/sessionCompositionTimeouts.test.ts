@@ -61,6 +61,7 @@ describe('SessionComposition zero-blocking auth shell', () => {
     expect(directProjectionIndex).toBeGreaterThan(supersessionIndex);
     expect(assuranceIndex).toBeGreaterThan(directProjectionIndex);
     expect(source).toContain('AAL2_DIAGNOSTIC_SUPERSESSION_ID');
+    expect(source).toContain("void authFetch('/api/auth/aal2/diagnostic-login'");
     expect(source).toContain('setPendingStepUpAssurance(assurance)');
   });
 
