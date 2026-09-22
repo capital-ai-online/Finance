@@ -42,8 +42,8 @@ const snapshotManifest = JSON.parse(
 
 describe('extended FRONTEND webdesign sync', () => {
   it('pins the synchronized graphical architecture to the latest selected upstream commit', () => {
-    expect(snapshotManifest.sourceSha).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
-    expect(snapshotManifest.currentGraphicalComponentCount).toBe(16);
+    expect(snapshotManifest.sourceSha).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
+    expect(snapshotManifest.currentGraphicalComponentCount).toBe(18);
     expect(snapshotManifest.presentationSurfaces).toMatchObject({
       login: '/login',
       legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
