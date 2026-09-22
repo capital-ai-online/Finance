@@ -99,7 +99,7 @@ stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identit
     userId: identity.userId,
     supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
     reactivationStage: AAL2_REACTIVATION_STAGE,
-    privilegedAal2Required: isAal2EnabledFor('privileged'),
+    privilegedAal2Required: true,
   });
 
   const supabase = getServerSupabase();
@@ -121,7 +121,7 @@ stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identit
     registrationAal2Required: isAal2EnabledFor('registration'),
     accountMfaRequired: profile.mfa_required_account === true,
     onboardingRequired: profile.onboarding_required === true,
-    privilegedAal2Required: isAal2EnabledFor('privileged'),
+    privilegedAal2Required: true,
   };
 
   createLogger('aal2-diagnostic', req.requestId).info('AAL2 login diagnostic checkpoint', {
@@ -297,7 +297,7 @@ stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, ident
     reactivationStage: AAL2_REACTIVATION_STAGE,
     registrationAal2Required,
     resultingMfaRequiredAccount: registrationAal2Required,
-    privilegedAal2Required: isAal2EnabledFor('privileged'),
+    privilegedAal2Required: true,
   };
 
   createLogger('aal2-diagnostic', req.requestId).info(
