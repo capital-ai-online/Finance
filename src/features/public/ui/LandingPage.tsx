@@ -13,7 +13,7 @@ interface LandingPageProps {
  * Canonical public landing page for /.
  *
  * Visual design authority is pinned to:
- * SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d
+ * SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3
  *
  * The current presentation components/data/types/assets are source-locked; host routing and branding remain explicit Finance adapters verified by
  * frontendReferenceDesignLock.test.ts. CAPITAL-AI routing and productive runtime authority remain
@@ -29,7 +29,7 @@ export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPa
       className="capital-ai-frontend-port"
       data-landing-section="frontend-reference-design-port"
       data-landing-design-repository="SvenKulessa/FRONTEND"
-      data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"
+      data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"
       data-mobile-view="active"
       data-desktop-view="responsive-active"
       data-market-data-binding="verified-on-selection"
