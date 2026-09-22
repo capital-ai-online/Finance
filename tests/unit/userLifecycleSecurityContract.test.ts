@@ -43,10 +43,13 @@ describe('GOV-CHAT-042 user lifecycle security contract', () => {
     expect(authFetch).toContain("status: 401");
   });
 
-  it('keeps onboarding and MFA gates ahead of authenticated application projection', () => {
+  it('keeps onboarding and required MFA gates ahead of authenticated application projection', () => {
     const session = read('src/app/auth/SessionComposition.tsx');
 
-    expect(session).toContain('const onboardingRequired = await needsOnboarding(session);');
+    expect(session).toContain('const gatePolicy = await readAuthGatePolicy(session);');
+    expect(session).toContain('if (gatePolicy.onboardingRequired)');
+    expect(session).toContain('if (!gatePolicy.mfaRequiredAccount)');
+    expect(session).toContain('await handleSupabaseSession(session);');
     expect(session).toContain('setPendingOnboardingSession(session);');
     expect(session).toContain('setPendingStepUpSession(session);');
     expect(session).toContain('<RegistrationCompletionGate');
