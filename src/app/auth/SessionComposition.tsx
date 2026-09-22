@@ -30,8 +30,8 @@ function isSubscriptionTier(value: unknown): value is SubscriptionTier {
  * OPS-AUTH-BACKEND-01 browser adapter.
  *
  * Authentication authority lives entirely behind /api/auth/*. The browser owns no Supabase
- * session, OAuth callback, MFA/onboarding choreography, refresh token, bearer token or auth
- * localStorage state. Public UI renders immediately; this adapter only projects the backend's
+ * session, OAuth callback, secondary-factor/onboarding choreography, refresh token, bearer token
+ * or browser-persisted auth state. Public UI renders immediately; this adapter only projects the backend's
  * already-verified session view when it becomes available.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
