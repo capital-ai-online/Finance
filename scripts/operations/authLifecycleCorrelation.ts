@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { LifecycleResult } from './userLifecycleHarness';
 
-export type AuthLifecycleOwner = 'CAPITAL-AI-OPS' | 'CAPITAL-AI-FE' | 'CAPITAL-AI-GOV' | 'CAPITAL-AI-SEO';
+export type AuthLifecycleOwner = 'CAPITAL-AI-OPS' | 'CAPITAL-AI-FE' | 'CAPITAL-AI-GOV' | 'CAPITAL-AI-SEC' | 'CAPITAL-AI-SEO';
 
 export interface AuthLifecycleFinding {
   id: string;
@@ -54,6 +54,8 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
   const appDashboard = read(repoRoot, 'src/app/dashboard/Dashboard.tsx');
   const registrationGate = read(repoRoot, 'src/components/RegistrationCompletionGate.tsx');
   const stepUp = read(repoRoot, 'server/stepUp.ts');
+  const authMiddleware = read(repoRoot, 'src/platform/Security/authMiddleware.ts');
+  const aal2Supersession = read(repoRoot, 'src/platform/Security/aal2DiagnosticSupersession.ts');
   const registrationRoadmap = read(repoRoot, 'docs/roadmaps/work-packages/AUTH_NORMAL_USER_LOGIN_REGISTRATION_2026-08-29.md');
   const indexHtml = read(repoRoot, 'index.html');
   const packageJson = JSON.parse(read(repoRoot, 'package.json')) as { version?: string };
@@ -174,7 +176,11 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
 
   const rootHasLandingProfileProjection =
     rootBlock.includes('profile={userSession') ||
-    rootBlock.includes('userSession={userSession}');
+    rootBlock.includes('userSession={userSession}') ||
+    (
+      rootBlock.includes('authenticatedProfile={{') &&
+      rootBlock.includes('subscriptionTier: userSession.subscriptionTier')
+    );
   const productiveScorerReachableFromRoot =
     rootBlock.includes('preview={<PublicAnalysisPreview') &&
     publicScorerPreview.includes('CanonicalCryptoScoringEnterprise') &&
@@ -262,13 +268,24 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       : 'One or more canonical self-registration controls are missing.',
   ));
 
+  const aal2StageZero =
+    aal2Supersession.includes('AAL2_REACTIVATION_STAGE = 0');
+  const registrationDiagnosticSupersession =
+    aal2StageZero &&
+    registrationGate.includes("isAal2EnabledFor('registration')") &&
+    stepUp.includes("isAal2EnabledFor('registration')") &&
+    stepUp.includes('mfa_required_account: registrationAal2Enabled');
   const registrationOnboarding =
     sessionComposition.includes('RegistrationCompletionGate') &&
-    sessionComposition.includes('needsOnboarding(session)') &&
+    (
+      sessionComposition.includes('readAuthGatePolicy(session)') ||
+      sessionComposition.includes('needsOnboarding(session)')
+    ) &&
     registrationGate.includes("authFetch('/api/auth/register/complete'") &&
     registrationGate.includes("authFetch('/api/auth/mfa/enrollment-complete'") &&
     stepUp.includes("stepUpRouter.post('/register/complete'") &&
-    stepUp.includes("stepUpRouter.post('/mfa/enrollment-complete'");
+    stepUp.includes("stepUpRouter.post('/mfa/enrollment-complete'") &&
+    registrationDiagnosticSupersession;
   findings.push(finding(
     'registration_onboarding_contract',
     registrationOnboarding ? 'PASS' : 'FAIL',
@@ -277,16 +294,44 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       'src/app/auth/SessionComposition.tsx',
       'src/components/RegistrationCompletionGate.tsx',
       'server/stepUp.ts',
+      'src/platform/Security/aal2DiagnosticSupersession.ts',
     ],
-    'New registrations converge on profile/consent completion and verified MFA before protected application access.',
+    'New registrations always complete profile/consent; during the explicit diagnostic supersession AAL2 enrollment is skipped without setting mfa_required_account=true, and later stages can restore it.',
     registrationOnboarding
-      ? 'Profile/consent and MFA onboarding gates are connected end-to-end in repository code.'
-      : 'The registration onboarding chain is incomplete or bypassable in repository code.',
+      ? 'Profile/consent remains mandatory while registration AAL2 is explicitly stage-controlled and Stage 0 preserves mfa_required_account=false.'
+      : 'The registration onboarding/supersession chain is incomplete or divergent.',
+  ));
+
+  const aal2DiagnosticSupersessionContract =
+    aal2StageZero &&
+    sessionComposition.includes("isAal2EnabledFor('login')") &&
+    registrationGate.includes("isAal2EnabledFor('registration')") &&
+    stepUp.includes("isAal2EnabledFor('registration')") &&
+    authMiddleware.includes("isAal2EnabledFor('privileged')") &&
+    authMiddleware.includes('export async function verifyProviderAal2') &&
+    authMiddleware.includes("'aal2.diagnostic_supersession_bypass'");
+  findings.push(finding(
+    'aal2_diagnostic_supersession_contract',
+    aal2DiagnosticSupersessionContract ? 'PASS' : 'FAIL',
+    'CAPITAL-AI-SEC',
+    [
+      'src/platform/Security/aal2DiagnosticSupersession.ts',
+      'src/platform/Security/authMiddleware.ts',
+      'src/app/auth/SessionComposition.tsx',
+      'src/components/RegistrationCompletionGate.tsx',
+      'server/stepUp.ts',
+    ],
+    'AAL2 enforcement is explicitly superseded at Stage 0 across login, registration and privileged server checks while strict provider verification remains implemented for staged reactivation.',
+    aal2DiagnosticSupersessionContract
+      ? 'Stage 0 is explicit across all AAL2 enforcement surfaces; strict provider AAL2 verification remains present and privileged bypasses are audit-logged.'
+      : 'The AAL2 diagnostic supersession is missing from one or more enforcement surfaces or strict provider verification was removed.',
   ));
 
   const subscriptionProjection =
     sessionComposition.includes("authFetch('/api/stripe/user-subscription')") &&
-    sessionComposition.includes("subscriptionTier: 'Free'") &&
+    sessionComposition.includes('isSubscriptionTier(data?.subscriptionTier)') &&
+    sessionComposition.includes('subscriptionTier: data.subscriptionTier') &&
+    !sessionComposition.includes("subscriptionTier: 'Free'") &&
     !sessionComposition.includes('/api/stripe/user-subscription?userId=') &&
     !sessionComposition.includes('/api/stripe/user-subscription?email=');
   const lf02RepositoryReady =
