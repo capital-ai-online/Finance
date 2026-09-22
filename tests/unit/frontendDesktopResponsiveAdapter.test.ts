@@ -24,23 +24,26 @@ describe('desktop landing responsive adapter', () => {
       sourceLock.entries
         .filter((entry) => entry.mode !== 'EXACT_GIT_BLOB')
         .map((entry) => entry.sourcePath),
-    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx']);
+    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx', 'src/components/Header.tsx']);
 
+    expect(referenceApp).toContain("const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)'");
+    expect(referenceApp).toContain("type LandingViewMode = 'mockup' | 'fullscreen'");
     expect(referenceApp).toContain(
-      "const [viewMode, setViewMode] = useState<'mockup' | 'fullscreen'>('mockup')",
+      'const [viewMode, setViewMode] = useState<LandingViewMode>(resolveViewportViewMode)',
     );
+    expect(referenceApp).toContain("setViewMode(matches ? 'fullscreen' : 'mockup')");
   });
 
   it('adapts only desktop widths to the production website container', () => {
     expect(portCss).toContain('@media (min-width: 1024px)');
     expect(portCss).toContain('.capital-ai-frontend-port > div > main');
-    expect(portCss).toContain('max-width: 1280px !important');
+    expect(portCss).toContain('max-width: 1440px !important');
     expect(portCss).toContain('border-width: 0 !important');
     expect(portCss).toContain('border-radius: 0 !important');
     expect(portCss).toContain('box-shadow: none !important');
     expect(portCss).toContain('overflow: visible !important');
-    expect(portCss).toContain('grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))');
-    expect(portCss).toContain('font-size: clamp(3.25rem, 5vw, 5.25rem) !important');
+    expect(portCss).toContain('grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))');
+    expect(portCss).toContain('font-size: clamp(3.75rem, 5.6vw, 5.75rem) !important');
   });
 
   it('removes desktop-only mockup chrome without changing mobile or tablet rules', () => {

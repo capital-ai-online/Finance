@@ -69,7 +69,7 @@
       "sourcePath": "src/components/Header.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/Header.tsx",
       "blobSha": "e6f3d75e0bcba1c362ad0b1b0b0c340686da5be1",
-      "mode": "EXACT_GIT_BLOB"
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
       "sourcePath": "src/components/Hero.tsx",
@@ -183,14 +183,19 @@
   },
   "hostPresentationAdapters": [
     {
+      "sourcePath": "src/components/Header.tsx",
+      "runtimeTarget": "src/features/public/ui/frontend-port/components/Header.tsx",
+      "authority": "FRONTEND structure remains canonical; Finance removes internal version/debug color-code chrome from the user-facing presentation"
+    },
+    {
       "sourcePath": "src/components/LoginPage.tsx",
       "runtimeTarget": "src/features/public/ui/LoginPage.tsx",
       "authority": "Finance Auth/Session remains authoritative; upstream is design reference only"
     },
     {
       "sourcePath": "src/components/LegalAndFaqPages.tsx",
-      "runtimeTarget": "src/features/public/ui/LegalPageShell.tsx + route-specific COMP content",
-      "authority": "CAPITAL-AI-COMP remains content authority; upstream is design reference only"
+      "runtimeTarget": "src/features/public/ui/LegalAndFaqPages.tsx",
+      "authority": "FRONTEND design is canonical; CAPITAL-AI-COMP supplies productive legal/FAQ content only"
     }
   ],
   "analyticsAdapter": {

@@ -22,6 +22,7 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
       'logout_explicit_global_action',
       'registration_primary_contract',
       'registration_onboarding_contract',
+      'landing_first_lf02_auth_profile_repository_gate',
       'registration_roadmap_closure',
       'platform_version_projection',
       'search_structured_version_metadata',
@@ -38,7 +39,7 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     expect(surfaces).not.toContain('src/components/Dashboard.tsx');
   });
 
-  it('keeps LF-01 independent from later pricing/scoring integration and fail-closed on productive root coupling', () => {
+  it('keeps completed LF-01 independent from additive LF-02 profile projection while fail-closing productive pricing/scoring/news coupling', () => {
     const findings = byId();
     expect(findings.has('checkout_root_return_handoff')).toBe(false);
 
@@ -56,6 +57,17 @@ describe('CAPITAL-AI-OPS auth lifecycle correlation', () => {
     expect(findings.get('registration_onboarding_contract')?.result).toBe('PASS');
     expect(findings.get('platform_version_projection')?.result).toBe('PASS');
     expect(findings.get('google_oauth_provider_handoff')?.result).toBe('PASS');
+  });
+
+  it('keeps LF-02 repository readiness distinct from final provider PASS and owner-routes the landing projection', () => {
+    const findings = byId();
+    const lf02 = findings.get('landing_first_lf02_auth_profile_repository_gate');
+
+    expect(lf02).toBeDefined();
+    expect(lf02?.owner).toBe('CAPITAL-AI-FE');
+    expect(lf02?.result).toBe('NOT_AVAILABLE');
+    expect(lf02?.expected).toContain('provider Security/QM evidence remains independent');
+    expect(lf02?.observed).toContain('owner-correct FE handoff');
   });
 
   it('routes remediation findings to the owning projects and allows them to turn from FAIL to PASS without changing the OPS inventory', () => {

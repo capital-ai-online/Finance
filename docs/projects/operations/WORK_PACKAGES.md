@@ -6,6 +6,17 @@
 **Correlation date:** `2026-09-20`  
 **Open PR baseline:** #1125 Self-Healing contract writer; #1126 Governance Autofix has no changed-file overlap
 
+## Current owner-directed package — LF-02 Auth/Profile correlation
+
+| Priority | Package | PVC | Current disposition |
+|---:|---|---|---|
+| P0 / Owner-directed | `OPS-LF02-AUTH-PROFILE-CORRELATION` | `PVC-02` | `ACTIVE / PROVIDER_AUDIT_COMPLETE / OWNER_HANDOFFS_OPEN / LF02_NOT_PASS` — current main + Render exact-SHA correlated; Supabase performance readback complete; FE issue #1237 owns landing/login integration; SEC issue #1238 owns Data-API/Auth hardening; final Security/QM/provider evidence remains fail-closed |
+
+Detailed package: `work-packages/OPS_LF02_AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md`.  
+Live evidence: `evidence/AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md`.
+
+The package is activated by fresh Human/Owner direction in the 2026-09-22 interaction. It does not transfer FE, SEC, IAM, Billing/Entitlement or QM authority into OPS. The older 2026-09-21 root-routing correlation remains historical evidence and does not reopen already-completed LF-00/LF-01 work.
+
 ## Current terminal repository packages
 
 | Priority | Package | PVC | Scope | Exit evidence / current disposition |
