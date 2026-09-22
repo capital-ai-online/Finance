@@ -1,6 +1,7 @@
 # SEO Topic Map — Public Launch Baseline
 
 **Date:** 2026-09-21  
+**Evidence refresh:** 2026-09-22  
 **Project:** `CAPITAL-AI-SEO`  
 **Work packages:** `WP-SEO-TOPICS`, `WP-SEO-CONTENT`  
 **Evidence rule:** no invented search volume, ranking, traffic or conversion estimates.
@@ -51,3 +52,67 @@ Once a real read surface is connected:
 - real Social referral performance after publication.
 
 Until then, this map is a qualitative product/search-intent baseline.
+
+
+## SERP / competitor evidence refresh — 2026-09-22
+
+This refresh uses publicly observable search-result/product evidence to sharpen **intent and content-gap hypotheses only**. It does not assign search volume, ranking difficulty, traffic potential, conversion rate or competitive score.
+
+### Observed intent patterns
+
+| Query / need pattern | Observed user intent | Content implication for CAPITAL-AI |
+|---|---|---|
+| KI-Aktienanalyse / AI stock analysis | informational + product investigation | explain what the AI/scoring layer actually does and what remains a human decision |
+| Aktienscore / Scoring-Modell | informational + comparison | make score meaning, factors, provenance and limitations understandable instead of presenting an unexplained number |
+| KI-Scoring Datenquellen / Transparenz | trust + validation | expose only verified provider/evidence lineage that FINTECH approves for public use |
+| Multi-Asset Analyse | product investigation | explain why asset classes can share one research surface without pretending they use one universal scoring formula |
+| Score-Grenzen / keine Anlageberatung | trust + risk | state model/data limitations and keep decision support distinct from personalized investment advice |
+
+### Current market-message evidence
+
+Publicly observable competitors and finance tools currently emphasize several recurring patterns:
+
+- **aktienscore.com** explains factor composition, score interpretation and explicit limits instead of presenting its rating as a guaranteed forecast.
+- **AktienKI** publishes a dedicated AI/data-transparency surface covering model fallibility, data-source freshness and the absence of guaranteed outcomes.
+- **finqt** markets one cross-asset AI research interface spanning crypto, equities, forex and commodities.
+- **wallstreetONLINE Smart Portfolio Guide** demonstrates demand for understandable AI-supported portfolio analysis across several asset classes, while its personalized-advice framing is not copied into CAPITAL-AI.
+- Other AI-analysis products frequently foreground confidence, trade direction or concrete trade plans. CAPITAL-AI should not imitate those claims unless separately supported by its canonical domain contracts.
+
+These observations support one non-commodity gap for CAPITAL-AI: **transparent, evidence-first multi-asset scoring and analysis boundaries**.
+
+### Public evidence sources
+
+Captured/re-read on 2026-09-22:
+
+- aktienscore.com — factor composition, score explanation and explicit score limitations: https://aktienscore.com/
+- AktienKI — AI/data-transparency, source freshness and model limitations: https://www.aktienki.com/rechtliches/ki-transparenz
+- finqt — cross-asset AI research positioning across crypto, equities, forex and commodities: https://finqt.com/de
+- wallstreetONLINE Smart Portfolio Guide — AI-supported multi-asset portfolio-analysis positioning: https://www.wallstreet-online.de/smart-portfolio-guide
+- Stock Analysis AI — confidence/risk/trade-plan oriented AI-analysis positioning used only as contrast evidence: https://www.stocksanalysisai.com/de
+
+These links are evidence of public messaging observed on the capture date, not endorsement, ranking or proof of search demand volume.
+
+### Priority refresh
+
+| Priority | Topic cluster | Evidence state | Next action |
+|---|---|---|---|
+| P1 | Explainable / evidence-first multi-asset scoring | public intent + competitor pattern observed; CAPITAL-AI repository has versioned scoring/evidence contracts | Pilot Brief #02; FINTECH truth review before any publication |
+| P1 | AI Market Intelligence | existing Brief #01 + current landing metadata | retain; measure only after GSC/GA4 read access |
+| P1 | Multi-Asset Intelligence / Universe | current product surface + public multi-asset demand pattern | strengthen contextual internal linking; no new route from this brief |
+| P1 | Data provenance / scoring lineage | trust need observed; repository evidence exists | expose only public-safe provider/evidence facts approved by FINTECH |
+| P2 | Value / Buffett methodology | existing product/domain references, but model-specific claims need owner verification | keep gated behind exact FINTECH methodology evidence |
+| P2 | Crypto scoring methodology | versioned crypto contracts exist; category/lens boundaries are nuanced | separate future brief only after exact public-safe model contract is selected |
+
+## CAPITAL-AI scoring truth boundary for content
+
+The current repository does **not** justify a single universal formula across all asset classes.
+
+Content may describe the following only when tied to the exact applicable FINTECH contract:
+
+- scoring/model versions are explicit where implemented;
+- evidence/provenance and data-quality state are part of the scoring architecture;
+- traditional technical scoring can exclude missing factors and renormalize remaining weights where that exact contract applies;
+- some research lenses such as sentiment, momentum, pattern or AI summaries can remain separate from the canonical score;
+- subclass/research models require versioned feature contracts, verified provider coverage and governed promotion before being represented as productive scoring truth.
+
+Historical, superseded or research-only weight formulas are not publishing evidence.
