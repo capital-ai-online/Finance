@@ -21,33 +21,42 @@ describe('Post-MFA subscription handoff regression boundary', () => {
     expect(gate).toContain('liveSession.user.id !== verifiedSession.user.id');
     expect(gate).toContain("code: 'POST_MFA_SESSION_HANDOFF_FAILED'");
     expect(gate).toContain("code: 'IDENTITY_MISMATCH_DETECTED'");
+    expect(gate).toContain('const onboardingRequired = await needsOnboarding(liveSession)');
     expect(gate).toContain('await handleSupabaseSession(liveSession)');
     expect(gate).not.toContain('setTimeout(');
     expect(gate).not.toContain('Promise.race([');
   });
 
-  it('uses the rotation-aware authFetch path for non-blocking subscription enrichment', () => {
+  it('awaits the rotation-aware authFetch tier before publishing the authenticated session', () => {
     const source = readRepoFile('src/app/auth/SessionComposition.tsx');
     const start = source.indexOf('const handleSupabaseSession');
     const end = source.indexOf('const establishSession', start);
     const handler = source.slice(start, end);
 
     expect(source).toContain("import { authFetch } from '../../lib/authFetch'");
-    expect(handler).toContain("void authFetch('/api/stripe/user-subscription')");
-    expect(handler).toContain("subscriptionTier: 'Free'");
+    expect(handler).toContain("res = await authFetch('/api/stripe/user-subscription')");
+    expect(handler).toContain('subscriptionTier: data.subscriptionTier');
+    expect(handler).not.toContain("subscriptionTier: 'Free'");
     expect(handler).not.toContain('session.access_token');
     expect(handler).not.toContain('?userId=');
+
+    const readbackIndex = handler.indexOf("res = await authFetch('/api/stripe/user-subscription')");
+    const publishIndex = handler.indexOf('updateUserSession(baseSession)');
+    expect(readbackIndex).toBeGreaterThan(-1);
+    expect(publishIndex).toBeGreaterThan(readbackIndex);
   });
 
-  it('keeps subscription enrichment least-privileged and rejects identity mismatch fail-closed', () => {
+  it('fails closed on unresolved tiers and rejects identity mismatch without inventing Free state', () => {
     const source = readRepoFile('src/app/auth/SessionComposition.tsx');
     const start = source.indexOf('const handleSupabaseSession');
     const end = source.indexOf('const establishSession', start);
     const handler = source.slice(start, end);
 
-    expect(handler).toContain("if (res.status === 401 || !res.ok) return;");
-    expect(handler).toContain("const tier: SubscriptionTier = data?.subscriptionTier || 'Free';");
+    expect(handler).toContain('if (!res.ok)');
+    expect(handler).toContain('isSubscriptionTier(data?.subscriptionTier)');
+    expect(handler).toContain("code: 'SUBSCRIPTION_READBACK_FAILED'");
     expect(handler).toContain('resetAuthProjection();');
     expect(handler).toContain("code: 'IDENTITY_MISMATCH_DETECTED'");
+    expect(handler).not.toContain("|| 'Free'");
   });
 });

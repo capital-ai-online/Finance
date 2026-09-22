@@ -136,10 +136,14 @@ describe('website primary login regression boundary', () => {
   it('routes email/password and Google-created sessions through the existing onboarding and assurance gates', () => {
     expect(registrationCompletionGate).toContain('E-Mail/Passwort- UND');
     expect(registrationCompletionGate).toContain('Google-OAuth-Konten');
+    expect(sessionComposition).toContain('const assurance = await getCurrentAssuranceLevel(supabase)');
+    expect(sessionComposition).toContain("assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'");
     expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(session)');
     expect(sessionComposition).toContain('setPendingOnboardingSession(session)');
     expect(sessionComposition).toContain('setPendingStepUpSession(session)');
+    expect(sessionComposition).toContain('const onboardingRequired = await needsOnboarding(liveSession)');
     expect(loginStepUpGate).toContain("level.nextLevel === 'aal2'");
+    expect(loginStepUpGate).toContain('initialAssurance ??');
   });
 
   it('keeps the Supabase auth callback synchronous and resolves persisted state directly without a watchdog', () => {
@@ -193,6 +197,9 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain('verifyTotpChallenge');
     expect(loginStepUpGate).toContain('MFA_OPERATION_TIMEOUT_MS = 10_000');
     expect(loginStepUpGate).toContain('withMfaTimeout(');
+    expect(loginStepUpGate).toContain("setRequirement('totp')");
+    expect(loginStepUpGate).toContain("challengeTotpFactor(supabase, totpFactor.id)");
+    expect(loginStepUpGate).toContain("AAL2 wird vorbereitet…");
     expect(loginStepUpGate).toContain("setRequirement('blocked')");
   });
 
