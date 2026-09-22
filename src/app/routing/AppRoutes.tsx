@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { LandingPage, LegalAndFaqPages, LoginPage } from '../../features/public/ui';
+import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
 const Dashboard = lazy(() =>
@@ -129,6 +129,10 @@ export function AppRoutes({
       </RouteLoadingBoundary>
     );
   };
+
+  if (currentPath === '/account/update-password') {
+    return <PasswordUpdatePage />;
+  }
 
   if (
     currentPath === '/datenschutz' ||

@@ -339,6 +339,32 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                     </button>
 
+                    <a
+                      href="/universe"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 text-left transition-all"
+                      data-public-navigation="universe"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Globe className="w-4 h-4 text-[#60A5FA]" />
+                        Universe
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </a>
+
+                    <a
+                      href="/learning-platform"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 text-left transition-all"
+                      data-public-navigation="learning-platform"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <BookOpen className="w-4 h-4 text-[#F9BF21]" />
+                        Learning Platform
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </a>
+
                     {/* MARKET VOCABULARY MODULE */}
                     <button
                       type="button"
