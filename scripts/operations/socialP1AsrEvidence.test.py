@@ -41,8 +41,10 @@ class RequiredTermMatcherTest(unittest.TestCase):
     def test_btc_segmented_as_bt_c_is_explicit_asr_equivalent(self) -> None:
         self.assertMatch("BTC", "Sprich BT, C klar aus.")
 
-    def test_eth_misrecognitions_remain_fail_closed(self) -> None:
+    def test_eth_semantic_alias_is_allowed_while_misrecognitions_remain_fail_closed(self) -> None:
         self.assertMatch("ETH", "Sprich BTC, ETH und CAPITAL-AI klar aus.")
+        self.assertMatch("ETH", "Bitcoin und Ethereum sind reine Aussprachebeispiele.")
+        self.assertNoMatch("ETH", "Sprich BTC, ETA und Capital Eye klar aus.")
         self.assertNoMatch("ETH", "Sprich BTC, ETS und Capital Eye klar aus.")
         self.assertNoMatch("ETH", "Sprich BTC, ETI und Capital Eye klar aus.")
 
