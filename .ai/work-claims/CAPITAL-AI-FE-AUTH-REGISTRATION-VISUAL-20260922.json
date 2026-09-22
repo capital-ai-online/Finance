@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-AUTH-REGISTRATION-VISUAL-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Restore the visible email login/registration/recovery controls on /login using the canonical SvenKulessa/FRONTEND LoginPage design while preserving the merged backend-first authentication authority.",
+  "workItemDE": "E-Mail-Anmeldung, Registrierung und Passwort-vergessen auf /login im kanonischen FRONTEND-Design wieder sichtbar machen und ausschließlich an die backend-first Auth-Endpunkte anbinden",
+  "startedAt": "2026-09-22T11:06:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "dbebf7688e36bc0b179cc3e11b5a07612d14e7ab",
+  "lastSyncedMainSha": "dbebf7688e36bc0b179cc3e11b5a07612d14e7ab",
+  "branch": "frontend/auth-registration-visual-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-FE",
+  "priority": "P0",
+  "priorityReason": "Backend email authentication is productive but the public login page exposes only Google, blocking ordinary users from discovering registration and recovery.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-AUTH-REGISTRATION-VISUAL-20260922.json",
+    "docs/projects/frontend/work-packages/FE_AUTH_REGISTRATION_VISUAL_2026-09-22.md",
+    "src/features/public/ui/LoginPage.tsx",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-EMAIL-REGISTRATION-BILLING-SYNC-20260922.json"
+  ],
+  "scopeBoundary": [
+    "Visual authority is SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d/src/components/LoginPage.tsx.",
+    "Browser presentation may POST credentials only to same-origin backend auth endpoints; no direct Supabase auth client calls are reintroduced.",
+    "Google OAuth remains available in parallel through /api/auth/login/google.",
+    "Registration uses /api/auth/register; email login uses /api/auth/login/email; recovery uses /api/auth/password/forgot; confirmation resend uses /api/auth/confirmation/resend.",
+    "Supabase tokens remain HttpOnly/backend-owned.",
+    "CAPITAL-AI-OPS remains owner of backend auth, Supabase and Stripe runtime semantics; this FE slice does not change those contracts.",
+    "Legacy billing convergence was executed separately under fresh owner direction and is evidence/dependency only, not FE-owned implementation.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "dbebf7688e36bc0b179cc3e11b5a07612d14e7ab",
+    "backendFoundation": "PR #1273 merged email registration/login/recovery backend endpoints.",
+    "designSource": "SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d/src/components/LoginPage.tsx",
+    "openWriterOverlap": "No open login/registration/auth PR at branch creation.",
+    "legacyBillingConvergence": "public.users rows were converged to public.subscriptions/stripe.subscriptions while preserving usage_log foreign-key history."
+  },
+  "acceptanceCriteria": [
+    "/login visibly exposes Anmelden and Registrieren tabs in the pinned FRONTEND design language.",
+    "Email/password login POSTs only to /api/auth/login/email and redirects to / after an authenticated response.",
+    "Registration POSTs only to /api/auth/register and shows confirmation-mail guidance.",
+    "Password-forgot POSTs only to /api/auth/password/forgot and remains enumeration-resistant in UI wording.",
+    "Confirmation resend POSTs only to /api/auth/confirmation/resend.",
+    "Google login remains available.",
+    "No supabase.auth, direct token, localStorage auth or sessionStorage auth logic is introduced in LoginPage.",
+    "Relevant frontend/auth tests and required repository checks pass on exact head.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
