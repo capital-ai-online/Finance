@@ -12,7 +12,7 @@
 - **source_project:** `CAPITAL-AI-GOV`
 - **task:** materialize `docs/projects/operations/` and integrate the existing DevelopmentChain as project execution lifecycle.
 - **status:** accepted into OPS project planning; implementation evidence is this project surface.
-- **authority:** DevelopmentChain policy remains Governance-owned.
+- **authority:** Repository execution resolves exclusively through `/AGENTS.md@CURRENT_MAIN`; `DevelopmentChain` is a lifecycle/projection term only and does not create a standalone instruction surface.
 
 ## Inbound — Security
 
