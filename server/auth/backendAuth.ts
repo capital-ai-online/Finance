@@ -191,6 +191,16 @@ function createStatelessAuthClient() {
   });
 }
 
+/**
+ * Server-only client for password, signup, confirmation and recovery operations.
+ *
+ * This deliberately has no browser storage and never projects Supabase session material to the
+ * frontend. Successful login/verification sessions must be handed to persistBackendAuthSession().
+ */
+export function createBackendEmailAuthClient() {
+  return createStatelessAuthClient();
+}
+
 function pkceStorage(req: Request, res: Response) {
   const cookies = parseCookieHeader(req.headers.cookie);
   return {

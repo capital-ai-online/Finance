@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/quality-management/`  
 **Owner:** `CAPITAL-AI-QM` (cross-cutting; no productive PVC)  
 **Status:** `PROPOSED — CANONICAL PLANNING ROADMAP; QM-V2 ACTIVATES ONLY AFTER ADR-0103 ACCEPTANCE / HUMAN MERGE`  
-**Reconciliation:** 2026-09-16 — QM chat backlog and current-main Quality work re-correlated for deterministic automated Roadmap execution  
-**Baseline:** `main@a793c86136c56f82f065c07f854c7c588e1ff7db`  
+**Reconciliation:** 2026-09-22 — QM-PR900-01 independently assured against current main; owner-correct findings routed; QM-PR900-02 promoted as the single next execution-ready successor  
+**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation and authority rule
@@ -38,12 +38,12 @@ Automation invariants:
 
 ## Deterministic QM successor order
 
-Only the first item below is explicitly execution-ready. Later items remain `WAITING` until their predecessor reaches a terminal outcome and the Roadmap is re-correlated from then-current `main`.
+`QM-PR900-01` reached a terminal assurance outcome on 2026-09-22. Exactly one successor is now execution-ready: `QM-PR900-02`. Later items remain `WAITING` until their predecessor reaches a terminal outcome and the Roadmap is re-correlated from then-current `main`.
 
 ### QM-PR900-01 — Deterministic PR-class matrix assurance
 
 **Priority:** `5/5`.  
-**State:** `READY_FOR_EXECUTION`.  
+**State:** `DONE / ASSURANCE_COMPLETE_WITH_OWNER_HANDOFF`.  
 **Dependencies:** none.
 
 Revalidate the already materialized current-main PR classification and validation-planning chain rather than building a second classifier. Human-merged OPS/Security work already provides trusted-base changed-file planning, scoped validation profiles and provider-selection controls; QM independently assesses whether the resulting matrix is deterministic, risk-proportionate and evidence-truthful.
@@ -58,13 +58,13 @@ Assessment scope includes:
 - skipped/not-selected/not-run checks remain distinguishable from `PASS`;
 - any implementation defect is referred to its canonical GOV/OPS/SEC owner rather than repaired inside QM.
 
-**Exit:** one current-main evidence matrix maps each relevant PR class/profile to required or intentionally omitted check capsules and proves that no lower-risk optimization weakens exact-head, Security, Release or Human/CODEOWNER merge evidence. Findings outside QM are owner-routed with a concrete verification gate.
+**Exit:** completed by [`evidence/QM_PR900_01_PR_CLASS_MATRIX_ASSURANCE_2026-09-22.md`](./evidence/QM_PR900_01_PR_CLASS_MATRIX_ASSURANCE_2026-09-22.md). The D/C/R + NONE/FOCUSED/FULL matrix remains fail-closed for high-risk/unknown/runtime-consumed scope; not-run evidence remains non-PASS. Current PR_FAST execution/preflight projection gaps are routed owner-correctly to `CAPITAL-AI-OPS` as Issue #1274 with an exact-head return gate.
 
 ### QM-PR900-02 — Exact-snapshot Quality evidence
 
 **Priority:** `5/5`.  
-**State:** `WAITING / DEPENDS_ON_QM-PR900-01`.  
-**Dependencies:** QM-PR900-01.
+**State:** `READY_FOR_EXECUTION`.  
+**Dependencies:** QM-PR900-01 — terminal assurance outcome reached 2026-09-22.
 
 Complete exact-identity binding for Quality execution evidence. Required ESS-0001-CONTRACTS Chapter-12 / ESS-0005 gates must report `PASS`, `FAIL` or `NOT_AVAILABLE`; wrong-head, stale, incomplete, skipped or not-executed evidence cannot satisfy a gate.
 

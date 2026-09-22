@@ -15,12 +15,13 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@720e4a80904a881e5ef732b66e1303f51a769d8e`  
+**Current implementation baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`  
 **SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
 **SH-02.9A merge:** PR #1246 → `7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
-**Current coordination slice:** `SH-02.9` — Observability/SLO/incident convergence on `agent/operations-sh02-9-observability-convergence-20260922`  
-**Next functional slice:** `SH-02.9` — Observability/SLO/incident convergence  
+**SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
+**Current coordination slice:** `SH-02.9` — post-merge convergence against CURRENT_MAIN; functional implementation merged  
+**Next functional slice:** `SH-02.10` — Fault injection and convergence suite, only after this post-merge projection is Human-merged  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -47,9 +48,9 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.6 | Frontend degraded-mode + version-skew recovery | FE cross-cutting | 02.2,02.3 | feature-local degradation, reconnect/backoff, state rehydration, deployment skew recovery | IMPLEMENTED_ON_MAIN / VALIDATED via PR #1161 |
 | SH-02.7 | Exact-SHA runtime recovery | OPS / PVC-07,08 | 02.3 + provenance | existing authorized deploy path can boundedly re-drive exact merged SHA and verify identity | IMPLEMENTED_ON_MAIN via PR #1187 / PROTECTED ACTIVATION REMAINS HELD |
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
-| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING — BOUNDED OBSERVABILITY PROJECTION ADDED |
+| SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN via PR #1262 / POST_MERGE_PROJECTION_PENDING |
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
-| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED / NOT_STARTED — BLOCKED UNTIL SH-02.9 EXIT GATE |
+| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.9 | deterministic failure matrix proves bounded recovery and safe exhaustion | QUEUED / NOT_STARTED — BLOCKED UNTIL SH-02.9 POST-MERGE PROJECTION CONVERGES |
 | SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | QUEUED |
 
 ## SH-02.9 — Observability/SLO/incident convergence
@@ -64,7 +65,7 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 
 ### Exit evidence still required
 
-Repository validation on the exact PR head must prove the new tests and existing contract suite terminally successful. Until that evidence exists, SH-02.9 remains validation-pending and SH-02.10 remains `QUEUED / NOT_STARTED`.
+PR #1262 was Human-merged as `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`. Its canonical PR body records exact-head Required Checks and Security/Compliance as PASS before merge. This post-merge slice only converges the canonical status projection against CURRENT_MAIN; it does not manufacture new runtime evidence. SH-02.10 remains `QUEUED / NOT_STARTED` until this projection itself passes its Human/CODEOWNER final gate.
 
 ## SH-02.0 — Supersession and architecture baseline
 
