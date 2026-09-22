@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Temporarily supersede AAL2 requirements in normal login and registration authentication, preserve enrolled MFA factors and privileged server AAL2 authorization, add nonblocking diagnostic logging, then support staged reactivation.",
-  "workItemDE": "AAL2 für normalen Login und Registrierung temporär superseden, Faktoren erhalten, privilegiertes Server-AAL2 unverändert lassen und stufenweise Diagnose ermöglichen",
+  "workItem": "Temporarily supersede AAL2 enforcement across normal login, registration, and privileged server checks while preserving enrolled factors, primary Supabase identity validation, and strict provider AAL2 code for staged diagnostic reactivation.",
+  "workItemDE": "AAL2 vollständig temporär superseden, Faktoren und primäre Supabase-Identität erhalten und Login, Registrierung sowie privilegiertes AAL2 stufenweise anhand von Logs reaktivieren",
   "startedAt": "2026-09-22T05:12:00+02:00",
   "baseBranch": "main",
   "baseSha": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
@@ -19,7 +19,7 @@
   "projectFolder": "docs/projects/security/",
   "projectStage": "cross-cutting security diagnostic; no productive PVC ownership transfer",
   "priority": "P0",
-  "priorityReason": "Productive Google login experiences a roughly 10-second apparent stall before the native AAL2 gate; isolation requires removing AAL2 from the user-authentication critical path without deleting factors or weakening privileged authorization.",
+  "priorityReason": "Productive Google login stalls around AAL2 choreography; Owner explicitly directed full temporary AAL2 supersession followed by staged reactivation to isolate the failing boundary.",
   "canonicalIssue": 1237,
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-SEC-AUTH-AAL2-DIAGNOSTIC-SUPERSESSION-20260922.json",
@@ -36,13 +36,17 @@
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/authLifecycleRemediation.test.ts",
     "tests/unit/authLifecycleCorrelation.test.ts",
-    "tests/unit/userLifecycleSecurityContract.test.ts"
+    "tests/unit/userLifecycleSecurityContract.test.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "tests/unit/authMiddlewareAal2.test.ts",
+    "tests/integration/nativeMfaAal2.test.ts"
   ],
   "scopeBoundary": [
-    "All public.profiles rows are read back with mfa_required_account=false; no factor is deleted or mutated.",
-    "Stage 0 removes AAL2 only from normal login and registration authentication.",
-    "Primary Supabase identity verification, OAuth, bearer validation, IAM role checks and subscription authority are unchanged.",
-    "src/platform/Security/authMiddleware.ts and privileged requireVerifiedAal2()/requireStepUp() semantics remain identical to CURRENT_MAIN.",
+    "All public.profiles rows are read back with mfa_required_account=false; no native factor is deleted or mutated.",
+    "Stage 0 removes AAL2 enforcement from normal login, registration/onboarding, and privileged server AAL2 checks.",
+    "Primary Supabase identity verification, OAuth bearer validation, IAM role checks, rate limits and subscription authority remain active.",
+    "Privileged Stage-0 supersession occurs only after a bearer token resolves to a real Supabase user and is audit logged.",
+    "The strict verifyProviderAal2() implementation remains fail-closed and independently testable for Stage 3 restoration.",
     "No email-address or hard-coded user-ID bypass is introduced.",
     "Stage changes require ordinary branch/PR/required-check/Human-CODEOWNER convergence.",
     "No Stripe, Render, secrets, DNS, billing, factor deletion or schema mutation is included."
@@ -51,17 +55,19 @@
     "currentMain": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
     "supabaseBeforeAfter": "5 profiles total; 0 with mfa_required_account=true; 5 with false; update-to-false returned no rows; 3 profiles retain verified native MFA factors.",
     "priorPr": "#1256 closed unmerged as superseded after Owner expanded diagnostic scope.",
-    "securityBoundary": "Privileged authMiddleware AAL2 implementation restored byte-for-byte from CURRENT_MAIN before PR creation.",
+    "securityBoundary": "Owner-directed Stage 0 supersedes AAL2 itself across login, registration and privileged checks; primary identity/IAM remain active and strict provider AAL2 code is retained separately for Stage 3.",
     "overlap": "No open PR writer matched AAL2/MFA/session-composition scope at latest correlation."
   },
   "acceptanceCriteria": [
-    "Stage 0 is explicit in one runtime module and disables login/registration AAL2 requirements.",
+    "Stage 0 is explicit in one runtime module and disables login, registration and privileged AAL2 requirements.",
     "Normal Google login does not execute native factor/challenge choreography when Stage 0 is active.",
     "Registration still requires profile/consent completion but skips MFA enrollment at Stage 0 and persists mfa_required_account=false.",
     "Existing verified native factors remain present and unchanged.",
     "A nonblocking authenticated server diagnostic checkpoint records stage/account policy for login correlation.",
-    "Privileged server requireVerifiedAal2()/requireStepUp() remains strict and unchanged from CURRENT_MAIN.",
+    "Privileged AAL2 supersession requires a valid primary Supabase bearer identity and records an IAM audit event.",
+    "Strict verifyProviderAal2() remains fail-closed and is covered independently by unit/integration tests.",
     "Enterprise tier remains server-authoritative and no provisional Free state is reintroduced.",
+    "Reactivation order is Stage 1 login, Stage 2 registration, Stage 3 privileged AAL2.",
     "Focused and full required tests pass on exact head.",
     "Human/CODEOWNER merge remains required."
   ],
