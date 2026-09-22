@@ -21,22 +21,24 @@ describe('GOV-CHAT-042 user lifecycle security contract', () => {
     expect(readback).not.toContain('?userId=');
   });
 
-  it('keeps privileged AAL2 server-authoritative while authentication supersession stays bounded', () => {
+  it('keeps strict provider AAL2 independently implemented while Stage 0 supersedes its enforcement', () => {
     const auth = read('src/platform/Security/authMiddleware.ts');
     const supersession = read('src/platform/Security/aal2DiagnosticSupersession.ts');
     const stepUp = read('server/stepUp.ts');
 
+    expect(auth).toContain('export async function verifyProviderAal2');
     expect(auth).toContain('export async function requireVerifiedAal2');
     expect(auth).toContain('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)');
     expect(auth).toContain("if (aalData.currentLevel !== 'aal2')");
-    expect(auth).toContain('const aal2 = await requireVerifiedAal2(req);');
-    expect(auth).not.toContain('aal2-superseded');
-    expect(auth).not.toContain("isAal2EnabledFor('privileged')");
+    expect(auth).toContain("if (isAal2EnabledFor('privileged'))");
+    expect(auth).toContain("'aal2.diagnostic_supersession_bypass'");
+    expect(auth).toContain("'aal2-superseded'");
     expect(supersession).toContain('AAL2_REACTIVATION_STAGE = 0');
-    expect(supersession).toContain("export type Aal2AuthenticationSurface = 'login' | 'registration'");
-    expect(supersession).toContain('privilegedServerAal2Unaffected: true');
+    expect(supersession).toContain("export type Aal2Surface = 'login' | 'registration' | 'privileged'");
+    expect(supersession).toContain('privileged: 3');
     expect(stepUp).toContain("stepUpRouter.post('/aal2/diagnostic-login'");
     expect(stepUp).toContain("eventName: 'auth.aal2.diagnostic.login'");
+    expect(stepUp).toContain("privilegedAal2Required: isAal2EnabledFor('privileged')");
     expect(auth).toContain(".is('used_at', null)");
     expect(auth).toContain(".gt('expires_at', new Date().toISOString())");
     expect(auth).toContain(".update({ used_at: new Date().toISOString() })");
