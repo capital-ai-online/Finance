@@ -396,6 +396,12 @@ export function reconcileDecisionBody(bodyText, gates, details = {}) {
   if (requiredHeadings.some((heading) => contract.body.split(heading).length - 1 !== 1)) {
     return { eligible: false, changed: false, reason: 'decision-section-boundary-ambiguous', body: original };
   }
+  if (contract.body.split('<summary>Technische Details & Traceability</summary>').length - 1 !== 1) {
+    return { eligible: false, changed: false, reason: 'technical-evidence-details-boundary-missing', body: original };
+  }
+  if (contract.body.split('<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>').length - 1 !== 1) {
+    return { eligible: false, changed: false, reason: 'production-baseline-details-boundary-missing', body: original };
+  }
 
   const decisionStatus = deriveDecisionStatus(gates);
   let body = ensureDecisionStatusLine(contract.body, decisionStatus);
@@ -452,6 +458,12 @@ function validateCanonicalBootstrapBody(bodyText) {
     !CANONICAL_V18_HEADINGS.every((heading, index) => headings[index] === heading)
   ) return 'bootstrap-headings-noncanonical';
   if (/\{\{[A-Z0-9_]+\}\}/.test(body)) return 'bootstrap-has-unresolved-placeholders';
+  if (body.split('<summary>Technische Details & Traceability</summary>').length - 1 !== 1) {
+    return 'bootstrap-technical-evidence-details-boundary-invalid';
+  }
+  if (body.split('<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>').length - 1 !== 1) {
+    return 'bootstrap-production-baseline-details-boundary-invalid';
+  }
   for (const marker of [
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
@@ -472,8 +484,13 @@ export function reconcileDecisionBodyWithBootstrap(
   const original = String(bodyText || '');
   const direct = reconcileDecisionBody(original, gates, details);
   if (direct.eligible) return { ...direct, bootstrapped: false };
+  const bootstrapEligibleReasons = new Set([
+    'decision-section-boundary-ambiguous',
+    'technical-evidence-details-boundary-missing',
+    'production-baseline-details-boundary-missing',
+  ]);
   if (
-    direct.reason !== 'decision-section-boundary-ambiguous' ||
+    !bootstrapEligibleReasons.has(direct.reason) ||
     detectPrTemplateVersion(original) !== PR_TEMPLATE_VERSION
   ) {
     return { ...direct, bootstrapped: false };
