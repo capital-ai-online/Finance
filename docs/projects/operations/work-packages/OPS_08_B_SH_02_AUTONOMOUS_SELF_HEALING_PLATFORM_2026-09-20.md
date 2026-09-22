@@ -15,7 +15,7 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@d5829ff2fd40228cc938d07638563f56e178dfa6`  
+**Current implementation baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`  
 **SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
 **SH-02.9A merge:** PR #1246 → `7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
@@ -309,7 +309,7 @@ At minimum simulate:
 
 ### SH-02.10 branch implementation
 
-- `sh-02.10-fault-convergence/1.0.0` defines exactly twelve deterministic scenarios and creates no second recovery authority.
+- `sh-02.10-fault-convergence/1.0.0` defines exactly thirteen deterministic scenarios and creates no second recovery authority.
 - injections are limited to in-memory state, pure model input and mocked HTTP I/O; Production faults, provider mutation, runtime recycle, deployment, rollback and restore are prohibited.
 - fatal process state is injected through the existing process-health seam and must project unhealthy liveness while `RUNTIME_PROCESS_RECYCLE` stays `HELD`.
 - transient and persistent provider failures reuse `dependencyResilience`; provider-native retry/circuit/LKG ownership is preserved and no nested retry executor is created.
@@ -317,6 +317,7 @@ At minimum simulate:
 - frontend stale-chunk recovery proves exactly one automatic reload per fingerprint/session; persistent render failure remains observe-only.
 - mocked 503/429 responses prove bounded safe-read retry and no automatic mutation-method replay.
 - deployment identity drift and failed exact-SHA readback prove escalation while `REDEPLOY_EXACT_SHA` stays `HELD`.
+- `CURRENT_STATE_PROJECTION_BASELINE_STALE` is a deterministic repository-projection drift scenario: it resolves to `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, reuses the single Current-State Baseline Autofix writer, permits at most one idempotent attempt and requires exact-head CI/Governance readback.
 - missing capability and exhausted budget are explicit fail-closed scenarios.
 - SH-02.8 protected rollback/restore remains `HELD`; its unavailable capability is a negative-control input, not an activation prerequisite for this non-destructive suite.
 - hosted exact-head validation plus independent QM and Security assurance remain required before SH-02.10 may be terminal and before SH-02.11 may activate production tiers.
