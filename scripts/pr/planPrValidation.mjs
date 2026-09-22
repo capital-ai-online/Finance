@@ -68,6 +68,21 @@ export function isDependencyPath(filePath) {
   return p === 'package.json' || p === 'package-lock.json';
 }
 
+export function isOssQualityPrFastPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('src/')
+    || p.startsWith('server/')
+    || p === 'server.ts'
+    || p.startsWith('scripts/')
+    || p.startsWith('tests/')
+    || p === 'package.json'
+    || p === 'package-lock.json'
+    || p === 'knip.json'
+    || p === '.jscpd.json'
+    || p === '.github/workflows/oss-quality-assurance.yml'
+    || p === '.github/workflows/oss-quality-deep-assurance.yml';
+}
+
 export function isFocusedNodeValidationPath(filePath) {
   const p = normalizePath(filePath);
   return p.startsWith('scripts/pr/')
@@ -370,14 +385,12 @@ export function buildPreflightEvidence({
   const scope = classifyChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
   const plan = planChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
 
-  const sourceOrTestImpact = normalizedFiles.some((file) =>
-    file.startsWith('src/') || file.startsWith('tests/') || isJavaScriptTypeScriptPath(file),
-  );
+  const prFastRelevant = normalizedFiles.some(isOssQualityPrFastPath);
   const qualitySelection = {
-    gitleaks: normalizedFiles.length > 0,
-    osv: normalizedFiles.some(isDependencyPath),
-    knip: sourceOrTestImpact,
-    jscpd: sourceOrTestImpact,
+    gitleaks: prFastRelevant,
+    osv: prFastRelevant,
+    knip: false,
+    jscpd: false,
     zizmor: scope.workflow_security === true,
   };
 
@@ -396,7 +409,11 @@ export function buildPreflightEvidence({
   const checks = Object.fromEntries(
     Object.entries(plannedChecks).map(([name, planned]) => [
       name,
-      { planned, result: normalizedResults[name] || 'NOT_RUN' },
+      {
+        planned,
+        applicability: planned ? 'PLANNED' : 'NOT_APPLICABLE',
+        result: normalizedResults[name] || 'NOT_RUN',
+      },
     ]),
   );
 
@@ -413,6 +430,10 @@ export function buildPreflightEvidence({
     selected_tests: selectedTests(plan, normalizedBase),
     required_exact_head_contexts: REQUIRED_EXACT_HEAD_CONTEXTS,
     required_context_note: 'Required-context names are merge-safety expectations; live ruleset readback remains authoritative.',
+    quality_profiles: {
+      pr_fast: prFastRelevant ? 'PLANNED' : 'NOT_APPLICABLE',
+      deep_baseline: 'SCHEDULED_NOT_PR',
+    },
     tool_versions: Object.fromEntries(
       Object.entries(toolVersions || {}).map(([key, value]) => [key, String(value)]),
     ),
