@@ -81,6 +81,14 @@ function canonicalBody() {
     '## 3. 🔍 Technical Evidence',
     '',
     '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '</details>',
+    '',
+    '<details>',
     '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
     '',
     '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
@@ -229,6 +237,52 @@ test('reconciler rejects unsafe v1.8 bootstrap bodies and remains fail closed', 
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'bootstrap-headings-noncanonical');
+});
+
+test('reconciler bootstraps the exact PR #1264 collapsed-details drift through trusted canonical v1.8', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PENDING',
+    security: 'PASS',
+    baseline: 'PENDING',
+  };
+
+  for (const [summary, directReason] of [
+    ['<summary>Technische Details & Traceability</summary>', 'technical-evidence-details-boundary-missing'],
+    ['<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>', 'production-baseline-details-boundary-missing'],
+  ]) {
+    const damaged = canonicalBody().replace(summary, '');
+    const direct = reconcileDecisionBody(damaged, gates);
+    assert.equal(direct.eligible, false);
+    assert.equal(direct.reason, directReason);
+
+    const repaired = reconcileDecisionBodyWithBootstrap(damaged, canonicalBody(), gates);
+    assert.equal(repaired.eligible, true);
+    assert.equal(repaired.changed, true);
+    assert.equal(repaired.bootstrapped, true);
+    assert.equal(repaired.reason, 'canonical-v1.8-renderer-bootstrap-reconciled');
+    assert.match(repaired.body, /<summary>Technische Details & Traceability<\/summary>/);
+    assert.match(repaired.body, /<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>/);
+  }
+});
+
+test('reconciler rejects a renderer bootstrap body that is itself missing collapsed-detail boundaries', () => {
+  const gates = {
+    main: 'PASS',
+    scope: 'PASS',
+    overlap: 'PASS',
+    checks: 'PASS',
+    security: 'PASS',
+    baseline: 'PASS',
+  };
+  const malformed = canonicalBody().replace('## 1. 🧭 Entscheidung', '## 1. Entscheidung');
+  const unsafeBootstrap = canonicalBody().replace('<summary>Technische Details & Traceability</summary>', '');
+  const result = reconcileDecisionBodyWithBootstrap(malformed, unsafeBootstrap, gates);
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'bootstrap-technical-evidence-details-boundary-invalid');
 });
 
 test('reconciler repairs missing v1.8 Decision/Evidence projections without touching technical evidence', () => {
@@ -390,6 +444,10 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /auto_merge_state/);
   assert.match(workflow, /PR-v1\.8-Struktur und exakten Bootstrap-Snapshot binden/);
   assert.match(workflow, /bootstrap_required/);
+  assert.match(workflow, /technicalDetailsSummary = '<summary>Technische Details & Traceability<\/summary>'/);
+  assert.match(workflow, /machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>'/);
+  assert.match(workflow, /occurrenceCount\(technicalDetailsSummary\) === 1/);
+  assert.match(workflow, /occurrenceCount\(machineBaselineSummary\) === 1/);
   assert.match(workflow, /ref: \${\{ steps\.bootstrap_snapshot\.outputs\.head_sha \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
