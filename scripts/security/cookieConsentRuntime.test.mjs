@@ -173,8 +173,16 @@ test('initialization config keeps opt-in and reopens the vendor preferences', as
   } };
   vm.runInNewContext(read('public/cookieconsent-init.js'), { window, document, console, CustomEvent: class { constructor(type) { this.type = type; } } });
   await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(config, undefined);
+  assert.equal(buttons.length, 1);
+
+  buttons[0].click();
+  await new Promise((resolve) => setImmediate(resolve));
+
   assert.equal(config.mode, 'opt-in');
   assert.equal(config.revision, 1);
+  assert.equal(config.autoShow, false);
+  assert.equal(config.lazyHtmlGeneration, true);
   assert.equal(config.cookie.name, 'capital_ai_consent_v3');
   assert.equal(config.cookie.secure, true);
   assert.equal(config.cookie.path, '/');
@@ -184,8 +192,6 @@ test('initialization config keeps opt-in and reopens the vendor preferences', as
   assert.equal(config.categories.marketing, undefined);
   assert.equal(config.manageScriptTags, false);
   assert.equal(config.guiOptions.consentModal.equalWeightButtons, true);
-  assert.equal(buttons.length, 1);
-  buttons[0].click();
   assert.equal(reopened, 1);
 });
 

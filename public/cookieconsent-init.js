@@ -46,77 +46,16 @@
     return Promise.all(requiredStyleIds.map(waitForStylesheet));
   }
 
-  function removeFirstVisitNotice() {
-    var notice = document.getElementById('capital-ai-consent-notice');
-    if (notice && typeof notice.remove === 'function') notice.remove();
-  }
-
-  function createConsentAction(label, onClick) {
-    var button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'capital-ai-consent-notice__button';
-    button.textContent = label;
-    button.addEventListener('click', onClick);
-    return button;
-  }
-
-  function installFirstVisitNotice() {
-    if (typeof consent.validConsent === 'function' && consent.validConsent()) {
-      removeFirstVisitNotice();
-      return;
-    }
-    if (document.getElementById('capital-ai-consent-notice')) return;
-
-    var notice = document.createElement('section');
-    notice.id = 'capital-ai-consent-notice';
-    notice.setAttribute('aria-label', 'Cookie-Auswahl');
-
-    var copy = document.createElement('div');
-    copy.className = 'capital-ai-consent-notice__copy';
-
-    var title = document.createElement('strong');
-    title.textContent = 'Deine Cookie-Auswahl';
-
-    var description = document.createElement('p');
-    description.textContent = 'Notwendige Funktionen bleiben aktiv. Google Analytics startet erst nach deiner freiwilligen Zustimmung. Die Website bleibt während der Auswahl vollständig bedienbar.';
-
-    copy.appendChild(title);
-    copy.appendChild(description);
-
-    var actions = document.createElement('div');
-    actions.className = 'capital-ai-consent-notice__actions';
-    actions.appendChild(createConsentAction('Nur notwendige', function () {
-      consent.acceptCategory([]);
-      removeFirstVisitNotice();
-    }));
-    actions.appendChild(createConsentAction('Einstellungen', function () {
-      consent.showPreferences();
-    }));
-    actions.appendChild(createConsentAction('Alle akzeptieren', function () {
-      consent.acceptCategory('all');
-      removeFirstVisitNotice();
-    }));
-
-    notice.appendChild(copy);
-    notice.appendChild(actions);
-
-    // Keep the first-visit choice in normal document flow instead of mounting a
-    // focus-trapping fixed modal over the application. The settings button
-    // remains available on every route after the notice scrolls out of view.
-    document.body.prepend(notice);
-  }
-
   // FE-CONSENT-V3: new cookie/revision never imports a CookieHub choice.
   var configuration = {
     mode: 'opt-in',
     revision: 1,
     autoShow: false,
+    lazyHtmlGeneration: true,
     hideFromBots: false,
     disablePageInteraction: false,
     manageScriptTags: false,
     autoClearCookies: false,
-    onFirstConsent: removeFirstVisitNotice,
-    onConsent: removeFirstVisitNotice,
     cookie: {
       name: 'capital_ai_consent_v3',
       domain: '',
@@ -176,6 +115,32 @@
       },
     },
   };
+  var initializationPromise = null;
+
+  function hasStoredConsentCookie() {
+    var cookieName = configuration.cookie.name + '=';
+    return String(document.cookie || '')
+      .split(';')
+      .some(function (entry) { return entry.trim().indexOf(cookieName) === 0; });
+  }
+
+  function initializeConsent() {
+    if (initializationPromise) return initializationPromise;
+
+    initializationPromise = waitForConsentStyles()
+      .then(function () { return consent.run(configuration); })
+      .then(function () {
+        window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
+      })
+      .catch(function (error) {
+        initializationPromise = null;
+        console.error('[Consent] Initialization failed; optional services remain disabled.', error);
+        throw error;
+      });
+
+    return initializationPromise;
+  }
+
   // Available on every SPA route, independently of React/authentication.
   function installSettingsButton() {
     if (document.getElementById('capital-ai-cookie-settings')) return;
@@ -183,21 +148,26 @@
     button.id = 'capital-ai-cookie-settings';
     button.type = 'button';
     button.textContent = 'Cookie-Einstellungen';
-    button.addEventListener('click', function () { consent.showPreferences(); });
+    button.addEventListener('click', function () {
+      initializeConsent()
+        .then(function () { consent.showPreferences(); })
+        .catch(function () {
+          // Initialization already logged the error; optional services stay disabled.
+        });
+    });
     document.body.appendChild(button);
   }
-  try {
-    waitForConsentStyles()
-      .then(function () { return consent.run(configuration); })
-      .then(function () {
-        installSettingsButton();
-        installFirstVisitNotice();
-        window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
-      })
-      .catch(function (error) {
-        console.error('[Consent] Initialization failed; optional services remain disabled.', error);
-      });
-  } catch (error) {
-    console.error('[Consent] Initialization failed; optional services remain disabled.', error);
+  installSettingsButton();
+
+  if (hasStoredConsentCookie()) {
+    void initializeConsent().catch(function () {
+      // Initialization already logged the error; returning users stay fail-closed
+      // without an unhandled rejection affecting the application.
+    });
+  } else {
+    // A fresh/private visit remains completely independent from the vendor DOM.
+    // The GA bridge still receives its fail-closed readiness signal and keeps
+    // optional measurement disabled until the user opens settings and consents.
+    window.dispatchEvent(new CustomEvent('capital-ai:consent-ready'));
   }
 })();
