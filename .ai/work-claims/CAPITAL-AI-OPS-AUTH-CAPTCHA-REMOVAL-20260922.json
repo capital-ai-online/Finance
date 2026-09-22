@@ -13,7 +13,7 @@
   "startedAt": "2026-09-22T13:12:00+02:00",
   "baseBranch": "main",
   "baseSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
-  "lastSyncedMainSha": "7ff91e1a84bf7a41d590bd725a93f5692404f25f",
+  "lastSyncedMainSha": "c3181b37987598511b3eb3e2d313102458fed415",
   "branch": "operations/auth-captcha-removal-20260922",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -39,12 +39,12 @@
     "tests/unit/authCaptchaRemoval.test.ts"
   ],
   "evidence": {
-    "currentMain": "7ff91e1a84bf7a41d590bd725a93f5692404f25f",
+    "currentMain": "c3181b37987598511b3eb3e2d313102458fed415",
     "ownerDirection": "Fresh Human Owner direction: detach hCaptcha from the application and retry registration.",
     "productionSymptom": "Login page freezes after hCaptcha was reattached.",
     "smtpEvidence": "Production Render mailer previously completed SMTP send to s.kulessa@protonmail.com successfully.",
     "providerConstraint": "Supabase Auth CAPTCHA is still provider-side enabled and cannot be toggled by the available Supabase connector/SQL preflight.",
-    "mainSynchronization": "Merged CURRENT_MAIN 7ff91e1a84bf7a41d590bd725a93f5692404f25f after confirming zero changed-file overlap; inherited the #1287 routing-test correction instead of duplicating it."
+    "mainSynchronization": "Merged CURRENT_MAIN c3181b37987598511b3eb3e2d313102458fed415 after confirming zero changed-file overlap; #1288 supply-chain changes remain unmodified."
   },
   "scopeBoundary": [
     "Remove captchaToken requirements and forwarding from backend email auth.",
