@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@d5829ff2fd40228cc938d07638563f56e178dfa6`
+**Baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -16,7 +16,7 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). Against `main@d5829ff2fd40228cc938d07638563f56e178dfa6`, SH-02.10 — Fault Injection & Convergence Suite — is the current dependency-ready P0 slice. It is non-destructive: SH-02.8 remains HELD and is exercised only as negative-control capability evidence. Hosted exact-head validation and independent QM/Security assurance remain required before SH-02.10 terminal closure or SH-02.11 staged activation.
+SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). Against `main@c3181b37987598511b3eb3e2d313102458fed415`, SH-02.10 — Fault Injection & Convergence Suite — is the current dependency-ready P0 slice. It is non-destructive: SH-02.8 remains HELD and is exercised only as negative-control capability evidence. Hosted exact-head validation and independent QM/Security assurance remain required before SH-02.10 terminal closure or SH-02.11 staged activation.
 
 Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
