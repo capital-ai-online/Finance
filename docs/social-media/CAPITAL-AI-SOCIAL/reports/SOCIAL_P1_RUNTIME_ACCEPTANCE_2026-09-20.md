@@ -4,7 +4,7 @@
 **Roadmap item:** `SOCIAL-P1`  
 **Date:** 2026-09-20  
 **Baseline:** `main@c307ab9a4e0eb5ba415b70da7a84bff1a7dc803b`  
-**Evidence status:** `TECHNICAL_RUNTIME_EVIDENCE_PRESENT / HUMAN_LISTENING_REQUIRED`  
+**Evidence status:** `TECHNICAL_RUNTIME_EVIDENCE_PRESENT / HUMAN_LISTENING_FAILED_7_OF_8 / PROSODY_REMEDIATION_REQUIRED`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Purpose
@@ -65,29 +65,31 @@ The following SOCIAL-P1 evidence classes are now materially present:
 | measured runtime/latency evidence | PRESENT IN RUNTIME ARTIFACT | real benchmark job output/runtime records |
 | license/provenance inventory | PRESENT IN RUNTIME ARTIFACT | model-provenance/runtime inventory emitted by the benchmark harness |
 | transcript / required-term evidence | PASS | final ASR run `35486731963` |
-| human listening review | **NOT RUN** | no Human/Owner listening evidence has been recorded |
-| Social final subjective acceptance | **BLOCKED** | depends on truthful human listening review |
+| human listening review | **RECORDED — 1 PASS / 7 FAIL** | `SOCIAL_P1_HUMAN_LISTENING_2026-09-22.json` binds every verdict to the exact audio SHA-256 |
+| Social final subjective acceptance | **FAIL / REMEDIATION REQUIRED** | seven samples are too choppy/staccato; only sample 4 is usable |
 
 ## Current acceptance decision
 
 `SOCIAL-P1` is **not terminal yet**.
 
-The former statement that acoustic/runtime execution was entirely `NOT RUN` is stale and superseded by the real runtime and ASR evidence above. However, the benchmark contract explicitly calls for human review of German intelligibility and a Social acceptance decision. No such human listening evidence exists in the repository at this point.
+Human/Owner listening was completed on 2026-09-22 and is now bound to the exact audio identities. Seven of the eight samples are rejected because the speech is too choppy/staccato. Only sample 4 — `chatterbox-multilingual-v3::de-dialogue-host-v1`, SHA-256 `fa0f6a312095f35607bf470325e643ad3f625c01bd3f3a55e98b0b118afd37b0` — is usable and becomes the sole current acoustic reference.
 
 Therefore:
 
 - technical runtime evidence: **PASS / PRESENT**
 - ASR Required-Term evidence: **PASS**
 - immutable evidence correlation: **PASS**
-- human listening evidence: **NOT RUN**
-- overall SOCIAL-P1 terminal exit: **BLOCKED_BY_HUMAN_LISTENING_EVIDENCE**
-- SOCIAL-P2: **REMAINS BLOCKED**
+- human listening evidence: **RECORDED — 1 PASS / 7 FAIL**
+- prior 8-sample quality baseline: **OBSOLETE / HISTORICAL EVIDENCE ONLY**
+- overall SOCIAL-P1 terminal exit: **BLOCKED_BY_PROSODY_REMEDIATION**
+- SOCIAL-P2 repository preparation: **MAY CONTINUE**
+- SOCIAL-P2 consumption of rejected P1 audio: **HELD**
 
 ## Exact unblock condition
 
-A Human/Owner reviewer must listen to the retained benchmark/remediation audio and record reproducible review evidence for the applicable SOCIAL-P1 acceptance dimensions. The review must reference the exact artifact/audio identity and must not infer quality from ASR alone.
+The owner-correct OPS runtime remediation must return new **German-only** audio candidates with exact immutable runtime evidence. Sample 4 remains unchanged as the comparison reference. Social then requires a new Human/Owner listening PASS for natural connected speech; ASR PASS alone cannot close this gate.
 
-Only after that evidence is materialized and correlated against then-current main may SOCIAL-P1 become terminal and SOCIAL-P2 consume the validated TTS result.
+The current remediation contract is `SOCIAL_P1_PROSODY_REMEDIATION_2026-09-22.md`, with the runtime handoff in `SOCIAL_P1_PROSODY_REMEDIATION_TO_OPS_2026-09-22.md`.
 
 ## Before / after
 
@@ -97,6 +99,13 @@ Only after that evidence is materialized and correlated against then-current mai
 | generated WAV evidence | absent | immutable artifacts present |
 | latency/runtime evidence | absent | runtime records present |
 | ASR evidence | absent | final small/large-v3 correlation PASS |
-| human listening | absent | still `NOT RUN` |
-| SOCIAL-P1 | runtime-blocked | human-listening-blocked |
-| SOCIAL-P2 | blocked | still blocked; narrower unblock condition |
+| human listening | absent | recorded: 1 PASS / 7 FAIL |
+| SOCIAL-P1 | runtime-blocked | prosody-remediation-blocked |
+| SOCIAL-P2 | blocked | repository preparation may continue; rejected P1 audio consumption remains held |
+
+
+## Human listening update — 2026-09-22
+
+The Human/Owner explicitly declared the previous voice list obsolete for quality selection because the speech is too choppy. Seven exact audio identities are rejected. Sample 4 is the sole usable reference.
+
+This update does not rewrite or delete the original runtime/ASR evidence. It adds the previously missing subjective evidence layer and changes the acceptance outcome from `HUMAN_LISTENING_REQUIRED` to `HUMAN_LISTENING_FAILED_7_OF_8 / PROSODY_REMEDIATION_REQUIRED`.
