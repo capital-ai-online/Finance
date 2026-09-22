@@ -235,9 +235,9 @@ def _synthesis_text(sample: dict[str, Any], candidate: str) -> tuple[str, str]:
 
     if candidate == "chatterbox-multilingual-v3":
         pronunciation_clause = (
-            "BTC, E T H und Capital A I gehören hier in einen natürlichen, zusammenhängenden Satzfluss."
+            "BTC, Ethereum mit dem Kürzel E T H und Capital A I gehören hier in einen natürlichen, zusammenhängenden Satzfluss."
         )
-        projection = "de_finance_pronunciation_projection_v5_chatterbox_inline_term_pronunciation"
+        projection = "de_finance_pronunciation_projection_v6_chatterbox_semantic_eth"
     else:
         pronunciation_clause = "Sprich B T C, E T H und Capital A I klar aus."
         projection = "de_finance_pronunciation_projection_v1"

@@ -7,12 +7,13 @@
 
 - Finance Chatterbox synthesis originally inserted forced segmented acronym phrases.
 - The first connected-sentence remediation run preserved the natural sentence structure, but Whisper large-v3 observed `ETH` as `S` and `CAPITAL-AI` as `Kapital I`; numbers and BTC passed.
+- The inline-letter v5 run recovered `CAPITAL-AI`, but Whisper large-v3 observed `ETH` as `ETA`; accepting `ETA` is intentionally forbidden because it is not a safe semantic equivalent.
 - Sample 4 was the only Human-approved voice reference.
 - The finance remediation workflow required manual dispatch and did not package sample 4 beside the new candidate.
 
 ## Intended after
 
-- Finance Chatterbox keeps one connected German sentence; only the two failed terms use inline pronunciation hints (`E T H`, `Capital A I`) and the former standalone `Danach einzeln` segments stay removed.
+- Finance Chatterbox keeps one connected German sentence. `CAPITAL-AI` keeps the successful inline `Capital A I` projection; `ETH` is spoken as the canonical asset name `Ethereum` plus its ticker context, while `ETA/ETS/ETI` remain fail-closed.
 - Generation defaults are explicit and recorded in runtime evidence rather than being implicit library defaults.
 - A same-repository PR on `agent/operations-social-p1-prosody-*` enters the existing budget-gated Modal remediation path automatically.
 - The workflow packages the new candidate and immutable sample-4 reference together for direct Human A/B listening.
