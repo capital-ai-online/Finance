@@ -80,6 +80,18 @@ Publicly observable competitors and finance tools currently emphasize several re
 
 These observations support one non-commodity gap for CAPITAL-AI: **transparent, evidence-first multi-asset scoring and analysis boundaries**.
 
+### Public evidence sources
+
+Captured/re-read on 2026-09-22:
+
+- aktienscore.com — factor composition, score explanation and explicit score limitations: https://aktienscore.com/
+- AktienKI — AI/data-transparency, source freshness and model limitations: https://www.aktienki.com/rechtliches/ki-transparenz
+- finqt — cross-asset AI research positioning across crypto, equities, forex and commodities: https://finqt.com/de
+- wallstreetONLINE Smart Portfolio Guide — AI-supported multi-asset portfolio-analysis positioning: https://www.wallstreet-online.de/smart-portfolio-guide
+- Stock Analysis AI — confidence/risk/trade-plan oriented AI-analysis positioning used only as contrast evidence: https://www.stocksanalysisai.com/de
+
+These links are evidence of public messaging observed on the capture date, not endorsement, ranking or proof of search demand volume.
+
 ### Priority refresh
 
 | Priority | Topic cluster | Evidence state | Next action |
