@@ -48,6 +48,15 @@ const ROUTES = [
       'Capital-AI Learning Platform: freigegebenes zweisprachiges Vocabulary mit Definitionen, Concept-IDs und Governance-Referenzen.',
   },
   {
+    routePath: '/vocabulary',
+    file: 'vocabulary/index.html',
+    title: 'Market Vocabulary – CAPITAL-AI',
+    description:
+      'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Concept-IDs und Governance-Referenzen aus der kanonischen Vocabulary Registry.',
+    noscript:
+      'CAPITAL-AI Market Vocabulary: freigegebene Begriffe und Definitionen aus der kanonischen Vocabulary Registry.',
+  },
+  {
     routePath: '/impressum',
     file: 'impressum/index.html',
     title: 'Impressum – CAPITAL-AI',
@@ -162,7 +171,7 @@ function injectMeta(html, route) {
       <main>
         <h1>${escapeAttr(title)}</h1>
         <p>${escapeAttr(route.noscript)}</p>
-        <p><a href="${ORIGIN}/universe">Universe</a> · <a href="${ORIGIN}/learning-platform">Learning Platform</a></p>
+        <p><a href="${ORIGIN}/universe">Universe</a> · <a href="${ORIGIN}/learning-platform">Learning Platform</a> · <a href="${ORIGIN}/vocabulary">Vocabulary</a></p>
         <p><a href="${ORIGIN}/impressum">Impressum</a> ·
            <a href="${ORIGIN}/agb">AGB</a> ·
            <a href="${ORIGIN}/datenschutz">Datenschutz</a></p>
