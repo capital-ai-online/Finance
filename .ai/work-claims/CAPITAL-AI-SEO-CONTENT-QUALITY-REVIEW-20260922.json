@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-CONTENT-QUALITY-REVIEW-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Continue WP-SEO-LAUNCH-01 after PR #1253 by releasing the merged claim, re-correlating current SEO state, revalidating helpful-content/spam negative gates, recording the current review with at most two immediate follow-ups, and routing the observed external root-metadata divergence to owner-correct OPS verification without taking runtime/provider authority.",
+  "startedAt": "2026-09-22T05:39:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
+  "branch": "seo/content-quality-review-20260922",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "The merged topic/content slice leaves foreign-owner runtime/domain gates open; SEO can still advance its own content-quality and review controls and surface a fresh root-metadata evidence gap without mutating Production.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-TOPIC-EVIDENCE-PILOT-BRIEF-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-CONTENT-QUALITY-REVIEW-20260922.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/seo/WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "PR #1253 merged at main@93893ab46cc0753dc4e86cd7d6120d321bc48651",
+    "SEO #1233 remains blocked on OPS #1252 for /faq PUBLIC_SPA_PATHS plus route-specific public HTML promotion",
+    "Pilot Brief #02 remains domain-truth gated on FINTECH #1254",
+    "External root metadata divergence is verification-only and routed to OPS #1258",
+    "GSC Search Analytics, GA4 and GenAI visibility remain independently provider-read gated",
+    "SEC PR #1257 is a non-overlapping foreign writer and is not modified by this slice"
+  ],
+  "exitEvidence": [
+    "merged #1253 exclusive claim is released",
+    "SEO roadmap/checklist baseline reflects CURRENT_MAIN and the post-merge dependency state",
+    "repository-level helpful-content/spam negative gates are re-read without claiming provider/indexation PASS",
+    "monthly/current review emits no more than two immediate follow-up actions",
+    "external root metadata mismatch is captured as owner-correct OPS verification rather than an inferred SEO/runtime defect",
+    "no runtime, provider, publication, credential or foreign-owner implementation mutation occurs"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge authority."
+}
