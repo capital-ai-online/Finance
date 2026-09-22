@@ -13,7 +13,7 @@
   "startedAt": "2026-09-22T05:58:00+02:00",
   "baseBranch": "main",
   "baseSha": "8cf32de51821a48f58a7bd86b2d6e0222a0f9cde",
-  "lastSyncedMainSha": "c24bebf008678d0c30fa8c552b9d31aa325b719d",
+  "lastSyncedMainSha": "163cdcec7b7dc2aa18ad3c8d8846ed0d4bf15dda",
   "branch": "operations/auth-backend-rebuild-20260922",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -52,11 +52,11 @@
     "No Stripe billing semantics, MFA factor deletion, DNS, provider secrets, or Human/CODEOWNER merge authority is changed."
   ],
   "evidence": {
-    "currentMain": "c24bebf008678d0c30fa8c552b9d31aa325b719d",
+    "currentMain": "163cdcec7b7dc2aa18ad3c8d8846ed0d4bf15dda",
     "priorDiagnostic": "PR #1257 merged; despite client AAL2 supersession the page still freezes after login, so the client-owned auth lifecycle is no longer the selected architecture.",
     "openWriterOverlap": "No open PR matched auth/login/session backend rebuild scope at branch creation.",
     "ownerDirection": "Fresh Owner direction explicitly requests removal of the complete existing login logic and installation of a new backend login architecture.",
-    "mainSynchronization": "Merged CURRENT_MAIN c24bebf008678d0c30fa8c552b9d31aa325b719d into the auth rebuild at 1eea0a3cc20a366a6a30ce42c91a8f13af6ef6f1 after confirming zero changed-file overlap across the 8 intervening main files."
+    "mainSynchronization": "Merged CURRENT_MAIN 163cdcec7b7dc2aa18ad3c8d8846ed0d4bf15dda into the auth rebuild at ff87163322f46c188ccf5b26f8816d40df0370df after confirming zero changed-file overlap across the 7 intervening SEO/current-main files."
   },
   "acceptanceCriteria": [
     "Google login is initiated only through /api/auth/login/google and callback is handled only by /api/auth/callback.",
