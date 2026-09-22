@@ -12,9 +12,9 @@ Return one new German Chatterbox Finance candidate that can be compared directly
 
 ## Root-cause experiment
 
-The first experiment changes exactly one acoustic input dimension: the Chatterbox Finance synthesis text.
+The remediation changes exactly one acoustic input dimension at a time: the Chatterbox Finance synthesis text.
 
-The rejected Finance remediation used forced letter-by-letter phrases such as `E, Tee, Haa` and `Capital, A, I`. The accepted sample 4 used normal connected German dialogue. This slice therefore removes forced segmentation and uses one natural sentence containing `BTC`, `ETH` and `CAPITAL-AI`.
+The rejected Finance remediation used forced standalone letter-by-letter phrases such as `E, Tee, Haa` and `Capital, A, I`. The accepted sample 4 used normal connected German dialogue. The first connected-sentence run removed those standalone segments, but runtime ASR evidence still observed `ETH` as `S` and `CAPITAL-AI` as `Kapital I`. The second bounded experiment therefore keeps one connected sentence and introduces only inline pronunciation hints for the two failed terms: `E T H` and `Capital A I`.
 
 Chatterbox generation parameters remain explicitly pinned to the model API defaults used by the accepted reference path:
 

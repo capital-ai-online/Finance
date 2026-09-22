@@ -32,8 +32,8 @@ class FinancePronunciationProjectionTest(unittest.TestCase):
             "text": "Aussprachetest: 12,5 Prozent und 1.234,56 Euro. Sprich BTC, ETH und CAPITAL-AI klar aus.",
         }
         text, projection = MODULE._synthesis_text(sample, "chatterbox-multilingual-v3")
-        self.assertEqual(projection, "de_finance_pronunciation_projection_v4_chatterbox_natural_prosody")
-        self.assertIn("BTC, ETH und CAPITAL-AI", text)
+        self.assertEqual(projection, "de_finance_pronunciation_projection_v5_chatterbox_inline_term_pronunciation")
+        self.assertIn("BTC, E T H und Capital A I", text)
         self.assertIn("natürlichen, zusammenhängenden Satzfluss", text)
         self.assertNotIn("Danach einzeln", text)
         self.assertNotIn("E, Tee, Haa", text)
