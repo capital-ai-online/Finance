@@ -26,7 +26,7 @@ Authority-Bindung: current `/AGENTS.md`, anwendbare Accepted ADR / aktive ESS. D
 
 > **0002.21 Current Frontend convergence.** Fresh Owner direction on 2026-09-22 binds active website SEO exclusively to current main `9c8a3e80c4451ed0b6ea45f368175604608f6f4b`, the merge of FE PR #1241 and FRONTEND source `f2a101330d74420c373f0ec56fa58caac53d741d`. Root metadata is aligned to the visible market-intelligence landing, stale Impressum metadata is corrected from TMG to § 5 DDG, and Mobile/Desktop CWV is measurement-gated rather than blocked on superseded FE PRs. The current Frontend exposes `/faq`, but canonical SEO/sitemap/prerender promotion remains fail-closed on OPS Issue #1223 so the existing route-set equality/security invariant is preserved; SEO Issue #1233 continues after that dependency.
 
-> **0002.22 IA / public-route convergence.** After merged PR #1260, the active SEO slice is re-correlated to `main@aee799282298596a5f2d9140a4e805edf52783a0`. The canonical six-route SEO/sitemap/prerender/public-server set still includes `/universe`, but the current hydrated `AppRoutes.tsx` no longer renders that route. FE Issue #1263 owns restoration of same-route client reachability plus visible root navigation to `/universe` and `/learning-platform`. `/faq` remains blocked on OPS #1252, Pilot Brief #02 on FINTECH #1254, and GSC/GA4/GenAI reads remain provider-gated. Initial Render readback for this slice is not exact on CURRENT_MAIN, so Production freeze remains non-PASS until exact-SHA convergence is observed.
+> **0002.22 IA / public-route convergence.** After merged PR #1260, the active SEO slice is re-correlated to `main@aee799282298596a5f2d9140a4e805edf52783a0`. The canonical six-route SEO/sitemap/prerender/public-server set still includes `/universe`, but the current hydrated `AppRoutes.tsx` no longer renders that route. FE Issue #1263 owns restoration of same-route client reachability plus visible root navigation to `/universe` and `/learning-platform`. `/faq` remains blocked on OPS #1252, Pilot Brief #02 on FINTECH #1254, and GSC/GA4/GenAI reads remain provider-gated. Initial Render readback showed drift; canonical deploy `dep-dap07drtqb8s73ertcv0` subsequently recovered exact `main@aee799282298596a5f2d9140a4e805edf52783a0` within 261 seconds, so the snapshot-bound Production freeze is `PASS`. OPS #1258 remains separate raw-HTML/cache evidence.
 
 ## Zweck
 
@@ -113,7 +113,7 @@ Jedes neue WP führt mindestens: **Owner**, **Status**, **Impact**, **Effort**, 
 - Open OPS PR #1262 has no changed-file overlap with the SEO claim/docs scope.
 - Root metadata is source-aligned across `index.html`, `routeSeo.ts` and prerender; OPS #1258 remains the owner-correct production/raw-HTML verification lane.
 - Canonical six-route equality remains intact across routeSeo/sitemap/prerender/public-server inventories, but hydrated `/universe` reachability is broken in `AppRoutes.tsx`; FE #1263 is launch-blocking.
-- Initial Render readback: live `720e4a80904a881e5ef732b66e1303f51a769d8e` vs CURRENT_MAIN `aee799282298596a5f2d9140a4e805edf52783a0`; exact-SHA Production freeze is non-PASS for that observation.
+- Initial Render readback showed drift; canonical Render deploy `dep-dap07drtqb8s73ertcv0` recovered exact `main@aee799282298596a5f2d9140a4e805edf52783a0` with a 261-second trigger delta. Snapshot-bound Production freeze is `PASS`; OPS #1258 still owns raw-HTML/cache verification.
 - X/Facebook connected-account readback remains `0/0`; Wave-1 provider publication remains blocked.
 - This SEO slice owns launch coordination/evidence only. FE/OPS/SOCIAL/COMP/FINTECH/QM runtime/domain work remains owner-correct.
 
@@ -327,7 +327,7 @@ Dieses Work Item ist repository-seitig fertig, wenn:
 - Web-, Search-, Measurement-, Content-, Social-, Production-, Security-/Compliance- und QM-Gates mit Owner, Evidence und Exit State definiert sind;
 - der current-main Landing-/Routing-Stand als Repository-Produktbaseline behandelt wird, ohne daraus ungeprüfte Production-/Provider-Evidence abzuleiten;
 - `/universe` hydrated route parity als FE #1263 klassifiziert und nicht durch SEO-Runtime-Mutation umgangen wird;
-- Production exact-SHA drift, `/universe` client-route drift, GSC/GA4-Connection-Gates und fehlende X/Facebook-Account-Identitäten explizit als non-PASS dokumentiert sind;
+- `/universe` client-route drift, GSC/GA4-Connection-Gates und fehlende X/Facebook-Account-Identitäten explizit als non-PASS dokumentiert sind; Production exact-SHA recovery is separately evidenced as snapshot-bound PASS;
 - keine Produktiv-/Provider-/Publishing-/Credential-Mutation aus SEO-Ownership erfolgt;
 - ausgeführte und nicht ausgeführte Checks getrennt dokumentiert sind.
 
