@@ -93,6 +93,14 @@ function requireAuth(handler: (req: express.Request, res: express.Response, iden
 // and current profile, so Render logs can later correlate staged reactivation without trusting
 // client-supplied account state.
 stepUpRouter.post('/aal2/diagnostic-login', requireAuth(async (req, res, identity) => {
+  createLogger('aal2-diagnostic', req.requestId).info('AAL2 login diagnostic request entered', {
+    eventName: 'auth.aal2.diagnostic.login.start',
+    userId: identity.userId,
+    supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+    reactivationStage: AAL2_REACTIVATION_STAGE,
+    privilegedServerAal2Unaffected: true,
+  });
+
   const supabase = getServerSupabase();
   const { data: profile, error } = await supabase
     .from('profiles')
