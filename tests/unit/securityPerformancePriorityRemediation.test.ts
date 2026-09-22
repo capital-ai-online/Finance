@@ -33,7 +33,7 @@ describe('P2 public/login bundle boundary', () => {
   it('keeps the public landing shell eager while heavyweight application routes stay lazy', () => {
     expect(routes).toContain("import React, { Suspense, lazy, useEffect, useState } from 'react'");
     expect(routes).toContain(
-      "import { LandingPage, LegalAndFaqPages, LoginPage } from '../../features/public/ui'",
+      "import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui'",
     );
     expect(routes).toContain("import('../dashboard/Dashboard')");
     expect(routes).not.toContain("import('../../features/public/ui/LandingPage')");
