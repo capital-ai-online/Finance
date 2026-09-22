@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEO-LAUNCH-01-IA-CONVERGENCE-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "WP-SEO-LAUNCH-01 continuation after PR #1260: re-correlate the exact current launch candidate, audit canonical public-route reachability and internal linking, classify current Production/provider blockers, and emit owner-correct handoffs without mutating FE/OPS/FINTECH/provider runtime.",
+  "startedAt": "2026-09-22T06:25:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "aee799282298596a5f2d9140a4e805edf52783a0",
+  "branch": "agent/seo-launch-01-ia-convergence-20260922",
+  "projectId": "CAPITAL-AI-SEO",
+  "projectFolder": "docs/projects/seo/",
+  "projectStage": "N/A — cross-cutting; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-SEO",
+  "priority": "P1",
+  "priorityReason": "The launch package remains active; current main exposes a canonical /universe SEO route whose client router no longer renders it, while FAQ/domain/provider lanes remain separately gated.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEO-LANDING-FIRST-GATE-20260921.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-CONTENT-QUALITY-REVIEW-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-SEO-LAUNCH-01-IA-CONVERGENCE-20260922.json",
+    "docs/projects/seo/ROADMAP.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/seo/WP_SEO_LAUNCH_01_IA_CONVERGENCE_2026-09-22.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "OPS #1252 remains open for /faq public-route/static-HTML promotion; SEO #1233 remains blocked on that owner-correct dependency.",
+    "FINTECH #1254 remains open for public scoring-truth review of Pilot Brief #02.",
+    "OPS #1258 remains open for root Production HTML verification; current Render readback is separately snapshot-bound.",
+    "GSC Search Analytics, GA4 and GenAI visibility remain provider-read gated.",
+    "Open OPS PR #1262 has no changed-file overlap with this SEO documentation/claim slice."
+  ],
+  "exitEvidence": [
+    "merged predecessor claims are released",
+    "CURRENT_MAIN/public-route/client-router/internal-link state is reproducibly audited",
+    "canonical /universe mismatch is owner-correctly routed to CAPITAL-AI-FE",
+    "Production state is classified against exact CURRENT_MAIN without synthetic PASS",
+    "SEO roadmap/checklist/program projection reflect the current dependency state",
+    "no FE/OPS/FINTECH/provider runtime mutation is performed"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; auto-merge eligibility must be separately proven against /AGENTS.md@CURRENT_MAIN."
+}
