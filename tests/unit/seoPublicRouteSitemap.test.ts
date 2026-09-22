@@ -182,6 +182,71 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'faq', 'index.html'));
   });
 
+  it('serves /vocabulary publicly and canonicalizes glossary aliases', () => {
+    expect(PUBLIC_SPA_PATHS.has('/vocabulary')).toBe(true);
+    expect(APPLICATION_SPA_PATHS.has('/vocabulary')).toBe(false);
+    expect(listPublicRouteSeoPaths()).toContain('/vocabulary');
+    expect(getRouteSeo('/vocabulary')).toMatchObject({
+      title: 'Market Vocabulary – CAPITAL-AI',
+      canonicalPath: '/vocabulary',
+    });
+
+    const handler = captureProductionFallbackHandler();
+    let sentFile: string | undefined;
+
+    const vocabularyResponse = {
+      status() {
+        return this;
+      },
+      type() {
+        return this;
+      },
+      send() {
+        return this;
+      },
+      sendFile(file: string) {
+        sentFile = file;
+        return this;
+      },
+      redirect() {
+        return this;
+      },
+    } as unknown as Response;
+
+    handler({ path: '/vocabulary' } as Request, vocabularyResponse, () => undefined);
+    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'vocabulary', 'index.html'));
+
+    const aliases = ['/glossar', '/lexikon', '/market-vocabulary', '/dictionary'];
+    for (const alias of aliases) {
+      expect(APPLICATION_SPA_PATHS.has(alias)).toBe(true);
+      let redirectStatus: number | undefined;
+      let redirectLocation: string | undefined;
+      const aliasResponse = {
+        status() {
+          return this;
+        },
+        type() {
+          return this;
+        },
+        send() {
+          return this;
+        },
+        sendFile() {
+          return this;
+        },
+        redirect(status: number, location: string) {
+          redirectStatus = status;
+          redirectLocation = location;
+          return this;
+        },
+      } as unknown as Response;
+
+      handler({ path: alias } as Request, aliasResponse, () => undefined);
+      expect(redirectStatus).toBe(301);
+      expect(redirectLocation).toBe('/vocabulary');
+    }
+  });
+
   it('returns a real HTTP 404 for an unknown route', () => {
     const handler = captureProductionFallbackHandler();
     let statusCode: number | undefined;
