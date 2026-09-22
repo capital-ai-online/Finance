@@ -13,9 +13,9 @@ export interface RouteSeo {
 }
 
 const DEFAULT: RouteSeo = {
-  title: 'CAPITAL-AI Portal',
+  title: 'CAPITAL-AI – Marktdaten verstehen. Chancen besser erkennen.',
   description:
-    `Offizielles CAPITAL-AI Portal (Version ${CAPITAL_AI_VERSION}) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.`,
+    `Offizielles CAPITAL-AI Portal (Version ${CAPITAL_AI_VERSION}) – Marktdaten verstehen. Chancen besser erkennen: Echtzeit-Marktdaten, KI-gestütztes Scoring und fundierte Analysen für transparentere Entscheidungen an globalen Märkten.`,
   canonicalPath: '/',
 };
 
@@ -35,7 +35,7 @@ const ROUTES: Record<string, RouteSeo> = {
   },
   '/impressum': {
     title: 'Impressum – CAPITAL-AI',
-    description: 'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
+    description: 'Impressum und Anbieterkennzeichnung gemäß § 5 DDG für CAPITAL-AI (Sven Kulessa).',
     canonicalPath: '/impressum',
   },
   '/agb': {
