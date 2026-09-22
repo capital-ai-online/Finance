@@ -64,7 +64,6 @@ test('runbook names the canonical security and governance authorities', () => {
   for (const expected of [
     '/AGENTS.md',
     'AUTH-GOV-AGENT-TRUST-ROOT',
-    'docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md',
     'AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION',
     'server.ts',
     'server.application.ts',
@@ -75,6 +74,10 @@ test('runbook names the canonical security and governance authorities', () => {
   ]) {
     assert.ok(runbook.includes(expected), `missing canonical authority/path: ${expected}`);
   }
+  assert.ok(
+    !runbook.includes('docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md'),
+    'retired standalone DevelopmentChain policy must not be projected as current authority',
+  );
 });
 
 test('domain hardening runbook preserves minimal Render CAA and IPv6 safety invariants', () => {
