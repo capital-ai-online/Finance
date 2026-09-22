@@ -59,16 +59,14 @@ vi.mock('../../server/db', () => ({
 import {
   requireVerifiedAal2,
   requireStepUp,
-  verifyProviderAal2,
 } from '../../src/platform/Security/authMiddleware';
 import { isSupabaseConfigured } from '../../server/db';
-import { AAL2_AUTH_TEST_QUARANTINE } from '../../src/platform/Security/aal2DiagnosticSupersession';
 
 function req(headers: Record<string, string> = {}): Request {
   return { headers, requestId: 'test-request' } as unknown as Request;
 }
 
-describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('verifyProviderAal2 strict provider boundary', () => {
+describe('requireVerifiedAal2 strict privileged server boundary', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     getAalMock.mockReset();
@@ -77,13 +75,13 @@ describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('verifyProviderAal2 strict provider b
 
   it('verweigert fail-closed, wenn Supabase nicht konfiguriert ist', async () => {
     (isSupabaseConfigured as any).mockReturnValue(false);
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result).toEqual({ verified: false, currentLevel: null, reason: 'supabase-not-configured' });
     expect(getUserMock).not.toHaveBeenCalled();
   });
 
   it('verweigert ohne Bearer-Token, ohne Supabase überhaupt aufzurufen', async () => {
-    const result = await verifyProviderAal2(req());
+    const result = await requireVerifiedAal2(req());
     expect(result.verified).toBe(false);
     expect(result.reason).toBe('no-bearer-token');
     expect(getUserMock).not.toHaveBeenCalled();
@@ -91,7 +89,7 @@ describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('verifyProviderAal2 strict provider b
 
   it('verweigert bei ungültigem/abgelaufenem Token', async () => {
     getUserMock.mockResolvedValue({ data: { user: null }, error: { message: 'jwt expired' } });
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer bad' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer bad' }));
     expect(result.verified).toBe(false);
     expect(result.reason).toBe('invalid-token');
     expect(getAalMock).not.toHaveBeenCalled();
@@ -100,21 +98,21 @@ describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('verifyProviderAal2 strict provider b
   it('verweigert fail-closed, wenn der AAL-Lookup selbst fehlschlägt (Netzwerk-/Authfehler)', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: null, error: { message: 'network error' } });
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result).toEqual({ verified: false, userId: 'user-1', currentLevel: null, reason: 'aal-lookup-failed' });
   });
 
   it('verweigert bei aal1', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal1', nextLevel: 'aal2' }, error: null });
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result).toEqual({ verified: false, userId: 'user-1', currentLevel: 'aal1', reason: 'insufficient-aal' });
   });
 
   it('verweigert bei fehlendem/null Level statt einen Level anzunehmen', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: null, nextLevel: 'aal1' }, error: null });
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result.verified).toBe(false);
     expect(result.reason).toBe('insufficient-aal');
   });
@@ -122,49 +120,21 @@ describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('verifyProviderAal2 strict provider b
   it('erlaubt bei aal2 und liefert die userId', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result).toEqual({ verified: true, userId: 'user-1', currentLevel: 'aal2', reason: 'aal2-verified' });
     expect(getAalMock).toHaveBeenCalledWith('tok');
   });
 
   it('verweigert fail-closed bei einem unerwarteten Wurf statt zu crashen', async () => {
     getUserMock.mockRejectedValue(new Error('boom'));
-    const result = await verifyProviderAal2(req({ authorization: 'Bearer tok' }));
+    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
     expect(result.verified).toBe(false);
     expect(result.reason).toBe('internal-error');
   });
 });
 
 
-describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('requireVerifiedAal2 Stage-0 supersession', () => {
-  beforeEach(() => {
-    getUserMock.mockReset();
-    getAalMock.mockReset();
-    (isSupabaseConfigured as any).mockReturnValue(true);
-  });
-
-  it('verweigert weiterhin ohne primaere Bearer-Identitaet', async () => {
-    const result = await requireVerifiedAal2(req());
-    expect(result).toEqual({ verified: false, currentLevel: null, reason: 'no-bearer-token' });
-    expect(getUserMock).not.toHaveBeenCalled();
-  });
-
-  it('supersediert nur AAL2 nachdem der Bearer einer echten Supabase-Identitaet zugeordnet wurde', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-
-    const result = await requireVerifiedAal2(req({ authorization: 'Bearer tok' }));
-
-    expect(result).toEqual({
-      verified: true,
-      userId: 'user-1',
-      currentLevel: 'superseded',
-      reason: 'aal2-superseded',
-    });
-    expect(getAalMock).not.toHaveBeenCalled();
-  });
-});
-
-describe.skipIf(AAL2_AUTH_TEST_QUARANTINE)('requireStepUp (gekoppelt an AAL2)', () => {
+describe('requireStepUp (gekoppelt an privilegiertes AAL2)', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     getAalMock.mockReset();
