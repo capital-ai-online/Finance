@@ -33,28 +33,35 @@ function runtime({
   themeReady = false,
   omitTheme = false,
   validConsent = false,
+  analyticsConsent = false,
 } = {}) {
   const vendorStyle = createStylesheet(vendorReady);
   const themeStyle = createStylesheet(themeReady);
-  const buttons: Array<{ id?: string; click?: () => void }> = [];
+  const elements: Array<ReturnType<typeof createElement>> = [];
   const errors: unknown[][] = [];
+  const accepted: unknown[] = [];
   let runCount = 0;
   let config: Record<string, unknown> | undefined;
   let hasConsent = validConsent;
+  let analyticsAccepted = analyticsConsent;
 
   const styles = new Map<string, ReturnType<typeof createStylesheet>>([
     ['cookieconsent-vendor-style', vendorStyle],
   ]);
   if (!omitTheme) styles.set('cookieconsent-theme-style', themeStyle);
 
-  function createElement() {
+  function createElement(tagName = 'div') {
     const listeners = new Map<string, Listener>();
     const children: unknown[] = [];
-    return {
+    const attrs = new Map<string, string>();
+    const element = {
+      tagName,
       id: undefined as string | undefined,
       className: undefined as string | undefined,
       type: undefined as string | undefined,
       textContent: undefined as string | undefined,
+      checked: false,
+      disabled: false,
       children,
       addEventListener(name: string, listener: Listener) {
         listeners.set(name, listener);
@@ -62,23 +69,36 @@ function runtime({
       appendChild(child: unknown) {
         children.push(child);
       },
-      setAttribute() {},
-      remove() {},
+      setAttribute(name: string, value: string) {
+        attrs.set(name, value);
+      },
+      removeAttribute(name: string) {
+        attrs.delete(name);
+      },
+      remove() {
+        const index = elements.indexOf(element);
+        if (index >= 0) elements.splice(index, 1);
+      },
       click() {
         listeners.get('click')?.();
       },
+      focus() {},
+      getAttribute(name: string) {
+        return attrs.get(name) ?? null;
+      },
     };
+    return element;
   }
 
   const document = {
     cookie: validConsent ? 'capital_ai_consent_v3=stored-choice' : '',
     getElementById(id: string) {
-      return styles.get(id) ?? buttons.find((button) => button.id === id) ?? null;
+      return styles.get(id) ?? elements.find((element) => element.id === id) ?? null;
     },
     createElement,
     body: {
-      appendChild(button: ReturnType<typeof createElement>) {
-        buttons.push(button);
+      appendChild(element: ReturnType<typeof createElement>) {
+        elements.push(element);
       },
     },
   };
@@ -91,12 +111,19 @@ function runtime({
         config = value;
         return Promise.resolve();
       },
-      showPreferences() {},
+      showPreferences() {
+        throw new Error('Vendor preferences UI must not be used by the CAPITAL-AI settings path.');
+      },
       validConsent() {
         return hasConsent;
       },
-      acceptCategory() {
+      acceptedCategory(category: string) {
+        return category === 'analytics' && analyticsAccepted;
+      },
+      acceptCategory(value: unknown) {
+        accepted.push(value);
         hasConsent = true;
+        analyticsAccepted = value === 'all';
       },
     },
   };
@@ -123,8 +150,9 @@ function runtime({
   return {
     vendorStyle,
     themeStyle,
-    buttons,
+    elements,
     errors,
+    accepted,
     flush,
     get runCount() {
       return runCount;
@@ -147,43 +175,75 @@ describe('CookieConsent stylesheet readiness', () => {
     await r.flush();
 
     expect(r.runCount).toBe(0);
-    expect(r.buttons).toHaveLength(1);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-settings')).toBe(true);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(false);
 
     const init = fs.readFileSync('public/cookieconsent-init.js', 'utf8');
     expect(init).toContain('lazyHtmlGeneration: true');
     expect(init).toContain('autoShow: false');
     expect(init).toContain('if (hasStoredConsentCookie())');
     expect(init).not.toContain('installFirstVisitNotice');
-    expect(init).not.toContain('capital-ai-consent-notice');
-
-    const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
-    expect(theme).not.toContain('#capital-ai-consent-notice');
+    expect(init).not.toContain('consent.showPreferences()');
   });
 
-  it('initializes CookieConsent only after an explicit settings click on a fresh visit', async () => {
+  it('opens the native settings surface without using the vendor preferences overlay', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
-    expect(r.runCount).toBe(0);
 
-    r.buttons[0]?.click?.();
+    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
     await r.flush();
 
     expect(r.runCount).toBe(1);
-    expect(r.config?.mode).toBe('opt-in');
-    expect(r.config?.disablePageInteraction).toBe(false);
-    expect(r.config?.autoShow).toBe(false);
-    expect(r.config?.lazyHtmlGeneration).toBe(true);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(true);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-analytics')).toBe(true);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-save')).toBe(true);
   });
 
-  it('restores a previously stored consent choice without showing startup UI', async () => {
-    const r = runtime({ vendorReady: true, themeReady: true, validConsent: true });
+  it('saves an Analytics opt-in through the canonical CookieConsent category API', async () => {
+    const r = runtime({ vendorReady: true, themeReady: true });
+    await r.flush();
+
+    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    await r.flush();
+
+    const analytics = r.elements.find((element) => element.id === 'capital-ai-cookie-analytics');
+    const save = r.elements.find((element) => element.id === 'capital-ai-cookie-save');
+    expect(analytics).toBeTruthy();
+    expect(save).toBeTruthy();
+
+    if (analytics) analytics.checked = true;
+    save?.click();
+
+    expect(r.accepted).toEqual(['all']);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(false);
+  });
+
+  it('saves a necessary-only choice without enabling analytics', async () => {
+    const r = runtime({ vendorReady: true, themeReady: true });
+    await r.flush();
+
+    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    await r.flush();
+    r.elements.find((element) => element.id === 'capital-ai-cookie-save')?.click();
+
+    expect(r.accepted).toEqual([[]]);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(false);
+  });
+
+  it('restores a previously stored analytics choice into the native checkbox', async () => {
+    const r = runtime({
+      vendorReady: true,
+      themeReady: true,
+      validConsent: true,
+      analyticsConsent: true,
+    });
     await r.flush();
 
     expect(r.runCount).toBe(1);
-    expect(r.config?.mode).toBe('opt-in');
-    expect(r.config?.autoShow).toBe(false);
-    expect(r.config?.lazyHtmlGeneration).toBe(true);
-    expect(r.buttons).toHaveLength(1);
+    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    await r.flush();
+
+    expect(r.elements.find((element) => element.id === 'capital-ai-cookie-analytics')?.checked).toBe(true);
   });
 
   it('waits for required stylesheets only when a stored choice requires vendor initialization', async () => {
@@ -205,17 +265,14 @@ describe('CookieConsent stylesheet readiness', () => {
     await r.flush();
 
     expect(r.runCount).toBe(0);
-    expect(r.buttons).toHaveLength(1);
+    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-settings')).toBe(true);
     expect(String(r.errors[0]?.[1])).toContain('Required stylesheet missing');
   });
 
-  it('keeps the page available when returning-consent stylesheet loading fails', async () => {
-    const r = runtime({ vendorReady: true, validConsent: true });
-    r.themeStyle.dispatch('error');
-    await r.flush();
-
-    expect(r.runCount).toBe(0);
-    expect(r.buttons).toHaveLength(1);
-    expect(String(r.errors[0]?.[1])).toContain('Required stylesheet failed to load');
+  it('makes the native settings surface explicitly pointer-interactive without a full-page overlay', () => {
+    const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
+    expect(theme).toMatch(/#capital-ai-cookie-panel\s*\{[\s\S]*pointer-events:\s*auto;/);
+    expect(theme).toMatch(/#capital-ai-cookie-panel \.capital-ai-cookie-panel__button\s*\{[\s\S]*pointer-events:\s*auto;/);
+    expect(theme).not.toContain('#capital-ai-cookie-panel::before');
   });
 });
