@@ -5,6 +5,7 @@ import './frontend-port/frontend-port.css';
 
 interface LandingPageProps {
   onLoginNavigate?: () => void;
+  onLogout?: () => void | Promise<void>;
   authenticatedProfile?: AuthenticatedLandingProfile | null;
 }
 
@@ -21,9 +22,9 @@ interface LandingPageProps {
  * Mobile remains the source presentation baseline. The Finance-owned responsive adapter activates
  * the website desktop canvas at >=1024px without changing the pinned FRONTEND component tree.
  */
-export function LandingPage({ authenticatedProfile = null }: LandingPageProps) {
+export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPageProps) {
   return (
-    <LandingSessionProvider profile={authenticatedProfile}>
+    <LandingSessionProvider profile={authenticatedProfile} onLogout={onLogout}>
       <section
       className="capital-ai-frontend-port"
       data-landing-section="frontend-reference-design-port"
