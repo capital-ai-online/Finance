@@ -21,6 +21,7 @@ interface PublicHtmlFiles {
   root: string;
   universe: string;
   learningPlatform: string;
+  vocabulary: string;
   impressum: string;
   agb: string;
   datenschutz: string;
@@ -42,6 +43,7 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
     root,
     universe: path.resolve(rootDir, 'universe', 'index.html'),
     learningPlatform: path.resolve(rootDir, 'learning-platform', 'index.html'),
+    vocabulary: path.resolve(rootDir, 'vocabulary', 'index.html'),
     impressum: path.resolve(rootDir, 'impressum', 'index.html'),
     agb: path.resolve(rootDir, 'agb', 'index.html'),
     datenschutz: path.resolve(rootDir, 'datenschutz', 'index.html'),
@@ -77,6 +79,13 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
         return res.sendFile(existingOrRoot(files.universe));
       case '/learning-platform':
         return res.sendFile(existingOrRoot(files.learningPlatform));
+      case '/vocabulary':
+        return res.sendFile(existingOrRoot(files.vocabulary));
+      case '/glossar':
+      case '/lexikon':
+      case '/market-vocabulary':
+      case '/dictionary':
+        return res.redirect(301, '/vocabulary');
       case '/impressum':
         return res.sendFile(existingOrRoot(files.impressum));
       case '/agb':
