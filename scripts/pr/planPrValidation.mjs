@@ -21,7 +21,9 @@
  */
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { classifyChangedFiles } from './classifyPrScope.mjs';
 import {
   findRuntimeConsumedPaths,
   isDocsPath,
@@ -297,6 +299,137 @@ export function writeGithubOutput(plan) {
   return text;
 }
 
+
+export const REQUIRED_EXACT_HEAD_CONTEXTS = Object.freeze([
+  'GitGuardian Security Checks',
+  'Hardened image / HIGH+CRITICAL CVE gate',
+  'PR Governance (Kosten / Workflow / Vorlage)',
+  'build-and-test',
+]);
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function assertSha(name, value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(normalized)) {
+    throw new TypeError(`${name} must be a full 40-character git SHA`);
+  }
+  return normalized;
+}
+
+function normalizePreflightResults(results = {}) {
+  const allowed = new Set(['PASS', 'FAIL', 'NOT_RUN']);
+  const normalized = {};
+  for (const [key, value] of Object.entries(results || {})) {
+    const status = String(value || '').trim().toUpperCase();
+    if (!allowed.has(status)) throw new TypeError(`Invalid preflight result for ${key}: ${value}`);
+    normalized[key] = status;
+  }
+  return normalized;
+}
+
+function selectedTests(plan, baseSha) {
+  const selected = [];
+  if (plan.vitest_mode === 'full') selected.push('npm test');
+  if (plan.vitest_mode === 'changed') selected.push(`npx vitest run --changed ${baseSha} --passWithNoTests`);
+  if (plan.node_pr_tests && plan.vitest_mode !== 'full') selected.push('node --test scripts/pr/*.test.mjs');
+  if (plan.node_systemadmin_tests && plan.vitest_mode !== 'full') selected.push('node --test scripts/systemadmin/*.test.mjs');
+  if (plan.node_security_assessment_tests && plan.vitest_mode !== 'full') {
+    selected.push('node --test scripts/security/validateSecurityAssessment.test.mjs');
+  }
+  return selected;
+}
+
+/**
+ * Build machine-readable ChatGPT preflight evidence without inventing PASS.
+ * Results default to NOT_RUN and must be supplied only after the command/tool
+ * actually executed in the pre-PR environment.
+ */
+export function buildPreflightEvidence({
+  baseSha,
+  headSha,
+  treeSha,
+  files = [],
+  runtimeConsumedPaths = [],
+  forceFull = false,
+  toolVersions = {},
+  results = {},
+} = {}) {
+  const normalizedBase = assertSha('baseSha', baseSha);
+  const normalizedHead = assertSha('headSha', headSha);
+  const normalizedTree = assertSha('treeSha', treeSha);
+  const normalizedFiles = (files || []).map(normalizePath).filter(Boolean);
+  const normalizedResults = normalizePreflightResults(results);
+  const scope = classifyChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
+  const plan = planChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
+
+  const sourceOrTestImpact = normalizedFiles.some((file) =>
+    file.startsWith('src/') || file.startsWith('tests/') || isJavaScriptTypeScriptPath(file),
+  );
+  const qualitySelection = {
+    gitleaks: normalizedFiles.length > 0,
+    osv: normalizedFiles.some(isDependencyPath),
+    knip: sourceOrTestImpact,
+    jscpd: sourceOrTestImpact,
+    zizmor: scope.workflow_security === true,
+  };
+
+  const plannedChecks = {
+    lint: scope.lint === true,
+    vitest: scope.unit === true && plan.vitest_mode !== 'none',
+    node_pr_tests: plan.node_pr_tests === true && plan.vitest_mode !== 'full',
+    node_systemadmin_tests: plan.node_systemadmin_tests === true && plan.vitest_mode !== 'full',
+    node_security_assessment_tests: plan.node_security_assessment_tests === true && plan.vitest_mode !== 'full',
+    build: scope.build === true,
+    dependency_audit: scope.audit === true,
+    workflow_security: scope.workflow_security === true,
+    ...qualitySelection,
+  };
+
+  const checks = Object.fromEntries(
+    Object.entries(plannedChecks).map(([name, planned]) => [
+      name,
+      { planned, result: normalizedResults[name] || 'NOT_RUN' },
+    ]),
+  );
+
+  const evidence = {
+    schema_version: '1.0.0',
+    evidence_type: 'CHATGPT_PREFLIGHT',
+    base_sha: normalizedBase,
+    head_sha: normalizedHead,
+    tree_sha: normalizedTree,
+    pr_class: scope.class,
+    production_impact: scope.production_impact === true,
+    changed_paths: normalizedFiles,
+    validation_profile: String(plan.validation_profile || '').toUpperCase(),
+    selected_tests: selectedTests(plan, normalizedBase),
+    required_exact_head_contexts: REQUIRED_EXACT_HEAD_CONTEXTS,
+    required_context_note: 'Required-context names are merge-safety expectations; live ruleset readback remains authoritative.',
+    tool_versions: Object.fromEntries(
+      Object.entries(toolVersions || {}).map(([key, value]) => [key, String(value)]),
+    ),
+    checks,
+    planner: {
+      vitest_mode: plan.vitest_mode,
+      codeql_mode: plan.codeql_mode,
+      codeql_languages: plan.codeql_languages,
+      automated_code_review_mode: plan.automated_code_review_mode,
+      reason: plan.reason,
+    },
+  };
+
+  const fingerprint = createHash('sha256').update(canonicalJson(evidence)).digest('hex');
+  return { ...evidence, evidence_fingerprint: `sha256:${fingerprint}` };
+}
+
 function main() {
   const forceFull = process.env.EVENT_NAME === 'push'
     || process.env.CI_FORCE_FULL === 'true'
@@ -324,6 +457,29 @@ function main() {
   if (runtimeConsumedPaths.length > 0) console.log(`[planPrValidation] runtime-consumed changed artifacts: ${runtimeConsumedPaths.join(', ')}`);
   console.log(JSON.stringify(plan, null, 2));
   writeGithubOutput(plan);
+
+  if (process.argv.includes('--preflight-evidence')) {
+    const baseSha = process.env.PR_BASE_SHA || process.env.BASE_SHA || '';
+    const headSha = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
+    const resolvedHead = execFileSync('git', ['rev-parse', headSha], { encoding: 'utf8' }).trim();
+    const treeSha = execFileSync('git', ['rev-parse', `${resolvedHead}^{tree}`], { encoding: 'utf8' }).trim();
+    const results = process.env.PREFLIGHT_RESULTS_JSON ? JSON.parse(process.env.PREFLIGHT_RESULTS_JSON) : {};
+    const evidence = buildPreflightEvidence({
+      baseSha,
+      headSha: resolvedHead,
+      treeSha,
+      files,
+      runtimeConsumedPaths,
+      forceFull,
+      toolVersions: { node: process.version },
+      results,
+    });
+    const rendered = `${JSON.stringify(evidence, null, 2)}\\n`;
+    if (process.env.PREFLIGHT_OUTPUT) fs.writeFileSync(process.env.PREFLIGHT_OUTPUT, rendered, 'utf8');
+    console.log('PREFLIGHT_EVIDENCE_START');
+    console.log(rendered.trimEnd());
+    console.log('PREFLIGHT_EVIDENCE_END');
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('planPrValidation.mjs')) {

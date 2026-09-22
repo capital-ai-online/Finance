@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-02-CI-01E-20260921",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "OPS-02-CI-01E — ChatGPT Preflight & Runner-Minute Convergence",
+  "startedAt": "2026-09-21T21:42:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "22541eedb57d5cc690b13bc9b8284ae5a6f07c0c",
+  "branch": "operations/ops-02-ci-01e-preflight-telemetry-20260921",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "priority": "P0",
+  "priorityReason": "Fresh Owner direction requires three-day full-lifecycle cost telemetry and a deterministic ChatGPT preflight evidence contract before P1 runner reduction.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-02-CI-01E-20260921.json",
+    "scripts/pr/planPrValidation.mjs",
+    "scripts/pr/preflightEvidence.test.mjs",
+    "scripts/pr/analyzeRunnerLifecycle.mjs",
+    "scripts/pr/analyzeRunnerLifecycle.test.mjs",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_02_CI_01E_CHATGPT_PREFLIGHT_RUNNER_CONVERGENCE_2026-09-21.md"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
+}
