@@ -141,7 +141,7 @@ Current bounded state:
 - FE handoff #1263 owns client-route restoration and visible internal navigation;
 - `/faq` remains deliberately application-only until OPS #1252 returns the public server/static-HTML prerequisite; SEO #1233 remains blocked;
 - Pilot Brief #02 remains `NOT_PUBLISHED` until FINTECH #1254 returns public-safe scoring truth;
-- current Render readback initially showed Production at `720e4a80904a881e5ef732b66e1303f51a769d8e` while CURRENT_MAIN was `aee799282298596a5f2d9140a4e805edf52783a0`; exact-SHA Production freeze is therefore non-PASS for that snapshot;
+- current Render readback initially showed drift, then canonical deploy `dep-dap07drtqb8s73ertcv0` converged Production to exact `main@aee799282298596a5f2d9140a4e805edf52783a0`; deploy trigger delta was 261 seconds, so exact-SHA Production freeze is `PASS` for this snapshot; OPS #1258 remains the separate raw-HTML/cache verification lane;
 - X/Facebook production account readback remains 0/0, so Wave-1 publication remains provider-account blocked;
 - GSC Search Analytics, current six-URL inspection, GA4 and GenAI visibility remain independently provider-read gated.
 
