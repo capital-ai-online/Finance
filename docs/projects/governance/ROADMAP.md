@@ -1,12 +1,12 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@aee799282298596a5f2d9140a4e805edf52783a0`
+**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — SH-V3 merged foundations, Issue→Project dispatch and owner-correct SH-02.9 continuation re-correlated to CURRENT_MAIN  
+**Reconciliation:** 2026-09-22 — SH-V3/v1.8 Self-Healing state and merged SH-02.9 re-correlated to CURRENT_MAIN; OPS post-merge continuation remains owner-correct  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -40,21 +40,22 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 - PR #1179 — SH-V3 convergence milestones/work-package foundation;
 - PR #1198 / #1199 / #1214 / #1218 — SH-V3-02 ancestry, serialized repair, merge-continuation and dispatched-CI convergence;
 - PR #1229 — bounded Issue intake → canonical project dispatch on the Governance side; productive Self-Healing integration remains OPS-owned.
+- PR #1269 — SH-V3-02 v1.8 collapsed Technical-Traceability/Production-Baseline drift recognition and trusted-main bootstrap convergence.
 
 ### Active dependency chain
 
 1. `SH-V3-01 — Convergence Readback & Overlap Recovery`: `FOUNDATION_MERGED / CONTINUOUS_INVARIANT` via PR #1179; reused by later convergence, not reopened as branch work.
-2. `SH-V3-02 — Control Panel Autofix Orchestration Watchdog`: `IMPLEMENTED_ON_MAIN / CONTINUOUS_WATCHDOG` through PR #1198, #1199, #1214 and #1218; future findings remain evidence-bound to the registered repair paths.
+2. `SH-V3-02 — Control Panel Autofix Orchestration Watchdog`: `IMPLEMENTED_ON_MAIN / CONTINUOUS_WATCHDOG` through PR #1198, #1199, #1214, #1218 and #1269; v1.8 collapsed-details drift now re-enters the existing trusted-main Decision/Evidence repair path, and future findings remain evidence-bound to registered repairers.
 3. `SH-V3-03 — Exact-SHA Runtime Recovery`: `IMPLEMENTED_ON_MAIN` through owner-correct OPS PR #1187; repository implementation is distinct from any later production/readback evidence.
 4. `SH-02.8 — Protected rollback/restore contracts`: `HELD` until its explicit recovery-evidence plus SEC/COMP/QM prerequisites are satisfied; merge of SH-02.7 alone does not synthesize that evidence.
 5. `SH-02.9A — Issue Intake & Project Dispatch`: `DONE_MAIN / TERMINAL` through OPS PR #1246 and post-merge convergence PR #1259, consuming the Governance-side dispatch contract from PR #1229.
-6. `SH-02.9 — Observability/SLO/incident convergence`: `IN_FLIGHT / OWNER_CORRECT_OPS` in open PR #1262. Its changed files are OPS work-package/runtime-test scope and do not overlap this GOV roadmap reconciliation.
-7. `SH-02.10 — Fault injection/convergence suite`: dependency-held until SH-02.9 reaches verified terminal evidence.
+6. `SH-02.9 — Observability/SLO/incident convergence`: `IMPLEMENTED_ON_MAIN` through merged OPS PR #1262. Open OPS PR #1271 owns the post-merge projection/convergence readback and does not overlap this GOV roadmap reconciliation.
+7. `SH-02.10 — Fault injection/convergence suite`: remains dependency-held until the owner-correct SH-02.9 post-merge projection in PR #1271 reaches verified terminal evidence.
 8. `SH-02.11 — Staged production activation`: dependency-held until the enabled preceding tiers are verified.
 
 ### Single-writer and protected-blocker rules
 
-- Canonical v1.7 Decision/Evidence drift delegates only to the existing PR Decision Evidence Reconciler.
+- Canonical v1.8 Decision/Evidence drift delegates only to the existing PR Decision Evidence Reconciler; merged PR #1269 also binds missing collapsed Technical Traceability / machine-readable Production-Baseline boundaries to that trusted-main bootstrap path.
 - Markerless/legacy PR-template bootstrap and atomic Production-Baseline repair remain owned by the existing PR Production Baseline Auto-Refresh specialist; this is distinct from v1.7 Decision/Evidence reconciliation.
 - Current-State projection baseline drift remains owned by its existing dedicated baseline repair path.
 - Deterministic CI expectation drift is repairable only through an individually registered, evidence-bound repairer.
