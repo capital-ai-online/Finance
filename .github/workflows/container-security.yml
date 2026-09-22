@@ -293,6 +293,10 @@ jobs:
           }
           fs.writeFileSync('artifacts/container-security/oci-image-digest.txt', `${digest}\n`);
           NODE
+          image_config_digest="$(docker image inspect "capital-ai-security:$SOURCE_SHA" --format '{{.Id}}')"
+          test "${image_config_digest#sha256:}" != "$image_config_digest"
+          test "${#image_config_digest}" -eq 71
+          printf '%s\n' "$image_config_digest" > artifacts/container-security/image-config-digest.txt
           printf '%s\n' "$SOURCE_SHA" > artifacts/container-security/source-sha.txt
 
       - name: Runtime-Metadaten und Angriffsfläche fail-closed prüfen
@@ -384,25 +388,29 @@ jobs:
           const graphSha = sha256('artifacts/container-security/npm-production-graph.json');
           const sbomSha = sha256('artifacts/container-security/runtime-image-sbom.cdx.json');
           const ociDigest = fs.readFileSync('artifacts/container-security/oci-image-digest.txt', 'utf8').trim();
+          const imageConfigDigest = fs.readFileSync('artifacts/container-security/image-config-digest.txt', 'utf8').trim();
           const evidence = {
             schemaVersion: '1.0.0',
             sourceCommit: sourceSha,
             packageLockSha256: lockSha,
             productionGraphSha256: graphSha,
             finalSbomSha256: sbomSha,
-            ociImageDigest: ociDigest,
+            buildRepresentationDigest: ociDigest,
+            imageConfigDigest,
             chain: [
               'package-lock.json',
               'npm ci --omit=dev',
               'Dockerfile hardening/pruning',
               'FINAL CycloneDX SBOM',
               'SBOM SHA-256',
-              'OCI image digest',
+              'Build representation digest',
+              'Image config digest',
               'Git SHA / Release Manifest',
             ],
           };
           if (!/^[0-9a-f]{40}$/.test(sourceSha)) throw new Error('invalid source commit binding');
-          if (!/^sha256:[0-9a-f]{64}$/.test(ociDigest)) throw new Error('invalid OCI digest binding');
+          if (!/^sha256:[0-9a-f]{64}$/.test(ociDigest)) throw new Error('invalid build representation digest');
+          if (!/^sha256:[0-9a-f]{64}$/.test(imageConfigDigest)) throw new Error('invalid image config digest binding');
           fs.writeFileSync('artifacts/container-security/final-supply-chain-binding.json', JSON.stringify(evidence, null, 2) + '\n');
           NODE
 
@@ -442,6 +450,7 @@ jobs:
           mkdir -p artifacts/production-image
           docker save "capital-ai-security:$SOURCE_SHA" | gzip -1 > artifacts/production-image/image.tar.gz
           cp artifacts/container-security/oci-image-digest.txt artifacts/production-image/
+          cp artifacts/container-security/image-config-digest.txt artifacts/production-image/
           cp artifacts/container-security/source-sha.txt artifacts/production-image/
           cp artifacts/container-security/runtime-image-sbom.cdx.json artifacts/production-image/
           cp artifacts/container-security/runtime-image-sbom.sha256 artifacts/production-image/
@@ -494,10 +503,14 @@ jobs:
         run: |
           set -euo pipefail
           test "$(cat artifacts/production-image/source-sha.txt)" = "$GITHUB_SHA"
-          expected_digest="$(cat artifacts/production-image/oci-image-digest.txt)"
-          test "${expected_digest#sha256:}" != "$expected_digest"
-          test "${#expected_digest}" -eq 71
+          build_digest="$(cat artifacts/production-image/oci-image-digest.txt)"
+          expected_config_digest="$(cat artifacts/production-image/image-config-digest.txt)"
+          test "${build_digest#sha256:}" != "$build_digest"
+          test "${#build_digest}" -eq 71
+          test "${expected_config_digest#sha256:}" != "$expected_config_digest"
+          test "${#expected_config_digest}" -eq 71
           gunzip -c artifacts/production-image/image.tar.gz | docker load
+          test "$(docker image inspect "capital-ai-security:$GITHUB_SHA" --format '{{.Id}}')" = "$expected_config_digest"
           test "$(docker image inspect "capital-ai-security:$GITHUB_SHA" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')" = "$GITHUB_SHA"
           test "$(docker image inspect "capital-ai-security:$GITHUB_SHA" --format '{{ index .Config.Labels "org.opencontainers.image.source" }}')" = "https://github.com/$GITHUB_REPOSITORY"
 
@@ -514,14 +527,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_digest="$(cat artifacts/production-image/oci-image-digest.txt)"
           docker tag "capital-ai-security:$GITHUB_SHA" "$GHCR_IMAGE:$GITHUB_SHA"
           docker push "$GHCR_IMAGE:$GITHUB_SHA" | tee artifacts/production-image/ghcr-push.txt
           pushed_digest="$(sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' artifacts/production-image/ghcr-push.txt | tail -n 1)"
           test -n "$pushed_digest"
-          test "$pushed_digest" = "$expected_digest"
-          printf '%s\n' "$pushed_digest" > artifacts/production-image/ghcr-image-digest.txt
-          echo "digest=$pushed_digest" >> "$GITHUB_OUTPUT"
+          registry_digest="$(docker buildx imagetools inspect "$GHCR_IMAGE:$GITHUB_SHA" | sed -n 's/^Digest:[[:space:]]*//p' | head -n 1)"
+          test "${registry_digest#sha256:}" != "$registry_digest"
+          test "${#registry_digest}" -eq 71
+          test "$registry_digest" = "$pushed_digest"
+          printf '%s\n' "$registry_digest" > artifacts/production-image/ghcr-image-digest.txt
+          printf '%s\n' "$registry_digest" > artifacts/production-image/ghcr-registry-readback-digest.txt
+          echo "digest=$registry_digest" >> "$GITHUB_OUTPUT"
 
       - name: Private GHCR-Package und Digest-Pull verifizieren
         shell: bash
@@ -535,8 +551,10 @@ jobs:
           visibility="$(gh api -H 'Accept: application/vnd.github+json' "/orgs/$owner/packages/container/$package_name" --jq '.visibility')"
           test "$visibility" = 'private'
           image_ref="$GHCR_IMAGE@$IMAGE_DIGEST"
+          expected_config_digest="$(cat artifacts/production-image/image-config-digest.txt)"
           docker image rm "$GHCR_IMAGE:$GITHUB_SHA" "capital-ai-security:$GITHUB_SHA" >/dev/null
           docker pull "$image_ref"
+          test "$(docker image inspect "$image_ref" --format '{{.Id}}')" = "$expected_config_digest"
           test "$(docker image inspect "$image_ref" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')" = "$GITHUB_SHA"
           printf '%s\n' "$image_ref" > artifacts/production-image/ghcr-image-reference.txt
           printf 'PASS\n' > artifacts/production-image/ghcr-private-pull.txt
