@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Express, Request, RequestHandler, Response } from 'express';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getRouteSeo,
   listPublicRouteSeoPaths,
@@ -61,6 +61,10 @@ function captureProductionFallbackHandler(): RequestHandler {
   if (!handler) throw new Error('Production SPA fallback handler was not registered.');
   return handler;
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
   it('lists every canonical public SEO route exactly once and nothing else', () => {
@@ -147,6 +151,8 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
   });
 
   it('serves /faq as a canonical public SEO route with its prerender fallback', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+
     expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(false);
     expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(true);
     expect(listPublicRouteSeoPaths()).toContain('/faq');
@@ -183,6 +189,8 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
   });
 
   it('serves /vocabulary publicly and canonicalizes glossary aliases', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+
     expect(PUBLIC_SPA_PATHS.has('/vocabulary')).toBe(true);
     expect(APPLICATION_SPA_PATHS.has('/vocabulary')).toBe(false);
     expect(listPublicRouteSeoPaths()).toContain('/vocabulary');
