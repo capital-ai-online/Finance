@@ -65,7 +65,7 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
 
   const httpOnlySession =
     backendAuth.includes("'HttpOnly'") &&
-    backendAuth.includes("'SameSite='") &&
+    backendAuth.includes('SameSite=') &&
     backendAuth.includes("if (isProduction()) parts.push('Secure')") &&
     backendAuth.includes('resolveVerifiedBackendAuth') &&
     backendRoutes.includes("backendAuthRouter.get('/session'") &&
