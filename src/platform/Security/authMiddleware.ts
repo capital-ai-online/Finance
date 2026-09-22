@@ -18,6 +18,11 @@ import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
 import { createLogger } from '../../../server/logger';
 import { annotateReason, buildDebounceKey, createIamAuditDebounce } from './iamAuditDebounce';
+import {
+  AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+  AAL2_REACTIVATION_STAGE,
+  isAal2EnabledFor,
+} from './aal2DiagnosticSupersession';
 
 const iamLogger = createLogger('iam');
 const MAX_BEARER_TOKEN_LENGTH = 8_192;
@@ -249,10 +254,10 @@ export interface Aal2Result {
   verified: boolean;
   userId?: string;
   currentLevel: string | null;
-  reason: Aal2DenyReason | 'aal2-verified';
+  reason: Aal2DenyReason | 'aal2-verified' | 'aal2-superseded';
 }
 
-export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
+export async function verifyProviderAal2(req: Request): Promise<Aal2Result> {
   if (!isSupabaseConfigured()) {
     return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
   }
@@ -290,7 +295,62 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
 
     return { verified: true, userId: userData.user.id, currentLevel: 'aal2', reason: 'aal2-verified' };
   } catch (err: any) {
-    iamLogger.error('requireVerifiedAal2 unerwarteter Fehler - fail-closed verweigert', {
+    iamLogger.error('verifyProviderAal2 unerwarteter Fehler - fail-closed verweigert', {
+      requestId: req.requestId,
+      error: err?.message || String(err),
+    });
+    return { verified: false, currentLevel: null, reason: 'internal-error' };
+  }
+}
+
+export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
+  if (isAal2EnabledFor('privileged')) {
+    return verifyProviderAal2(req);
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
+  }
+
+  const token = extractBearerToken(req);
+  if (!token) {
+    return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
+  }
+
+  try {
+    const supabase = getServerSupabase();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return { verified: false, currentLevel: null, reason: 'invalid-token' };
+    }
+
+    iamLogger.warn('AAL2 diagnostic supersession bypass', {
+      requestId: req.requestId,
+      userId: userData.user.id,
+      supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+      reactivationStage: AAL2_REACTIVATION_STAGE,
+      surface: 'privileged',
+    });
+    await logIamEvent(
+      userData.user.id,
+      userData.user.id,
+      'aal2.diagnostic_supersession_bypass',
+      null,
+      {
+        supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+        reactivationStage: AAL2_REACTIVATION_STAGE,
+        surface: 'privileged',
+      },
+    );
+
+    return {
+      verified: true,
+      userId: userData.user.id,
+      currentLevel: 'superseded',
+      reason: 'aal2-superseded',
+    };
+  } catch (err: any) {
+    iamLogger.error('AAL2 diagnostic supersession identity validation failed', {
       requestId: req.requestId,
       error: err?.message || String(err),
     });
