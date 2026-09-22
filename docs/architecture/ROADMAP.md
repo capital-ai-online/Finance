@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.0.0`  
 **Status date:** `2026-09-22`  
-**Baseline:** `main@aee799282298596a5f2d9140a4e805edf52783a0`  
+**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -37,8 +37,9 @@ Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OP
 
 ## Current correlation — 2026-09-22
 
-- `main@4a095d7e267b284ed4456750ad031457a2ef9a0a` remains historical merge evidence for FE desktop convergence, but CURRENT_MAIN has advanced to `aee799282298596a5f2d9140a4e805edf52783a0`.
-- SH-02.9A is contained on main through PR #1246 and its post-merge convergence PR #1259. Open PR #1262 is the owner-correct OPS continuation for SH-02.9 and is not promoted to current-main state by this index.
+- `main@4a095d7e267b284ed4456750ad031457a2ef9a0a` remains historical merge evidence for FE desktop convergence; CURRENT_MAIN for this projection is `4c4a88e7f83150191c81134439e7bc9a1145ad4a`.
+- SH-02.9A is contained on main through PR #1246 and its post-merge convergence PR #1259. SH-02.9 is now contained on main through merged OPS PR #1262; open OPS PR #1271 is its post-merge projection/convergence follow-up and is not promoted to current-main state by this index.
+- SH-V3-02's v1.8 collapsed-details self-heal extension is contained on main through merged GOV PR #1269; this remains part of the existing bounded Self-Healing architecture rather than a second control plane.
 - The current organizational projection resolves `PVC-09..17` exclusively to `CAPITAL-AI-FINTECH`; no current DATA-owner routing is retained here.
 - FE/GOV work-package status stays in the owning project Roadmaps. This index records repository-wide navigation and invariant state only; it does not duplicate their execution queues.
 
