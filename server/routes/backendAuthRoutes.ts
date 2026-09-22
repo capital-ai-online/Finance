@@ -26,7 +26,10 @@ const AUTH_RATE_LIMIT = rateLimitMiddleware({
 const TIERS = new Set(['Free', 'Starter', 'Pro', 'Enterprise']);
 
 function normalizeTier(value: string): 'Free' | 'Starter' | 'Pro' | 'Enterprise' {
-  return TIERS.has(value) ? (value as 'Free' | 'Starter' | 'Pro' | 'Enterprise') : 'Free';
+  if (!TIERS.has(value)) {
+    throw new Error(`[BackendAuth] Invalid authoritative subscription tier: ${value}`);
+  }
+  return value as 'Free' | 'Starter' | 'Pro' | 'Enterprise';
 }
 
 function authErrorRedirect(origin: string, code: string): string {
