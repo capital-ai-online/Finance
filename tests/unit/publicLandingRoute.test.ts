@@ -58,7 +58,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).toContain('ReferenceApp');
     expect(landingPage).toContain('frontend-reference-design-port');
     expect(landingPage).toContain('data-landing-design-repository="SvenKulessa/FRONTEND"');
-    expect(landingPage).toContain('data-landing-design-commit="f2a101330d74420c373f0ec56fa58caac53d741d"');
+    expect(landingPage).toContain('data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"');
     expect(landingPort).not.toContain('fetch(');
     expect(landingPort).not.toContain('/api/');
     expect(landingPort).not.toContain('supabase');
