@@ -559,11 +559,11 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                 />
                 <span>
                   Ich akzeptiere die{' '}
-                  <a href="/agb" className="text-slate-200 underline hover:text-amber-400">
+                  <a\n                    href="/agb"\n                    target="_blank"\n                    rel="noopener noreferrer"\n                    className="text-slate-200 underline hover:text-amber-400"\n                  >
                     Nutzungsbedingungen (AGB)
                   </a>{' '}
                   und die{' '}
-                  <a href="/datenschutz" className="text-slate-200 underline hover:text-emerald-400">
+                  <a\n                    href="/datenschutz"\n                    target="_blank"\n                    rel="noopener noreferrer"\n                    className="text-slate-200 underline hover:text-emerald-400"\n                  >
                     Datenschutzrichtlinie
                   </a>
                   .
