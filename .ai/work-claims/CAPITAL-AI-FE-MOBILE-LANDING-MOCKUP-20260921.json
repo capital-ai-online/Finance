@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-MOBILE-LANDING-MOCKUP-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -42,5 +42,7 @@
     "auth root expectation updated from authenticated / -> /dashboard to authenticated stay-on-root",
     "public workbench recovery expectation moved out of LF-01 root while preserving reusable feature-local boundary",
     "landing news integration expectation changed from productive composition to explicit static LF-05 presentation slot"
-  ]
+  ],
+  "releasedAt": "2026-09-22T03:13:00+02:00",
+  "releaseReason": "Historical LF-01 package is merged/superseded; current Owner direction advances the root to LF-02 auth/profile/subscription presentation."
 }

@@ -164,10 +164,27 @@ export function AppRoutes({
   }
 
   if (currentPath === '/') {
+    if (userSession?.type === 'registered') {
+      return (
+        <LandingPage
+          onLoginNavigate={clearJustLoggedOut}
+          authenticatedProfile={{
+            name: userSession.name,
+            email: userSession.email,
+            subscriptionTier: userSession.subscriptionTier,
+          }}
+        />
+      );
+    }
+
     return <LandingPage onLoginNavigate={clearJustLoggedOut} />;
   }
 
   if (currentPath === '/login') {
+    if (userSession?.type === 'registered') {
+      return <RouteRedirect to="/" label="Zur Landingpage" />;
+    }
+
     return <LoginPage onLoginEmail={handleLogin} justLoggedOut={justLoggedOut} />;
   }
 

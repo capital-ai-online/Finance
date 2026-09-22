@@ -22,6 +22,8 @@ import { BrandLogo } from './BrandLogo';
 import { ASSET_CLASSES } from '../data/mockData';
 import { MainCategory, AssetSubclass } from '../types';
 import { trackLoginClick } from '../utils/analytics';
+import { useLandingSessionProfile } from '../../LandingSessionContext';
+import { SubscriptionStatusBadge } from '../../SubscriptionStatusBadge';
 
 interface HeaderProps {
   onOpenAnalysis?: () => void;
@@ -42,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedClass, setExpandedClass] = useState<MainCategory | null>('KRYPTO');
+  const authenticatedProfile = useLandingSessionProfile();
 
   const renderClassIcon = (id: MainCategory) => {
     switch (id) {
@@ -102,26 +105,43 @@ export const Header: React.FC<HeaderProps> = ({
           <span>LIVE</span>
         </div>
 
-        {/* PROMINENT TOP-RIGHT LOGIN BUTTON LEADING TO /login */}
-        <a
-          id="header-login-btn"
-          href="/login"
-          onClick={(e) => {
-            e.preventDefault();
-            trackLoginClick('header_top_right');
-            onNavigateLogin?.();
-          }}
-          className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400/15 via-[#FF2E93]/15 to-[#8D26FF]/20 hover:from-amber-400/25 hover:via-[#FF2E93]/25 hover:to-[#8D26FF]/35 border border-amber-400/40 hover:border-amber-300 text-amber-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_14px_rgba(249,191,33,0.18)] hover:shadow-[0_0_20px_rgba(255,46,147,0.3)] active:scale-95 cursor-pointer group shrink-0"
-          data-analytics="login-click"
-          data-ga-category="authentication"
-          data-ga-action="click_login"
-          data-ga-label="header_top_right"
-          aria-label="Zum Capital-AI Login /login"
-          title="Terminal Anmeldung (/login)"
-        >
-          <LogIn className="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-200 group-hover:scale-110 transition-all" />
-          <span>Login</span>
-        </a>
+        {/* Productive auth projection: identity comes exclusively from SessionComposition. */}
+        {authenticatedProfile ? (
+          <button
+            id="header-session-btn"
+            type="button"
+            onClick={() => onNavigate?.('/dashboard')}
+            className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-400/30 hover:border-emerald-300/50 text-emerald-200 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+            aria-label={`Angemeldet als ${authenticatedProfile.name}. Zum Dashboard`}
+            title="Angemeldet · Zum Dashboard"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Angemeldet</span>
+            <span className="hidden md:inline max-w-28 truncate text-white/70">
+              {authenticatedProfile.name}
+            </span>
+          </button>
+        ) : (
+          <a
+            id="header-login-btn"
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              trackLoginClick('header_top_right');
+              onNavigateLogin?.();
+            }}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400/15 via-[#FF2E93]/15 to-[#8D26FF]/20 hover:from-amber-400/25 hover:via-[#FF2E93]/25 hover:to-[#8D26FF]/35 border border-amber-400/40 hover:border-amber-300 text-amber-200 hover:text-white text-xs font-bold transition-all shadow-[0_0_14px_rgba(249,191,33,0.18)] hover:shadow-[0_0_20px_rgba(255,46,147,0.3)] active:scale-95 cursor-pointer group shrink-0"
+            data-analytics="login-click"
+            data-ga-category="authentication"
+            data-ga-action="click_login"
+            data-ga-label="header_top_right"
+            aria-label="Zum Capital-AI Login /login"
+            title="Terminal Anmeldung (/login)"
+          >
+            <LogIn className="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-200 group-hover:scale-110 transition-all" />
+            <span>Login</span>
+          </a>
+        )}
       </div>
 
       {/* Slide-out Mobile Menu Drawer FROM THE LEFT ("links aufklappbar") */}
@@ -169,29 +189,59 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                 </div>
 
-                {/* Mobile Drawer Login CTA */}
+                {/* Mobile Drawer auth/subscription projection */}
                 <div className="mt-3">
-                  <a
-                    id="drawer-login-btn"
-                    href="/login"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsMenuOpen(false);
-                      trackLoginClick('drawer');
-                      onNavigateLogin?.();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-400/15 via-[#FF2E93]/15 to-[#8D26FF]/20 border border-amber-400/40 text-amber-200 hover:text-white font-bold text-xs transition-all shadow-[0_0_12px_rgba(249,191,33,0.15)] group"
-                    data-analytics="drawer-login-click"
-                    data-ga-category="authentication"
-                    data-ga-action="click_login"
-                    data-ga-label="drawer_menu"
-                  >
-                    <span className="flex items-center gap-2">
-                      <LogIn className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-                      <span>Terminal Anmeldung (/Login)</span>
-                    </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
-                  </a>
+                  {authenticatedProfile ? (
+                    <div
+                      data-authenticated-sideboard-profile="true"
+                      className="rounded-xl border border-emerald-400/25 bg-emerald-500/5 p-3"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Angemeldet</span>
+                      </div>
+                      <p className="mt-1 truncate text-sm font-semibold text-white">
+                        {authenticatedProfile.name}
+                      </p>
+                      <div className="mt-3">
+                        <SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} />
+                      </div>
+                      <button
+                        id="drawer-dashboard-btn"
+                        type="button"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          onNavigate?.('/dashboard');
+                        }}
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all"
+                      >
+                        <span>Zum Dashboard</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
+                      </button>
+                    </div>
+                  ) : (
+                    <a
+                      id="drawer-login-btn"
+                      href="/login"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsMenuOpen(false);
+                        trackLoginClick('drawer');
+                        onNavigateLogin?.();
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-400/15 via-[#FF2E93]/15 to-[#8D26FF]/20 border border-amber-400/40 text-amber-200 hover:text-white font-bold text-xs transition-all shadow-[0_0_12px_rgba(249,191,33,0.15)] group"
+                      data-analytics="drawer-login-click"
+                      data-ga-category="authentication"
+                      data-ga-action="click_login"
+                      data-ga-label="drawer_menu"
+                    >
+                      <span className="flex items-center gap-2">
+                        <LogIn className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                        <span>Terminal Anmeldung (/Login)</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
+                    </a>
+                  )}
                 </div>
 
                 {/* Navigation Sections */}
