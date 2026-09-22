@@ -15,6 +15,11 @@ const LearningVocabulary = lazy(() =>
     default: module.LearningVocabulary,
   })),
 );
+const MarketVocabularyModal = lazy(() =>
+  import('../../features/public/ui/frontend-port/components/MarketVocabularyModal').then((module) => ({
+    default: module.MarketVocabularyModal,
+  })),
+);
 const MediaStudio = lazy(() =>
   import('../../features/social/ui/MediaStudio').then((module) => ({ default: module.MediaStudio })),
 );
@@ -132,6 +137,30 @@ export function AppRoutes({
     currentPath === '/faq'
   ) {
     return <LegalAndFaqPages route={currentPath} />;
+  }
+
+  if (
+    currentPath === '/glossar' ||
+    currentPath === '/lexikon' ||
+    currentPath === '/market-vocabulary' ||
+    currentPath === '/dictionary'
+  ) {
+    return <RouteRedirect to="/vocabulary" label="Weiter zum Market Vocabulary" />;
+  }
+
+  if (currentPath === '/vocabulary') {
+    return (
+      <div className="min-h-screen bg-[#02050e] text-white">
+        <RouteLoadingBoundary>
+          <MarketVocabularyModal
+            isOpen
+            onClose={() => {
+              if (typeof window !== 'undefined') window.location.assign('/');
+            }}
+          />
+        </RouteLoadingBoundary>
+      </div>
+    );
   }
 
   if (currentPath === '/learning-platform') {
