@@ -2,8 +2,8 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.0.0`  
-**Status date:** `2026-09-16`  
-**Baseline:** `main@fb4d8e430bed17c89c21163c184eb3dbb0598104`  
+**Status date:** `2026-09-22`  
+**Baseline:** `main@7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -33,7 +33,7 @@ Canonical ownership is resolved from:
 - `docs/projects/README.md`
 - `docs/projects/PROJECT_VALUE_CHAIN.md`
 
-Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..11` DATA; `PVC-12..17` FINTECH. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
+Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..17` FINTECH. `CAPITAL-AI-DATA` is superseded as an independent productive owner. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
 
 ## Current invariants projected from AGENTS.md
 
@@ -50,3 +50,9 @@ Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OP
 - machine registries support identity/integrity but are not instruction surfaces.
 
 Current project work and priorities must be read from owner-correct project Roadmaps and re-correlated against current main; this index does not prescribe an execution queue.
+
+## Policy/contract convergence guard
+
+Active current-state projections MUST NOT cite removed standalone DevelopmentChain, PR, handoff or provider-specific policy files as current execution authority. Stable historical authority IDs may remain for traceability only when they resolve back to `/AGENTS.md@CURRENT_MAIN`. Security, Compliance, QM and domain contracts retain their subject-matter constraints and independent gates; they do not become a second development instruction hierarchy.
+
+Current projection drift is a bounded Self-Healing finding. Repository-owned deterministic projection drift may use the existing `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` path; foreign-owner or protected-policy contradictions are routed as owner-correct handoffs and remain fail-closed until verified.

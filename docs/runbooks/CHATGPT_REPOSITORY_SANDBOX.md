@@ -2,7 +2,8 @@
 
 **Status:** ACTIVE EXECUTION PROFILE AFTER HUMAN MERGE  
 **Date:** 2026-08-22  
-**Authority:** `/AGENTS.md` + DevelopmentChain Execution Policy  
+**Execution trust root:** `/AGENTS.md@CURRENT_MAIN`  
+**Authority note:** Stable historical DevelopmentChain authority IDs are traceability aliases only and resolve back to `AGENTS.md`; no standalone DevelopmentChain policy is current.  
 **Role:** local/pre-PR validation projection; **non-authorizing**
 
 ## Purpose

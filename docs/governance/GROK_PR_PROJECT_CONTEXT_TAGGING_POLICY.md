@@ -1,10 +1,12 @@
 # GROK PR Project-Context Tagging Policy
 
+> **Lifecycle:** HISTORICAL / NON-AUTHORIZING / PROVIDER-SPECIFIC PROJECTION. All normative wording below is retained only as historical provenance. Current execution semantics resolve exclusively through `/AGENTS.md@CURRENT_MAIN`; this file cannot instruct Grok, ChatGPT, another agent, CI, merge, release or provider mutation. Productive M10 is `RETIRED / OFF` and no standalone DevelopmentChain/PR policy is current.
+
 **Document ID:** GOV-GROK-PR-CONTEXT-001  
-**Status:** PROPOSED  
+**Status:** HISTORICAL / NON-AUTHORIZING  
 **Date:** 2026-08-16  
 **Repository:** `SvenKulessa/Finance`  
-**Authority:**  
+**Historical authority references (non-authorizing):**  
 - `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`  
 - `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`  
 - `docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md` (GOV-GROK-POST-MERGE-001)  

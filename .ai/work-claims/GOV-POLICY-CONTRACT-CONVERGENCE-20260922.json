@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-POLICY-CONTRACT-CONVERGENCE-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate active governance policies, contracts, handoffs, security constraints and current-state projections into one AGENTS-rooted DevelopmentChain/Self-Healing model without creating a second control plane.",
+  "workItemDE": "Aktive Richtlinien, Contracts, Handoffs, Security-Constraints und Current-State-Projektionen gegen AGENTS.md und die bestehende Self-Healing-Architektur konvergieren, ohne einen zweiten Control Plane zu erzeugen.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "pvc": [
+    "PVC-05"
+  ],
+  "branch": "governance/policy-contract-convergence-20260922",
+  "baseSha": "a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d",
+  "correlation": {
+    "currentMain": "a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d",
+    "trustRoot": "/AGENTS.md@CURRENT_MAIN",
+    "selfHealingContract": "src/platform/Supervisor/selfHealingContract.ts#self-healing-contract/1.0.0",
+    "foreignOwnerHandoffs": [
+      1230,
+      1231,
+      1232
+    ],
+    "knownOverlap": [
+      "CAPITAL-AI-GOV-HISTORICAL-FRAMEWORK-PURGE-2026-09-14 claims docs/governance/authority-registry.json, docs/projects/governance/ROADMAP.md, docs/adr/**, docs/evidence/** and docs/compliance/**; this branch does not mutate those paths."
+    ]
+  },
+  "claimedPaths": [
+    ".ai/work-claims/GOV-POLICY-CONTRACT-CONVERGENCE-20260922.json",
+    "docs/projects/governance/work-packages/GOV_POLICY_CONTRACT_CONVERGENCE_2026-09-22.md",
+    "docs/architecture/ROADMAP.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md",
+    "docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md",
+    "docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md",
+    "docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md",
+    "docs/governance/document-registry.json",
+    "docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md",
+    "docs/governance/GROK_PR_PROJECT_CONTEXT_TAGGING_POLICY.md",
+    "docs/governance/GROK_GOVERNANCE_AND_COLLABORATION_PROMPT.md",
+    "docs/governance/CAPITAL_AI_GOVERNANCE_LIBRARY_REPORT_2026-08-15.md",
+    "scripts/governance/controlPlaneStructuralValidatorCore.mjs",
+    "tests/unit/governanceAuthorityConsistency.test.ts"
+  ],
+  "dependencies": [
+    "No mutation of paths claimed by CAPITAL-AI-GOV-HISTORICAL-FRAMEWORK-PURGE-2026-09-14.",
+    "SEC/OPS/SOCIAL stale authority references are owner-correct handoffs via Issues #1230/#1231/#1232.",
+    "Historical/archive evidence remains unchanged unless an active compatibility surface falsely presents stale text as current authority."
+  ],
+  "exitEvidence": [
+    "AGENTS.md remains the single repository execution instruction surface.",
+    "Active GOV/global current-state projections no longer present removed standalone DevelopmentChain/PR policy files as current authority.",
+    "Enterprise current-state ownership projection resolves PVC-09..17 to CAPITAL-AI-FINTECH.",
+    "Provider-specific Grok policy/prompt files are explicitly historical/non-authorizing and cannot act as instruction surfaces.",
+    "Governance structural validation prevents regression on the corrected current projections.",
+    "Foreign-owner drift is represented by owner-correct Issues with exact paths and exit gates.",
+    "Self-Healing consumes policy/current-state drift through the existing repository projection finding/action model; no second registry or Supervisor is created."
+  ],
+  "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned."
+}
