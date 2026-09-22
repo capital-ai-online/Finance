@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-LF02-ACCOUNT-MFA-POLICY-LOGIN-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Honor the existing profile mfa_required_account policy during normal website login so optional enrolled factors do not force a global AAL2 challenge, while preserving native factors and server-enforced AAL2 for privileged Owner/Admin actions.",
+  "workItemDE": "LF-02: Account-MFA-Policy beim normalen Google-Login respektieren und globalen AAL2-Zwang für nicht verpflichtete Konten entfernen",
+  "startedAt": "2026-09-22T04:48:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
+  "lastSyncedMainSha": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
+  "branch": "frontend/lf02-account-mfa-policy-login-v2-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation/auth composition; no productive PVC",
+  "priority": "P0",
+  "priorityReason": "The productive Google login still stalls behind optional native-MFA factor discovery/challenge even though the live account policy marks MFA as not required for the normal application login.",
+  "canonicalIssue": 1237,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-LF02-ACCOUNT-MFA-POLICY-LOGIN-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-FE-LF02-IMMEDIATE-AAL2-ENTERPRISE-READBACK-20260922.json",
+    "src/lib/onboarding.ts",
+    "src/app/auth/SessionComposition.tsx",
+    "scripts/operations/authLifecycleCorrelation.ts",
+    "tests/unit/sessionCompositionTimeouts.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/userLifecycleSecurityContract.test.ts",
+    "tests/unit/authLifecycleRemediation.test.ts"
+  ],
+  "scopeBoundary": [
+    "No email-address or hard-coded user-ID authentication bypass is introduced.",
+    "profiles.mfa_required_account is resolved for the verified Supabase user ID together with onboarding_required in one profile read.",
+    "A verified optional native MFA factor remains enrolled and available; this change does not delete or mutate auth.mfa_factors.",
+    "Accounts with mfa_required_account=true still enter the native AAL2 login gate and fail closed when no usable AAL2 factor exists.",
+    "Privileged Owner/Admin server actions continue to enforce requireVerifiedAal2() and applicable purpose-bound step-up independently of the browser login path.",
+    "The existing /api/stripe/user-subscription endpoint remains the server-authoritative subscription projection.",
+    "No Supabase data/schema mutation, Stripe mutation, Render mutation, deploy, merge, or Human/CODEOWNER authority is performed."
+  ],
+  "evidence": {
+    "currentMain": "93893ab46cc0753dc4e86cd7d6120d321bc48651",
+    "liveAccountPolicy": "The reported Enterprise owner account has onboarding_required=false and mfa_required_account=false while retaining one verified native TOTP factor.",
+    "rootCause": "Current SessionComposition challenges every session whose Supabase nextLevel is aal2 solely because a factor is enrolled, before consulting account login-MFA policy. listFactors/challenge is bounded by a 10-second UI timeout and matches the observed delay.",
+    "securityBoundary": "Accepted IAM contracts retain server-side AAL2 enforcement for privileged Owner/Admin actions; the browser LoginStepUpGate is orchestration, not the authorization boundary.",
+    "openWriterOverlap": "Fresh correlation on main@93893ab46cc0753dc4e86cd7d6120d321bc48651 found no open PR writer overlap for the auth-policy scope; intervening main advancement was SEO-owned."
+  },
+  "acceptanceCriteria": [
+    "Normal Google login reads onboarding_required and mfa_required_account by verified user ID before native factor choreography.",
+    "For mfa_required_account=false and onboarding_required=false, the session proceeds directly to authoritative subscription readback without LoginStepUpGate or factor-list/challenge delay.",
+    "The optional native TOTP factor remains enrolled and unchanged.",
+    "For mfa_required_account=true, aal1->aal2 still renders LoginStepUpGate and missing usable AAL2 evidence fails closed.",
+    "Privileged server actions remain protected by requireVerifiedAal2() and applicable step-up controls.",
+    "The Enterprise subscription is still projected only after canonical authenticated server readback; no provisional Free state returns.",
+    "Focused auth/security/lifecycle tests and required PR gates pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
