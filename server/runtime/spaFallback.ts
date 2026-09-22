@@ -24,6 +24,7 @@ interface PublicHtmlFiles {
   impressum: string;
   agb: string;
   datenschutz: string;
+  faq: string;
 }
 
 function isPathInsideRoot(rootDir: string, candidate: string): boolean {
@@ -44,6 +45,7 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
     impressum: path.resolve(rootDir, 'impressum', 'index.html'),
     agb: path.resolve(rootDir, 'agb', 'index.html'),
     datenschutz: path.resolve(rootDir, 'datenschutz', 'index.html'),
+    faq: path.resolve(rootDir, 'faq', 'index.html'),
   };
   for (const candidate of Object.values(candidates)) {
     if (!isPathInsideRoot(rootDir, candidate)) {
@@ -70,7 +72,6 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
       case '/login':
       case '/dashboard':
       case '/media-studio':
-      case '/faq':
         return res.sendFile(files.root);
       case '/universe':
         return res.sendFile(existingOrRoot(files.universe));
@@ -82,6 +83,8 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
         return res.sendFile(existingOrRoot(files.agb));
       case '/datenschutz':
         return res.sendFile(existingOrRoot(files.datenschutz));
+      case '/faq':
+        return res.sendFile(existingOrRoot(files.faq));
       default:
         return res.status(404).type('text/plain').send('Not Found');
     }
