@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-COMP-WORK-PACKAGES-2026-08-31`  
 **Role:** roadmap / non-authorizing  
-**Version:** 1.1.0  
-**Date:** 2026-09-06  
+**Version:** 1.2.0  
+**Date:** 2026-09-22  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current baseline:** `main@49bf799d0098ba15a86a686401627ee6f658164f`
+**Current baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
 
 These eight work packages are the complete V2.1 Compliance workstream set. They coordinate assessment work only. None grants technical execution ownership over a foreign productive `PVC-*` stage.
 
@@ -21,6 +21,16 @@ These eight work packages are the complete V2.1 Compliance workstream set. They 
 | `COMP-06` | Evidence | `EXECUTED_HELD` | all held sets reviewed; missing evidence remains explicit |
 | `COMP-07` | Remediation Handoff | `EXECUTED_HELD` | current owner/gate routing recorded; foreign work remains foreign |
 | `COMP-08` | Continuous Compliance | `EXECUTED_CONTINUOUS` | current impact review executed; future material changes re-trigger it |
+
+## Active specialized package — COMP-FINREG-01
+
+`COMP-FINREG-01-FINANCIAL-REGULATORY-PERIMETER-20260922` is an owner-directed specialization of the existing `COMP-08 → COMP-01..07` lifecycle, not a ninth workstream.
+
+- **Primary input:** `REQ-COMP-038` — financial-services / supervisory scope remains `UNKNOWN`.
+- **Current factual triggers:** public scoring/ranking, `BUY/SELL`, `Best/Worst`, concrete Crypto trade setups, research/paper portfolio-allocation semantics and possible referral remuneration.
+- **Required legal regimes to classify:** WpIG/MAR for financial-instrument recommendation/advice surfaces; MiCAR for crypto-asset services; conditional DORA/GwG/§34f consequences only after the primary entity/activity classification.
+- **Work package:** `COMP_FINREG_01_FINANCIAL_REGULATORY_PERIMETER_2026-09-22.md`.
+- **Exit:** `FINREG_PERIMETER_EVIDENCE_READY`; no regulatory PASS, licence, exemption or legal conclusion is created by the package itself.
 
 ## COMP-01 — Applicability
 

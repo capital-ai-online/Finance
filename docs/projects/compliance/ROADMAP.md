@@ -1,6 +1,6 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
-**Baseline:** `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`
+**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
 
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
@@ -26,6 +26,19 @@ Fresh Human/Owner direction on 2026-09-21 establishes a landing-first dependency
 At `main@896722e55ab1304bd798da6fc8c6f2d9b178a12e`, the root landing and pinned presentation are already present. The previous existence blocker is superseded. PR #1209 is the remaining FE desktop-only stabilization writer; COMP keeps only genuine residual evidence gates open and does not re-open merged #1195/#1206 work.
 
 **Exit:** `LF01_COMP_EVIDENCE_READY` only after exact-head/current-main evidence demonstrates a truthful static/presentational root, no productive feature API dependency required for first render, preserved legal/consent boundaries, independent SEC/QM state and explicit owner-routed gaps. This Compliance evidence state does not itself declare the cross-project LF-01 gate PASS.
+
+## Owner-directed financial-regulatory perimeter — COMP-FINREG-01
+
+**State:** `ACTIVE_FROM_HUMAN_OWNER_DIRECTION / LEGAL_REVIEW_REQUIRED`  
+**Canonical identity:** `COMP-FINREG-01-FINANCIAL-REGULATORY-PERIMETER-20260922`  
+**Primary requirement:** `REQ-COMP-038`  
+**Work package:** `../../compliance/CAPITAL-AI-COMP/work-packages/COMP_FINREG_01_FINANCIAL_REGULATORY_PERIMETER_2026-09-22.md`
+
+Fresh Human/Owner direction on 2026-09-22 activates a bounded financial-regulatory content/perimeter review against current BaFin/German/EU sources. Current product evidence includes public scoring/ranking, visible recommendation-like `BUY/SELL` and `Best/Worst` semantics, concrete Crypto trade-setup levels, research/paper portfolio allocation semantics and possible referral remuneration. These facts are sufficient to trigger competent classification but do not establish a licence requirement, exemption or regulatory status by themselves.
+
+The package operationalizes the already-existing `REQ-COMP-038 = UNKNOWN` gate through the existing `COMP-08 → COMP-01..07` lifecycle. It does not create a ninth Compliance workstream, does not assign a productive PVC to COMP and does not pre-empt Human/Legal classification.
+
+**Exit:** `FINREG_PERIMETER_EVIDENCE_READY` only after every material recommendation-like financial/crypto surface is factually inventoried, WpIG/MAR and MiCAR classifications are competently dispositioned, conditional DORA/GwG/§34f consequences remain evidence-gated, remuneration/conflicts are mapped, and all productive remediation is routed to the actual canonical owner.
 
 ## Current return reassessment — REQ-COMP-033
 
