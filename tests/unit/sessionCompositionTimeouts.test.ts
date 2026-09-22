@@ -46,16 +46,21 @@ describe('SessionComposition zero-blocking auth shell', () => {
     expect(source).not.toContain("'subscription handoff'");
   });
 
-  it('takes the returning-user AAL2 fast path before the onboarding profile roundtrip', () => {
+  it('applies the staged AAL2 diagnostic supersession before native factor choreography', () => {
     const establishStart = source.indexOf('const establishSession = async');
-    const assuranceIndex = source.indexOf('const assurance = await getCurrentAssuranceLevel(supabase)', establishStart);
-    const fastPathIndex = source.indexOf("assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'", assuranceIndex);
-    const onboardingIndex = source.indexOf('const onboardingRequired = await needsOnboarding(session)', fastPathIndex);
+    const policyIndex = source.indexOf('const gatePolicy = await readAuthGatePolicy(session)', establishStart);
+    const onboardingIndex = source.indexOf('if (gatePolicy.onboardingRequired)', policyIndex);
+    const supersessionIndex = source.indexOf("if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount)", onboardingIndex);
+    const directProjectionIndex = source.indexOf('await handleSupabaseSession(session)', supersessionIndex);
+    const assuranceIndex = source.indexOf('const assurance = await getCurrentAssuranceLevel(supabase)', supersessionIndex);
 
     expect(establishStart).toBeGreaterThan(-1);
-    expect(assuranceIndex).toBeGreaterThan(establishStart);
-    expect(fastPathIndex).toBeGreaterThan(assuranceIndex);
-    expect(onboardingIndex).toBeGreaterThan(fastPathIndex);
+    expect(policyIndex).toBeGreaterThan(establishStart);
+    expect(onboardingIndex).toBeGreaterThan(policyIndex);
+    expect(supersessionIndex).toBeGreaterThan(onboardingIndex);
+    expect(directProjectionIndex).toBeGreaterThan(supersessionIndex);
+    expect(assuranceIndex).toBeGreaterThan(directProjectionIndex);
+    expect(source).toContain('AAL2_DIAGNOSTIC_SUPERSESSION_ID');
     expect(source).toContain('setPendingStepUpAssurance(assurance)');
   });
 
