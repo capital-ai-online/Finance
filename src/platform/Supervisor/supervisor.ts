@@ -12,6 +12,10 @@ import {
   type SelfHealingContractSnapshot,
 } from './selfHealingContract';
 import {
+  getFaultInjectionSuiteSnapshot,
+  type FaultInjectionSuiteSnapshot,
+} from './faultInjectionConvergence';
+import {
   getDependencyResilienceSnapshot,
   projectProviderResilience,
   type DependencyResilienceSnapshot,
@@ -361,6 +365,8 @@ export interface SupervisorStatus {
   findings: SupervisorFinding[];
   /** Pure remediation contract projection; it does not itself execute a recovery action. */
   selfHealingContract: SelfHealingContractSnapshot;
+  /** SH-02.10 deterministic, non-destructive fault/convergence projection for the read-only Control Panel. */
+  faultInjectionConvergence: FaultInjectionSuiteSnapshot;
   /** SH-02.4 dependency-resilience projection; provider-native retry remains owner-correct. */
   dependencyResilience: DependencyResilienceSnapshot;
   providerResilience: ProviderResilienceProjection[];
@@ -372,6 +378,7 @@ export interface SupervisorStatus {
     recovery: boolean;
     selfHealing: boolean;
     selfHealingContract: boolean;
+    faultInjectionConvergence: boolean;
     conflictResolution: boolean;
     providerHealth: boolean;
     marketDataRouting: boolean;
@@ -398,6 +405,7 @@ export function getSupervisorStatus(): SupervisorStatus {
   const agentProviderChain = observeAgentProviderChain();
   const findings = buildFindingsFromExecutions(recentExecutions, agentProviderChain);
   const selfHealingContract = getSelfHealingContractSnapshot();
+  const faultInjectionConvergence = getFaultInjectionSuiteSnapshot();
   const dependencyResilience = getDependencyResilienceSnapshot();
   const providerHealth = getProviderHealth();
   const providerResilience = providerHealth.map(record => projectProviderResilience(record));
@@ -429,6 +437,7 @@ export function getSupervisorStatus(): SupervisorStatus {
     agentProviderChain,
     findings,
     selfHealingContract,
+    faultInjectionConvergence,
     dependencyResilience,
     providerResilience,
     capabilities: {
@@ -439,6 +448,7 @@ export function getSupervisorStatus(): SupervisorStatus {
       recovery: true,
       selfHealing: false,
       selfHealingContract: selfHealingContract.valid,
+      faultInjectionConvergence: faultInjectionConvergence.complete,
       conflictResolution: true,
       providerHealth: true,
       marketDataRouting: true,
@@ -462,6 +472,7 @@ export function getSupervisorStatus(): SupervisorStatus {
       'agentProviderChain: canonical providers ChatGPT, Claude, Grok (Owner 2026-08-16). Google AI Studio / NotebookLM / Gemini = RETIRED.',
       'findings: observation-only; Supervisor entscheidet niemals (ESS-0002).',
       `selfHealingContract: ${selfHealingContract.valid ? 'VALID' : 'INVALID'}; enabled=${selfHealingContract.enabledActionIds.join(',') || 'none'}; held=${selfHealingContract.heldActionIds.join(',') || 'none'}.`,
+      `faultInjectionConvergence: ${faultInjectionConvergence.complete ? 'COMPLETE' : 'INCOMPLETE'}; scenarios=${faultInjectionConvergence.scenarioCount}/${faultInjectionConvergence.requiredScenarioCount}; baselineStaleCoverage=${faultInjectionConvergence.scenarioIds.includes('CURRENT_STATE_PROJECTION_BASELINE_STALE') ? 'COVERED' : 'MISSING'}; projection-only until SH-02.11 staged activation.`,
       `dependencyResilience: ${dependencyResilience.valid ? 'VALID' : 'INVALID'}; genericSafeRetry=${dependencyResilience.genericSafeRetryActivation}; provider-native retry/circuit/LKG remains owner-correct and is projected without nested retries. Runtime selfHealing remains false until staged activation in SH-02.11.`,
       ...agentProviderChain.notes,
     ],
