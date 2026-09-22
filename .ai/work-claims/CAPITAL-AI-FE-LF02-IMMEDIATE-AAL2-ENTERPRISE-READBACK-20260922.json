@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LF02-IMMEDIATE-AAL2-ENTERPRISE-READBACK-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -53,5 +53,7 @@
     "Focused auth, post-MFA, entitlement and session-composition regression tests pass.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-22T05:14:00+02:00",
+  "releaseReason": "Merged in PR #1255 and superseded by Owner-directed SEC-AUTH-DIAG-AAL2-01 diagnostic supersession."
 }
