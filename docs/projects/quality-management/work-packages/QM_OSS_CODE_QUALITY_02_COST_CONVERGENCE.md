@@ -6,7 +6,7 @@
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Baseline:** `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b`  
 **Parent:** `QM-OSS-CODE-QUALITY-01`  
-**Status:** `IMPLEMENTED_ON_BRANCH / EXACT-HEAD_VALIDATION_PENDING`  
+**Status:** `IMPLEMENTED_ON_MAIN / MERGED_PR_1244 / PR_FAST_EXECUTION_EVIDENCE_NOT_AVAILABLE`  
 **Authority:** Quality evidence/cost remediation only; no merge, release, deployment or productive PVC authority.
 
 ## Trigger and reproduced root cause
@@ -110,3 +110,16 @@ Open PRs were correlated against CURRENT_MAIN before branch creation. No open PR
 9. Human/CODEOWNER merge and post-merge CURRENT_MAIN readback complete.
 
 No pending workflow is reported as PASS.
+
+
+## Post-merge readback — 2026-09-22
+
+PR #1244 wurde Human/CODEOWNER-gated als Merge-Commit `71087c960f8c1e99d4b0d48252bece14b120bd28` integriert. Der Readback gegen `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a` bestätigt die Repository-Materialisierung:
+
+- `.github/workflows/oss-quality-assurance.yml` enthält das beabsichtigte `PR_FAST`-Profil mit Gitleaks + OSV und ohne `npm ci`, Voll-Coverage, Knip oder jscpd;
+- `.github/workflows/oss-quality-deep-assurance.yml` enthält die tägliche `DEEP_BASELINE` plus manuellen Diagnose-Dispatch;
+- der Unified-Finding-Vertrag ist auf `oss-quality-evidence/1.1.0` mit explizitem `NOT_APPLICABLE` erweitert.
+
+Die noch offene Exit-Evidence wird **nicht** als PASS dargestellt: Auf dem relevanten Exact Head von PR #1273 (`b5d0ea081aa1a3230ee1bdb9ffd9c3a9ff009963`) wurde trotz `server/**`-Änderungen kein pull-request-getriggerter `OSS Quality Assurance`-Run im GitHub-Readback beobachtet. Damit sind Exit-Punkte 4, 5 und 8 für die neue PR_FAST-Lane weiterhin `NOT_AVAILABLE`.
+
+Die Ausführungs-/Preflight-Konvergenz wurde owner-korrekt an `CAPITAL-AI-OPS` als Issue #1274 übergeben. QM verändert die OPS-CI-/Actions-Logik nicht innerhalb dieses Pakets. Ein terminaler `DONE_MAIN`-Status ist erst zulässig, wenn ein aktueller relevanter Exact-Head-Run die PR_FAST-Ausführung und die tatsächlich reduzierte Laufzeit reproduzierbar belegt.
