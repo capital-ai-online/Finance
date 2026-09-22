@@ -14,7 +14,12 @@ import {
   type NativeMfaAssuranceLevel,
 } from '../../platform/Security/nativeMfa';
 import { clearLoginStepUpMarkers } from '../../lib/loginStepUp';
-import { needsOnboarding as readNeedsOnboarding } from '../../lib/onboarding';
+import { needsOnboarding as readNeedsOnboarding, readAuthGatePolicy } from '../../lib/onboarding';
+import {
+  AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+  AAL2_REACTIVATION_STAGE,
+  isAal2EnabledFor,
+} from '../../platform/Security/aal2DiagnosticSupersession';
 import {
   getSessionBootstrapKey,
   isSessionEstablishmentEvent,
@@ -197,29 +202,59 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       throw new Error('[Auth] Supabase ist für die Assurance-Prüfung nicht verfügbar.');
     }
 
-    // Fast path for returning accounts with an enrolled MFA factor. Supabase's AAL check can
-    // determine immediately after the OAuth callback that this session must step up from aal1 to
-    // aal2. In that case the MFA gate is rendered before the profile/onboarding Data-API roundtrip.
-    // The onboarding invariant is rechecked after successful MFA before the session is published.
-    const assurance = await getCurrentAssuranceLevel(supabase);
-    if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
-      setPendingStepUpAssurance(assurance);
-      setPendingStepUpSession(session);
-      setAuthBootstrapPending(false);
-      return;
-    }
+    // Emit the diagnostic checkpoint before the browser profile-policy read. The call is not
+    // awaited, so it cannot block the critical login path. Render can correlate this request with
+    // the later subscription readback to isolate time spent in client-side profile hydration.
+    void authFetch('/api/auth/aal2/diagnostic-login', { method: 'POST' }).catch((err) => {
+      console.warn('[Auth][AAL2-DIAGNOSTIC] server checkpoint failed:', err);
+    });
 
-    const onboardingRequired = await needsOnboarding(session);
-    if (onboardingRequired) {
+    const gatePolicy = await readAuthGatePolicy(session);
+
+    if (gatePolicy.onboardingRequired) {
       setPendingStepUpAssurance(null);
       setPendingOnboardingSession(session);
       setAuthBootstrapPending(false);
       return;
     }
 
-    setPendingStepUpAssurance(assurance);
-    setPendingStepUpSession(session);
+    // Diagnostic supersession stage 0 removes the native AAL2 factor/challenge path entirely from
+    // normal website login. At stage 1+ login AAL2 is re-enabled, but only for accounts whose
+    // profiles.mfa_required_account has deliberately been switched back to true.
+    if (!isAal2EnabledFor('login') || !gatePolicy.mfaRequiredAccount) {
+      console.info('[Auth][AAL2-DIAGNOSTIC-SUPERSESSION]', {
+        supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+        reactivationStage: AAL2_REACTIVATION_STAGE,
+        surface: 'login',
+        aal2Required: false,
+        accountMfaRequired: gatePolicy.mfaRequiredAccount,
+      });
+      setPendingStepUpAssurance(null);
+      await handleSupabaseSession(session);
+      return;
+    }
+
+    const assurance = await getCurrentAssuranceLevel(supabase);
+    if (assurance.currentLevel === 'aal2') {
+      await handleSupabaseSession(session);
+      return;
+    }
+
+    if (assurance.nextLevel === 'aal2') {
+      setPendingStepUpAssurance(assurance);
+      setPendingStepUpSession(session);
+      setAuthBootstrapPending(false);
+      return;
+    }
+
+    resetAuthProjection();
     setAuthBootstrapPending(false);
+    setAuthError({
+      message:
+        'Für dieses Konto ist AAL2 wieder aktiviert, aber Supabase meldet keinen verifizierbaren AAL2-Faktor.',
+      code: 'MFA_REQUIRED_FACTOR_MISSING',
+      expectedId: session.user.id,
+    });
   };
 
   const scheduleSessionEstablishment = (session: any) => {
@@ -385,6 +420,18 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           const session = pendingOnboardingSession;
           setPendingOnboardingSession(null);
           setPendingStepUpAssurance(null);
+
+          if (!isAal2EnabledFor('login')) {
+            console.info('[Auth][AAL2-DIAGNOSTIC-SUPERSESSION]', {
+              supersessionId: AAL2_DIAGNOSTIC_SUPERSESSION_ID,
+              reactivationStage: AAL2_REACTIVATION_STAGE,
+              surface: 'login-after-onboarding',
+              aal2Required: false,
+            });
+            await handleSupabaseSession(session);
+            return;
+          }
+
           setPendingStepUpSession(session);
         }}
         onAbort={async () => {
@@ -448,8 +495,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
               return;
             }
 
-            // The fast AAL2 path intentionally skips the pre-MFA profile roundtrip. Revalidate the
-            // onboarding invariant here before exposing an authenticated application session.
+            // Revalidate onboarding after an enabled MFA path before exposing application state.
             const onboardingRequired = await needsOnboarding(liveSession);
             if (onboardingRequired) {
               setPendingOnboardingSession(liveSession);

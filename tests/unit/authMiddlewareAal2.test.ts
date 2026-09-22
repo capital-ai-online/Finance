@@ -22,6 +22,9 @@ vi.mock('../../server/db', () => ({
       },
     },
     from: (table: string) => {
+      if (table === 'audit_logs_iam') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
       if (table !== 'step_up_tokens') throw new Error(`Unerwartete Tabelle im Test: ${table}`);
       return {
         update: () => ({
@@ -53,14 +56,17 @@ vi.mock('../../server/db', () => ({
   })),
 }));
 
-import { requireVerifiedAal2, requireStepUp } from '../../src/platform/Security/authMiddleware';
+import {
+  requireVerifiedAal2,
+  requireStepUp,
+} from '../../src/platform/Security/authMiddleware';
 import { isSupabaseConfigured } from '../../server/db';
 
 function req(headers: Record<string, string> = {}): Request {
   return { headers, requestId: 'test-request' } as unknown as Request;
 }
 
-describe('requireVerifiedAal2', () => {
+describe('requireVerifiedAal2 strict privileged server boundary', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     getAalMock.mockReset();
@@ -127,7 +133,8 @@ describe('requireVerifiedAal2', () => {
   });
 });
 
-describe('requireStepUp (gekoppelt an AAL2)', () => {
+
+describe('requireStepUp (gekoppelt an privilegiertes AAL2)', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     getAalMock.mockReset();
@@ -141,11 +148,21 @@ describe('requireStepUp (gekoppelt an AAL2)', () => {
     expect(getUserMock).not.toHaveBeenCalled();
   });
 
-  it('verweigert bei AAL1, auch wenn ein syntaktisch gültiger Step-Up-Header vorliegt - der DB-Tokencheck wird gar nicht erst versucht', async () => {
+  it('Stage 0 laesst privilegierten Step-Up weiter an Provider-AAL2 gebunden', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    getAalMock.mockResolvedValue({ data: { currentLevel: 'aal1', nextLevel: 'aal2' }, error: null });
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
+    getAalMock.mockResolvedValue({
+      data: { currentLevel: 'aal1', nextLevel: 'aal2' },
+      error: null,
+    });
+    stepUpUpdateResultMock.mockResolvedValue({ data: { id: 'token-row-1' }, error: null });
+
+    const result = await requireStepUp(
+      req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }),
+      'test-purpose',
+    );
+
     expect(result).toBe(false);
+    expect(getAalMock).toHaveBeenCalledWith('tok');
     expect(stepUpUpdateResultMock).not.toHaveBeenCalled();
   });
 
