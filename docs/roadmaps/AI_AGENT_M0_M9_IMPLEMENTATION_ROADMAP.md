@@ -1,8 +1,10 @@
 # AI Agent M0–M10 Implementation Roadmap
 
-> Legacy filename retained for stable references. Canonical operational phase index: `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
+> **Lifecycle:** HISTORICAL SNAPSHOT / NON-AUTHORIZING. The filename is retained only for stable historical references. The former `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` and standalone DevelopmentChain execution surfaces are retired/removed.
+>
+> **Current-authority note (2026-09-22):** Repository execution resolves exclusively through `/AGENTS.md@CURRENT_MAIN`. The historical M0–M10/M10, policy, handoff and approval rules below are preserved as provenance and MUST NOT select work, grant capability, authorize CI/merge/deploy, or override current Project/PVC/Security/Compliance/domain constraints. Productive M10 is `RETIRED / OFF`.
 
-Status: IMPLEMENTATION PHASE
+Status: HISTORICAL SNAPSHOT / NON-AUTHORIZING
 Status date: 2026-08-12
 Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
 Platform version: `0.6.0`
