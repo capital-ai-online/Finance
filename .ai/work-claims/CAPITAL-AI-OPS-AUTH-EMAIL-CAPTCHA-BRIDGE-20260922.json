@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-EMAIL-CAPTCHA-BRIDGE-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Restore the Supabase Auth CAPTCHA token contract for backend-first email registration/login/recovery/resend after live registration evidence showed CAPTCHA rejection before confirmation mail generation.",
+  "workItemDE": "CAPTCHA-Token-Vertrag des backend-first E-Mail-Auth-Flows wiederherstellen, damit Supabase Registrierung, Login, Recovery und Confirmation-Resend akzeptiert",
+  "startedAt": "2026-09-22T12:10:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+  "lastSyncedMainSha": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+  "branch": "operations/auth-email-captcha-bridge-20260922",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation / PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "Production registration currently returns enumeration-resistant 202 while Supabase rejects the request before confirmation mail generation because captcha_token is missing.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-EMAIL-CAPTCHA-BRIDGE-20260922.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_EMAIL_CAPTCHA_BRIDGE_2026-09-22.md",
+    "server/routes/backendAuthRoutes.ts",
+    "tests/unit/backendEmailAuth.test.ts"
+  ],
+  "dependencies": [
+    "Frontend owner must obtain a fresh hCaptcha token through the existing src/lib/hcaptcha.ts bridge and supply it in the same-origin auth request.",
+    "Supabase Auth CAPTCHA remains enabled; this package does not disable or weaken bot protection."
+  ],
+  "evidence": {
+    "currentMain": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+    "productionCommit": "4d8c6ee4797e763a4c6a006eff17d34a793c3a49",
+    "smtpTest": "Render mailer successfully completed outbox job e6f1a611-11a3-43b3-9f0a-20df0ae1c208 to s.kulessa@protonmail.com on first attempt.",
+    "registrationFailure": "Render backend-auth log: captcha protection: request disallowed (no captcha_token found).",
+    "resendFailure": "Render backend-auth log: Signup confirmation resend rejected for the same missing captcha_token.",
+    "existingBridge": "src/lib/hcaptcha.ts already provides requestHcaptchaToken(); Dockerfile/render.yaml already project VITE_HCAPTCHA_SITE_KEY.",
+    "openWriterOverlap": "No open auth/captcha/email registration PR at claim creation."
+  },
+  "scopeBoundary": [
+    "Do not disable Supabase CAPTCHA.",
+    "Do not expose hCaptcha secret; only the public site key remains browser-visible.",
+    "Validate captchaToken as bounded request input and fail closed when absent.",
+    "Forward captchaToken to Supabase signUp, signInWithPassword, resend and resetPasswordForEmail.",
+    "Preserve account-enumeration resistance for registration, recovery and resend.",
+    "No SMTP credential change is required by current evidence.",
+    "No database schema or Stripe mutation is part of this package.",
+    "Human/CODEOWNER merge required."
+  ],
+  "acceptanceCriteria": [
+    "All four protected backend email-auth endpoints require a bounded captchaToken.",
+    "Supabase calls receive captchaToken in their documented options contract.",
+    "Provider CAPTCHA errors no longer masquerade as a successful mail request when the token is absent at the backend boundary.",
+    "Existing email-confirmation token-hash flow and HttpOnly session behavior remain unchanged.",
+    "Focused and required checks pass on exact head.",
+    "Human/CODEOWNER merge required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
