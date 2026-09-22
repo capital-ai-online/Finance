@@ -5,11 +5,20 @@ declare global {
       validConsent: () => boolean;
       acceptedCategory: (category: string) => boolean;
     };
+    CapitalAIConsent?: {
+      openSettings: () => void;
+    };
   }
 }
 
 export function openCookieConsentSettings(): void {
-  window.CookieConsent?.showPreferences();
+  const trigger = document.getElementById('capital-ai-cookie-settings') as HTMLButtonElement | null;
+  if (trigger) {
+    trigger.click();
+    return;
+  }
+
+  window.CapitalAIConsent?.openSettings();
 }
 
 // Compatibility export for current and parallel Login/Landing consumers.
