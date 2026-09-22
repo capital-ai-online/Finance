@@ -47,6 +47,7 @@ const EMAIL_MAX_LENGTH = 320;
 const PASSWORD_MAX_LENGTH = 1_024;
 const DISPLAY_NAME_MAX_LENGTH = 120;
 const TOKEN_HASH_MAX_LENGTH = 1_024;
+const CAPTCHA_TOKEN_MAX_LENGTH = 8_192;
 
 const TIERS = new Set(['Free', 'Starter', 'Pro', 'Enterprise']);
 
@@ -82,6 +83,27 @@ function normalizeDisplayName(value: unknown): string | undefined {
   const clean = value.trim().replace(/\s+/g, ' ');
   if (!clean) return undefined;
   return clean.slice(0, DISPLAY_NAME_MAX_LENGTH);
+}
+
+function normalizeCaptchaToken(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const token = value.trim();
+  if (!token || token.length > CAPTCHA_TOKEN_MAX_LENGTH) return null;
+  return token;
+}
+
+function isCaptchaProviderError(error: unknown): boolean {
+  const message = (error as { message?: unknown } | null)?.message;
+  return typeof message === 'string' && message.toLowerCase().includes('captcha');
+}
+
+function requireCaptchaToken(req: Request, res: Response): string | null {
+  const captchaToken = normalizeCaptchaToken(req.body?.captchaToken);
+  if (!captchaToken) {
+    res.status(400).json({ error: 'Sicherheitsprüfung erforderlich. Bitte erneut versuchen.' });
+    return null;
+  }
+  return captchaToken;
 }
 
 function providerStatus(error: unknown): number | null {
@@ -260,6 +282,9 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
     return;
   }
 
+  const captchaToken = requireCaptchaToken(req, res);
+  if (!captchaToken) return;
+
   try {
     await assertServerPasswordSafe(password);
   } catch (error) {
@@ -281,6 +306,7 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
       options: {
         emailRedirectTo: new URL('/', origin).toString(),
         data: fullName ? { full_name: fullName } : undefined,
+        captchaToken,
       },
     });
 
@@ -291,6 +317,10 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
         status,
         error: error.message,
       });
+      if (isCaptchaProviderError(error)) {
+        res.status(400).json({ error: 'Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.' });
+        return;
+      }
       if (status === 429) {
         res.status(429).json({ error: 'Zu viele Registrierungsversuche. Bitte später erneut versuchen.' });
         return;
@@ -344,9 +374,16 @@ backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, r
     return;
   }
 
+  const captchaToken = requireCaptchaToken(req, res);
+  if (!captchaToken) return;
+
   try {
     const supabase = createBackendEmailAuthClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken },
+    });
     if (error || !data.session || !data.user || data.user.is_anonymous) {
       const status = providerStatus(error);
       authLogger.warn('Email/password login denied', {
@@ -354,6 +391,10 @@ backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, r
         status,
         error: error?.message || 'missing-session',
       });
+      if (isCaptchaProviderError(error)) {
+        res.status(400).json({ error: 'Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.' });
+        return;
+      }
       if (status === 429) {
         res.status(429).json({ error: 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.' });
         return;
@@ -392,13 +433,19 @@ backendAuthRouter.post('/confirmation/resend', AUTH_MAIL_RATE_LIMIT, async (req,
     return;
   }
 
+  const captchaToken = requireCaptchaToken(req, res);
+  if (!captchaToken) return;
+
   try {
     const origin = resolveApplicationOrigin(req);
     const supabase = createBackendEmailAuthClient();
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: new URL('/', origin).toString() },
+      options: {
+        emailRedirectTo: new URL('/', origin).toString(),
+        captchaToken,
+      },
     });
 
     if (error) {
@@ -408,6 +455,10 @@ backendAuthRouter.post('/confirmation/resend', AUTH_MAIL_RATE_LIMIT, async (req,
         status,
         error: error.message,
       });
+      if (isCaptchaProviderError(error)) {
+        res.status(400).json({ error: 'Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.' });
+        return;
+      }
       if (status === 429) {
         res.status(429).json({ error: 'Zu viele Mail-Anfragen. Bitte später erneut versuchen.' });
         return;
@@ -439,11 +490,15 @@ backendAuthRouter.post('/password/forgot', AUTH_MAIL_RATE_LIMIT, async (req, res
     return;
   }
 
+  const captchaToken = requireCaptchaToken(req, res);
+  if (!captchaToken) return;
+
   try {
     const origin = resolveApplicationOrigin(req);
     const supabase = createBackendEmailAuthClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: new URL('/account/update-password', origin).toString(),
+      captchaToken,
     });
 
     if (error) {
@@ -453,6 +508,10 @@ backendAuthRouter.post('/password/forgot', AUTH_MAIL_RATE_LIMIT, async (req, res
         status,
         error: error.message,
       });
+      if (isCaptchaProviderError(error)) {
+        res.status(400).json({ error: 'Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.' });
+        return;
+      }
       if (status === 429) {
         res.status(429).json({ error: 'Zu viele Mail-Anfragen. Bitte später erneut versuchen.' });
         return;
