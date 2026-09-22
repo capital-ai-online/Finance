@@ -48,6 +48,11 @@ const ROUTES: Record<string, RouteSeo> = {
     description: 'Datenschutzerklärung und Informationen zur Datenverarbeitung gemäß DSGVO für CAPITAL-AI.',
     canonicalPath: '/datenschutz',
   },
+  '/faq': {
+    title: 'FAQ – CAPITAL-AI',
+    description: 'Häufig gestellte Fragen zu CAPITAL-AI, Plattform, Datenqualität, Datenschutz, Konto, Abonnement und rechtlicher Transparenz.',
+    canonicalPath: '/faq',
+  },
 };
 
 export function normalizePathname(pathname: string): string {
