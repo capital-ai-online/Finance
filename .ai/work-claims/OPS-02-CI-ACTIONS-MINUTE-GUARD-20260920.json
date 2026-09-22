@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-02-CI-ACTIONS-MINUTE-GUARD-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -41,5 +41,7 @@
     "sha": "8c45be2e1386294de32927357dc50f1dfd03bb73",
     "status": "SYNCED",
     "correlatedAt": "2026-09-20T18:43:31Z"
-  }
+  },
+  "releasedAt": "2026-09-22T13:25:00+02:00",
+  "releaseReason": "The claimed Actions-minute predecessor is terminal on current main; this stale exclusive writer is released during the owner-correct SEC-WEB-F01/F16 remediation."
 }
