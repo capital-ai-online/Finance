@@ -1,79 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  clearLoginStepUpMarkers,
-  hasPassedLoginStepUpThisTab,
-  markLoginStepUpPassed,
-} from '../../src/lib/loginStepUp';
+import { describe, expect, it } from 'vitest';
 
-const loginStepUpSource = fs.readFileSync(
-  path.join(process.cwd(), 'src/lib/loginStepUp.ts'),
-  'utf8',
-);
+describe('superseded browser login step-up boundary', () => {
+  it('keeps normal login free of browser MFA/AAL orchestration', () => {
+    const session = fs.readFileSync(path.join(process.cwd(), 'src/app/auth/SessionComposition.tsx'), 'utf8');
+    const login = fs.readFileSync(path.join(process.cwd(), 'src/features/public/ui/LoginPage.tsx'), 'utf8');
+    const auth = fs.readFileSync(path.join(process.cwd(), 'src/platform/Security/authMiddleware.ts'), 'utf8');
 
-describe('Login-Step-Up authority boundary', () => {
-  it('enthaelt keine zweite fail-open MFA/AAL-Entscheidungslogik mehr', () => {
-    expect(loginStepUpSource).not.toContain('loginStepUpRequirement');
-    expect(loginStepUpSource).not.toContain("from '../supabaseClient'");
-    expect(loginStepUpSource).not.toContain('supabase.auth.passkey.list');
-    expect(loginStepUpSource).not.toContain(".select('totp_enabled')");
-    expect(loginStepUpSource).toContain('Compatibility-only tab marker for the canonical native Supabase AAL gate.');
-    expect(loginStepUpSource).toContain('lives exclusively in `LoginStepUpGate`');
-  });
-});
-
-describe('Login-Step-Up sessionStorage marker', () => {
-  let store: Map<string, string>;
-
-  beforeEach(() => {
-    store = new Map();
-    vi.stubGlobal('window', {
-      sessionStorage: {
-        getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
-        setItem: (key: string, value: string) => store.set(key, value),
-        removeItem: (key: string) => store.delete(key),
-        key: (index: number) => Array.from(store.keys())[index] ?? null,
-        get length() {
-          return store.size;
-        },
-      },
-    });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('markiert eine bereits erfolgreich verifizierte Sitzung strikt pro Nutzer', () => {
-    expect(hasPassedLoginStepUpThisTab('user-1')).toBe(false);
-    expect(hasPassedLoginStepUpThisTab('user-2')).toBe(false);
-
-    markLoginStepUpPassed('user-1');
-
-    expect(hasPassedLoginStepUpThisTab('user-1')).toBe(true);
-    expect(hasPassedLoginStepUpThisTab('user-2')).toBe(false);
-  });
-
-  it('entfernt alle tab-lokalen Marker beim Logout', () => {
-    markLoginStepUpPassed('user-1');
-    markLoginStepUpPassed('user-2');
-
-    clearLoginStepUpMarkers();
-
-    expect(hasPassedLoginStepUpThisTab('user-1')).toBe(false);
-    expect(hasPassedLoginStepUpThisTab('user-2')).toBe(false);
-  });
-
-  it('behandelt einen nicht lesbaren Marker-Speicher als unverifiziert', () => {
-    vi.stubGlobal('window', {
-      sessionStorage: {
-        getItem: () => {
-          throw new Error('blocked');
-        },
-      },
-    });
-
-    expect(hasPassedLoginStepUpThisTab('user-1')).toBe(false);
+    expect(session).not.toContain('LoginStepUpGate');
+    expect(session).not.toContain('getAuthenticatorAssuranceLevel');
+    expect(login).not.toContain('LoginStepUpGate');
+    expect(auth).toContain('requireVerifiedAal2');
   });
 });
