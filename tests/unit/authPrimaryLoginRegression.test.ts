@@ -208,8 +208,8 @@ describe('website primary login regression boundary', () => {
     expect(loginStepUpGate).toContain("setRequirement('blocked')");
     expect(aal2Supersession).toContain("login: 1");
     expect(aal2Supersession).toContain("registration: 2");
-    expect(aal2Supersession).toContain("export type Aal2Surface = 'login' | 'registration' | 'privileged'");
-    expect(aal2Supersession).toContain('privileged: 3');
+    expect(aal2Supersession).toContain('privilegedServerAal2Unaffected: true');
+    expect(aal2Supersession).not.toContain("privileged: 3");
   });
 
   it('obtains hCaptcha tokens without persisting or logging them', () => {
