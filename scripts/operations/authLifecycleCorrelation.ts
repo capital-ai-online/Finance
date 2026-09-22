@@ -264,7 +264,7 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
 
   const registrationOnboarding =
     sessionComposition.includes('RegistrationCompletionGate') &&
-    sessionComposition.includes('needsOnboarding(session)') &&
+    (sessionComposition.includes('needsOnboarding(session)') || sessionComposition.includes('readAuthGatePolicy(session)')) &&
     registrationGate.includes("authFetch('/api/auth/register/complete'") &&
     registrationGate.includes("authFetch('/api/auth/mfa/enrollment-complete'") &&
     stepUp.includes("stepUpRouter.post('/register/complete'") &&
