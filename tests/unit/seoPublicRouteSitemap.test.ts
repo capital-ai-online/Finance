@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Express, Request, RequestHandler, Response } from 'express';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getRouteSeo,
   listPublicRouteSeoPaths,
@@ -61,6 +61,10 @@ function captureProductionFallbackHandler(): RequestHandler {
   if (!handler) throw new Error('Production SPA fallback handler was not registered.');
   return handler;
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
   it('lists every canonical public SEO route exactly once and nothing else', () => {
@@ -133,6 +137,10 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     expect(robots.toLowerCase()).not.toContain('noindex');
   });
 
+  it('keeps Impressum metadata aligned to § 5 DDG', () => {
+    expect(getRouteSeo('/impressum').description).toContain('§ 5 DDG');
+  });
+
   it('keeps the learning platform discoverable from prerendered static HTML without hydration', () => {
     const source = fs.readFileSync(prerenderPath, 'utf8');
     const noscriptTemplate = source.match(/const noscriptBlock = `([\s\S]*?)`;/)?.[1] ?? '';
@@ -142,9 +150,16 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     );
   });
 
-  it('serves /faq through the SPA shell without promoting it into the SEO route set', () => {
-    expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(true);
-    expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(false);
+  it('serves /faq as a canonical public SEO route with its prerender fallback', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+
+    expect(APPLICATION_SPA_PATHS.has('/faq')).toBe(false);
+    expect(PUBLIC_SPA_PATHS.has('/faq')).toBe(true);
+    expect(listPublicRouteSeoPaths()).toContain('/faq');
+    expect(getRouteSeo('/faq')).toMatchObject({
+      title: 'FAQ – CAPITAL-AI',
+      canonicalPath: '/faq',
+    });
 
     const handler = captureProductionFallbackHandler();
     let sentFile: string | undefined;
@@ -170,7 +185,74 @@ describe('public SEO route sitemap consistency (WP-SEO-TECH-GATE)', () => {
     handler({ path: '/faq' } as Request, response, () => undefined);
 
     expect(statusCode).toBeUndefined();
-    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'index.html'));
+    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'faq', 'index.html'));
+  });
+
+  it('serves /vocabulary publicly and canonicalizes glossary aliases', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+
+    expect(PUBLIC_SPA_PATHS.has('/vocabulary')).toBe(true);
+    expect(APPLICATION_SPA_PATHS.has('/vocabulary')).toBe(false);
+    expect(listPublicRouteSeoPaths()).toContain('/vocabulary');
+    expect(getRouteSeo('/vocabulary')).toMatchObject({
+      title: 'Market Vocabulary – CAPITAL-AI',
+      canonicalPath: '/vocabulary',
+    });
+
+    const handler = captureProductionFallbackHandler();
+    let sentFile: string | undefined;
+
+    const vocabularyResponse = {
+      status() {
+        return this;
+      },
+      type() {
+        return this;
+      },
+      send() {
+        return this;
+      },
+      sendFile(file: string) {
+        sentFile = file;
+        return this;
+      },
+      redirect() {
+        return this;
+      },
+    } as unknown as Response;
+
+    handler({ path: '/vocabulary' } as Request, vocabularyResponse, () => undefined);
+    expect(sentFile).toBe(path.join(process.cwd(), 'dist', 'vocabulary', 'index.html'));
+
+    const aliases = ['/glossar', '/lexikon', '/market-vocabulary', '/dictionary'];
+    for (const alias of aliases) {
+      expect(APPLICATION_SPA_PATHS.has(alias)).toBe(true);
+      let redirectStatus: number | undefined;
+      let redirectLocation: string | undefined;
+      const aliasResponse = {
+        status() {
+          return this;
+        },
+        type() {
+          return this;
+        },
+        send() {
+          return this;
+        },
+        sendFile() {
+          return this;
+        },
+        redirect(status: number, location: string) {
+          redirectStatus = status;
+          redirectLocation = location;
+          return this;
+        },
+      } as unknown as Response;
+
+      handler({ path: alias } as Request, aliasResponse, () => undefined);
+      expect(redirectStatus).toBe(301);
+      expect(redirectLocation).toBe('/vocabulary');
+    }
   });
 
   it('returns a real HTTP 404 for an unknown route', () => {
