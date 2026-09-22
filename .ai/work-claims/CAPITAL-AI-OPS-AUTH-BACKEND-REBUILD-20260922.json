@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-BACKEND-REBUILD-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -70,5 +70,7 @@
     "Focused and full required tests pass on the exact PR head.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-22T08:58:00+02:00",
+  "releaseReason": "Human/CODEOWNER merge completed via PR #1270 at main@c8b6948e2cabb39539446dd396636d9e358d45eb; superseded by the fresh Owner-directed email registration/authentication extension."
 }
