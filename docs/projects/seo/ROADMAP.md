@@ -1,12 +1,12 @@
 # CAPITAL-AI-SEO — Canonical Roadmap
 
-**Baseline:** `main@123ad5ac7734d363e35d1b7bf945aceae41fbee8`
+**Baseline:** `main@11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1`
 
 **Project:** `CAPITAL-AI-SEO`  
 **Folder:** `docs/projects/seo/`  
 **Role:** cross-cutting SEO and Google Marketing execution/project coordination  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-17 — historical task activation removed  
+**Reconciliation:** 2026-09-22 — post-PR #1211 merge readback; FAQ public-SEO dependency reclassified to OPS #1252; topic/content evidence refresh active  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -21,7 +21,7 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 ### WP-SEO-LAUNCH-01 — Public Web & Social Launch Management
 
-**State:** `ACTIVE_CANONICAL / CURRENT_FRONTEND_1241_BOUND / FAQ_OPS_DEPENDENCY_OPEN`.
+**State:** `ACTIVE_CANONICAL / PR_1211_MERGED / POST_SOCIAL1234_SYNC / FAQ_OPS_1252_BLOCKED / TOPIC_CONTENT_EVIDENCE_REFRESH_ACTIVE`.
 
 Fresh Human/Owner direction in the current interaction activates one bounded launch-readiness work item: converge the existing SEO, public-web, measurement and Social distribution capabilities into an evidence-based go-public sequence without creating a second roadmap, publishing authority, analytics stack or product owner.
 
@@ -29,7 +29,8 @@ Fresh Human/Owner direction in the current interaction activates one bounded lau
 **Program integration:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` version `0002.21`.
 
 **Current execution evidence:** `docs/seo/WP_SEO_LAUNCH_01_EXECUTION_BASELINE_2026-09-20.md`.  
-**Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.
+**Current management refresh:** `docs/seo/WP_SEO_LAUNCH_01_MANAGEMENT_REFRESH_2026-09-21.md`.  
+**Post-#1211 continuation evidence:** `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`.
 
 Historical launch-execution readback retained for provenance (superseded by the 2026-09-22 current-frontend convergence below):
 
@@ -88,18 +89,22 @@ Owner-correct handoff: FE owns PR #1195 re-scope/supersession and static visual 
 
 ## Current frontend / SEO convergence — 2026-09-22
 
-Fresh Human/Owner direction requires all active SEO website work to target the current merged Frontend rather than older landing snapshots.
+Human/CODEOWNER merged PR #1211 at `main@c01e1096ef0c2595b97daa23e4aca25129b2545c`. FE PR #1250 then moved CURRENT_MAIN to `main@375bab9f3b05c08ce86d9909e3b024b34097d8b2`, and SOCIAL PR #1234 subsequently moved it to `main@11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1`. Both later merges are non-overlapping with this SEO document scope; the SEO branch is synchronized to the latest main before merge-readiness is evaluated.
 
-- Current main is `9c8a3e80c4451ed0b6ea45f368175604608f6f4b`, exactly the merge of FE PR #1241.
-- PR #1241 promotes `SvenKulessa/FRONTEND@f2a101330d74420c373f0ec56fa58caac53d741d` into the current landing runtime.
-- PR #1206/#1209 references are historical evidence only for active SEO coordination.
-- Root title/description are corrected in the open SEO PR to the current visible “Marktdaten verstehen. Chancen besser erkennen.” proposition.
-- Impressum route/prerender metadata is corrected from TMG to `§ 5 DDG`.
-- Final Mobile/Desktop CWV is measurement-gated; no superseded FE PR remains a blocker.
-- `/faq` exists in the current frontend, but canonical SEO route/sitemap/prerender promotion remains blocked on OPS Issue #1223 because the production SPA allowlist/fallback has not yet converged. SEO Issue #1233 remains the owner-correct continuation.
-- GSC/GA4/GenAI provider states remain independently evidence-gated.
+- PR #1211 merged the root title/description and current-landing semantic alignment; the active root proposition is no longer an open SEO-PR handoff.
+- Impressum route/prerender metadata is merged on the DDG wording (`§ 5 DDG`); stale TMG wording is historical only.
+- FE PR #1241 remains the graphical source generation incorporated by the merged SEO baseline; older #1206/#1209 references remain historical evidence only.
+- Final Mobile/Desktop CWV remains measurement-gated; no synthetic field PASS is inferred.
+- OPS #1223 / PR #1249 completed direct Production-SPA reachability for `/faq`, but `/faq` is still classified as `APPLICATION_SPA_PATHS` and does not yet have a route-specific public HTML fallback.
+- The strict route-set contract still requires equality across canonical SEO routes, sitemap, prerender, `PUBLIC_SPA_PATHS` and public HTML fallback. Therefore SEO Issue #1233 remains fail-closed blocked on the owner-correct OPS promotion Issue #1252; the equality/security invariant is not weakened.
+- `WP-SEO-TOPICS` + `WP-SEO-CONTENT` are the current dependency-ready SEO-owned continuation. The qualitative topic map is refreshed from real public SERP/competitor evidence without invented volume/ranking values, and Pilot Brief #02 defines an evidence-first scoring content contract.
+- GSC Search Analytics, current URL performance, GA4 and GenAI visibility remain independently evidence-gated; repository or web-search observations do not substitute provider reads.
 
-Current binding evidence: `docs/seo/SEO_LANDING_PAGE_BINDING_2026-09-21.md`.
+Current binding evidence:
+- `docs/seo/SEO_LANDING_PAGE_BINDING_2026-09-21.md`
+- `docs/seo/WP_SEO_LAUNCH_01_POST_1211_CONTINUATION_2026-09-22.md`
+- `docs/seo/SEO_TOPIC_MAP_PUBLIC_LAUNCH_2026-09-21.md`
+- `docs/seo/SEO_LAUNCH_CONTENT_BRIEF_02_2026-09-22.md`
 
 ## Current provider evidence
 
@@ -174,8 +179,8 @@ Program detail remains in `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADM
 | WP-SEO-AI-VIS | GSC connectivity verified; GenAI performance read condition-gated |
 | WP-SEO-TECH-GATE | FE owner return merged; repository regression present; deployed readback partial |
 | WP-SEO-SCHEMA | FE owner return merged; generated-output/Rich-Result detail remains evidence-gated |
-| WP-SEO-TOPICS | requires concrete provider/topic evidence |
-| WP-SEO-CONTENT | requires topic evidence |
+| WP-SEO-TOPICS | current qualitative map refreshed with real public SERP/competitor evidence on 2026-09-22; quantitative reprioritization still requires GSC/provider data |
+| WP-SEO-CONTENT | Brief #01 exists; Brief #02 defines evidence-first multi-asset scoring content with FINTECH/COMP review gates; no publication authority is implied |
 | WP-SEO-SPAM | repository negative-gate evidence surface |
 | WP-SEO-CWV / IA / MEDIA | owner-routed evidence surfaces |
 | WP-SEO-REFRESH / AUTHORITY | condition-gated where real search/content evidence is required |
