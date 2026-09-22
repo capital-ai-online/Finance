@@ -57,9 +57,25 @@ interface SupervisorExecution {
   error?: string;
 }
 
+interface SelfHealingContractProjection {
+  valid?: boolean;
+  enabledActionIds?: string[];
+  heldActionIds?: string[];
+}
+
+interface FaultInjectionConvergenceProjection {
+  complete?: boolean;
+  scenarioCount?: number;
+  requiredScenarioCount?: number;
+  scenarioIds?: string[];
+  protectedActionsHeld?: boolean;
+}
+
 interface SupervisorStatusResponse {
   recentExecutions?: SupervisorExecution[];
   routingTable?: Record<string, unknown>;
+  selfHealingContract?: SelfHealingContractProjection;
+  faultInjectionConvergence?: FaultInjectionConvergenceProjection;
   [key: string]: unknown;
 }
 
@@ -157,6 +173,12 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   const recentExecutions = Array.isArray(supervisorStatus?.recentExecutions)
     ? supervisorStatus.recentExecutions
     : [];
+  const selfHealingContract = supervisorStatus?.selfHealingContract;
+  const faultInjectionConvergence = supervisorStatus?.faultInjectionConvergence;
+  const baselineStaleCovered =
+    faultInjectionConvergence?.scenarioIds?.includes('CURRENT_STATE_PROJECTION_BASELINE_STALE') ?? false;
+  const repositoryProjectionActionEnabled =
+    selfHealingContract?.enabledActionIds?.includes('RECONCILE_REPOSITORY_PROJECTION') ?? false;
 
   const observedCards = [
     {
@@ -258,6 +280,52 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
               </div>
             ))}
           </div>
+
+          <section className="bg-[#111114] border border-white/5 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+              <ShieldCheck size={15} className="text-aif-gold-DEFAULT" />
+              <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider">
+                Self-Healing Control Panel
+              </h3>
+            </div>
+            <p className="text-[11px] text-white/45 leading-relaxed">
+              Read-only Projektion des kanonischen Self-Healing-Contracts und der SH-02.10-Fault-Suite.
+              Reparaturen werden hier nicht ausgeführt; vorhandene spezialisierte Writer und Exact-Head-
+              Verifikation bleiben die einzige Mutations- und Evidence-Grenze.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-white/5 bg-black/20 p-4 space-y-2">
+                <div className="text-[9px] font-mono uppercase text-white/40">Contract</div>
+                <div className="text-sm font-bold font-mono text-white">
+                  {selfHealingContract ? (selfHealingContract.valid ? 'VALID' : 'INVALID') : 'nicht instrumentiert'}
+                </div>
+                <div className="text-[10px] text-white/35">
+                  Runtime-Self-Healing bleibt bis SH-02.11 gestuft; diese Ansicht erteilt keine Aktion.
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-black/20 p-4 space-y-2">
+                <div className="text-[9px] font-mono uppercase text-white/40">SH-02.10 Fault Coverage</div>
+                <div className="text-sm font-bold font-mono text-white">
+                  {faultInjectionConvergence
+                    ? `${faultInjectionConvergence.scenarioCount ?? 0}/${faultInjectionConvergence.requiredScenarioCount ?? 0} ${faultInjectionConvergence.complete ? 'COMPLETE' : 'INCOMPLETE'}`
+                    : 'nicht instrumentiert'}
+                </div>
+                <div className="text-[10px] text-white/35">
+                  Protected Actions: {faultInjectionConvergence?.protectedActionsHeld === true ? 'HELD' : 'nicht verifiziert'}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-black/20 p-4 space-y-2">
+                <div className="text-[9px] font-mono uppercase text-white/40">Baseline Drift Recovery</div>
+                <div className="text-sm font-bold font-mono text-white">
+                  {baselineStaleCovered && repositoryProjectionActionEnabled ? 'COVERED' : 'nicht verifiziert'}
+                </div>
+                <div className="text-[10px] text-white/35 break-words">
+                  CURRENT_STATE_PROJECTION_BASELINE_STALE → REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT →
+                  RECONCILE_REPOSITORY_PROJECTION · 1 Versuch · Exact-Head CI/Governance Readback
+                </div>
+              </div>
+            </div>
+          </section>
 
           <section className="bg-[#111114] border border-white/5 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 border-b border-white/5 pb-3">
