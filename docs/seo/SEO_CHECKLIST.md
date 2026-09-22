@@ -1,7 +1,7 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project:** CAPITAL-AI  
-**Stand:** 22.09.2026 — Post-PR #1253 Content-Quality/Review-Korrelation  
-**Korrelationsbasis:** `main@93893ab46cc0753dc4e86cd7d6120d321bc48651`  
+**Stand:** 22.09.2026 — Post-PR #1260 IA/Public-Route-Korrelation  
+**Korrelationsbasis:** `main@aee799282298596a5f2d9140a4e805edf52783a0`  
 **Provider-Evidence-Snapshot:** `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489`  
 **Repository:** `capital-ai-online/Finance`  
 **GOOGLE_VISIBLE_PASS:** **PARTIAL — GSC READ_VERIFIED + URL INSPECTION 5/5 VERIFIED; `/learning-platform` laut Google noch nicht indexiert; Search Analytics/GA4/GenAI-Metriken weiter offen**
@@ -61,11 +61,12 @@
 - [x] kein `llms.txt` als Pflicht-/Ranking-Hack
 
 ## 6. Internal Linking / IA
-- [ ] Public-URL-Inventar vollständig
-- [ ] keine Orphan Pages
-- [ ] beschreibende, kontextuelle Anchor-Texte
-- [ ] H1/H2-Struktur pro indexierbarer Seite konsistent
-- [ ] Navigation und interne Links führen zu kanonischen URLs
+- [x] Public-URL-Inventar vollständig — sechs kanonische SEO-Routen sind in routeSeo/Sitemap/Prerender/Public-Server-Set gleich
+- [ ] keine Orphan-/Reachability-Drift — `/universe` ist kanonische SEO-/Server-Route, fehlt aber im aktuellen hydrierten `AppRoutes`-Router; FE #1263
+- [ ] beschreibende, kontextuelle Anchor-Texte — sichtbare Root-Navigation zu `/universe` und `/learning-platform` fehlt; Prerender-Noscript allein schließt den UX/IA-Gap nicht
+- [ ] H1/H2-Struktur pro indexierbarer Seite konsistent — für `/universe` erst nach Client-Route-Konvergenz wieder als same-route Runtime-Evidence wertbar
+- [ ] Navigation und interne Links führen zu kanonischen URLs — FE #1263 ist owner-korrekter Handoff
+- [x] `/faq` wird trotz sichtbarer UI-Verlinkung nicht voreilig als indexierbare SEO-Route behandelt; OPS #1252 → SEO #1233 bleibt fail-closed
 
 ## 7. Performance / Core Web Vitals — FE-owned
 - [ ] p75 LCP <= 2.5 s
@@ -104,9 +105,9 @@
 - [x] Review-Snapshot 2026-09-22 materialisiert — `WP_SEO_LAUNCH_01_CONTENT_QUALITY_REVIEW_2026-09-22.md`
 - [ ] KPI-Delta seit letztem Review — echte GSC/GA4 Performance-Reads weiterhin nicht verfügbar
 - [ ] neue/entfallene Google Search Features prüfen — provider-read gated
-- [x] Impact/Effort/Dependencies neu bewertet — unmittelbar priorisiert: OPS #1258 Root-HTML-Verifikation und OPS #1252 FAQ-Public-Route-Prerequisite
-- [x] aktuelle technische Regression/Evidence-Lücke aufgenommen — externer Root-Crawl weicht von CURRENT_MAIN-Metadaten ab; OPS #1258 verifiziert Production vs Cache/Deploy
-- [x] genau zwei unmittelbare Folgeaktionen dokumentiert; FINTECH #1254 bleibt fachliche Folgeabhängigkeit ohne vorgezogene Publikationsfreigabe
+- [x] Impact/Effort/Dependencies neu bewertet — unmittelbar priorisiert: FE #1263 `/universe` Client-Routing/visible IA und OPS #1252 FAQ-Public-Route-Prerequisite
+- [x] aktuelle technische Regression/Evidence-Lücke aufgenommen — `/universe` bleibt kanonische SEO-/Server-Route, ist aber im hydrierten Client-Router nicht geroutet; FE #1263. OPS #1258 bleibt separate Root-HTML-Verifikation.
+- [x] genau zwei unmittelbare Folgeaktionen dokumentiert; OPS #1258 und FINTECH #1254 bleiben owner-korrekte Folgeabhängigkeiten ohne vorgezogene PASS-/Publikationsfreigabe
 
 ## 13. Provider / Governance Gates
 - [x] Search Console Property Read: `READ_VERIFIED` auf realem Codex-Cloud-Host über direkten STDIO-MCP-Pfad; `sc-domain:capital-ai.online` gefunden
@@ -121,27 +122,28 @@
 
 ### Current continuation correlation — 2026-09-22
 
-- PR #1253 Human/CODEOWNER-gemergt; CURRENT_MAIN = `93893ab46cc0753dc4e86cd7d6120d321bc48651`.
-- Einziger offener fremder Writer bei Branch-Erstellung: SEC PR #1257; kein Changed-File-Overlap mit diesem SEO-Dokumentationsslice.
+- PR #1260 Human/CODEOWNER-gemergt; Fresh CURRENT_MAIN = `aee799282298596a5f2d9140a4e805edf52783a0`.
+- Einziger offener Writer bei Branch-Erstellung: OPS PR #1262; kein Changed-File-Overlap mit diesem SEO-Dokumentationsslice.
 - Kanonische indexierbare Repository-Route-/Sitemap-Menge bleibt sechs URLs; `/faq` bleibt bis OPS #1252 bewusst außerhalb des Public-SEO-Sets.
-- Externer Root-Crawl zeigte ältere Metadaten als CURRENT_MAIN; Status = `EXTERNAL_CRAWL_METADATA_DIVERGENCE / OPS_VERIFY_1258`, nicht Production-Failure.
+- `/universe` hat einen neuen launch-blockierenden IA/Runtime-Befund: routeSeo/Sitemap/Prerender/Public-Server enthalten die Route, `AppRoutes.tsx` aber nicht. FE #1263 ist der owner-korrekte Handoff.
+- Root-Metadaten sind auf CURRENT_MAIN source-seitig konsistent; OPS #1258 bleibt für den zuvor beobachteten externen Production-/Crawl-Mismatch offen.
 - Pilot Brief #02 = `MERGED_SOURCE_BRIEF / NOT_PUBLISHED`; FINTECH #1254 bleibt Domain-Truth-Gate.
-- GSC Search Analytics / GA4 / GenAI = weiterhin echte Provider-Read-Gates; keine synthetischen Werte.
+- X/Facebook production account readback = `0/0`; Wave-1 Publishing bleibt `BLOCKED_PROVIDER_ACCOUNT_IDENTITY`.
+- GSC Search Analytics / current six-URL inspection / GA4 / GenAI = echte Provider-Read-Gates; keine synthetischen Werte.
+- Initialer Render-Readback dieses Slices: live `720e4a80904a881e5ef732b66e1303f51a769d8e` vs CURRENT_MAIN `aee799282298596a5f2d9140a4e805edf52783a0` → `PRODUCTION_DRIFT` bis exakte Konvergenz belegt ist.
 
 ## 14. Repository Correlation
 - [x] current repository `capital-ai-online/Finance`
-- [x] synchronisierte Arbeitsbaseline `main@afa259fc786479386a6ea0e165c3d8dc3363aae8`
-- [x] Provider-Evidence wurde auf `main@b95f9b74a01b6d0e1228a8d5291b0fb54ea80489` erzeugt; danach wurde PR #981 Human-gemergt und änderte ausschließlich `docs/projects/social-media/ROADMAP.md`, ohne SEO-/MCP-/Google-Read-Semantik zu verändern
-- [x] current `/AGENTS.md` Control Plane **2.11.0** vollständig gelesen; PR #981 änderte die Trust Root nicht
+- [x] aktuelle Arbeitsbaseline `main@aee799282298596a5f2d9140a4e805edf52783a0`
+- [x] current `/AGENTS.md` Control Plane **4.8.0** gelesen; Single Trust Root bleibt maßgeblich
 - [x] `CAPITAL-AI-SEO` / `docs/projects/seo/` / Primary Owner `CAPITAL-AI-SEO`; cross-cutting, kein produktives PVC
-- [x] unmittelbar vor Final-Correlation keine offenen Pull Requests auf GitHub
-- [x] historische Claim `SEO-D-BLOCK-2026-08-15` verweist auf Checklist/Runbook, aber der dort genannte Branch existiert nicht mehr; kein reproduzierbarer aktiver Writer
-- [x] PR #954 Human-gemerged; Codex-MCP-Hostvertrag liegt auf main
-- [x] PR #959 Human-gemerged; SEO-Automation ist lane-spezifisch wieder in der Roadmap-Ausführung aktiv
-- [x] PR #893 Human-gemerged; Public-Route-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
-- [x] PR #894 Human-gemerged; Structured-Data-Lifecycle-Regression liegt auf current main; PR-head CI/Governance/Container-Security waren erfolgreich
-- [x] ADR-0035, ESS-0014, ADR-0082 und ADR-0084 bleiben für die betroffenen SEO-/Google-/Prerender-Grenzen maßgeblich; keine fremde Runtime-/Provider-Authority übernommen
-- [x] CODEX-02 `PASS`, CODEX-03 `PASS`, CODEX-04 direkte STDIO MCP-Liveness `PASS`, GSC-01 `READ_VERIFIED`, SEO-CHAT-02 `VERIFIED`
-- [x] `/learning-platform` als reales Providerfinding erhalten: Verdict `NEUTRAL`, Coverage `Discovered - currently not indexed`
-- [x] keine Detailwerte für die übrigen vier URL-Inspection-Responses synthetisiert; belegt ist 5/5 realer Provider-Response
-- [x] produktive FE/OPS-Änderungen bleiben außerhalb dieses SEO-owned Status-/Acceptance-Synchronisierungsslices
+- [x] offene Writer korreliert: OPS PR #1262 ohne Changed-File-/SEO-Semantik-Overlap
+- [x] PR #1204 und PR #1260 sind gemergt; deren stale active/exclusive Claims werden im aktuellen Fortsetzungsbranch freigegeben
+- [x] Root-Metadaten source-seitig konsistent auf `index.html`, `routeSeo.ts` und Prerender; OPS #1258 bleibt Runtime-Verifikation
+- [x] sechs kanonische SEO-Routen bleiben in routeSeo/Sitemap/Prerender/Public-Server-Inventar gleich
+- [ ] `/universe` same-route Client-Reachability — FE #1263 offen
+- [ ] `/faq` Public-SEO-Promotion — OPS #1252 offen, SEO #1233 blockiert
+- [ ] FINTECH public-safe Scoring-Truth für Brief #02 — #1254 offen
+- [ ] Production exact-SHA = CURRENT_MAIN — initialer Readback dieses Slices non-PASS; erneute Provider-Korrelation erforderlich
+- [x] GSC historische Property-/5-URL-Inspection-Evidence bleibt getrennt von aktuellen sechs-URL/Search-Analytics-/GA4-/GenAI-Gates
+- [x] keine FE/OPS/FINTECH/SOCIAL Runtime- oder Provider-Authority durch diesen SEO-Slice übernommen
