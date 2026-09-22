@@ -18,13 +18,19 @@ const sourceLock = JSON.parse(
 
 describe('desktop landing responsive adapter', () => {
   it('keeps the current FRONTEND source lock intact', () => {
-    expect(sourceLock.sourceCommit).toBe('f2a101330d74420c373f0ec56fa58caac53d741d');
+    expect(sourceLock.sourceCommit).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
     expect(sourceLock.lockMode).toBe('EXACT_GIT_BLOB_WITH_FINANCE_PRESENTATION_ADAPTERS');
     expect(
       sourceLock.entries
         .filter((entry) => entry.mode !== 'EXACT_GIT_BLOB')
         .map((entry) => entry.sourcePath),
-    ).toEqual(['src/App.tsx', 'src/components/BrandLogo.tsx', 'src/components/Header.tsx']);
+    ).toEqual([
+      'src/App.tsx',
+      'src/components/BrandLogo.tsx',
+      'src/components/Header.tsx',
+      'src/components/MarketVocabularyModal.tsx',
+      'src/data/mockData.ts',
+    ]);
 
     expect(referenceApp).toContain("const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)'");
     expect(referenceApp).toContain("type LandingViewMode = 'mockup' | 'fullscreen'");

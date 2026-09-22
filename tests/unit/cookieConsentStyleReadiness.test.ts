@@ -28,31 +28,72 @@ function createStylesheet(initiallyReady = false) {
   };
 }
 
-function runtime({ vendorReady = false, themeReady = false, omitTheme = false } = {}) {
+function runtime({
+  vendorReady = false,
+  themeReady = false,
+  omitTheme = false,
+  validConsent = false,
+} = {}) {
   const vendorStyle = createStylesheet(vendorReady);
   const themeStyle = createStylesheet(themeReady);
   const buttons: Array<{ id?: string }> = [];
+  const prepended: Array<{
+    id?: string;
+    className?: string;
+    children?: unknown[];
+    remove?: () => void;
+  }> = [];
   const errors: unknown[][] = [];
   let runCount = 0;
   let config: Record<string, unknown> | undefined;
+  let hasConsent = validConsent;
 
   const styles = new Map<string, ReturnType<typeof createStylesheet>>([
     ['cookieconsent-vendor-style', vendorStyle],
   ]);
   if (!omitTheme) styles.set('cookieconsent-theme-style', themeStyle);
 
+  function createElement() {
+    const children: unknown[] = [];
+    const element: {
+      id?: string;
+      className?: string;
+      type?: string;
+      textContent?: string;
+      children: unknown[];
+      addEventListener: (name: string, listener: Listener) => void;
+      appendChild: (child: unknown) => void;
+      setAttribute: (name: string, value: string) => void;
+      remove: () => void;
+    } = {
+      children,
+      addEventListener() {},
+      appendChild(child: unknown) {
+        children.push(child);
+      },
+      setAttribute() {},
+      remove() {
+        const index = prepended.indexOf(element);
+        if (index >= 0) prepended.splice(index, 1);
+      },
+    };
+    return element;
+  }
+
   const document = {
     getElementById(id: string) {
-      return styles.get(id) ?? buttons.find((button) => button.id === id) ?? null;
+      return styles.get(id)
+        ?? buttons.find((button) => button.id === id)
+        ?? prepended.find((element) => element.id === id)
+        ?? null;
     },
-    createElement() {
-      return {
-        addEventListener() {},
-      };
-    },
+    createElement,
     body: {
       appendChild(button: { id?: string }) {
         buttons.push(button);
+      },
+      prepend(element: ReturnType<typeof createElement>) {
+        prepended.unshift(element);
       },
     },
   };
@@ -66,6 +107,14 @@ function runtime({ vendorReady = false, themeReady = false, omitTheme = false } 
         return Promise.resolve();
       },
       showPreferences() {},
+      validConsent() {
+        return hasConsent;
+      },
+      acceptCategory() {
+        hasConsent = true;
+        const onFirstConsent = config?.onFirstConsent;
+        if (typeof onFirstConsent === 'function') onFirstConsent();
+      },
     },
   };
 
@@ -92,8 +141,12 @@ function runtime({ vendorReady = false, themeReady = false, omitTheme = false } 
     vendorStyle,
     themeStyle,
     buttons,
+    prepended,
     errors,
     flush,
+    get notices() {
+      return prepended.filter((element) => element.id === 'capital-ai-consent-notice');
+    },
     get runCount() {
       return runCount;
     },
@@ -110,16 +163,31 @@ describe('CookieConsent stylesheet readiness', () => {
     expect(html).toContain('id="cookieconsent-theme-style"');
   });
 
-  it('keeps a fresh/private first visit non-blocking outside visible consent surfaces', async () => {
+  it('keeps a fresh/private first visit in normal document flow without an auto-shown modal', async () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
     expect(r.runCount).toBe(1);
     expect(r.config?.disablePageInteraction).toBe(false);
+    expect(r.config?.autoShow).toBe(false);
+    expect(r.notices).toHaveLength(1);
 
     const theme = fs.readFileSync('public/cookieconsent-theme.css', 'utf8');
     expect(theme).toMatch(/#cc-main\s*\{[\s\S]*pointer-events:\s*none;/);
     expect(theme).toMatch(/#cc-main \.cm,[\s\S]*#cc-main \.pm\s*\{[\s\S]*pointer-events:\s*auto;/);
+
+    const noticeBlock = theme.match(/#capital-ai-consent-notice\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(noticeBlock).toContain('position: relative;');
+    expect(noticeBlock).not.toContain('position: fixed;');
+  });
+
+  it('does not recreate the first-visit notice when valid consent already exists', async () => {
+    const r = runtime({ vendorReady: true, themeReady: true, validConsent: true });
+    await r.flush();
+
+    expect(r.runCount).toBe(1);
+    expect(r.notices).toHaveLength(0);
+    expect(r.buttons).toHaveLength(1);
   });
 
   it('initializes immediately when both required stylesheets are already ready', async () => {

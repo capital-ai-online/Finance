@@ -64,11 +64,57 @@ describe('OPS-AUTH-EMAIL-01 backend email authentication', () => {
     expect(getBlock).not.toContain('verifyOtp');
   });
 
+  it('requires and forwards one bounded CAPTCHA token on every protected email-auth entrypoint', () => {
+    const routes = read('server/routes/backendAuthRoutes.ts');
+
+    expect(routes).toContain('const CAPTCHA_TOKEN_MAX_LENGTH = 8_192');
+    expect(routes).toContain('function requireCaptchaToken(req: Request, res: Response)');
+    expect(routes).toContain("Sicherheitsprüfung erforderlich. Bitte erneut versuchen.");
+
+    const register = routes.slice(
+      routes.indexOf("backendAuthRouter.post('/register'"),
+      routes.indexOf("backendAuthRouter.post('/login/email'"),
+    );
+    expect(register).toContain('const captchaToken = requireCaptchaToken(req, res)');
+    expect(register).toContain('captchaToken,');
+
+    const login = routes.slice(
+      routes.indexOf("backendAuthRouter.post('/login/email'"),
+      routes.indexOf("backendAuthRouter.post('/confirmation/resend'"),
+    );
+    expect(login).toContain('const captchaToken = requireCaptchaToken(req, res)');
+    expect(login).toContain('options: { captchaToken }');
+
+    const resend = routes.slice(
+      routes.indexOf("backendAuthRouter.post('/confirmation/resend'"),
+      routes.indexOf("backendAuthRouter.post('/password/forgot'"),
+    );
+    expect(resend).toContain('const captchaToken = requireCaptchaToken(req, res)');
+    expect(resend).toContain('captchaToken,');
+
+    const forgot = routes.slice(
+      routes.indexOf("backendAuthRouter.post('/password/forgot'"),
+      routes.indexOf("backendAuthRouter.get('/email/confirm'"),
+    );
+    expect(forgot).toContain('const captchaToken = requireCaptchaToken(req, res)');
+    expect(forgot).toContain('captchaToken,');
+  });
+
+  it('does not hide provider CAPTCHA failures behind enumeration-resistant accepted responses', () => {
+    const routes = read('server/routes/backendAuthRoutes.ts');
+    expect(routes).toContain('function isCaptchaProviderError(error: unknown)');
+    expect(routes).toContain("Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.");
+    expect(routes.indexOf('if (isCaptchaProviderError(error))')).toBeLessThan(
+      routes.indexOf('// Do not reveal whether an account already exists.'),
+    );
+  });
+
   it('establishes the same HttpOnly session for email login as for Google OAuth', () => {
     const routes = read('server/routes/backendAuthRoutes.ts');
     const backend = read('server/auth/backendAuth.ts');
 
-    expect(routes).toContain('supabase.auth.signInWithPassword({ email, password })');
+    expect(routes).toContain('supabase.auth.signInWithPassword({');
+    expect(routes).toContain('options: { captchaToken }');
     expect(routes).toContain('persistBackendAuthSession(req, res, data.session)');
     expect(backend).toContain("'HttpOnly'");
     expect(backend).toContain('SameSite=');
