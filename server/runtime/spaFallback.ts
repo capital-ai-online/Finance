@@ -21,9 +21,11 @@ interface PublicHtmlFiles {
   root: string;
   universe: string;
   learningPlatform: string;
+  vocabulary: string;
   impressum: string;
   agb: string;
   datenschutz: string;
+  faq: string;
 }
 
 function isPathInsideRoot(rootDir: string, candidate: string): boolean {
@@ -41,9 +43,11 @@ function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
     root,
     universe: path.resolve(rootDir, 'universe', 'index.html'),
     learningPlatform: path.resolve(rootDir, 'learning-platform', 'index.html'),
+    vocabulary: path.resolve(rootDir, 'vocabulary', 'index.html'),
     impressum: path.resolve(rootDir, 'impressum', 'index.html'),
     agb: path.resolve(rootDir, 'agb', 'index.html'),
     datenschutz: path.resolve(rootDir, 'datenschutz', 'index.html'),
+    faq: path.resolve(rootDir, 'faq', 'index.html'),
   };
   for (const candidate of Object.values(candidates)) {
     if (!isPathInsideRoot(rootDir, candidate)) {
@@ -70,18 +74,26 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
       case '/login':
       case '/dashboard':
       case '/media-studio':
-      case '/faq':
         return res.sendFile(files.root);
       case '/universe':
         return res.sendFile(existingOrRoot(files.universe));
       case '/learning-platform':
         return res.sendFile(existingOrRoot(files.learningPlatform));
+      case '/vocabulary':
+        return res.sendFile(existingOrRoot(files.vocabulary));
+      case '/glossar':
+      case '/lexikon':
+      case '/market-vocabulary':
+      case '/dictionary':
+        return res.redirect(301, '/vocabulary');
       case '/impressum':
         return res.sendFile(existingOrRoot(files.impressum));
       case '/agb':
         return res.sendFile(existingOrRoot(files.agb));
       case '/datenschutz':
         return res.sendFile(existingOrRoot(files.datenschutz));
+      case '/faq':
+        return res.sendFile(existingOrRoot(files.faq));
       default:
         return res.status(404).type('text/plain').send('Not Found');
     }
