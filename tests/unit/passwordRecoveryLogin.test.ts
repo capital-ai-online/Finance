@@ -13,8 +13,7 @@ describe('backend-first password recovery presentation boundary', () => {
     expect(loginPage).toContain('id="password-forgot-btn"');
     expect(loginPage).toContain('id="password-recovery-form"');
     expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
-    expect(loginPage).toContain('const captchaToken = await requestHcaptchaToken();');
-    expect(loginPage).toContain('captchaToken,');
+    expect(loginPage).not.toContain('captchaToken');
     expect(loginPage).not.toContain('resetPasswordForEmail');
     expect(loginPage).not.toContain('updateUser({ password');
     expect(loginPage).not.toContain('signInWithPassword');
@@ -27,7 +26,8 @@ describe('backend-first password recovery presentation boundary', () => {
     expect(loginPage).toContain('id="tab-mode-register"');
     expect(loginPage).toContain("postAuthJson('/api/auth/register'");
     expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
-    expect(loginPage).toContain("import { preloadHcaptchaSdk, requestHcaptchaToken } from '../../../lib/hcaptcha'");
+    expect(loginPage).not.toContain('hcaptcha');
+    expect(loginPage).not.toContain('Hcaptcha');
     expect(loginPage).not.toContain('localStorage');
     expect(loginPage).not.toContain('sessionStorage');
   });

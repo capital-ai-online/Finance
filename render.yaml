@@ -22,11 +22,7 @@ services:
         sync: false
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
-      # Public hCaptcha browser sitekey. The secret key remains exclusively in Supabase Auth.
-      - key: VITE_HCAPTCHA_SITE_KEY
-        sync: false
-      # Native Supabase passkey is the preferred first-party authentication path. RP settings,
-      # hCaptcha compatibility and enrolled-user coverage were verified before activation.
+      # Native Supabase passkey is the preferred first-party authentication path.
       - key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED
         value: "true"
       - key: STRIPE_PUBLISHABLE_KEY
