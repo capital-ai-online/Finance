@@ -202,14 +202,14 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       throw new Error('[Auth] Supabase ist für die Assurance-Prüfung nicht verfügbar.');
     }
 
-    const gatePolicy = await readAuthGatePolicy(session);
-
-    // Diagnostic logging is deliberately off the critical login path. The server resolves the
-    // identity/policy again from the bearer token, so this call can be used to correlate each
-    // staged reactivation without trusting browser-supplied policy state.
+    // Emit the diagnostic checkpoint before the browser profile-policy read. The call is not
+    // awaited, so it cannot block the critical login path. Render can correlate this request with
+    // the later subscription readback to isolate time spent in client-side profile hydration.
     void authFetch('/api/auth/aal2/diagnostic-login', { method: 'POST' }).catch((err) => {
       console.warn('[Auth][AAL2-DIAGNOSTIC] server checkpoint failed:', err);
     });
+
+    const gatePolicy = await readAuthGatePolicy(session);
 
     if (gatePolicy.onboardingRequired) {
       setPendingStepUpAssurance(null);
