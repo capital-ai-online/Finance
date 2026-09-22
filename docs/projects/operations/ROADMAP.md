@@ -1,12 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@53c38dbeaf85262ed1784ce3458d61b54f6da3bb`
-
+**Baseline:** `main@4a095d7e267b284ed4456750ad031457a2ef9a0a`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-20 — SH-02.3 contract/supersession correlated to current main  
+**Reconciliation:** 2026-09-21 — fresh CURRENT_MAIN correlation; SH-02 remains active and OPS-02-CI-01E runs as an independent PVC-02 cost-control slice  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -28,7 +27,7 @@ Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM
 **Priority rule:** while a dependency-ready SH-02 slice exists, `OPS-08-B-SH-02` is the highest executable OPS priority. The backlog below remains valid but is not selected ahead of SH-02 unless Self-Healing is genuinely blocked by a real dependency.
 
 1. `OPS-PR900-06 — Security owner returns` is the next normal executable OPS Roadmap evidence-return slice only if fresh current-main correlation still confirms that exact active identity. `OPS-PR900-05` repository materialization is Human-merged via PR #980; its deterministic evidence contract is ready while real live SLO/incident/RPO/RTO/vendor measurements remain explicitly open and must not be synthesized.
-2. `OPS-02-CI-01 — Build/Test Cost & Scope Reduction` is repository-integrated for the current bounded slices: PR #988 merged the `NONE / FOCUSED / FULL / REUSE` cost-profile policy and PR #996 merged snapshot-bound stale-event/concurrency hardening. Remaining hosted cost/race observations stay real-evidence-only; no unobserved race or saving is promoted to PASS.
+2. `OPS-02-CI-01 — Build/Test Cost & Scope Reduction` is repository-integrated for the current bounded slices: PR #988 merged the `NONE / FOCUSED / FULL / REUSE` cost-profile policy and PR #996 merged snapshot-bound stale-event/concurrency hardening. Remaining hosted cost/race observations stay real-evidence-only; no unobserved race or saving is promoted to PASS. Fresh Owner direction activates child `OPS-02-CI-01E — ChatGPT Preflight & Runner-Minute Convergence` at P0 for a machine-readable pre-PR evidence contract and a three-day full-lifecycle runner-minute baseline. This child does not change Required Check, Security, QM, Governance, Human or CODEOWNER semantics; P1 workflow reduction waits on the measured baseline.
 3. `OPS-PR900-03B` remains historical `BLOCKED / NOT_STARTED — PROVIDER_HOST / EFFECTIVE-GRANT / READBACK GAP` until fresh current-main correlation explicitly revalidates it. PR #970 and PR #982 put the Reader contract and bounded GitHub Work-Management adapter on main, but no separately authorized provider host with Finance-only effective grants plus real Projects/Fields, Issue Types/Fields, Milestone and Wiki `Read -> Write -> Readback` evidence exists yet.
 4. `OPS-PR900-04` repository preparation is current: 04A and 04B are merged. GitHub App creation/installation, permission grants, repository selection, OAuth/MCP connection changes, Vault/private-key provisioning and any PAT provisioning remain `HELD_EXTERNAL_OWNER_AUTHORIZATION` until a separate explicit Human/Owner request authorizes the exact protected mutation.
 5. Historical unmerged/diverged OPS branches are search input only and are not successor bases. In particular, `agent/operations-roadmap-current-main-sync-20260916`, `agent/operations-roadmap-post996-sync-20260916`, `agent/operations-github-status-sync-20260916` and `agent/operations-ops18-main-projection-20260915` are not used as current-main integration bases.
@@ -126,7 +125,7 @@ Return reproducible evidence for CORS composition, CSP reporting/strict-CSP prom
 | OPS-POST851-ID-02 | — | historical BLOCKED state |
 | OPS-08-SEC-07 Recovery / RPO / RTO | PVC-08 | harness on main; measured evidence may remain |
 | OPS-02-SEC-06 Entitlement inventory | PVC-02 | parent complete; child/SEC evidence may remain |
-| OPS-02-CI-01 Build/Test Cost & Scope Reduction | PVC-02 | integrated via PR #988 and PR #996; hosted evidence remains real-evidence-only |
+| OPS-02-CI-01 Build/Test Cost & Scope Reduction | PVC-02 | integrated via PR #988 and PR #996; child OPS-02-CI-01E ACTIVE / P0 for preflight + three-day lifecycle telemetry |
 | DR-03 | — | historical blocked state |
 | OPS-08-B-SH-01 Self-Healing readiness | PVC-08 | ARCHIVED / NON-AUTHORIZING — `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` |
 
