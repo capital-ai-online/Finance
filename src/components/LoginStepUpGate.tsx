@@ -69,6 +69,11 @@ export function LoginStepUpGate({
   const [nativeError, setNativeError] = useState<string | null>(null);
 
   const userId = session.user.id;
+  const totpSubmitLabel = nativeVerifying
+    ? 'Prüfe AAL2…'
+    : totpChallengeId
+      ? 'AAL2 bestätigen'
+      : 'AAL2 wird vorbereitet…';
 
   useEffect(() => {
     let cancelled = false;
@@ -335,11 +340,7 @@ export function LoginStepUpGate({
                 className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
               >
                 <KeyRound size={16} />
-                {nativeVerifying
-                  ? 'Prüfe AAL2…'
-                  : !totpChallengeId
-                    ? 'AAL2 wird vorbereitet…'
-                    : 'AAL2 bestätigen'}
+                {totpSubmitLabel}
               </button>
             </form>
             {webauthnFactorId && (
