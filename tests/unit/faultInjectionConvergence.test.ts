@@ -255,6 +255,45 @@ describe('SH-02.10 fault injection and convergence suite', () => {
     });
   });
 
+  it('CURRENT_STATE_PROJECTION_BASELINE_STALE: reuses the single bounded baseline autofix path', () => {
+    const scenario = SH_02_10_FAULT_MATRIX.find(
+      item => item.id === 'CURRENT_STATE_PROJECTION_BASELINE_STALE',
+    );
+    expect(scenario).toMatchObject({
+      surface: 'REPOSITORY_MODEL',
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      expectedTerminalState: 'CONVERGED',
+      protectedMutationAllowed: false,
+      productionFaultAllowed: false,
+    });
+
+    const action = getRemediationAction('RECONCILE_REPOSITORY_PROJECTION');
+    expect(action).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      requiredCapability: 'repository.pr.autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      budget: { maxAttempts: 1 },
+    });
+
+    const eligibility = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      attemptsUsed: 0,
+      nowMs: 0,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(eligibility).toMatchObject({
+      state: 'ELIGIBLE',
+      remainingAttempts: 1,
+    });
+  });
+
   it('policy/capability denial fails closed for an otherwise enabled action', () => {
     const eligibility = evaluateRemediationEligibility({
       findingClass: 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
