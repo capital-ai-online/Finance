@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-LF02-IMMEDIATE-AAL2-ENTERPRISE-READBACK-20260922",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair LF-02 post-Google-login convergence so returning MFA-enabled accounts enter the native AAL2 gate before profile hydration and the landing session is published only after server-authoritative subscription readback.",
+  "workItemDE": "LF-02: AAL2 direkt nach Google-Login und autoritativen Enterprise-Abo-Readback herstellen",
+  "startedAt": "2026-09-22T04:11:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1",
+  "lastSyncedMainSha": "11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1",
+  "branch": "frontend/lf02-immediate-aal2-enterprise-readback-20260922",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation/auth composition; no productive PVC",
+  "priority": "P0",
+  "priorityReason": "Productive Google login currently delays mandatory AAL2 presentation and can expose a provisional Free tier for an owner/Enterprise account.",
+  "canonicalIssue": 1237,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-LF02-IMMEDIATE-AAL2-ENTERPRISE-READBACK-20260922.json",
+    "src/app/auth/SessionComposition.tsx",
+    "src/components/LoginStepUpGate.tsx",
+    "tests/unit/sessionCompositionTimeouts.test.ts",
+    "tests/unit/postMfaSubscriptionHandoffRegression.test.ts",
+    "tests/unit/s1R2EntitlementAuthority.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts"
+  ],
+  "scopeBoundary": [
+    "Supabase Auth remains the sole primary authentication and MFA authority.",
+    "The existing /api/stripe/user-subscription endpoint remains the sole browser-visible subscription authority.",
+    "No email-based owner/Enterprise bypass is introduced; identity remains bound to the verified Supabase user UUID.",
+    "Returning accounts with nextLevel=aal2 may render the step-up gate before the onboarding profile roundtrip, but onboarding is rechecked after MFA before session publication.",
+    "No Supabase schema/data mutation, Stripe mutation, Render mutation, deployment, or Human/CODEOWNER merge is performed."
+  ],
+  "evidence": {
+    "currentMain": "11f0bcc6f1c4bf44c52c5cdda8d0bd2d965f66e1",
+    "supabaseReadback": "Target account has iam_role=owner, profile role=enterprise, active Enterprise subscription, onboarding_required=false, and one verified TOTP factor.",
+    "codeFinding": "SessionComposition published subscriptionTier=Free before asynchronous authoritative readback and awaited needsOnboarding before rendering LoginStepUpGate.",
+    "openWriterOverlap": "No open PR matched SessionComposition/LoginStepUpGate/subscription-readback scope at branch start."
+  },
+  "acceptanceCriteria": [
+    "After Google OAuth, a returning account whose Supabase assurance state is aal1 -> aal2 reaches the AAL2 gate before the onboarding profile Data-API roundtrip.",
+    "The TOTP prompt becomes visible as soon as the verified factor is known; challenge creation may finish while the prompt is already rendered.",
+    "Onboarding remains fail-closed and is revalidated after successful MFA before the application session is published.",
+    "No registered session is published with a provisional Free tier.",
+    "The authenticated subscription endpoint must return a canonical tier before userSession is projected; unresolved or invalid readback fails closed.",
+    "Owner/Enterprise accounts resolve through the existing server UUID/iam_role/subscription authority and project Enterprise to the landing sideboard.",
+    "Focused auth, post-MFA, entitlement and session-composition regression tests pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
