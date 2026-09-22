@@ -312,14 +312,10 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
     registrationGate.includes("isAal2EnabledFor('registration')") &&
     stepUp.includes("isAal2EnabledFor('registration')") &&
     stepUp.includes("stepUpRouter.post('/aal2/diagnostic-login'") &&
-    stepUp.includes("privilegedAal2Required: isAal2EnabledFor('privileged')") &&
-    authMiddleware.includes('export async function verifyProviderAal2') &&
     authMiddleware.includes('export async function requireVerifiedAal2') &&
     authMiddleware.includes('supabase.auth.mfa.getAuthenticatorAssuranceLevel(token)') &&
-    authMiddleware.includes("isAal2EnabledFor('privileged')") &&
-    authMiddleware.includes('aal2-superseded') &&
-    authMiddleware.includes("'aal2.diagnostic_supersession_bypass'") &&
-    aal2Supersession.includes("privileged: 3");
+    !authMiddleware.includes('aal2-superseded') &&
+    aal2Supersession.includes('privilegedServerAal2Unaffected: true');
   findings.push(finding(
     'aal2_diagnostic_supersession_contract',
     aal2DiagnosticSupersessionContract ? 'PASS' : 'FAIL',
@@ -331,10 +327,10 @@ export function evaluateAuthLifecycleRepositoryContracts(repoRoot = process.cwd(
       'src/components/RegistrationCompletionGate.tsx',
       'server/stepUp.ts',
     ],
-    'Stage 0 supersedes AAL2 enforcement on login, registration and privileged server surfaces while preserving primary identity verification, strict provider-AAL2 implementation, factors and diagnostic evidence.',
+    'Stage 0 supersedes AAL2 on login and registration authentication only, emits server-side diagnostic checkpoints, preserves enrolled factors, and leaves privileged server AAL2 authorization unchanged.',
     aal2DiagnosticSupersessionContract
-      ? 'All AAL2 enforcement surfaces are Stage-0 superseded and observable; strict provider verification remains independently implemented for Stage 3 restoration.'
-      : 'The full diagnostic supersession is incomplete, not observable, or strict provider verification was removed.',
+      ? 'Login and registration AAL2 are explicitly Stage-0 superseded and observable; the independent privileged requireVerifiedAal2 boundary remains strict.'
+      : 'The diagnostic supersession is missing, not observable, or has crossed the privileged server AAL2 authorization boundary.',
   ));
 
   const subscriptionProjection =
