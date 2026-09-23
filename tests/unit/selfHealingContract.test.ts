@@ -156,6 +156,39 @@ describe('self-healing contract', () => {
     expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
   });
 
+  it('routes PR Governance metadata drift through the existing sole PR-body writer with one bounded attempt', () => {
+    const policy = getRemediationPolicy('REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT');
+    expect(policy.preferredActionId).toBe('RECONCILE_PR_GOVERNANCE_METADATA');
+    expect(policy.allowedActionIds).toEqual([
+      'RECONCILE_PR_GOVERNANCE_METADATA',
+      'OBSERVE_ONLY',
+    ]);
+
+    const action = getRemediationAction('RECONCILE_PR_GOVERNANCE_METADATA');
+    expect(action).toMatchObject({
+      tier: 'SH-1',
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      blastRadius: 'WORK_ITEM',
+      requiredCapability: 'repository.pr.production-baseline-refresh',
+      killSwitch: 'self-healing.pr-governance-metadata',
+      verificationProbe: 'exact-pr-governance-metadata-readback',
+      budget: { maxAttempts: 1 },
+    });
+
+    const eligible = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+      actionId: 'RECONCILE_PR_GOVERNANCE_METADATA',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
+  });
+
   it('routes Decision/Evidence drift only through the existing single PR-body reconciler', () => {
     const policy = getRemediationPolicy('REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
     expect(policy.preferredActionId).toBe('RECONCILE_PR_DECISION_EVIDENCE');

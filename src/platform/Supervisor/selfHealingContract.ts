@@ -6,7 +6,7 @@
  * Execution remains with the existing Supervisor/provider/runtime paths.
  */
 
-export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.0.0' as const;
+export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.1.0' as const;
 
 export const FINDING_CLASSES = [
   'PROCESS_FATAL',
@@ -25,6 +25,7 @@ export const FINDING_CLASSES = [
   'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
   'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
   'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+  'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
   'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
   'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
   'SECURITY_OR_POLICY_BLOCKED',
@@ -43,6 +44,7 @@ export type RemediationActionId =
   | 'QUARANTINE_WORK_ITEM'
   | 'RECONCILE_REPOSITORY_PROJECTION'
   | 'RECONCILE_PR_DECISION_EVIDENCE'
+  | 'RECONCILE_PR_GOVERNANCE_METADATA'
   | 'VERIFY_ISSUE_PROJECT_DISPATCH'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
@@ -141,6 +143,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'ESCALATED',
     description: 'Delegate an exact allowlisted repository projection or deterministic expectation repair to the existing PR autofix specialists, then require exact-head CI/Governance readback.',
   },
+  RECONCILE_PR_GOVERNANCE_METADATA: {
+    id: 'RECONCILE_PR_GOVERNANCE_METADATA',
+    tier: 'SH-1',
+    activation: 'ENABLED',
+    idempotencyClass: 'IDEMPOTENT',
+    blastRadius: 'WORK_ITEM',
+    requiredCapability: 'repository.pr.production-baseline-refresh',
+    killSwitch: 'self-healing.pr-governance-metadata',
+    verificationProbe: 'exact-pr-governance-metadata-readback',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Delegate deterministic canonical v1.8 PR Governance metadata drift to the existing PR Production Baseline Auto-Refresh body writer; derive values only from trusted scope, canonical banner and durable claim evidence, then require exact-head/base Governance readback.',
+  },
   RECONCILE_PR_DECISION_EVIDENCE: {
     id: 'RECONCILE_PR_DECISION_EVIDENCE',
     tier: 'SH-1',
@@ -231,6 +246,11 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
     'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
     'RECONCILE_REPOSITORY_PROJECTION',
     ['RECONCILE_REPOSITORY_PROJECTION', 'OBSERVE_ONLY'],
+  ),
+  REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT: policy(
+    'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+    'RECONCILE_PR_GOVERNANCE_METADATA',
+    ['RECONCILE_PR_GOVERNANCE_METADATA', 'OBSERVE_ONLY'],
   ),
   REPOSITORY_PR_DECISION_EVIDENCE_DRIFT: policy(
     'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
