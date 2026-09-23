@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import projectMappingMarkdown from '../../../../docs/projects/README.md?raw';
 import {
   Activity,
   ArrowLeft,
@@ -10,6 +11,8 @@ import {
   Layers3,
   Radio,
   ShieldCheck,
+  SlidersHorizontal,
+  UsersRound,
 } from 'lucide-react';
 import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
 import { Card } from '../../../shared/ui/Card';
@@ -21,11 +24,48 @@ import {
   type RoadmapWorkPackage,
   type RoadmapWorkState,
 } from './roadmapSnapshot';
+import {
+  buildRoadmapExecutionLanes,
+  matchesRoadmapProjectFilters,
+  parseRoadmapProjectRouting,
+  resolveRoadmapProjects,
+  type RoadmapProjectFilters,
+} from './roadmapProjectRouting';
 
 type ProductionIdentityState =
   | { status: 'loading'; commitSha: null; branch: null; version: null }
   | { status: 'available'; commitSha: string | null; branch: string | null; version: string | null }
   | { status: 'unavailable'; commitSha: null; branch: null; version: null };
+
+
+const PROJECT_ROUTES = parseRoadmapProjectRouting(projectMappingMarkdown);
+const EMPTY_FILTERS: RoadmapProjectFilters = { owner: '', folder: '', label: '' };
+
+function ProjectMetadata({ owner }: { owner: string }) {
+  const projects = resolveRoadmapProjects(owner, PROJECT_ROUTES);
+  if (projects.length === 0) {
+    return (
+      <p className="font-mono text-[10px] text-score-warning">
+        Project mapping unresolved — fail closed
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5" aria-label="Project routing metadata">
+      {projects.map((project) => (
+        <span
+          key={project.projectId}
+          className="rounded-md border bg-black/20 px-2 py-1 font-mono text-[10px] text-white/65"
+          style={{ borderColor: project.color }}
+          title={`${project.projectId} · ${project.folder} · ${project.label}`}
+        >
+          {project.symbol} {project.projectId} · {project.folder} · {project.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 const STATE_STYLE: Record<RoadmapWorkState, string> = {
   'in-flight': 'border-status-info/30 bg-status-info/10 text-status-info',
@@ -125,6 +165,7 @@ function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
           <span className="font-bold text-white/75">Nächstes Gate:</span> {item.nextGate}
         </p>
       ) : null}
+      <ProjectMetadata owner={item.owner} />
       <p className="mt-auto break-all border-t border-white/8 pt-3 font-mono text-[10px] leading-5 text-white/35">
         {item.source}
       </p>
@@ -157,6 +198,7 @@ function WorkPackageCard({ item }: { item: RoadmapWorkPackage }) {
         <p className="text-[11px] leading-5 text-white/55">
           <span className="font-bold text-white/70">Owner-Boundary:</span> {item.relationship}
         </p>
+        <ProjectMetadata owner={item.owner} />
         <p className="break-all font-mono text-[10px] leading-5 text-white/40">{item.source}</p>
         {item.prNumber ? (
           <a
@@ -181,6 +223,8 @@ export function RoadmapDashboard() {
     branch: null,
     version: null,
   });
+
+  const [projectFilters, setProjectFilters] = useState<RoadmapProjectFilters>(EMPTY_FILTERS);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -209,22 +253,54 @@ export function RoadmapDashboard() {
     return () => controller.abort();
   }, []);
 
+  const visibleWorkPackages = useMemo(
+    () =>
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter((item) =>
+        matchesRoadmapProjectFilters(item.owner, projectFilters, PROJECT_ROUTES),
+      ),
+    [projectFilters],
+  );
+
+  const visibleIntegrations = useMemo(
+    () =>
+      ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter((item) =>
+        matchesRoadmapProjectFilters(item.owner, projectFilters, PROJECT_ROUTES),
+      ),
+    [projectFilters],
+  );
+
+  const visibleQueuedItems = useMemo(
+    () =>
+      ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.filter((item) =>
+        matchesRoadmapProjectFilters(item.owner, projectFilters, PROJECT_ROUTES),
+      ),
+    [projectFilters],
+  );
+
+  const executionLanes = useMemo(
+    () => buildRoadmapExecutionLanes(visibleWorkPackages, visibleQueuedItems, PROJECT_ROUTES),
+    [visibleQueuedItems, visibleWorkPackages],
+  );
+
   const metrics = useMemo(() => {
-    const prBacked = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter(
+    const prBacked = visibleWorkPackages.filter(
       (item) => 'prNumber' in item && typeof item.prNumber === 'number',
     ).length;
-    const owners = new Set(ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.map((item) => item.owner)).size;
-    const legacyDrift = ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter(
-      (item) => item.state === 'legacy-drift',
-    ).length;
+    const owners = new Set(
+      [...visibleWorkPackages, ...visibleQueuedItems]
+        .flatMap((item) => resolveRoadmapProjects(item.owner, PROJECT_ROUTES))
+        .map((project) => project.projectId),
+    ).size;
+    const legacyDrift = visibleIntegrations.filter((item) => item.state === 'legacy-drift').length;
     return {
-      active: ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.length,
+      active: visibleWorkPackages.length,
       prBacked,
       owners,
-      integrations: ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.length,
+      integrations: visibleIntegrations.length,
       legacyDrift,
+      parallelLanes: executionLanes.length,
     };
-  }, []);
+  }, [executionLanes, visibleIntegrations, visibleQueuedItems, visibleWorkPackages]);
 
   const productionAligned =
     production.status === 'available' &&
@@ -332,6 +408,139 @@ export function RoadmapDashboard() {
           </Card>
         </section>
 
+        <section aria-labelledby="roadmap-filters-title" className="ui-panel ui-panel--elevated">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-5 w-5 text-brand-primary" aria-hidden="true" />
+                <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
+                  Project Routing Filter
+                </p>
+              </div>
+              <h2 id="roadmap-filters-title" className="mt-1 text-lg font-black text-white">
+                Nach Project Owner, Folder und Label filtern
+              </h2>
+              <p className="mt-2 max-w-3xl text-xs leading-5 text-white/50">
+                Alle Optionen werden zur Build-Zeit direkt aus <code>docs/projects/README.md</code> gelesen.
+                Diese UI erzeugt keine zweite Project- oder Ownership-Registry.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="ui-button-secondary px-3 py-2 text-xs font-bold"
+              onClick={() => setProjectFilters(EMPTY_FILTERS)}
+            >
+              Filter zurücksetzen
+            </button>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            <label className="space-y-2 text-xs font-bold text-white/70">
+              <span>Project Owner</span>
+              <select
+                className="min-h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-xs text-white"
+                value={projectFilters.owner}
+                onChange={(event) =>
+                  setProjectFilters((current) => ({ ...current, owner: event.target.value }))
+                }
+              >
+                <option value="">Alle Project Owner</option>
+                {PROJECT_ROUTES.map((project) => (
+                  <option key={project.projectId} value={project.projectId}>
+                    {project.symbol} {project.projectId} · {project.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-2 text-xs font-bold text-white/70">
+              <span>Folder</span>
+              <select
+                className="min-h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-xs text-white"
+                value={projectFilters.folder}
+                onChange={(event) =>
+                  setProjectFilters((current) => ({ ...current, folder: event.target.value }))
+                }
+              >
+                <option value="">Alle Folder</option>
+                {PROJECT_ROUTES.map((project) => (
+                  <option key={project.folder} value={project.folder}>
+                    {project.folder}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-2 text-xs font-bold text-white/70">
+              <span>Label</span>
+              <select
+                className="min-h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-xs text-white"
+                value={projectFilters.label}
+                onChange={(event) =>
+                  setProjectFilters((current) => ({ ...current, label: event.target.value }))
+                }
+              >
+                <option value="">Alle Labels</option>
+                {PROJECT_ROUTES.map((project) => (
+                  <option key={project.label} value={project.label}>
+                    {project.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section aria-labelledby="parallel-work-title" className="ui-panel">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex gap-3">
+              <UsersRound className="mt-0.5 h-5 w-5 text-brand-primary" aria-hidden="true" />
+              <div>
+                <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
+                  Parallel Worker Projection
+                </p>
+                <h2 id="parallel-work-title" className="text-lg font-black text-white">
+                  {metrics.parallelLanes} parallelisierbare Worker-Lanes im aktuellen Filter
+                </h2>
+              </div>
+            </div>
+            <p className="max-w-2xl text-xs leading-5 text-white/50">
+              Eine Lane bündelt zusammengehörige ACTIVE/READY-Pakete über <code>executionGroup</code>.
+              HELD/QUEUED und Evidence-Gates erhöhen die Zahl nicht. Vor dem tatsächlichen Start muss
+              jeder Chat CURRENT_MAIN, offene Writer, Pfad-/Semantik-Overlap und Owner-Grenzen neu prüfen.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+            {executionLanes.map((lane) => (
+              <div key={lane.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+                      {lane.projectIds.join(' · ') || 'PROJECT UNRESOLVED'}
+                    </p>
+                    <h3 className="mt-1 text-sm font-black text-white">{lane.id}</h3>
+                  </div>
+                  <span className="rounded-full border border-brand-success/30 bg-brand-success/10 px-2.5 py-1 text-[10px] font-black uppercase text-brand-success">
+                    {lane.itemIds.length > 1 ? 'GEBÜNDELT' : 'UNABHÄNGIG'}
+                  </span>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-text-secondary">
+                  {lane.itemIds.join(' · ')}
+                </p>
+                <p className="mt-3 font-mono text-[10px] text-white/45">
+                  ACTIVE {lane.activeItems} · READY {lane.readyItems}
+                </p>
+                {lane.dependencies.length > 0 ? (
+                  <p className="mt-2 text-[11px] leading-5 text-white/55">
+                    Abhängigkeiten: {lane.dependencies.join(' · ')}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section aria-labelledby="roadmap-phases-title" className="ui-panel ui-panel--elevated">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -379,7 +588,7 @@ export function RoadmapDashboard() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.map((item) => (
+            {visibleWorkPackages.map((item) => (
               <WorkPackageCard key={item.id} item={item} />
             ))}
           </div>
@@ -402,7 +611,7 @@ export function RoadmapDashboard() {
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.map((item) => (
+            {visibleIntegrations.map((item) => (
               <IntegrationCard key={item.id} item={item} />
             ))}
           </div>
@@ -422,7 +631,7 @@ export function RoadmapDashboard() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            {ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.map((item) => (
+            {visibleQueuedItems.map((item) => (
               <div key={item.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -434,6 +643,9 @@ export function RoadmapDashboard() {
                   </span>
                 </div>
                 <p className="mt-3 text-xs leading-5 text-text-secondary">{item.gate}</p>
+                <div className="mt-3">
+                  <ProjectMetadata owner={item.owner} />
+                </div>
                 <p className="mt-3 break-all font-mono text-[10px] text-white/35">{item.source}</p>
               </div>
             ))}
