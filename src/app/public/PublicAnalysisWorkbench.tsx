@@ -227,8 +227,7 @@ export function PublicAnalysisWorkbench() {
             selectedSymbol={PUBLIC_FIXED_SYMBOL}
             timeframe={timeframe}
             onChangeTimeframe={setTimeframe}
-            subscriptionTier="Free"
-          />
+/>
         );
       case 'ranking-board':
         return <RankingBoard onSelectAsset={() => setActiveTool('enterprise-scorer')} />;
