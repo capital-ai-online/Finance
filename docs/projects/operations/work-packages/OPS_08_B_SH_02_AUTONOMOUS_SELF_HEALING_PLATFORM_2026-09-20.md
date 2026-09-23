@@ -72,7 +72,7 @@ PR #1262 was Human-merged as `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`. The own
 
 ### Deliverables
 - architecture concept;
-- canonical `self-healing-contract/1.0.0`;
+- canonical `self-healing-contract/1.2.0`;
 - archive and deactivate predecessor Self-Healing rule projections;
 - current-main work claim;
 - roadmap/work-package reconciliation;
@@ -159,7 +159,7 @@ No self-healing action may recursively authorize itself.
 
 ### Canonical supersession rule
 
-After Human/CODEOWNER merge of SH-02.3, `self-healing-contract/1.0.0` is the only executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
+After Human/CODEOWNER merge of SH-02.3 and the later bounded contract extensions through the #1305/#1306 generation, `self-healing-contract/1.2.0` is the current executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
 
 The predecessor `OPS-08-B-SH-01`, legacy `SH-R*` labels and the narrow `AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md` control-plane projection are archived/non-authorizing. They cannot be used to activate, deny or classify remediation.
 
@@ -190,7 +190,7 @@ For each dependency:
 
 ### SH-02.4 branch implementation
 
-- `RETRY_SAFE_OPERATION` remains `HELD` in `self-healing-contract/1.0.0`; SH-02.4 implements and verifies the boundary without performing the staged SH-1 production activation reserved for SH-02.11.
+- `RETRY_SAFE_OPERATION` remains `HELD` in `self-healing-contract/1.2.0`; SH-02.4 implements and verifies the boundary without performing the staged SH-1 production activation reserved for SH-02.11.
 - `src/platform/Supervisor/dependencyResilience.ts` is the bounded executor/projection contract. Raw `SIDE_EFFECTING` and `PROTECTED` operations fail closed before execution; provider-native owners are never wrapped in another retry loop.
 - `executeSupervised()` now defaults unclassified work to `SIDE_EFFECTING` and suppresses automatic retries unless the caller explicitly declares `READ_ONLY` or `IDEMPOTENT`; safe retries use bounded exponential backoff plus jitter.
 - The contract-bound generic dependency executor carries the existing budget (timeout, max attempts, cooldown, kill switch and mandatory post-action verification) but returns fail-closed `ACTION_HELD` until staged activation.
