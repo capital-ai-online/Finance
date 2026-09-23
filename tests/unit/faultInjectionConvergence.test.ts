@@ -180,6 +180,47 @@ describe('SH-02.10 fault injection and convergence suite', () => {
     expect(getRemediationPolicy('FRONTEND_RENDER_FAILURE').preferredActionId).toBe('OBSERVE_ONLY');
   });
 
+  it('PR #1294 optional init rejection is classified fail-closed without automatic remediation', () => {
+    const scenario = SH_02_10_FAULT_MATRIX.find(
+      item => item.id === 'FRONTEND_OPTIONAL_INIT_REJECTION',
+    );
+
+    expect(scenario).toMatchObject({
+      surface: 'FRONTEND_MODEL',
+      findingClass: 'FRONTEND_OPTIONAL_INIT_FAILURE',
+      actionId: 'OBSERVE_ONLY',
+      expectedTerminalState: 'ESCALATED',
+      protectedMutationAllowed: false,
+      productionFaultAllowed: false,
+    });
+    expect(getRemediationPolicy('FRONTEND_OPTIONAL_INIT_FAILURE')).toMatchObject({
+      preferredActionId: 'OBSERVE_ONLY',
+      allowedActionIds: ['OBSERVE_ONLY'],
+    });
+  });
+
+  it('PR #1294 stale runtime expectation reuses the bounded repository expectation repair path', () => {
+    const scenario = SH_02_10_FAULT_MATRIX.find(
+      item => item.id === 'STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE',
+    );
+
+    expect(scenario).toMatchObject({
+      surface: 'REPOSITORY_MODEL',
+      findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+      actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+      expectedTerminalState: 'CONVERGED',
+    });
+
+    const action = getRemediationAction('RECONCILE_REPOSITORY_PROJECTION');
+    expect(action).toMatchObject({
+      activation: 'ENABLED',
+      idempotencyClass: 'IDEMPOTENT',
+      requiredCapability: 'repository.pr.autofix',
+      verificationProbe: 'exact-pr-head-ci-governance-readback',
+      budget: { maxAttempts: 1 },
+    });
+  });
+
   it('API_503: retries boundedly for a safe GET and then converges on success', async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(new Response('temporarily unavailable', { status: 503 }))
