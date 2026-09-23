@@ -8,7 +8,7 @@ import {
 
 describe('consumer legal contract baseline', () => {
   it('keeps the AGB version explicit and current for this remediation', () => {
-    expect(TERMS_VERSION).toBe('2026-08-23');
+    expect(TERMS_VERSION).toBe('2026-09-23');
   });
 
   it('matches the read-only verified active Stripe live catalog snapshot', () => {
