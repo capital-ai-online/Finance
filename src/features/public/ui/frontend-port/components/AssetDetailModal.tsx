@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, TrendingUp, DollarSign, Activity, AlertCircle, Sparkles } from 'lucide-react';
+import { X, TrendingUp, DollarSign, Activity, AlertCircle, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MarketAsset } from '../types';
+import { AssetLogo } from '../../runtime/AssetLogo';
 
 interface AssetDetailModalProps {
   asset: MarketAsset | null;
@@ -27,6 +28,7 @@ export const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClo
         <div className="flex items-start justify-between pb-4 border-b border-slate-800">
           <div>
             <div className="flex items-center gap-2">
+              <AssetLogo asset={asset} size="md" className="mr-1" />
               <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#F9BF21]/15 text-[#F9BF21] border border-[#F9BF21]/30 font-mono">
                 {asset.mainCategory}
               </span>
@@ -100,21 +102,26 @@ export const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClo
           </div>
         </div>
 
-        {/* Capital-AI Scoring Insight */}
-        <div className="mt-4 p-3.5 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-400 text-black flex items-center justify-center font-bold">
-              <Sparkles className="w-5 h-5" />
+        {/* FINTECH scoring boundary — no local score fixture is rendered. */}
+        <div
+          className="mt-4 p-3.5 rounded-xl bg-slate-900/70 border border-slate-700/80 flex items-center justify-between gap-3"
+          data-local-scoring="disabled"
+          data-scoring-authority="CAPITAL-AI-FINTECH"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-emerald-400/10 border border-emerald-400/25 text-emerald-300 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-xs text-amber-300 font-medium">Capital-AI Signal</div>
-              <div className="text-sm font-bold text-white">{asset.aiRating}</div>
+            <div className="min-w-0">
+              <div className="text-xs text-emerald-300 font-semibold">FINTECH Scoring Evidence</div>
+              <div className="text-[11px] text-slate-400 leading-relaxed">
+                Bewertung und Konfidenz werden ausschließlich aus der verifizierten FINTECH-Projektion eingebunden.
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-lg font-black text-amber-400">{asset.aiScore}/100</div>
-            <div className="text-[10px] text-slate-300">Hohe Konfidenz</div>
-          </div>
+          <span className="shrink-0 text-[9px] font-mono text-slate-400 border border-slate-700 rounded px-1.5 py-0.5">
+            NO LOCAL SCORE
+          </span>
         </div>
 
         {/* Key Stats Grid */}
