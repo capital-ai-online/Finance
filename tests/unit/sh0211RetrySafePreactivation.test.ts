@@ -62,7 +62,7 @@ describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'PASS', probe: 'dependency-operation-readback' }),
+      () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
     );
 
     expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
@@ -103,6 +103,9 @@ describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
       );
 
       expect(result.status).toBe('BLOCKED');
+      if (result.status !== 'BLOCKED') {
+        throw new Error(`expected BLOCKED result for ${resilienceOwner}`);
+      }
       expect(result.reason).toBe(
         resilienceOwner === 'DEPENDENCY_NATIVE'
           ? 'DEPENDENCY_NATIVE_RESILIENCE_OWNS_RETRY'
