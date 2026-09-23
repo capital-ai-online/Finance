@@ -1,5 +1,11 @@
 export type RoadmapWorkState = 'in-flight' | 'active' | 'in-progress' | 'evidence-gate';
 export type RoadmapQueueState = 'ready' | 'held' | 'queued';
+export type RoadmapIntegrationState =
+  | 'production-covered'
+  | 'repository-integrated'
+  | 'main-only'
+  | 'provider-gate'
+  | 'legacy-drift';
 
 export interface RoadmapWorkPackage {
   id: string;
@@ -24,11 +30,31 @@ export interface RoadmapQueuedItem {
   gate: string;
 }
 
+export interface RoadmapIntegrationItem {
+  id: string;
+  title: string;
+  owner: string;
+  state: RoadmapIntegrationState;
+  stateLabel: string;
+  source: string;
+  detail: string;
+  nextGate?: string;
+}
+
 export const ROADMAP_DASHBOARD_SNAPSHOT = {
-  schemaVersion: '1.1.0',
+  schemaVersion: '1.2.1',
   role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
   correlatedDate: '2026-09-23',
-  currentMainSha: '7bcc6aee2700d6fa3f926ff8615b04cde136750c',
+  correlatedMainSha: '426a98d4703271e438cbc6df4b1442fb3a9b032d',
+  currentMainSha: '426a98d4703271e438cbc6df4b1442fb3a9b032d',
+  productionAudit: {
+    observedCommitSha: '7c1d9293ee4c61e32791e447463fcaf263644c6d',
+    deployId: 'dep-daq2vqou01pc73fjldv0',
+    classification: 'CURRENT_MAIN_DEPLOY_FAILED_AFTER_RECOVERY_MERGE',
+    previousFailedDeployId: 'dep-daq378mk1f9s738adt70',
+    latestFailedDeployId: 'dep-daq3dkmgekts73be39i0',
+    note: 'Production remains live on the FIN-SENT-01 merge. The exact CURRENT_MAIN deploy after merged recovery #1334 started within the post-merge SLA and completed build/Quality PASS, but Runtime startup still failed because none of the accepted server-only management-token environment keys resolved a usable credential. Runtime identity continues to be read live from /healthz.',
+  },
   branding: {
     brandmark: 'docs/frontend/brandmark.json',
     designTokens: 'docs/frontend/design-tokens.json',
@@ -44,85 +70,22 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       relationship: 'cross-cutting Frontend presentation; canonical task state remains in owner project Roadmaps',
       phase: 'Product & Market',
       state: 'in-progress',
-      stateLabel: 'IMPLEMENTATION · CURRENT SLICE',
-      source: 'Fresh Human/Owner direction 2026-09-23 · frontend/roadmap-live-dashboard-v2-20260923',
+      stateLabel: 'SEO + PRODUCTION CONVERGENCE',
+      source: 'Fresh Human/Owner direction 2026-09-23',
       sourceType: 'human-directed',
-      detail: 'Builds the read-only /roadmap presentation from canonical brand/template contracts and a freshly correlated repository snapshot.',
+      detail: 'Re-correlates the read-only /roadmap projection to CURRENT_MAIN, removes terminal provider writers and adds a production/SEO integration ledger without creating a second task authority.',
     },
     {
-      id: 'PR-1299',
-      title: 'Vocabulary aus Repository-Dokumenten erweitern',
-      owner: 'CAPITAL-AI-GOV',
-      relationship: 'PVC-05 · Vocabulary/Governance projection',
-      phase: 'Automation',
-      state: 'in-flight',
-      stateLabel: 'PR #1299 · OPEN',
-      source: 'GitHub PR #1299',
-      sourceType: 'provider-pr',
-      detail: 'Open Governance writer extending documentation-derived concepts without creating a second Vocabulary registry.',
-      prNumber: 1299,
-    },
-    {
-      id: 'PR-1300',
-      title: 'Cookie-Auswahl Save-Action ohne Freeze',
-      owner: 'CAPITAL-AI-FE',
-      relationship: 'cross-cutting Frontend consent presentation',
-      phase: 'Product & Market',
-      state: 'in-flight',
-      stateLabel: 'PR #1300 · OPEN',
-      source: 'GitHub PR #1300',
-      sourceType: 'provider-pr',
-      detail: 'Open FE remediation for the consent save path; no overlap with the Roadmap dashboard files in this slice.',
-      prNumber: 1300,
-    },
-    {
-      id: 'DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING',
-      title: 'Documentary Change Impact startup_failure beheben',
-      owner: 'CAPITAL-AI-DOC',
-      relationship: 'PVC-03 · documentary workflow convergence',
-      phase: 'Automation',
-      state: 'in-flight',
-      stateLabel: 'ACTIVE BRANCH · EXACT-MAIN BASED',
-      source: 'agent/documentary-startup-failure-permission-ceiling-20260923',
-      sourceType: 'provider-branch',
-      detail: 'Active exclusive claim removes the reproducible workflow startup_failure and requires post-merge job-start evidence.',
-    },
-    {
-      id: 'SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION',
-      title: 'SH-02.11A Retry-Safe Security Assurance',
-      owner: 'CAPITAL-AI-SEC',
-      relationship: 'cross-cutting independent Security verification; no productive PVC transfer',
-      phase: 'Security & Compliance',
-      state: 'in-flight',
-      stateLabel: 'ACTIVE BRANCH · INDEPENDENT VERIFICATION',
-      source: 'agent/security-sh02-11a-retry-safe-independent-verification-20260923',
-      sourceType: 'provider-branch',
-      detail: 'Verifies the exact merged pre-activation generation while RETRY_SAFE_OPERATION remains HELD.',
-    },
-    {
-      id: 'OPS-ROADMAP-DIRECT-ROUTE-01',
-      title: 'Production SPA Fallback für /roadmap',
+      id: 'SH-02.11',
+      title: 'Retry-Safe Operation',
       owner: 'CAPITAL-AI-OPS',
-      relationship: 'PVC-02 · owner-correct server/runtime handoff for FE-ROADMAP-LIVE-01',
-      phase: 'Product & Market',
-      state: 'in-flight',
-      stateLabel: 'PR #1315 · OPEN',
-      source: 'GitHub PR #1315',
-      sourceType: 'provider-pr',
-      detail: 'Adds /roadmap to the non-indexable application SPA fallback without changing the SEO public/prerender contract.',
-      prNumber: 1315,
-    },
-    {
-      id: 'SH-02.11A',
-      title: 'Retry-Safe Pre-Activation',
-      owner: 'CAPITAL-AI-OPS',
-      relationship: 'PVC-08 · Self-Healing activation preparation',
+      relationship: 'PVC-08 · Self-Healing runtime',
       phase: 'Self-Healing Runtime',
-      state: 'evidence-gate',
-      stateLabel: 'PRE-ACTIVATION MERGED · ASSURANCE REQUIRED',
+      state: 'active',
+      stateLabel: 'ACTIVATED · RETRY_SAFE_OPERATION',
       source: 'docs/projects/operations/ROADMAP.md',
       sourceType: 'canonical-roadmap',
-      detail: 'PR #1314 is on main; RETRY_SAFE_OPERATION remains HELD until fresh independent Security and QM assurance converge on the same generation.',
+      detail: 'Independent Security/QM assurance converged and RETRY_SAFE_OPERATION is activated; broader SH-2/SH-3 actions remain held.',
     },
     {
       id: 'GOV-SH-V3',
@@ -146,7 +109,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       stateLabel: 'ACTIVE · P0 FOUNDATION',
       source: 'docs/projects/operations/ROADMAP.md',
       sourceType: 'canonical-roadmap',
-      detail: 'Machine-readable pre-PR evidence plus the bounded lifecycle runner-minute baseline remain active cost-control work.',
+      detail: 'Machine-readable pre-PR evidence plus bounded lifecycle runner-minute telemetry remain active cost-control work.',
     },
     {
       id: 'SEC-WEB-HARDENING-01',
@@ -158,7 +121,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       stateLabel: 'ACTIVE · IMPLEMENTATION OPEN',
       source: 'docs/projects/security/ROADMAP.md',
       sourceType: 'canonical-roadmap',
-      detail: 'P0/P1 website, artifact, identity and deployment controls remain evidence-driven and independently verified.',
+      detail: 'Public website, artifact, identity and deployment controls remain evidence-driven and independently verified.',
     },
     {
       id: 'COMP-LF-01',
@@ -191,10 +154,10 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       relationship: 'cross-cutting SEO / launch coordination',
       phase: 'Product & Market',
       state: 'active',
-      stateLabel: 'ACTIVE CANONICAL · EVIDENCE GATED',
+      stateLabel: 'ACTIVE · PROVIDER EVIDENCE OPEN',
       source: 'docs/projects/seo/ROADMAP.md',
       sourceType: 'canonical-roadmap',
-      detail: 'Launch readiness stays bounded by owner returns and real provider measurement evidence; no missing provider read becomes PASS.',
+      detail: 'Former FAQ, Universe handoff, scoring-review and root-metadata issues are terminal. Remaining launch evidence is measurement/provider-bound plus the newly detected stale Universe SEO/server projection.',
     },
     {
       id: 'SOCIAL-P1',
@@ -220,7 +183,114 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       sourceType: 'canonical-roadmap',
       detail: 'Repository-side integration may advance, but only technically evidenced and Human-listening-PASS audio may be consumed.',
     },
-  ] satisfies RoadmapWorkPackage[],
+  ] as RoadmapWorkPackage[],
+  integrationLedger: [
+    {
+      id: 'DOC-ROADMAP-CORRELATION',
+      title: 'Documentary Roadmap Correlation',
+      owner: 'CAPITAL-AI-DOC',
+      state: 'repository-integrated',
+      stateLabel: 'KORRELIERT · KEINE AKTIVE AUSFÜHRUNG',
+      source: 'docs/projects/documentary/ROADMAP.md · PRs #1310/#1154/#1131',
+      detail: 'CAPITAL-AI-DOC / PVC-03 hat auf dieser CURRENT_MAIN-Generation kein ausführbares aktives Arbeitspaket: WP-DOC-14..16 sind terminal, WP-DOC-17 ist historisch/not-applicable, WP-06A..E ist terminal, AUTO-01 und die startup_failure-Remediation sind gemergt. Verbliebene active-Marker sind stale Coordination-Evidence und werden nicht als Live-Arbeit reaktiviert.',
+      nextGate: 'Nur frische Failure-Evidence oder neue Human/Owner-Direction darf DOC-Arbeit aktivieren; die spätere Roadmap-Entfernung bleibt an den kanonischen Post-Social-Handoff gebunden.',
+    },
+    {
+      id: 'SEO-FAQ-PUBLIC-ROUTE',
+      title: 'FAQ als indexierbare Public Route',
+      owner: 'CAPITAL-AI-SEO · CAPITAL-AI-FE · CAPITAL-AI-OPS',
+      state: 'production-covered',
+      stateLabel: 'INTEGRIERT · TERMINAL',
+      source: 'Issues #1233/#1252 · src/lib/routeSeo.ts · server/middleware/seoUrlNormalize.ts',
+      detail: '/faq ist in Client-Routing, SEO-Metadaten, Public-Allowlist, Prerender und Sitemap integriert; die früheren Owner-Handoffs sind geschlossen.',
+    },
+    {
+      id: 'SEO-GA4-CONSENT',
+      title: 'GA4 Browser-Wiring hinter Consent',
+      owner: 'CAPITAL-AI-FE · CAPITAL-AI-COMP · CAPITAL-AI-SEO',
+      state: 'repository-integrated',
+      stateLabel: 'RUNTIME-WIRING INTEGRIERT',
+      source: 'index.html · public/google-analytics-consent.js',
+      detail: 'GA4 wird nur bei gültiger Analytics-Einwilligung und gültiger Measurement-ID geladen; Werbesignale bleiben denied. Runtime-Wiring ist nicht gleich Data-API-/Measurement-PASS.',
+      nextGate: 'Frische Provider-Messdaten über den read-only GSC/GA4-Pfad.',
+    },
+    {
+      id: 'SEO-GSC-GA4-MEASUREMENT',
+      title: 'Search Console / GA4 / GenAI Messbaseline',
+      owner: 'CAPITAL-AI-SEO',
+      state: 'provider-gate',
+      stateLabel: 'PROVIDER READ OPEN',
+      source: 'docs/projects/seo/ROADMAP.md · docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md',
+      detail: 'Historische GSC Property- und fünf URL-Inspections existieren. Aktuelle Search-Analytics-, GA4-Data-API- und GenAI-Visibility-Reads sind nicht als aktueller PASS belegt.',
+      nextGate: 'Least-privileged Provider-Readback; keine synthetischen KPIs.',
+    },
+    {
+      id: 'SEO-UNIVERSE-LEGACY-RETIREMENT',
+      title: 'Veraltete Universe-SEO-Anbindung entfernen',
+      owner: 'CAPITAL-AI-SEO · CAPITAL-AI-FE · CAPITAL-AI-OPS',
+      state: 'legacy-drift',
+      stateLabel: 'LEGACY DRIFT · RETIRE',
+      source: 'AppRoutes.tsx vs routeSeo.ts / sitemap.xml / prerender / PUBLIC_SPA_PATHS',
+      detail: 'Der aktuelle Client-Router rendert /universe nicht mehr, während SEO-Metadata, Sitemap, Prerender und Public-Server-Allowlist die Route weiterhin publizieren. Die Route darf nicht still wieder aktiviert werden.',
+      nextGate: 'Owner-korrekte Entfernung der veralteten SEO-/OPS-Projektionen bei erhaltener 404-/Canonical-Sicherheit.',
+    },
+    {
+      id: 'OPS-ROADMAP-DIRECT-ROUTE',
+      title: '/roadmap Direct Route',
+      owner: 'CAPITAL-AI-OPS · CAPITAL-AI-FE',
+      state: 'production-covered',
+      stateLabel: 'PRODUCTION ROUTE INTEGRIERT',
+      source: 'PR #1319 · server/middleware/seoUrlNormalize.ts',
+      detail: '/roadmap ist als nicht indexierbare Application-SPA-Route im produktiven Serverpfad integriert; die Seite bleibt eine read-only Projektion.',
+    },
+    {
+      id: 'SH-02.11-RETRY-SAFE',
+      title: 'Retry-Safe Self-Healing Activation',
+      owner: 'CAPITAL-AI-OPS',
+      state: 'production-covered',
+      stateLabel: 'AKTIVIERT · PRODUCTION COVERED',
+      source: 'PR #1330 · docs/projects/operations/evidence/SH_02_11_RETRY_SAFE_ACTIVATION_2026-09-23.md',
+      detail: 'RETRY_SAFE_OPERATION ist aktiviert und liegt vor dem produktiven Audit-Commit; generische Issue-Autofixes und weitere geschützte Aktionen bleiben held.',
+    },
+    {
+      id: 'FIN-SENT-01',
+      title: 'Attested Market Sentiment Projection',
+      owner: 'CAPITAL-AI-FINTECH',
+      state: 'production-covered',
+      stateLabel: 'LIVE AUDIT BASELINE',
+      source: 'PR #1332 · docs/projects/fintech/work-packages/FIN_SENT_01_ATTESTED_MARKET_SENTIMENT_2026-09-23.md',
+      detail: 'Der aktuelle Production-Audit-Commit ist exakt der FIN-SENT-01 Merge. Das Frontend darf nur attestierte Projektionen konsumieren; fehlende Evidence bleibt NOT_COMPUTABLE.',
+    },
+    {
+      id: 'PRICING-ARCHIVE-PUBLIC-VISIBILITY',
+      title: 'Pricing archiviert / Public Visibility getrennt',
+      owner: 'CAPITAL-AI-FE · CAPITAL-AI-OPS · CAPITAL-AI-COMP',
+      state: 'production-covered',
+      stateLabel: 'INTEGRIERT · PRODUCTION COVERED',
+      source: 'PRs #1324/#1325/#1326/#1327',
+      detail: 'Öffentliche Sichtbarkeit ist von Execution-Entitlements getrennt; archiviertes Pricing ist im Frontend, Checkout-Guard und Legal-Text konvergiert.',
+    },
+    {
+      id: 'AUTH-REGISTRATION-PROFILE',
+      title: 'Registrierung, Profil & Auth-Sicherheit',
+      owner: 'CAPITAL-AI-OPS',
+      state: 'main-only',
+      stateLabel: 'MERGED MAIN · PRODUCTION BLOCKED AFTER RECOVERY',
+      source: 'PR #1331 + PR #1334 · Render dep-daq3dkmgekts73be39i0',
+      detail: 'Auth/Profile und die bounded Render-Startup-Recovery #1334 sind auf CURRENT_MAIN. Der anschließende Exact-SHA Deploy 426a98d4… baute erfolgreich, scheiterte aber erneut beim Runtime-Start mit SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING; Production bleibt auf 7c1d9293….',
+      nextGate: 'Owner-korrekte OPS-Konfigurationskorrelation: wirksame server-only Management-Credential-Bereitstellung verifizieren, ohne Secret-Werte in Evidence zu lesen; danach Exact-SHA erneut promoten.',
+    },
+    {
+      id: 'OPS-DEPLOY-426A98',
+      title: 'CURRENT_MAIN Production Promotion after Auth Recovery',
+      owner: 'CAPITAL-AI-OPS',
+      state: 'main-only',
+      stateLabel: 'EXACT-MAIN DEPLOY FAILED · RUNTIME CONFIG',
+      source: 'Render dep-daq3dkmgekts73be39i0 · main@426a98d4703271e438cbc6df4b1442fb3a9b032d',
+      detail: 'Der post-recovery Deploy startete innerhalb der SLA, checkout/build/release-manifest/Quality waren PASS. Beim Runtime-Start löste keine der in #1334 akzeptierten server-only Credential-Variablen einen nutzbaren Management-Token auf; der fail-closed Guard beendete den Start mit SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING.',
+      nextGate: 'CAPITAL-AI-OPS muss die tatsächliche Render-Service-Umgebungsbindung owner-korrekt verifizieren/reparieren; danach exact 426a98d4… oder den dann aktuellen Main deployen und /healthz korrelieren.',
+    },
+  ] satisfies RoadmapIntegrationItem[],
   queuedItems: [
     {
       id: 'QM-PR900-02',
@@ -228,15 +298,31 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       state: 'ready',
       stateLabel: 'READY FOR EXECUTION',
       source: 'docs/projects/quality-management/ROADMAP.md',
-      gate: 'Exact-snapshot Quality evidence is the next QM successor; proposed QM-V2 coordination authority still depends on ADR-0103 acceptance/Human merge.',
+      gate: 'Exact-snapshot Quality evidence remains the current QM successor; proposed QM-V2 coordination authority still depends on ADR-0103 acceptance/Human merge.',
     },
     {
-      id: 'SH-02.11',
+      id: 'SH-02.12',
       owner: 'CAPITAL-AI-OPS',
       state: 'held',
-      stateLabel: 'DEPENDENCY READY · ACTIVATION HELD',
+      stateLabel: 'HELD · ROUTED ISSUE AUTO-FIX',
       source: 'docs/projects/operations/ROADMAP.md',
-      gate: 'Staged production activation remains blocked until enabled tiers and SH-02.11A independent assurance are verified.',
+      gate: 'No generic Issue-derived code-remediation executor is authorized; any later activation requires fresh CURRENT_MAIN, bounded branch-only remediation and Human/CODEOWNER merge authority.',
+    },
+    {
+      id: 'WP-SEO-METRICS',
+      owner: 'CAPITAL-AI-SEO',
+      state: 'held',
+      stateLabel: 'PROVIDER READ GATE',
+      source: 'docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md',
+      gate: 'Requires a real least-privileged GSC + GA4 read snapshot. Repository wiring or historical provider evidence is not a current metrics PASS.',
+    },
+    {
+      id: 'WP-SEO-AI-VIS',
+      owner: 'CAPITAL-AI-SEO',
+      state: 'held',
+      stateLabel: 'GENAI VISIBILITY READ GATE',
+      source: 'docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md',
+      gate: 'Requires real Search Console GenAI performance evidence; missing data/read surface must not be converted into PASS.',
     },
     {
       id: 'FIN-LF-01',

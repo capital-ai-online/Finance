@@ -15,6 +15,8 @@ import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
 import { Card } from '../../../shared/ui/Card';
 import {
   ROADMAP_DASHBOARD_SNAPSHOT,
+  type RoadmapIntegrationItem,
+  type RoadmapIntegrationState,
   type RoadmapQueueState,
   type RoadmapWorkPackage,
   type RoadmapWorkState,
@@ -36,6 +38,14 @@ const QUEUE_STYLE: Record<RoadmapQueueState, string> = {
   ready: 'border-brand-success/30 bg-brand-success/10 text-brand-success',
   held: 'border-score-warning/30 bg-score-warning/10 text-score-warning',
   queued: 'border-status-info/30 bg-status-info/10 text-status-info',
+};
+
+const INTEGRATION_STYLE: Record<RoadmapIntegrationState, string> = {
+  'production-covered': 'border-brand-success/30 bg-brand-success/10 text-brand-success',
+  'repository-integrated': 'border-status-info/30 bg-status-info/10 text-status-info',
+  'main-only': 'border-brand-accent/30 bg-brand-accent/10 text-brand-accent',
+  'provider-gate': 'border-score-warning/30 bg-score-warning/10 text-score-warning',
+  'legacy-drift': 'border-[#F87171]/30 bg-[#F87171]/10 text-[#F87171]',
 };
 
 const PHASES = [
@@ -61,7 +71,7 @@ const PHASES = [
     status: 'In Umsetzung',
     accent: 'text-roadmap-runtime',
     line: 'bg-roadmap-runtime',
-    detail: 'SH-02.10 ist terminal; SH-02.11A befindet sich in der unabhängigen Pre-Activation-Assurance.',
+    detail: 'SH-02.11 ist mit RETRY_SAFE_OPERATION aktiviert; SH-02.12 und weitere generische/protected Self-Healing-Aktionen bleiben held.',
   },
   {
     id: 'product',
@@ -69,7 +79,7 @@ const PHASES = [
     status: 'In Umsetzung',
     accent: 'text-roadmap-product-market',
     line: 'bg-roadmap-product-market',
-    detail: 'Roadmap, Consent, Vocabulary, SEO Launch sowie Social/TTS- und Media-Slices laufen evidenzgebunden weiter.',
+    detail: 'Roadmap, Consent/GA4, FAQ, Sentiment, Auth/Profile, SEO Launch sowie Social/TTS- und Media-Slices werden getrennt nach Main-, Production- und Provider-Evidence projiziert.',
   },
   {
     id: 'scaling',
@@ -90,6 +100,36 @@ function statusIcon(state: RoadmapWorkState) {
   if (state === 'evidence-gate') return <ShieldCheck className="h-4 w-4" aria-hidden="true" />;
   if (state === 'in-progress') return <Activity className="h-4 w-4" aria-hidden="true" />;
   return <CircleDot className="h-4 w-4" aria-hidden="true" />;
+}
+
+function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
+  return (
+    <Card className="flex h-full flex-col gap-3 border-white/8 bg-surface/65 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+            {item.owner}
+          </p>
+          <h3 className="mt-1 break-words text-sm font-black text-white">{item.id}</h3>
+          <p className="mt-1 text-xs font-semibold text-white/70">{item.title}</p>
+        </div>
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${INTEGRATION_STYLE[item.state]}`}
+        >
+          {item.stateLabel}
+        </span>
+      </div>
+      <p className="text-xs leading-5 text-text-secondary">{item.detail}</p>
+      {item.nextGate ? (
+        <p className="rounded-lg border border-white/8 bg-black/20 px-3 py-2 text-[11px] leading-5 text-white/60">
+          <span className="font-bold text-white/75">Nächstes Gate:</span> {item.nextGate}
+        </p>
+      ) : null}
+      <p className="mt-auto break-all border-t border-white/8 pt-3 font-mono text-[10px] leading-5 text-white/35">
+        {item.source}
+      </p>
+    </Card>
+  );
 }
 
 function WorkPackageCard({ item }: { item: RoadmapWorkPackage }) {
@@ -170,12 +210,19 @@ export function RoadmapDashboard() {
   }, []);
 
   const metrics = useMemo(() => {
-    const prBacked = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter((item) => item.prNumber).length;
+    const prBacked = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter(
+      (item) => 'prNumber' in item && typeof item.prNumber === 'number',
+    ).length;
     const owners = new Set(ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.map((item) => item.owner)).size;
+    const legacyDrift = ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter(
+      (item) => item.state === 'legacy-drift',
+    ).length;
     return {
       active: ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.length,
       prBacked,
       owners,
+      integrations: ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.length,
+      legacyDrift,
     };
   }, []);
 
@@ -246,7 +293,7 @@ export function RoadmapDashboard() {
             <div className="flex items-center gap-3">
               <GitBranch className="h-5 w-5 text-brand-primary" aria-hidden="true" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">CURRENT_MAIN</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">Korrelations-Basis</p>
                 <p className="mt-1 font-mono text-sm font-black text-white">
                   {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha)}
                 </p>
@@ -276,7 +323,7 @@ export function RoadmapDashboard() {
                 </p>
                 {production.status === 'available' ? (
                   <p className="mt-1 text-[10px] text-white/45">
-                    {productionAligned ? 'Snapshot identisch' : 'separater Runtime-Stand'} · {production.branch ?? 'branch n/a'}
+                    {productionAligned ? 'Baseline identisch' : 'Live Runtime separat'} · {production.branch ?? 'branch n/a'}
                     {production.version ? ` · v${production.version}` : ''}
                   </p>
                 ) : null}
@@ -338,6 +385,29 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
+        <section aria-labelledby="integration-ledger-title" className="ui-panel ui-panel--elevated">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-brand-primary">
+                Production / SEO Integration Ledger
+              </p>
+              <h2 id="integration-ledger-title" className="mt-1 text-xl font-black text-white sm:text-2xl">
+                Integriert, provider-gated und Legacy-Drift
+              </h2>
+            </div>
+            <p className="max-w-xl text-xs leading-5 text-white/50">
+              {metrics.integrations} korrelierte Integrationen · {metrics.legacyDrift} Legacy-Drift. Der Live-Deployment-Stand
+              kommt separat aus /healthz; Repository-Merge wird nicht automatisch als Production-PASS gewertet.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+            {ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.map((item) => (
+              <IntegrationCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+
         <section aria-labelledby="queue-title" className="ui-panel">
           <div className="flex items-center gap-3">
             <Clock3 className="h-5 w-5 text-brand-primary" aria-hidden="true" />
@@ -373,7 +443,7 @@ export function RoadmapDashboard() {
         <footer className="flex flex-col gap-3 border-t border-white/8 py-4 text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <p>Branding: brandmark.json · design-tokens.json · CapitalAiLogo · ui-panel/Card contracts.</p>
           <p className="font-mono">
-            Snapshot {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha)} · Production bleibt separate Evidence.
+            Korrelation {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha)} · Production bleibt separate Live-Evidence.
           </p>
         </footer>
       </div>

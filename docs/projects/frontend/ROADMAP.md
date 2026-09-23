@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — branded Roadmap Live Dashboard correlated to fresh CURRENT_MAIN; merged Vocabulary route return retained; no productive domain ownership changes  
-**Baseline:** `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`  
+**Reconciliation:** 2026-09-23 — Roadmap Live Dashboard re-correlated to fresh CURRENT_MAIN with SEO/Production integration ledger; terminal provider writers removed; no productive domain ownership changes  
+**Baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -16,33 +16,52 @@ Archive/superseded copies and historical non-terminal markers are evidence only.
 
 ## Current-main reconciliation — 2026-09-23
 
-This FE projection is re-correlated to `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`.
+This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`.
 
-- PR #1298 is Human/CODEOWNER-merged; the former `AppRoutes.tsx` writer overlap for Vocabulary return is terminal.
-- PR #1297 is Human/CODEOWNER-merged; SH-02.10 is no longer an open PR and is not projected as active FE work.
-- Open PR #1300 remains an independent FE consent writer with no changed-file overlap against the Roadmap dashboard slice.
-- Open PR #1299 remains a GOV Vocabulary writer and does not transfer Governance ownership to FE.
-- Production/deployment state is not inferred from repository merge state; the Roadmap UI reads the non-secret `/healthz` deployment identity independently.
+- PR #1334 (`Render Auth-Management-Token Recovery`) merged as `main@426a98d4703271e438cbc6df4b1442fb3a9b032d` while this FE PR was being created. The FE branch was synchronized by a non-conflicting merge; fresh provider readback now returns no foreign open writer (only this review-ready PR #1335). Historical PR #1299, #1300, #1315 and #1334 are terminal and are not projected as active provider work.
+- The old UI snapshot baseline `7bcc6aee2700d6fa3f926ff8615b04cde136750c` is 185 commits behind this CURRENT_MAIN correlation and is evidence only.
+- Render Production remains live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0`. Recovery PR #1334 is merged into CURRENT_MAIN, and its exact-main deploy `dep-daq3dkmgekts73be39i0` started within the post-merge SLA. Checkout, build, release manifest and Quality were PASS; Runtime startup nevertheless failed again with `SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING`, which proves that none of the accepted server-only management-token keys resolved a usable credential in the Render service environment. Production therefore remains truthful `PRODUCTION_DRIFT`, not PASS. No secret value is recorded. The UI continues to read `/healthz` at runtime.
+- SEO issues #1233, #1252, #1254, #1258 and #1263 are terminal; no open `project:CAPITAL-AI-SEO` issue was returned in the fresh provider readback.
+- A new current-state drift is explicit rather than silently repaired: `AppRoutes.tsx` no longer renders `/universe`, while `routeSeo.ts`, `sitemap.xml`, prerender and the server public-route allowlist still publish it. FE does **not** restore the removed client route; retirement of the stale projections remains owner-correct across FE/SEO/OPS.
+- Documentary correlation resolves `CAPITAL-AI-DOC / PVC-03` with **zero executable active work items** on this generation: `WP-DOC-14..16` are terminal, `WP-DOC-17` is historical `NOT_APPLICABLE_FOR_IMPLEMENTATION`, WP-06A..E is terminal through #1131, repository-structure AUTO-01 is terminal through #1154, and Documentary Change Impact startup-failure remediation is terminal through #1310. Residual `status: active` claim/package markers are stale coordination evidence under `/AGENTS.md` and are shown only as a non-active integration ledger entry; they do not reactivate DOC work.
+- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile plus merged recovery #1334 as main-only/deploy-blocked, and both failed exact-main Render promotions as Production-drift evidence.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 
 **Canonical identity:** `FE-ROADMAP-LIVE-01`  
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** read-only presentation/aggregation of canonical current-state evidence; no productive PVC ownership  
-**Status:** `IMPLEMENTED_ON_BRANCH / OWNER_CORRECT_OPS_DIRECT_ROUTE_BRANCH_ACTIVE`  
-**Fresh baseline:** `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`  
+**Status:** `IN_PROGRESS / SEO_PRODUCTION_CONVERGENCE_BRANCH`  
+**Fresh baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
 **Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/shared/branding/CapitalAiLogo.tsx`, `src/shared/ui/Card.tsx`
 
 Fresh Human/Owner direction requests a real `/roadmap` page that projects the current Roadmap and all actively processed work packages. The implementation remains a non-authorizing derived view:
 
 - canonical task state remains in each owner-correct `docs/projects/<project>/ROADMAP.md` or exact provider-backed PR/branch evidence;
-- the UI snapshot is bound to the exact correlated CURRENT_MAIN SHA and is never a second task registry;
-- open PRs and active exclusive branches are shown only as provider evidence, not as instruction or ownership authority;
+- the UI snapshot records an exact **correlation baseline** and is never a second task registry or a claim that repository main can be queried live from the browser;
+- provider-backed PR/branch rows are shown only while fresh provider evidence supports them; terminal writers are removed instead of retained as stale work;
 - `CapitalAiLogo` uses the canonical brandmark geometry; colors/typography/roadmap roles resolve from `design-tokens.json` and the existing CSS token projection;
-- Production identity is read from same-origin `/healthz` and remains explicitly separate from repository CURRENT_MAIN;
-- direct production deep-link fallback for `/roadmap` is owner-correctly active in OPS PR #1315 (`agent/operations-roadmap-direct-route-20260923`); FE does not absorb OPS runtime ownership.
+- Production identity is read from same-origin `/healthz` and remains explicitly separate from repository correlation state;
+- the owner-correct `/roadmap` server fallback is merged through PR #1319 and is represented as an integrated runtime surface, not an open OPS handoff;
+- the SEO/Production integration ledger distinguishes `production-covered`, `repository-integrated`, `main-only`, `provider-gate` and `legacy-drift`; repository configuration or historical provider evidence never becomes a synthetic PASS;
+- the current `/universe` mismatch is represented as **retirement work**, never as authority to restore the removed Client route.
 
-**Exit:** exact-head FE tests/build are green; `/roadmap` is wired in the client router; the owner-correct OPS direct-route fallback reaches its own Human/CODEOWNER merge gate; current-main/open-writer correlation remains PASS; Human/CODEOWNER merge remains required.
+**Exit:** exact-head FE tests/build are green; `/roadmap` continues to resolve through the existing client/server path; current-main/open-writer correlation remains PASS; the integration ledger matches the correlated repository/Production evidence; Human/CODEOWNER merge remains required.
+
+### FE-ROADMAP-LIVE-01 — SEO / Production convergence slice — 2026-09-23
+
+Fresh Human/Owner direction extends the existing `FE-ROADMAP-LIVE-01` presentation without creating a new roadmap authority.
+
+The derived dashboard now makes these states visible in one place:
+
+1. **Active canonical work** — only current owner-roadmap identities or fresh Human direction.
+2. **Repository-integrated** — merged/current-main implementation whose external provider state is still independent.
+3. **Production-covered** — implementation known to be contained in the observed Production audit commit.
+4. **Main-only / deploy-blocked** — merged after the observed Production commit or blocked by a failed promotion and therefore not represented as live until a later exact-SHA Production readback.
+5. **Provider-gate** — GSC/GA4/GenAI or other provider evidence that cannot be inferred from repository wiring.
+6. **Legacy drift** — old connections still advertised by technical SEO/server surfaces but no longer backed by the current productive Client surface.
+
+The current SEO audit records no open SEO issue/PR lane, but it does keep the still-actionable WPs `WP-SEO-METRICS` and `WP-SEO-AI-VIS` held behind real read-only provider evidence. `SEO-UNIVERSE-LEGACY-RETIREMENT` is surfaced as a fresh drift finding: remove stale SEO/prerender/server publication owner-correctly; do not revive `/universe`.
 
 ## FE-LF-01-UPSTREAM-ARCH — Current presentation architecture adoption
 
