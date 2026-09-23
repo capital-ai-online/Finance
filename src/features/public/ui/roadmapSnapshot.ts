@@ -75,6 +75,19 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       detail: 'Re-correlates the read-only /roadmap projection to CURRENT_MAIN, removes terminal provider writers and adds a production/SEO integration ledger without creating a second task authority.',
     },
     {
+      id: 'PR-1334',
+      title: 'Render Auth-Management-Token Recovery',
+      owner: 'CAPITAL-AI-OPS',
+      relationship: 'owner-correct Production deployment/configuration remediation for the failed #1331 promotion',
+      phase: 'Automation',
+      state: 'in-flight',
+      stateLabel: 'PR #1334 · OPEN · PRODUCTION DRIFT',
+      source: 'GitHub PR #1334',
+      sourceType: 'provider-pr',
+      detail: 'Owner-correct OPS recovery for the failed 98c8889… promotion. The canonical credential name remains SUPABASE_MANAGEMENT_ACCESS_TOKEN; established server-only aliases are accepted as bounded fallbacks while missing credentials remain fail-closed.',
+      prNumber: 1334,
+    },
+    {
       id: 'SH-02.11',
       title: 'Retry-Safe Operation',
       owner: 'CAPITAL-AI-OPS',
@@ -277,7 +290,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       stateLabel: 'DEPLOY FAILED · RUNTIME CONFIG',
       source: 'Render dep-daq378mk1f9s738adt70 · 2026-09-23',
       detail: 'Build und Release-Manifest waren PASS. Beim Runtime-Start brach supabaseAuthRegistrationControl.mjs fail-closed mit SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING ab; Production blieb auf 7c1d9293….',
-      nextGate: 'Prüfen, dass die Render-Service-Umgebung den server-only Management-Token unter dem erwarteten Variablennamen wirksam bereitstellt; danach exact-SHA neu deployen. Keine Secret-Werte in Evidence schreiben.',
+      nextGate: 'PR #1334 auf Exact Head verifizieren → Human/CODEOWNER Merge → Render exact-main erneut promoten → /healthz gegen 98c8889… korrelieren. Keine Secret-Werte in Evidence schreiben.',
     },
   ] satisfies RoadmapIntegrationItem[],
   queuedItems: [
