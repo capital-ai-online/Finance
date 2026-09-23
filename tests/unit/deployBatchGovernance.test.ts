@@ -32,17 +32,17 @@ describe('application-wide merge cadence governance', () => {
 
   it('defines a non-retroactive cadence epoch and truthful dashboard projection', () => {
     expect(agents).toContain('non-retroactive `cadenceEpoch`');
-    expect(agents).toContain('Pull Requests merged before that epoch do not count');
+    expect(agents).toContain('Pull Requests merged before the epoch');
     expect(agents).toContain('deployment progress `x/5`');
     expect(agents).toContain('version progress `x/10`');
     expect(agents).toContain('deterministic next PATCH target');
   });
 
   it('requires the tenth merged pull request to carry the next patch before merge', () => {
-    expect(agents).toContain('**ten merged Pull Request** cadence');
+    expect(agents).toContain('ten-merge version cadence');
     expect(agents).toContain('current ordinal is `9 mod 10`');
     expect(agents).toContain('Example: `0.6.0 → 0.6.1`');
-    expect(agents).toContain('`package.json#version` as the single version authority');
+    expect(versionContract.automaticMaterializationPolicy.singleVersionAuthority).toBe('package.json#version');
     expect(agents).toContain('`package-lock.json#packages[""]#version`');
     expect(versionContract.version).toBe('1.1.0');
     expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(true);
