@@ -74,6 +74,7 @@ export function registerProductionSpaFallback(app: Express, distPath: string): v
       case '/login':
       case '/dashboard':
       case '/media-studio':
+      case '/roadmap':
         return res.sendFile(files.root);
       case '/universe':
         return res.sendFile(existingOrRoot(files.universe));
