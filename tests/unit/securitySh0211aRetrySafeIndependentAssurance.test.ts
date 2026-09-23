@@ -12,16 +12,16 @@ import {
   getRemediationPolicy,
 } from '../../src/platform/Supervisor/selfHealingContract';
 
-describe('SH-02.11A independent Security assurance', () => {
-  it('binds to the exact contract generations and keeps automatic retry disabled', () => {
+describe('SH-02.11A Security assurance + SH-02.11 activation regression', () => {
+  it('binds to the assured contract generations and exposes only the successor safe-retry activation', () => {
     expect(SELF_HEALING_CONTRACT_VERSION).toBe('self-healing-contract/1.2.0');
     expect(DEPENDENCY_RESILIENCE_CONTRACT_VERSION).toBe('dependency-resilience/1.0.0');
 
     expect(getDependencyResilienceSnapshot()).toEqual({
       version: 'dependency-resilience/1.0.0',
       valid: true,
-      genericSafeRetryActivation: 'HELD',
-      automaticGenericRetryEnabled: false,
+      genericSafeRetryActivation: 'ENABLED',
+      automaticGenericRetryEnabled: true,
       maxAttempts: 3,
       cooldownMs: 500,
       timeoutMs: 10_000,
@@ -31,7 +31,7 @@ describe('SH-02.11A independent Security assurance', () => {
   it('preserves the exact bounded RETRY_SAFE_OPERATION Security contract', () => {
     expect(getRemediationAction('RETRY_SAFE_OPERATION')).toMatchObject({
       tier: 'SH-1',
-      activation: 'HELD',
+      activation: 'ENABLED',
       idempotencyClass: 'IDEMPOTENT',
       blastRadius: 'LOCAL_RUNTIME',
       requiredCapability: null,
@@ -116,7 +116,7 @@ describe('SH-02.11A independent Security assurance', () => {
     }
   });
 
-  it('keeps even an otherwise safe read operation non-executable while HELD', async () => {
+  it('allows the assured safe-read class after activation but still fails closed without verification evidence', async () => {
     const operation = vi.fn(async () => ({ ok: true }));
     const result = await executeContractBoundDependencyRecovery(
       {
@@ -129,7 +129,7 @@ describe('SH-02.11A independent Security assurance', () => {
       () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
     );
 
-    expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
-    expect(operation).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: 'NOT_CONVERGED' });
+    expect(operation).toHaveBeenCalledTimes(1);
   });
 });
