@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, BarChart3, Database, ShieldCheck, TrendingUp } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
+import { fetchAuthenticatedNews } from '../../../news/authenticatedNewsFetch';
 
 export type MarketSentimentCategory = 'ALLE' | 'KRYPTO' | 'AKTIEN' | 'INDIZIES' | 'ROHSTOFFE' | 'FOREX';
 export type MarketSentimentStatus = 'READY' | 'NOT_COMPUTABLE' | 'SOURCE_UNAVAILABLE' | 'STALE';
@@ -43,6 +44,109 @@ const CATEGORIES: Array<{ id: MarketSentimentCategory; label: string }> = [
   { id: 'ROHSTOFFE', label: 'Rohstoffe' },
   { id: 'FOREX', label: 'Forex' },
 ];
+interface VerifiedNewsEvidenceItem {
+  id?: string;
+  headline?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  sentimentBasis?: 'heuristic';
+  source?: string;
+  evidenceRef?: string;
+  publishedAt?: string;
+  provider?: string;
+  assetClasses?: string[];
+}
+
+type NewsEvidenceState =
+  | { state: 'loading'; items: VerifiedNewsEvidenceItem[]; provider: string | null }
+  | { state: 'ready'; items: VerifiedNewsEvidenceItem[]; provider: string | null }
+  | { state: 'unavailable'; items: VerifiedNewsEvidenceItem[]; provider: string | null };
+
+const CATEGORY_ASSET_CLASS: Partial<Record<MarketSentimentCategory, string>> = {
+  KRYPTO: 'crypto',
+  AKTIEN: 'stock',
+  INDIZIES: 'index',
+  ROHSTOFFE: 'commodity',
+  FOREX: 'forex',
+};
+
+function evidenceItemsForCategory(
+  category: MarketSentimentCategory,
+  items: VerifiedNewsEvidenceItem[],
+): VerifiedNewsEvidenceItem[] {
+  if (category === 'ALLE') return items;
+  const assetClass = CATEGORY_ASSET_CLASS[category];
+  if (!assetClass) return [];
+  return items.filter((item) => Array.isArray(item.assetClasses) && item.assetClasses.includes(assetClass));
+}
+
+function sentimentDirection(
+  sentiment: VerifiedNewsEvidenceItem['sentiment'],
+): MarketSentimentDriver['direction'] {
+  if (sentiment === 'positive') return 'up';
+  if (sentiment === 'negative') return 'down';
+  return 'neutral';
+}
+
+function latestObservedAt(items: VerifiedNewsEvidenceItem[]): string | null {
+  const timestamps = items
+    .map((item) => item.publishedAt)
+    .filter((value): value is string => typeof value === 'string' && !Number.isNaN(Date.parse(value)))
+    .sort((a, b) => Date.parse(b) - Date.parse(a));
+  return timestamps[0] ?? null;
+}
+
+function buildNewsEvidenceProjection(
+  category: MarketSentimentCategory,
+  items: VerifiedNewsEvidenceItem[],
+  provider: string | null,
+): MarketSentimentProjection {
+  const categoryItems = evidenceItemsForCategory(category, items);
+  const evidenceIds = [...new Set(
+    categoryItems
+      .map((item) => item.evidenceRef ?? item.id ?? null)
+      .filter((value): value is string => Boolean(value)),
+  )];
+  const modelVersion = category === 'KRYPTO' ? 'crypto-sentiment-research/0.1.0' : null;
+  const sourceLabel = provider ? 'Quelle: ' + provider : 'bestehender News-Evidence-Pfad';
+
+  return {
+    category,
+    status: 'NOT_COMPUTABLE',
+    score: null,
+    label: categoryItems.length > 0
+      ? 'Evidence verfügbar · Score nicht berechenbar'
+      : 'Keine kategorisierte Evidence',
+    summary: categoryItems.length > 0
+      ? categoryItems.length + ' verifizierte News-Metadaten aus ' + sourceLabel + '. Das vorhandene Headline-Sentiment bleibt Heuristik/Präsentationsmetadatum und wird nicht in einen FINTECH-Score umgerechnet. Ein numerischer Score bleibt fail-closed, bis der governte Sentiment-Inputvertrag vollständig belegt ist.'
+      : modelVersion
+        ? 'Der FINTECH-Scoringvertrag ' + modelVersion + ' ist vorhanden, aber die aktuelle News-Projektion liefert keine vollständig attestierten Sentiment-Features. Kein Neutralwert wird eingesetzt.'
+        : 'Für diese Assetklasse liegt aus dem aktuellen News-Evidence-Fenster kein attestierter FINTECH-Sentiment-Score vor.',
+    history30d: [],
+    drivers: categoryItems.slice(0, 5).map((item) => ({
+      title: item.source?.trim() || item.provider?.trim() || 'News Evidence',
+      description: item.headline?.trim() || 'Verifizierte Nachrichtenmetadaten',
+      direction: sentimentDirection(item.sentiment),
+    })),
+    modelVersion,
+    evidenceIds,
+    observedAt: latestObservedAt(categoryItems),
+  };
+}
+
+function buildUnavailableProjections(): Partial<Record<MarketSentimentCategory, MarketSentimentProjection>> {
+  return Object.fromEntries(CATEGORIES.map(({ id }) => [id, {
+    category: id,
+    status: 'SOURCE_UNAVAILABLE',
+    score: null,
+    label: 'Evidence derzeit nicht verfügbar',
+    summary: 'Der geschützte News-Evidence-Pfad ist für diese Sitzung nicht verfügbar. Es wird kein lokaler oder synthetischer Sentiment-Score erzeugt.',
+    history30d: [],
+    drivers: [],
+    modelVersion: id === 'KRYPTO' ? 'crypto-sentiment-research/0.1.0' : null,
+    evidenceIds: [],
+    observedAt: null,
+  }])) as Partial<Record<MarketSentimentCategory, MarketSentimentProjection>>;
+}
 
 function clampScore(score: number | null): number | null {
   if (score === null || !Number.isFinite(score)) return null;
@@ -56,7 +160,49 @@ function formatObservedAt(value: string | null): string {
 
 export function MarketSentimentPresentation({ projections = {}, onExploreMarkets }: MarketSentimentPresentationProps) {
   const [selectedCategory, setSelectedCategory] = useState<MarketSentimentCategory>('ALLE');
-  const projection = projections[selectedCategory] ?? null;
+  const [newsEvidence, setNewsEvidence] = useState<NewsEvidenceState>({
+    state: 'loading',
+    items: [],
+    provider: null,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetchAuthenticatedNews('/api/news?limit=20', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('news-evidence-' + response.status);
+        const body = await response.json().catch(() => []);
+        if (!Array.isArray(body)) throw new Error('news-evidence-invalid-payload');
+        setNewsEvidence({
+          state: 'ready',
+          items: body as VerifiedNewsEvidenceItem[],
+          provider: response.headers.get('x-capital-ai-news-provider'),
+        });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.warn('[MarketSentimentPresentation] News evidence unavailable:', error);
+        setNewsEvidence({ state: 'unavailable', items: [], provider: null });
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const evidenceProjections = useMemo<Partial<Record<MarketSentimentCategory, MarketSentimentProjection>>>(() => {
+    if (newsEvidence.state === 'unavailable') return buildUnavailableProjections();
+    if (newsEvidence.state !== 'ready') return {};
+    return Object.fromEntries(CATEGORIES.map(({ id }) => [
+      id,
+      buildNewsEvidenceProjection(id, newsEvidence.items, newsEvidence.provider),
+    ])) as Partial<Record<MarketSentimentCategory, MarketSentimentProjection>>;
+  }, [newsEvidence]);
+
+  const effectiveProjections = useMemo(
+    () => ({ ...evidenceProjections, ...projections }),
+    [evidenceProjections, projections],
+  );
+  const projection = effectiveProjections[selectedCategory] ?? null;
   const score = clampScore(projection?.score ?? null);
   const history = useMemo(() => projection?.history30d ?? [], [projection]);
   const ready = projection?.status === 'READY' && score !== null;
@@ -137,7 +283,7 @@ export function MarketSentimentPresentation({ projections = {}, onExploreMarkets
             <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
               <div className="rounded-xl border border-slate-800 bg-slate-950/35 p-2.5">
                 <div className="text-slate-500">Modell</div>
-                <div className="mt-1 truncate font-mono font-bold text-slate-200">{projection?.modelVersion ?? 'crypto-sentiment-research/0.1.0'}</div>
+                <div className="mt-1 truncate font-mono font-bold text-slate-200">{projection?.modelVersion ?? 'Kein FINTECH-Modell attestiert'}</div>
               </div>
               <div className="rounded-xl border border-slate-800 bg-slate-950/35 p-2.5">
                 <div className="text-slate-500">Evidence</div>
@@ -176,7 +322,7 @@ export function MarketSentimentPresentation({ projections = {}, onExploreMarkets
                 <div className="mt-3 space-y-2">
                   {projection.drivers.slice(0, 5).map((driver) => (
                     <div key={`${driver.title}-${driver.description}`} className="rounded-xl border border-slate-800 bg-slate-950/25 p-2.5">
-                      <div className="flex items-center gap-2 text-[11px] font-bold text-slate-200"><TrendingUp className="h-3 w-3 text-emerald-400" aria-hidden="true" />{driver.title}</div>
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-slate-200"><TrendingUp className={'h-3 w-3 ' + (driver.direction === 'down' ? 'rotate-180 text-red-400' : driver.direction === 'neutral' ? 'text-slate-400' : 'text-emerald-400')} aria-hidden="true" />{driver.title}</div>
                       <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{driver.description}</p>
                     </div>
                   ))}
