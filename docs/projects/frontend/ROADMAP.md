@@ -20,10 +20,10 @@ This FE projection is re-correlated to `main@98c8889ac5f34c8123470b9b5ac57648ccd
 
 - Provider readback returned **no open Pull Requests** at the correlation boundary; stale PR #1299, #1300 and #1315 entries are therefore removed from the active Work Graph.
 - The old UI snapshot baseline `7bcc6aee2700d6fa3f926ff8615b04cde136750c` is 185 commits behind this CURRENT_MAIN correlation and is evidence only.
-- Render Production remained live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0` while #1331 Auth/Profile was already merged on main. The UI continues to read `/healthz` at runtime and does not infer Production from merge state.
+- Render Production remains live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0` while #1331 Auth/Profile is already merged on main. The attempted exact-main deploy `dep-daq378mk1f9s738adt70` built successfully but failed at Runtime start because `supabaseAuthRegistrationControl.mjs` did not receive a usable `SUPABASE_MANAGEMENT_ACCESS_TOKEN`. This is an owner-correct OPS deployment/configuration blocker; no secret value is recorded. The UI continues to read `/healthz` at runtime and does not infer Production from merge state.
 - SEO issues #1233, #1252, #1254, #1258 and #1263 are terminal; no open `project:CAPITAL-AI-SEO` issue was returned in the fresh provider readback.
 - A new current-state drift is explicit rather than silently repaired: `AppRoutes.tsx` no longer renders `/universe`, while `routeSeo.ts`, `sitemap.xml`, prerender and the server public-route allowlist still publish it. FE does **not** restore the removed client route; retirement of the stale projections remains owner-correct across FE/SEO/OPS.
-- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring and #1331 Auth/Profile as main-only at the observed Production boundary.
+- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile as main-only, and the failed exact-main Render promotion as an explicit OPS blocker.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 
@@ -56,7 +56,7 @@ The derived dashboard now makes these states visible in one place:
 1. **Active canonical work** — only current owner-roadmap identities or fresh Human direction.
 2. **Repository-integrated** — merged/current-main implementation whose external provider state is still independent.
 3. **Production-covered** — implementation known to be contained in the observed Production audit commit.
-4. **Main-only** — merged after the observed Production commit and therefore not represented as live until a later exact-SHA Production readback.
+4. **Main-only / deploy-blocked** — merged after the observed Production commit or blocked by a failed promotion and therefore not represented as live until a later exact-SHA Production readback.
 5. **Provider-gate** — GSC/GA4/GenAI or other provider evidence that cannot be inferred from repository wiring.
 6. **Legacy drift** — old connections still advertised by technical SEO/server surfaces but no longer backed by the current productive Client surface.
 
