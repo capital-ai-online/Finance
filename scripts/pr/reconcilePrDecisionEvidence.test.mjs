@@ -604,6 +604,7 @@ test('leading PR body projection repairs the PR #1298 hybrid shape and binds one
     'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
     '</details>',
     '## 7. Maschinenlesbare Baseline',
+    '',
     legacyBlock,
   ].join('\n');
 
