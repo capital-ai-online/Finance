@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "DOCUMENTARY-WP06E-SELF-HEALING-CONTRACT-BOUND-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -35,5 +35,9 @@
     "tests/unit/documentaryConvergenceEvidence.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; SH-02 remains the parent recovery authority.",
-  "recorrelatedAt": "2026-09-20T13:14:30Z"
+  "recorrelatedAt": "2026-09-20T13:14:30Z",
+  "releasedAt": "2026-09-23T14:05:22.971Z",
+  "releaseReason": "PR #1131 merged on 2026-09-20; stale active/exclusive metadata released during CAPITAL-AI-DOC / PVC-03 startup_failure remediation.",
+  "terminalPullRequest": 1131,
+  "terminalMergeSha": "b971adb81a8490575cf8e2c8ff20ea98833c446e"
 }

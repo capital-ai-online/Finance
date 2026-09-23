@@ -353,6 +353,7 @@ jobs:
     if: needs.autosync-branch.outputs.branch != ''
     permissions:
       contents: read
+      issues: write
       pull-requests: write
     uses: ./.github/workflows/open-agent-draft-pr.yml
     with:
