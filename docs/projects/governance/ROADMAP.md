@@ -27,11 +27,11 @@ A work item is executable only when it is currently active under `/AGENTS.md@CUR
 
 Fresh Human/Owner direction defines one application-wide cadence authority. The Human merge of this Governance slice is the non-retroactive `cadenceEpoch`: historical merges do not prefill counters. Repository truth always follows latest `CURRENT_MAIN`; Production is a separate lagging deployment projection.
 
-- normal automatic Render deploy: every **5th merged PR** after the epoch or last successful cadence deployment;
+- normal automatic Render deploy: fixed merge ordinals **5/10/15/...** after the epoch; delayed/failed deployment never shifts later boundaries;
 - target at deployment mutation: freshly reread latest `CURRENT_MAIN`;
 - expected healthy lag below `5/5`: `DEPLOYMENT_QUEUED`, never drift and never an exact-SHA recovery trigger;
 - failed/due deployment: true `PRODUCTION_DRIFT`; bounded existing recovery may retry without another five merges;
-- ordinary automatic platform version: every **10th merged PR**, exact next PATCH on the candidate branch before Human merge through the existing Release Version Gate (`0.6.0 → 0.6.1` example);
+- ordinary automatic platform version: fixed merge ordinals **10/20/30/...**, exact next PATCH on the candidate branch before Human merge through the existing Release Version Gate (`0.6.0 → 0.6.1` example); explicit higher releases do not shift those boundaries;
 - `package.json#version` remains sole authority; root/package-root lockfile versions are governed mirrors;
 - semantic PATCH/MINOR/MAJOR classification remains Release-impact evidence, while between-cadence automatic version mutation is superseded;
 - CI/tests, Self-Healing continuation and live/current-state dashboard always follow latest `CURRENT_MAIN`, not the live Production SHA.

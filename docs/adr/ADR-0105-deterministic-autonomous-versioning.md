@@ -23,13 +23,13 @@ This ADR does not authorize its own PR creation, merge, release acceptance, Git 
 
 Version 1.1 adds a deterministic merge-cadence materialization rule. Where the v1.0 semantic-delta materialization wording below conflicts with this subsection for **ordinary automatic development**, this subsection prevails after Human/CODEOWNER merge of the activating Governance change.
 
-- The activating Governance merge is the non-retroactive `cadenceEpoch`; earlier PR merges are not counted.
-- Automatic ordinary platform-version materialization occurs on every **10th same-repository Pull Request merged into `main`** after the later of `cadenceEpoch` or the most recent merged platform-version transition.
-- When nine counted PR merges are already present, the next merge candidate is the tenth and must materialize exactly the next SemVer `PATCH` on its own branch before Human/CODEOWNER merge through the existing Release Version Gate. Example: `0.6.0 → 0.6.1`.
+- The activating Governance merge is the non-retroactive `cadenceEpoch` with merge ordinal `0`; the activating PR and all earlier PR merges are not counted.
+- Automatic ordinary platform-version materialization occurs at fixed positive merge ordinals divisible by **10** (`10, 20, 30, ...`) after `cadenceEpoch`.
+- When the current merge ordinal is `9 mod 10`, the next merge candidate is cadence-required and must materialize exactly the next SemVer `PATCH` on its own branch before Human/CODEOWNER merge through the existing Release Version Gate. Example: `0.6.0 → 0.6.1`.
 - `package.json#version` remains the sole platform-version authority. `package-lock.json#version` and `package-lock.json#packages[""]#version` are governed mirrors and must change atomically with it.
 - Direct `main` mutation remains denied. Any movement of `CURRENT_MAIN` before the merge decision invalidates the earlier cadence count and requires recomputation.
 - The semantic `PATCH/MINOR/MAJOR/NONE` engine remains deterministic Release-impact evidence, but ordinary automatic semantic classifications do **not** independently materialize versions between ten-merge boundaries.
-- A separately authorized explicit MINOR/MAJOR Release transition remains possible under existing Release/GA gates. Once merged, that transition becomes the new version-cadence anchor.
+- A separately authorized explicit MINOR/MAJOR Release transition remains possible under existing Release/GA gates, but it does not shift the fixed 10/20/30 merge boundaries; the next cadence boundary applies the strict next PATCH from the then-current platform version.
 - Version cadence does not grant deployment authority. The separate repository-wide deployment cadence remains governed by `/AGENTS.md@CURRENT_MAIN`.
 
 ## 2. Stable authorities and source artifacts
@@ -218,7 +218,7 @@ After this ADR becomes effective, Governance supplies deterministic semantic cla
 
 A separate OPS implementation slice must integrate this decision contract into the existing `src/platform/Release/**` version path. It must not create a second VersionManager, second registry or parallel Release architecture.
 
-Until that OPS slice is Human-merged and proves the 9→10 cadence check against fresh `CURRENT_MAIN`, Contract v1.1 deliberately sets legacy `branchMaterialization.allowedAfterAuthorityEffective=false`. This makes the v1.0 semantic materializer fail closed rather than permitting an obsolete between-cadence automatic version bump.
+Until that OPS slice is Human-merged and proves `currentMergeOrdinal % 10 == 9` against fresh `CURRENT_MAIN`, Contract v1.1 deliberately sets legacy `branchMaterialization.allowedAfterAuthorityEffective=false`. This makes the v1.0 semantic materializer fail closed rather than permitting an obsolete between-cadence automatic version bump.
 
 ## 11. Security impact
 

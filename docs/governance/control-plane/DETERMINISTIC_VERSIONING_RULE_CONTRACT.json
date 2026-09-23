@@ -12,9 +12,9 @@
   "ruleEngineVersion": "capital-ai-versioning-rules/1.0.0",
   "automaticMaterializationPolicy": {
     "mode": "MERGED_PR_CADENCE_PATCH",
-    "activationEpoch": "HUMAN_MERGE_OF_GOV_DEPLOY_BATCH_01",
+    "activationEpoch": "HUMAN_MERGE_OF_GOV_DEPLOY_BATCH_01_IS_ORDINAL_0",
     "retroactiveCounting": false,
-    "countUnit": "SAME_REPOSITORY_PULL_REQUEST_MERGED_TO_MAIN",
+    "countUnit": "SAME_REPOSITORY_PULL_REQUEST_MERGED_TO_MAIN_AFTER_EPOCH",
     "mergedPullRequestsPerPatch": 10,
     "candidatePreparationAtPriorMergedCount": 9,
     "bumpType": "PATCH",
@@ -22,7 +22,6 @@
     "example": "0.6.0->0.6.1",
     "materializeBeforeHumanMerge": true,
     "recomputeOnCurrentMainMovement": true,
-    "resetAnchorOnMergedVersionTransition": true,
     "semanticClassificationRole": "RELEASE_IMPACT_EVIDENCE",
     "semanticClassificationAutomaticBetweenCadenceMaterialization": false,
     "explicitHigherReleaseAllowed": true,
@@ -31,43 +30,138 @@
     "automaticDeployment": "DENY",
     "canonicalMutationPath": "CAPITAL-AI-OPS / PVC-06 / PVC-07 existing Release Version Gate",
     "singleVersionAuthority": "package.json#version",
-    "governedMirrors": ["package-lock.json#version", "package-lock.json#packages[\"\"]#version"]
+    "governedMirrors": [
+      "package-lock.json#version",
+      "package-lock.json#packages[\"\"]#version"
+    ],
+    "mergeOrdinalBoundaries": "POSITIVE_MULTIPLES_OF_10",
+    "candidateRule": "CURRENT_MERGE_ORDINAL_MOD_10_EQUALS_9_BEFORE_MERGE",
+    "explicitHigherReleaseShiftsCadence": false
   },
-  "classificationPrecedence": ["MAJOR", "MINOR", "PATCH", "NONE"],
+  "classificationPrecedence": [
+    "MAJOR",
+    "MINOR",
+    "PATCH",
+    "NONE"
+  ],
   "aggregation": "highest_severity_wins",
   "rules": [
-    {"ruleId":"NONE_NO_VERSION_RELEVANT_DELTA","changeType":"NO_VERSION_RELEVANT_DELTA","bumpType":"NONE"},
-    {"ruleId":"PATCH_BACKWARD_COMPATIBLE_BUG_FIX","changeType":"BACKWARD_COMPATIBLE_BUG_FIX","bumpType":"PATCH"},
-    {"ruleId":"PATCH_DOCUMENTATION_CORRECTION","changeType":"DOCUMENTATION_CORRECTION_NO_NEW_CAPABILITY","bumpType":"PATCH"},
-    {"ruleId":"PATCH_INTERNAL_IMPLEMENTATION_CHANGE","changeType":"INTERNAL_IMPLEMENTATION_NO_CONTRACT_EXTENSION","bumpType":"PATCH"},
-    {"ruleId":"PATCH_TEST_VALIDATION_FIX","changeType":"TEST_VALIDATION_FIX_NO_PUBLIC_CAPABILITY","bumpType":"PATCH"},
-    {"ruleId":"MINOR_NEW_BACKWARD_COMPATIBLE_RULE","changeType":"NEW_BACKWARD_COMPATIBLE_RULE","bumpType":"MINOR"},
-    {"ruleId":"MINOR_NEW_CAPABILITY","changeType":"NEW_CAPABILITY","bumpType":"MINOR"},
-    {"ruleId":"MINOR_NEW_VALIDATOR","changeType":"NEW_VALIDATOR","bumpType":"MINOR"},
-    {"ruleId":"MINOR_NEW_OPTIONAL_CONTRACT_FIELD","changeType":"NEW_OPTIONAL_CONTRACT_FIELD","bumpType":"MINOR"},
-    {"ruleId":"MINOR_NEW_BACKWARD_COMPATIBLE_API_FUNCTION","changeType":"NEW_BACKWARD_COMPATIBLE_API_FUNCTION","bumpType":"MINOR"},
-    {"ruleId":"MINOR_NEW_BACKWARD_COMPATIBLE_EVENT_FUNCTION","changeType":"NEW_BACKWARD_COMPATIBLE_EVENT_FUNCTION","bumpType":"MINOR"},
-    {"ruleId":"MAJOR_REMOVE_PUBLIC_CONTRACT","changeType":"REMOVE_PUBLIC_CONTRACT","bumpType":"MAJOR"},
-    {"ruleId":"MAJOR_INCOMPATIBLE_PUBLIC_CONTRACT","changeType":"INCOMPATIBLE_PUBLIC_CONTRACT","bumpType":"MAJOR"},
-    {"ruleId":"MAJOR_REMOVE_REQUIRED_INTERFACE","changeType":"REMOVE_REQUIRED_INTERFACE","bumpType":"MAJOR"},
-    {"ruleId":"MAJOR_INCOMPATIBLE_EVENT_SCHEMA","changeType":"INCOMPATIBLE_EVENT_SCHEMA","bumpType":"MAJOR"},
-    {"ruleId":"MAJOR_INCOMPATIBLE_API_SCHEMA","changeType":"INCOMPATIBLE_API_SCHEMA","bumpType":"MAJOR"},
-    {"ruleId":"MAJOR_EVIDENCED_CONSUMER_BREAKAGE","changeType":"SEMANTIC_CHANGE_WITH_CONSUMER_BREAKAGE","bumpType":"MAJOR"}
+    {
+      "ruleId": "NONE_NO_VERSION_RELEVANT_DELTA",
+      "changeType": "NO_VERSION_RELEVANT_DELTA",
+      "bumpType": "NONE"
+    },
+    {
+      "ruleId": "PATCH_BACKWARD_COMPATIBLE_BUG_FIX",
+      "changeType": "BACKWARD_COMPATIBLE_BUG_FIX",
+      "bumpType": "PATCH"
+    },
+    {
+      "ruleId": "PATCH_DOCUMENTATION_CORRECTION",
+      "changeType": "DOCUMENTATION_CORRECTION_NO_NEW_CAPABILITY",
+      "bumpType": "PATCH"
+    },
+    {
+      "ruleId": "PATCH_INTERNAL_IMPLEMENTATION_CHANGE",
+      "changeType": "INTERNAL_IMPLEMENTATION_NO_CONTRACT_EXTENSION",
+      "bumpType": "PATCH"
+    },
+    {
+      "ruleId": "PATCH_TEST_VALIDATION_FIX",
+      "changeType": "TEST_VALIDATION_FIX_NO_PUBLIC_CAPABILITY",
+      "bumpType": "PATCH"
+    },
+    {
+      "ruleId": "MINOR_NEW_BACKWARD_COMPATIBLE_RULE",
+      "changeType": "NEW_BACKWARD_COMPATIBLE_RULE",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MINOR_NEW_CAPABILITY",
+      "changeType": "NEW_CAPABILITY",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MINOR_NEW_VALIDATOR",
+      "changeType": "NEW_VALIDATOR",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MINOR_NEW_OPTIONAL_CONTRACT_FIELD",
+      "changeType": "NEW_OPTIONAL_CONTRACT_FIELD",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MINOR_NEW_BACKWARD_COMPATIBLE_API_FUNCTION",
+      "changeType": "NEW_BACKWARD_COMPATIBLE_API_FUNCTION",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MINOR_NEW_BACKWARD_COMPATIBLE_EVENT_FUNCTION",
+      "changeType": "NEW_BACKWARD_COMPATIBLE_EVENT_FUNCTION",
+      "bumpType": "MINOR"
+    },
+    {
+      "ruleId": "MAJOR_REMOVE_PUBLIC_CONTRACT",
+      "changeType": "REMOVE_PUBLIC_CONTRACT",
+      "bumpType": "MAJOR"
+    },
+    {
+      "ruleId": "MAJOR_INCOMPATIBLE_PUBLIC_CONTRACT",
+      "changeType": "INCOMPATIBLE_PUBLIC_CONTRACT",
+      "bumpType": "MAJOR"
+    },
+    {
+      "ruleId": "MAJOR_REMOVE_REQUIRED_INTERFACE",
+      "changeType": "REMOVE_REQUIRED_INTERFACE",
+      "bumpType": "MAJOR"
+    },
+    {
+      "ruleId": "MAJOR_INCOMPATIBLE_EVENT_SCHEMA",
+      "changeType": "INCOMPATIBLE_EVENT_SCHEMA",
+      "bumpType": "MAJOR"
+    },
+    {
+      "ruleId": "MAJOR_INCOMPATIBLE_API_SCHEMA",
+      "changeType": "INCOMPATIBLE_API_SCHEMA",
+      "bumpType": "MAJOR"
+    },
+    {
+      "ruleId": "MAJOR_EVIDENCED_CONSUMER_BREAKAGE",
+      "changeType": "SEMANTIC_CHANGE_WITH_CONSUMER_BREAKAGE",
+      "bumpType": "MAJOR"
+    }
   ],
   "semanticEvidenceContract": {
     "required": true,
     "freeLlmEstimationAllowed": false,
     "itemsRequired": true,
-    "requiredItemFields": ["evidenceId", "changeType", "source", "subject"],
-    "optionalItemFields": ["contractId", "capabilityId"],
+    "requiredItemFields": [
+      "evidenceId",
+      "changeType",
+      "source",
+      "subject"
+    ],
+    "optionalItemFields": [
+      "contractId",
+      "capabilityId"
+    ],
     "missingEvidence": "FAIL_CLOSED",
     "contradictoryEvidence": "FAIL_CLOSED",
     "unknownChangeType": "FAIL_CLOSED"
   },
   "cadenceEvidenceContract": {
     "requiredForCadenceMaterialization": true,
-    "requiredFields": ["cadenceEpochSha", "currentMainSha", "candidatePrNumber", "candidateHeadSha", "mergedPrCountSinceVersionAnchor", "versionAnchorSha", "previousVersion", "calculatedVersion"],
-    "requiredMergedCountBeforeCandidate": 9,
+    "requiredFields": [
+      "cadenceEpochSha",
+      "currentMainSha",
+      "candidatePrNumber",
+      "candidateHeadSha",
+      "currentMergeOrdinal",
+      "previousVersion",
+      "calculatedVersion"
+    ],
+    "requiredMergedCountBeforeCandidate": "currentMergeOrdinal % 10 == 9",
     "calculatedVersionMustBeStrictNextPatch": true,
     "staleCurrentMain": "FAIL_CLOSED",
     "ambiguousMergeHistory": "FAIL_CLOSED",
@@ -96,7 +190,12 @@
   ],
   "decisionIdentity": {
     "algorithm": "sha256",
-    "canonicalInputs": ["baseSha", "semanticDelta", "ruleSetVersion", "previousVersion"],
+    "canonicalInputs": [
+      "baseSha",
+      "semanticDelta",
+      "ruleSetVersion",
+      "previousVersion"
+    ],
     "timestampAffectsIdentity": false,
     "actorAffectsIdentity": false,
     "clientAffectsIdentity": false,
@@ -112,7 +211,7 @@
   },
   "branchMaterialization": {
     "allowedAfterAuthorityEffective": false,
-    "reactivationCondition": "OPS cadence-aware materializer verifies mergedPrCountSinceVersionAnchor == 9 against fresh CURRENT_MAIN and implements contract v1.1",
+    "reactivationCondition": "OPS cadence-aware materializer verifies currentMergeOrdinal % 10 == 9 against fresh CURRENT_MAIN and implements contract v1.1",
     "scope": "current-scoped-work-branch-only",
     "directMainMutation": "DENY",
     "automaticMerge": "DENY",

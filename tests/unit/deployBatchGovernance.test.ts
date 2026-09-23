@@ -15,9 +15,9 @@ describe('application-wide merge cadence governance', () => {
   );
 
   it('binds normal Render deployment to exactly five merged pull requests', () => {
-    expect(agents).toContain('normal automatic Render deployment is due only after **five merged Pull Requests**');
-    expect(agents).toContain('For counts `0/5` through `4/5`');
-    expect(agents).toContain('at `5/5`, the state becomes `DEPLOYMENT_DUE`');
+    expect(agents).toContain('positive `mergeOrdinal` divisible by **5**');
+    expect(agents).toContain('`5, 10, 15, ...`');
+    expect(agents).toContain('the state becomes `DEPLOYMENT_DUE`');
     expect(agents).toContain('the deployment target is the then-latest `CURRENT_MAIN`');
     expect(agents).toContain('Render native Auto Deploy remains off');
   });
@@ -40,18 +40,20 @@ describe('application-wide merge cadence governance', () => {
 
   it('requires the tenth merged pull request to carry the next patch before merge', () => {
     expect(agents).toContain('**ten merged Pull Request** cadence');
-    expect(agents).toContain('When nine counted PR merges are already present');
+    expect(agents).toContain('current ordinal is `9 mod 10`');
     expect(agents).toContain('Example: `0.6.0 → 0.6.1`');
     expect(agents).toContain('`package.json#version` as the single version authority');
     expect(agents).toContain('`package-lock.json#packages[""]#version`');
     expect(versionContract.version).toBe('1.1.0');
     expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(false);
-    expect(versionContract.branchMaterialization.reactivationCondition).toContain('mergedPrCountSinceVersionAnchor == 9');
+    expect(versionContract.branchMaterialization.reactivationCondition).toContain('currentMergeOrdinal % 10 == 9');
     expect(versionContract.automaticMaterializationPolicy).toMatchObject({
       mode: 'MERGED_PR_CADENCE_PATCH',
       retroactiveCounting: false,
       mergedPullRequestsPerPatch: 10,
       candidatePreparationAtPriorMergedCount: 9,
+      mergeOrdinalBoundaries: 'POSITIVE_MULTIPLES_OF_10',
+      explicitHigherReleaseShiftsCadence: false,
       bumpType: 'PATCH',
       targetRule: 'STRICT_NEXT_PATCH',
       materializeBeforeHumanMerge: true,
