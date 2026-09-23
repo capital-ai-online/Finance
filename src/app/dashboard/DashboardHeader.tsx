@@ -1,4 +1,4 @@
-import { Activity, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import { Activity, Mail, ShieldCheck } from 'lucide-react';
 import { CapitalAiLogo } from '../../shared/branding/CapitalAiLogo';
 import {
   DashboardNavigation,
@@ -18,7 +18,6 @@ export interface DashboardHeaderProps {
   onSelectSymbol: (symbol: string) => void;
   onCategoryFilterChange: (category: string) => void;
   onAdminNavigate: (tab: DashboardNavigationAdminTab) => void;
-  onUpgradeClick: () => void;
 }
 
 /**
@@ -39,9 +38,7 @@ export function DashboardHeader({
   onSelectSymbol,
   onCategoryFilterChange,
   onAdminNavigate,
-  onUpgradeClick,
 }: DashboardHeaderProps) {
-  const enterprisePresented = profile.subscriptionTier === 'Enterprise';
 
   return (
     <header
@@ -99,27 +96,14 @@ export function DashboardHeader({
             <span>Support</span>
           </a>
 
-          {!enterprisePresented ? (
-            <button
-              type="button"
-              onClick={onUpgradeClick}
-              className="ui-hit inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-brand-primary px-3 text-[11px] font-black uppercase tracking-wider text-background shadow-[0_0_15px_rgba(249,191,33,0.25)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:text-xs"
-              aria-label="Abonnementoptionen öffnen"
-            >
-              <Sparkles size={13} aria-hidden="true" />
-              <span className="hidden sm:inline">Premium freischalten</span>
-              <span className="sm:hidden">Premium</span>
-            </button>
-          ) : (
-            <div
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-score-best/20 bg-score-best/10 px-3 text-xs font-bold text-score-best"
-              aria-label="Enterprise-Abonnement aktiv"
-            >
-              <ShieldCheck size={14} aria-hidden="true" />
-              <span className="hidden sm:inline">Enterprise aktiv</span>
-              <span className="sm:hidden">Enterprise</span>
-            </div>
-          )}
+          <div
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-score-best/20 bg-score-best/10 px-3 text-xs font-bold text-score-best"
+            aria-label="Komponenten sind unabhängig vom Abonnement sichtbar"
+          >
+            <ShieldCheck size={14} aria-hidden="true" />
+            <span className="hidden sm:inline">Offener Zugang</span>
+            <span className="sm:hidden">Offen</span>
+          </div>
         </div>
       </div>
     </header>

@@ -46,8 +46,6 @@ export interface CryptoScoringEnterpriseProps {
   timeframe: string;
   onChangeTimeframe?: (timeframe: string) => void;
   userSession?: unknown;
-  subscriptionTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
-  onUpgradeClick?: () => void;
 }
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';

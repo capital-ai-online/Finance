@@ -35,9 +35,9 @@ describe('public landing cockpit recovery', () => {
     expect(workbench).toContain('Anmelden und Tool öffnen');
   });
 
-  it('restores an explicit profile/settings entry while preserving the Enterprise presentation badge', () => {
+  it('restores profile/settings while presenting subscription-independent component access', () => {
     expect(navigationModel).toContain("{ view: 'profil', label: 'Profil & Einstellungen', section: 'hub' }");
-    expect(dashboardHeader).toContain("profile.subscriptionTier === 'Enterprise'");
-    expect(dashboardHeader).toContain('Enterprise aktiv');
+    expect(dashboardHeader).not.toContain("profile.subscriptionTier === 'Enterprise'");
+    expect(dashboardHeader).toContain('Offener Zugang');
   });
 });

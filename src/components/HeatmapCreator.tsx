@@ -57,12 +57,10 @@ const PRESET_PATTERNS = [
 ];
 
 interface HeatmapCreatorProps {
-  subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
-  onUpgradeClick: () => void;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
 }
 
-export function HeatmapCreator({ subscriptionTier, onUpgradeClick, triggerAttempt }: HeatmapCreatorProps) {
+export function HeatmapCreator({ triggerAttempt }: HeatmapCreatorProps) {
   const [nodes, setNodes] = useState<HeatmapNode[]>(() => {
     const saved = localStorage.getItem('aif_custom_heatmap_nodes');
     return saved ? JSON.parse(saved) : DEFAULT_USER_NODES;
@@ -672,9 +670,7 @@ export function HeatmapCreator({ subscriptionTier, onUpgradeClick, triggerAttemp
           </div>
         </div>
 
-        <RealtimeAiNewsfeed 
-          subscriptionTier={subscriptionTier} 
-          onUpgradeClick={onUpgradeClick}
+        <RealtimeAiNewsfeed
           selectedSymbol={selectedSymbol}
         />
       </div>
