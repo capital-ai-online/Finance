@@ -14,7 +14,7 @@
   "baseBranch": "main",
   "baseSha": "f65753961359d74cdf19de996bace459a98725b9",
   "lastSyncedMainSha": "f65753961359d74cdf19de996bace459a98725b9",
-  "branch": "frontend/pricing-archive-open-component-visibility-20260923-r2",
+  "branch": "frontend/pricing-archive-open-visibility-20260923",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
   "projectStage": "cross-cutting presentation; no productive PVC",
@@ -39,6 +39,7 @@
     "src/features/crypto/ui/CryptoScoringEnterprise.tsx",
     "src/app/public/PublicAnalysisWorkbench.tsx",
     "tests/unit/pricingArchiveVisibilityPolicy.test.ts",
+    "tests/unit/dashboardViewRouter.test.ts",
     "tests/unit/userLifecycleFrontendProjection.test.ts",
     "tests/unit/subscriptionReadbackAuthContract.test.ts",
     "tests/unit/publicLandingCockpitRecovery.test.ts",
@@ -58,7 +59,7 @@
     "currentMain": "f65753961359d74cdf19de996bace459a98725b9",
     "openWriterOverlap": "Fresh CURRENT_MAIN correlation after merged PR #1324 shows no direct changed-file overlap with the remaining pricing slice.",
     "handovers": "OPS #1326; COMP #1327",
-    "currentMainCorrelation": "Clean r2 pricing archive slice correlated onto fresh CURRENT_MAIN f65753961359d74cdf19de996bace459a98725b9; behind_by must remain 0 through merge decision."
+    "currentMainCorrelation": "Clean pricing archive slice correlated onto fresh CURRENT_MAIN f65753961359d74cdf19de996bace459a98725b9; behind_by must remain 0 through merge decision."
   },
   "acceptanceCriteria": [
     "The active pricing UI is an archive notice with no price or checkout action.",
