@@ -3,7 +3,7 @@
 **Project:** CAPITAL-AI-FE  
 **Project relationship:** cross-cutting presentation layer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Execution base:** `main@928431741d23ad5c4ea712f6898ca392cf9852da`  
+**Execution base:** `main@84137c8d24507523c59cf22d6b888a24329a56e5`  
 **Status:** IMPLEMENTATION / HUMAN-CODEOWNER-MERGE REQUIRED
 
 ## Owner direction
