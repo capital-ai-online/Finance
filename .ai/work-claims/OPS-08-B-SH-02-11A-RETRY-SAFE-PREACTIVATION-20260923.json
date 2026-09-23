@@ -22,12 +22,14 @@
   "baseSha": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
   "branch": "agent/operations-sh02-11-retry-safe-preactivation-20260923",
   "claimedPaths": [
-    ".ai/work-claims/OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923.json",
     ".ai/work-claims/OPS-08-B-SH-02-11-DEPENDENCY-READINESS-20260923.json",
-    "src/platform/Supervisor/dependencyResilience.ts",
-    "tests/unit/sh0211RetrySafePreactivation.test.ts",
+    ".ai/work-claims/OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
     "docs/projects/operations/evidence/SH_02_11A_RETRY_SAFE_PREACTIVATION_2026-09-23.md",
-    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md"
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "src/platform/Supervisor/dependencyResilience.ts",
+    "tests/unit/sh0211RetrySafePreactivation.test.ts"
   ],
   "activationCandidate": {
     "actionId": "RETRY_SAFE_OPERATION",
