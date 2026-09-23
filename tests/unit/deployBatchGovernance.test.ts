@@ -5,42 +5,67 @@ import { describe, expect, it } from 'vitest';
 const root = process.cwd();
 const read = (repoPath: string) => fs.readFileSync(path.join(root, repoPath), 'utf8');
 
-describe('application-wide deployment batching governance', () => {
+describe('application-wide merge cadence governance', () => {
   const agents = read('AGENTS.md');
   const catalog = JSON.parse(read('docs/governance/control-catalog.json')) as {
     controls: Array<{ controlId: string; requirement: string }>;
   };
+  const versionContract = JSON.parse(
+    read('docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json'),
+  );
 
-  it('separates post-merge correlation from Render deployment mutation', () => {
-    expect(agents).toContain('Post-merge production correlation and deployment batching');
-    expect(agents).toContain('MUST NOT by itself require or trigger a Render production deployment');
+  it('binds normal Render deployment to exactly five merged pull requests', () => {
+    expect(agents).toContain('normal automatic Render deployment is due only after **five merged Pull Requests**');
+    expect(agents).toContain('For counts `0/5` through `4/5`');
+    expect(agents).toContain('at `5/5`, the state becomes `DEPLOYMENT_DUE`');
+    expect(agents).toContain('the deployment target is the then-latest `CURRENT_MAIN`');
     expect(agents).toContain('Render native Auto Deploy remains off');
-    expect(agents).not.toContain('deploy-production path for that exact SHA MUST be observed as triggered no later than five minutes');
   });
 
-  it('classifies healthy ancestor lag as queued instead of production drift', () => {
-    expect(agents).toContain('DEPLOYMENT_QUEUED');
-    expect(agents).toContain('an ancestor of `CURRENT_MAIN`');
-    expect(agents).toContain('Expected ancestor lag MUST NOT create or maintain a production-drift issue');
-    expect(agents).toContain('actual `PRODUCTION_DRIFT` remains fail-closed');
+  it('keeps tests, self-healing and dashboard truth on latest current main', () => {
+    expect(agents).toContain('CI, tests, Security/Compliance checks, Self-Healing and the live/current-state dashboard MUST follow the latest `CURRENT_MAIN`');
+    expect(agents).toContain('`DEPLOYMENT_QUEUED` below `5/5` MUST NOT trigger exact-SHA runtime recovery');
+    expect(agents).toContain('repository automation MAY advance the existing next-PR synchronization and Self-Healing continuation lanes');
+    expect(read('.github/workflows/self-healing-package-continuation.yml')).toContain("workflows: ['Post-Merge Production Correlation']");
+    expect(read('.github/workflows/ops-exact-sha-runtime-recovery.yml')).toContain("workflows: ['CI', 'Post-Merge Production Correlation']");
   });
 
-  it('defines a truthful observed merge-progress and next-version projection', () => {
-    expect(agents).toContain('observed_required_merges = merged_since_production + open_main_pull_requests');
-    expect(agents).toContain('observed_merge_progress = merged_since_production / observed_required_merges');
-    expect(agents).toContain('package.json#version@CURRENT_MAIN');
-    expect(agents).toContain('it is not a fixed global merge threshold');
+  it('defines a non-retroactive cadence epoch and truthful dashboard projection', () => {
+    expect(agents).toContain('non-retroactive `cadenceEpoch`');
+    expect(agents).toContain('Pull Requests merged before that epoch do not count');
+    expect(agents).toContain('deployment progress `x/5`');
+    expect(agents).toContain('version progress `x/10`');
+    expect(agents).toContain('deterministic next PATCH target');
   });
 
-  it('keeps one deployment authority control and routes productive implementation to OPS', () => {
-    const deployControls = catalog.controls.filter((item) => item.controlId === 'CTRL-DEPLOY-AUTH-001');
-    expect(deployControls).toHaveLength(1);
-    expect(deployControls[0].requirement).toContain('DEPLOYMENT_QUEUED');
-    expect(deployControls[0].requirement).toContain('separate exact-SHA verified deployment-batch action');
+  it('requires the tenth merged pull request to carry the next patch before merge', () => {
+    expect(agents).toContain('**ten merged Pull Request** cadence');
+    expect(agents).toContain('When nine counted PR merges are already present');
+    expect(agents).toContain('Example: `0.6.0 → 0.6.1`');
+    expect(agents).toContain('`package.json#version` as the single version authority');
+    expect(agents).toContain('`package-lock.json#packages[""]#version`');
+    expect(versionContract.version).toBe('1.1.0');
+    expect(versionContract.automaticMaterializationPolicy).toMatchObject({
+      mode: 'MERGED_PR_CADENCE_PATCH',
+      retroactiveCounting: false,
+      mergedPullRequestsPerPatch: 10,
+      candidatePreparationAtPriorMergedCount: 9,
+      bumpType: 'PATCH',
+      targetRule: 'STRICT_NEXT_PATCH',
+      materializeBeforeHumanMerge: true,
+      directMainMutation: 'DENY',
+      automaticMerge: 'DENY',
+      automaticDeployment: 'DENY',
+    });
+  });
 
-    const roadmap = read('docs/projects/governance/ROADMAP.md');
-    expect(roadmap).toContain('GOV-DEPLOY-BATCH-01');
-    expect(roadmap).toContain('CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08');
-    expect(roadmap).toContain('no CI, Render, runtime or provider mutation');
+  it('preserves one deploy authority and one version authority', () => {
+    const deploy = catalog.controls.filter((item) => item.controlId === 'CTRL-DEPLOY-AUTH-001');
+    const version = catalog.controls.filter((item) => item.controlId === 'CTRL-GOV-VERSION-002');
+    expect(deploy).toHaveLength(1);
+    expect(version).toHaveLength(1);
+    expect(deploy[0].requirement).toContain('every fifth merged Pull Request');
+    expect(version[0].requirement).toContain('every tenth merged Pull Request');
+    expect(version[0].requirement).toContain('package.json remains the sole authority');
   });
 });

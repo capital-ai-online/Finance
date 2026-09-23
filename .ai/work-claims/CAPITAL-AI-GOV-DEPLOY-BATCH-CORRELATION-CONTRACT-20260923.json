@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Replace the repository-wide per-merge Render deployment assumption with an application-wide deployment-batch correlation contract: expected healthy ancestor lag is DEPLOYMENT_QUEUED, merge progress and next expected version are projected, and true Production drift remains fail-closed.",
+  "workItem": "Define the application-wide non-retroactive merge cadence: normal Render deployment every 5 merged PRs, deterministic next-PATCH platform-version materialization on every 10th merged PR, while CI/tests/Self-Healing/dashboard follow latest CURRENT_MAIN and true Production drift remains fail-closed.",
   "startedAt": "2026-09-23T22:45:00+02:00",
   "baseBranch": "main",
   "baseSha": "8f5fff57613f183e0e1a2a8c8b41017338e63491",
@@ -18,7 +18,7 @@
   "projectFolder": "docs/projects/governance/",
   "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
   "priority": "P1",
-  "priorityReason": "Current AGENTS.md mandates a five-minute per-merge deployment and classifies any Production!=CURRENT_MAIN state as drift, directly conflicting with the fresh Human/Owner application-wide batching direction.",
+  "priorityReason": "Current AGENTS.md mandates per-merge deployment and ADR-0105 v1.0 permits semantic-delta-driven automatic version materialization; both conflict with the fresh Human/Owner 5-merge deployment / 10-merge PATCH cadence direction.",
   "claimedPaths": [
     "AGENTS.md",
     "docs/governance/control-catalog.json",
@@ -26,13 +26,16 @@
     "docs/projects/governance/ROADMAP.md",
     "tests/unit/prApprovalEnvelopeGovernance.test.ts",
     "tests/unit/deployBatchGovernance.test.ts",
-    ".ai/work-claims/CAPITAL-AI-GOV-DEPLOY-BATCH-CORRELATION-CONTRACT-20260923.json"
+    ".ai/work-claims/CAPITAL-AI-GOV-DEPLOY-BATCH-CORRELATION-CONTRACT-20260923.json",
+    "docs/adr/ADR-0105-deterministic-autonomous-versioning.md",
+    "docs/adr/registry.json",
+    "docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json"
   ],
   "scopeBoundary": [
-    "Governance contract only: no CI workflow mutation, no Render/provider mutation, no runtime endpoint and no Frontend implementation in this slice.",
-    "Productive materialization is owner-correct handoff to CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08 after Human/CODEOWNER merge.",
-    "Historical evidence remains provenance-preserving and is not rewritten.",
-    "Human/CODEOWNER merge authority and Security/Compliance gates remain unchanged."
+    "Governance/subject-matter authority contract only: no OPS workflow, Render/provider, runtime or FE dashboard mutation in this slice.",
+    "Productive deployment/version materialization remains owner-correct with CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08 after Human/CODEOWNER merge; FE only consumes the resulting read-only projection.",
+    "Parallel SEC PR #1337 owns current RoadmapDashboard.tsx/roadmapSnapshot.ts writes; this branch does not create changed-file overlap.",
+    "Historical evidence remains provenance-preserving and Human/CODEOWNER merge plus Security/Compliance gates remain unchanged."
   ],
   "dependencies": [
     "/AGENTS.md@8f5fff57613f183e0e1a2a8c8b41017338e63491",
@@ -40,16 +43,16 @@
     "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
   ],
   "exitEvidence": [
-    "AGENTS.md no longer mandates per-main-merge Render deployment or five-minute deploy-trigger convergence.",
-    "Healthy canonical Production that is an ancestor of CURRENT_MAIN is classified DEPLOYMENT_QUEUED rather than PRODUCTION_DRIFT.",
-    "Observed batch progress and next package.json version semantics are explicit and non-authorizing.",
-    "Control/authority versions and regression tests converge on the same semantics."
+    "AGENTS.md defines cadenceEpoch, 5 merged PR deployment threshold, 10 merged PR PATCH threshold and latest-CURRENT_MAIN test/Self-Healing/dashboard truth.",
+    "Expected healthy Production lag below 5/5 is DEPLOYMENT_QUEUED and cannot trigger exact-SHA recovery; failed/due deploy remains true PRODUCTION_DRIFT.",
+    "ADR-0105 v1.1 and Versioning Rule Contract v1.1 supersede ordinary between-cadence automatic semantic version materialization without creating a second version authority.",
+    "Control/authority/ADR registries and regression tests converge on the same semantics."
   ],
   "acceptanceCriteria": [
-    "One Trust Root remains; no secondary deployment policy is created.",
-    "PRODUCTION_DRIFT remains reserved for evidence-backed unexpected/unhealthy/diverged/failed-deploy states.",
-    "CAPITAL-AI-OPS successor implementation is explicit and dependency-gated on this Human merge.",
-    "Human/CODEOWNER merge remains required for this protected Governance/control-plane change."
+    "One Trust Root, one deploy authority and package.json#version as one platform-version authority remain.",
+    "Cadence counting is non-retroactive from the activating Human merge and counts only same-repository PRs actually merged to main.",
+    "The tenth merge candidate receives strict next PATCH on branch before Human merge; package-lock root/package-root mirrors change atomically.",
+    "Productive OPS/FE implementation remains owner-correct and no second Self-Healing/deploy/version controller is introduced."
   ],
   "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
 }

@@ -17,20 +17,28 @@ This file remains a temporary project status projection until the separately req
 
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
 
-## GOV-DEPLOY-BATCH-01 — Application-wide post-merge deploy batching contract
+## GOV-DEPLOY-BATCH-01 — 5-Merge Deployment / 10-Merge Version Cadence
 
 **State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
 **Priority:** `P1 🟠 Hoch`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Fresh baseline:** `main@8f5fff57613f183e0e1a2a8c8b41017338e63491`  
-**Foreign-owner handoff after merge:** `CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08`
+**Foreign-owner handoff after merge:** `CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08`; Live-Roadmap consumption remains `CAPITAL-AI-FE`
 
-Fresh Human/Owner direction replaces the repository-wide assumption that every main merge must immediately become the live Render commit. The Trust Root now separates mandatory post-merge correlation from deployment mutation: a healthy canonical Production SHA that is an ancestor of CURRENT_MAIN is `DEPLOYMENT_QUEUED`, not drift. The non-authorizing queue projection reports merged PRs since the live SHA, open main PRs, observed merge progress, the then-current next target SHA and `package.json#version@CURRENT_MAIN`.
+Fresh Human/Owner direction defines one application-wide cadence authority. The Human merge of this Governance slice is the non-retroactive `cadenceEpoch`: historical merges do not prefill counters. Repository truth always follows latest `CURRENT_MAIN`; Production is a separate lagging deployment projection.
 
-This Governance slice intentionally performs **no** CI, Render, runtime or provider mutation. After Human/CODEOWNER merge, CAPITAL-AI-OPS owns the productive materialization: stop the per-main-push deploy hook, converge Post-Merge Production Correlation and PR production baselines to queue semantics, expose the read-only queue projection to application consumers, retain true-drift fail-closed behavior, and preserve a separately verified exact-SHA deployment-batch path. CAPITAL-AI-FE may then consume that OPS projection without creating release authority.
+- normal automatic Render deploy: every **5th merged PR** after the epoch or last successful cadence deployment;
+- target at deployment mutation: freshly reread latest `CURRENT_MAIN`;
+- expected healthy lag below `5/5`: `DEPLOYMENT_QUEUED`, never drift and never an exact-SHA recovery trigger;
+- failed/due deployment: true `PRODUCTION_DRIFT`; bounded existing recovery may retry without another five merges;
+- ordinary automatic platform version: every **10th merged PR**, exact next PATCH on the candidate branch before Human merge through the existing Release Version Gate (`0.6.0 → 0.6.1` example);
+- `package.json#version` remains sole authority; root/package-root lockfile versions are governed mirrors;
+- semantic PATCH/MINOR/MAJOR classification remains Release-impact evidence, while between-cadence automatic version mutation is superseded;
+- CI/tests, Self-Healing continuation and live/current-state dashboard always follow latest `CURRENT_MAIN`, not the live Production SHA.
 
-**Exit:** `/AGENTS.md`, Authority Registry and Control Catalog express one coherent batching rule; former five-minute per-merge deployment semantics are superseded prospectively; true Production drift remains fail-closed; ordinary Human/CODEOWNER merge authority remains unchanged; OPS implementation is an explicit owner-correct successor rather than hidden in this Governance PR.
+This Governance slice intentionally does **not** mutate OPS workflows, Render/provider state or FE dashboard files. Productive OPS materialization must reuse the existing `ci.yml`, Post-Merge Production Correlation, exact-SHA recovery and Release Version Gate writers; no second deploy/version/Self-Healing controller is permitted. The parallel SEC PR #1337 already writes the Roadmap dashboard files, so this branch records the globally authoritative consumer contract rather than creating a changed-file writer collision.
 
+**Exit:** one Trust Root + ADR-0105 v1.1 + Versioning Rule Contract v1.1 define the fixed 5/10 cadence, non-retroactive epoch, latest-main semantics and recovery boundary; Control Catalog/Authority Registry and tests agree; OPS/FE successors have one unambiguous owner-correct implementation target after Human merge.
 
 ## GOV-SH-V3 — Self-Healing Convergence Program
 
