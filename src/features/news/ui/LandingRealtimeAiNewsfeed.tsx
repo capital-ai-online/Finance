@@ -1,19 +1,8 @@
 import React from 'react';
-import { ArrowRight, Filter, LockKeyhole, Newspaper, ShieldCheck } from 'lucide-react';
-import {
-  canUseFeature,
-  type SubscriptionTier,
-} from '../../../config/subscriptionEntitlements';
-
+import { Eye, Filter, Newspaper, ShieldCheck } from 'lucide-react';
 interface LandingRealtimeAiNewsfeedProps {
   onLoginNavigate?: () => void;
 }
-
-const SUBSCRIPTION_TIERS: readonly SubscriptionTier[] = ['Free', 'Starter', 'Pro', 'Enterprise'];
-
-const NEWSFEED_ENABLED_TIERS = SUBSCRIPTION_TIERS.filter((tier) =>
-  canUseFeature('registered', tier, 'realtime_ai_newsfeed'),
-);
 
 const CAPABILITY_FACTS = [
   {
@@ -41,10 +30,8 @@ const CAPABILITY_FACTS = [
  * news REST surface and does not create a second public news transport or synthetic preview dataset.
  */
 export function LandingRealtimeAiNewsfeed({
-  onLoginNavigate,
+  onLoginNavigate: _onLoginNavigate,
 }: LandingRealtimeAiNewsfeedProps) {
-  const enabledTierLabel = NEWSFEED_ENABLED_TIERS.join(' / ');
-
   return (
     <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
       <div className="rounded-2xl border border-brand-accent/20 bg-background/45 p-5 sm:p-6">
@@ -58,37 +45,27 @@ export function LandingRealtimeAiNewsfeed({
                 Canonical Realtime AI Newsfeed
               </p>
               <h3 className="mt-1 text-base font-black text-text-primary sm:text-lg">
-                Live-News nach verifiziertem Zugang
+                Live-News ohne Tarif-Sichtbarkeitsschranke
               </h3>
             </div>
           </div>
 
           <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-primary/25 bg-brand-primary/10 px-3 py-2 font-mono text-[10px] font-black uppercase tracking-wider text-brand-primary">
-            <LockKeyhole size={13} aria-hidden="true" />
-            {enabledTierLabel}
+            <Eye size={13} aria-hidden="true" />
+            Für alle sichtbar
           </span>
         </div>
 
         <p className="mt-5 max-w-3xl text-sm leading-relaxed text-text-secondary">
-          Der produktive CAPITAL-AI Newsfeed bleibt an eine verifizierte Sitzung und die
-          bestehende serverseitige Berechtigung gebunden. Die öffentliche Landingpage öffnet
-          deshalb keinen zweiten News-Datenpfad und zeigt keine Demo-Schlagzeilen.
+          Das bisherige abonnementsabhängige Sichtbarkeitsmodell ist vorerst deaktiviert. Die
+          News-/Evidence-Komponente wird unabhängig vom Tarif dargestellt; es entsteht kein zweiter
+          News-Datenpfad und keine synthetische Demo-Evidence.
         </p>
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <a
-            href="/login"
-            onClick={onLoginNavigate}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 text-xs font-black uppercase tracking-wider text-background shadow-[0_0_22px_color-mix(in_srgb,var(--color-brand-primary)_24%,transparent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-          >
-            Anmelden & Newsfeed öffnen
-            <ArrowRight size={15} aria-hidden="true" />
-          </a>
-          <p className="text-[11px] leading-relaxed text-text-secondary">
-            Nach erfolgreicher Anmeldung führt CAPITAL-AI in den bestehenden Dashboard-Newsfeed;
-            die Zugriffsentscheidung bleibt serverseitig.
-          </p>
-        </div>
+        <p className="mt-5 text-[11px] leading-relaxed text-text-secondary">
+          Geschützte Schreib-, Rechen- oder Provider-Aktionen behalten ihre eigenen serverseitigen
+          Sicherheitsgrenzen. Sichtbarkeit ist nicht gleich Ausführungsautorität.
+        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FE-PRICING-ARCHIVE-OPEN-VISIBILITY-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FE",
+  "projectFolder": "frontend",
+  "projectStage": "cross-cutting presentation / no productive PVC",
+  "workItem": "Disable and archive the current pricing presentation and remove subscription-tier visibility restrictions from the frontend while preserving protected execution authority.",
+  "startedAt": "2026-09-23T17:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "branch": "frontend/pricing-archive-open-visibility-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/FE-PRICING-ARCHIVE-OPEN-VISIBILITY-20260923.json",
+    "docs/projects/frontend/work-packages/FE_PRICING_ARCHIVE_OPEN_VISIBILITY_2026-09-23.md",
+    "docs/archive/billing/PRICING_MODEL_2026-08-23.md",
+    "src/features/billing/billingContract.ts",
+    "src/features/billing/ui/Abonnements.tsx",
+    "src/features/news/ui/LandingRealtimeAiNewsfeed.tsx",
+    "tests/unit/pricingArchiveOpenVisibility.test.ts"
+  ],
+  "dependencies": [
+    "OPS-PUBLIC-VISIBILITY-MODE-20260923 for public read-only News/Evidence transport"
+  ],
+  "foreignHandoffs": [
+    {
+      "target": "CAPITAL-AI-COMP",
+      "scope": "Reconcile legal/FAQ tariff wording with disabled pricing before future monetization launch."
+    }
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

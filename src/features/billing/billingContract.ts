@@ -10,14 +10,15 @@ export const LEGAL_PATHS = {
 export type PaidSubscriptionPlan = 'Starter' | 'Pro' | 'Enterprise';
 export type SubscriptionBillingPeriod = 'monthly' | 'yearly';
 
+export const PRICING_MODEL_STATE = 'ARCHIVED_DISABLED' as const;
+export const PRICING_MODEL_ARCHIVE_REFERENCE = 'docs/archive/billing/PRICING_MODEL_2026-08-23.md' as const;
+
 /**
- * Consumer-facing price baseline verified read-only against the active CAPITAL-AI
- * Stripe live catalog on 2026-08-23. Stripe Price IDs remain deployment
- * configuration and are intentionally not duplicated in client source code.
+ * Historical pricing snapshot retained for audit/provenance only.
  *
- * The server-side Stripe Price object remains authoritative for the actual charge;
- * these values are the public pre-contract display baseline and therefore must be
- * changed only together with a fresh live-catalog verification.
+ * PRICING_MODEL_STATE=ARCHIVED_DISABLED means these values are not an active public
+ * offer and must not drive checkout or feature visibility. Stripe Price IDs remain
+ * deployment configuration and are intentionally not duplicated in client source code.
  */
 export const SUBSCRIPTION_PRICES_EUR: Record<
   PaidSubscriptionPlan,
