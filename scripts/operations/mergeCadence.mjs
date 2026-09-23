@@ -55,6 +55,16 @@ export function isCadenceContractActive(contract) {
     && contract?.automaticMaterializationPolicy?.mergeOrdinalBoundaries === 'POSITIVE_MULTIPLES_OF_10';
 }
 
+/**
+ * @param {{
+ *   active: boolean;
+ *   mergeOrdinal: number;
+ *   productionOrdinal?: number;
+ *   productionRelation?: string;
+ *   productionHealthy?: boolean | null;
+ *   currentVersion: string;
+ * }} input
+ */
 export function computeMergeCadence({
   active,
   mergeOrdinal,
@@ -155,6 +165,14 @@ function resolveProductionOrdinal(repoRoot, epochSha, currentSha, productionSha)
   return { ordinal: 0, relation: 'DIVERGED' };
 }
 
+/**
+ * @param {{
+ *   repoRoot?: string;
+ *   ref?: string;
+ *   productionSha?: string;
+ *   productionHealthy?: boolean | null;
+ * }} input
+ */
 export function resolveMergeCadence({
   repoRoot = process.cwd(),
   ref = 'HEAD',
