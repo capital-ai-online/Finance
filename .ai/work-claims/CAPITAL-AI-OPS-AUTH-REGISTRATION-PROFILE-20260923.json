@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-REGISTRATION-PROFILE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5 Codex",
@@ -74,7 +74,9 @@
     "providerAdvisor": "Supabase reports leaked-password protection disabled before this change.",
     "overlap": "PASS: commits after e9ed0a0 touch only SH-02.11 supervisor/governance files; no changed-file overlap.",
     "ciRemediation": "Exact-head CI regression convergence: retired challenge test filename no longer reintroduces the retired provider string through claim metadata; subscription entitlement regression now validates live UserSession authority instead of the removed localStorage profile cache.",
-    "supabaseMigrationProviderReadback": "Supabase list_migrations readback returned 76 remote migrations; 20260922042903_revoke_trigger_only_security_definer_execute has no current local timestamp/name match and is classified REMOTE_ONLY_HISTORY. Branch migration 20260923193000_auth_registration_profile_convergence remains LOCAL_ONLY until protected post-merge deployment."
+    "supabaseMigrationProviderReadback": "Supabase list_migrations readback returned 76 remote migrations; 20260922042903_revoke_trigger_only_security_definer_execute has no current local timestamp/name match and is classified REMOTE_ONLY_HISTORY. Branch migration 20260923193000_auth_registration_profile_convergence remains LOCAL_ONLY until protected post-merge deployment.",
+    "mergedMain": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+    "postMergeRender": "dep-daq378mk1f9s738adt70 update_failed: SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING"
   },
   "scopeBoundary": [
     "Preserve existing capital-ai.online graphical presentation.",
@@ -92,5 +94,7 @@
     "Legacy identity cleanup aborts on any unmapped record.",
     "Exact-head required checks pass."
   ],
-  "releaseCondition": "Human/CODEOWNER merge followed by canonical migration and attested Render deployment."
+  "releaseCondition": "Human/CODEOWNER merge followed by canonical migration and attested Render deployment.",
+  "releasedAt": "2026-09-23T20:18:00Z",
+  "releaseReason": "PR #1331 Human/CODEOWNER-merged as main@98c8889ac5f34c8123470b9b5ac57648ccd38877; post-merge Render startup drift is continued under a fresh bounded recovery claim."
 }
