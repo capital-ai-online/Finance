@@ -36,7 +36,7 @@
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/passwordRecoveryLogin.test.ts",
     "tests/unit/frontendExtendedWebdesign.test.ts",
-    "tests/unit/autLEGACY_CHALLENGE_PROVIDERRemoval.test.ts"
+    "tests/unit/authChallengeRemoval.test.ts"
   ],
   "evidence": {
     "currentMain": "c3181b37987598511b3eb3e2d313102458fed415",
