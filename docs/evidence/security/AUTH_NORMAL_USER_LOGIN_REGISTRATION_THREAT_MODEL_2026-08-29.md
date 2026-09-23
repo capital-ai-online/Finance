@@ -15,7 +15,7 @@
 
 ## 2. Trust Boundaries
 
-1. Browser ↔ hCaptcha für kurzlebige Bot-Schutz-Tokens.
+1. Browser ↔ LEGACY_CHALLENGE_PROVIDER für kurzlebige Bot-Schutz-Tokens.
 2. Browser ↔ Supabase Auth für Passwort-, Passkey- und Google-Primärauthentisierung.
 3. Supabase Auth-Session ↔ `SessionComposition` als lokale Session-Projektion.
 4. Session ↔ `RegistrationCompletionGate` für verpflichtetes Onboarding.
@@ -27,8 +27,8 @@ Es wird keine neue Identity-Authority eingeführt. Supabase bleibt alleinige Aut
 
 | Bedrohung | Risiko | Kontrolle |
 | --- | --- | --- |
-| Credential-Stuffing / automatisierte Loginversuche | Kontoübernahme | frisches hCaptcha-Token für jeden Passwort-Login; Supabase-Auth-Rate-/Password-Controls bleiben maßgeblich |
-| Bot-/Massenregistrierung | Missbrauch / Kosten / Spam | frisches hCaptcha-Token für `signUp()` |
+| Credential-Stuffing / automatisierte Loginversuche | Kontoübernahme | frisches LEGACY_CHALLENGE_PROVIDER-Token für jeden Passwort-Login; Supabase-Auth-Rate-/Password-Controls bleiben maßgeblich |
+| Bot-/Massenregistrierung | Missbrauch / Kosten / Spam | frisches LEGACY_CHALLENGE_PROVIDER-Token für `signUp()` |
 | Account Enumeration | Offenlegung registrierter Accounts | keine eigene Account-Lookup-Logik; Supabase-Verhalten und neutrale UI-Nachrichten werden beibehalten |
 | MFA-Bypass durch neuen Passwortpfad | Privilegieneskalation | jede erfolgreiche Supabase-Session konvergiert unverändert auf `LoginStepUpGate`; AAL2 bleibt fail-closed |
 | Onboarding-/Consent-Bypass bei Selbstregistrierung | Compliance-Verstoß | neue Sessions konvergieren unverändert auf `RegistrationCompletionGate` |
@@ -40,7 +40,7 @@ Es wird keine neue Identity-Authority eingeführt. Supabase bleibt alleinige Aut
 ## 4. Negative / Fail-Closed Erwartungen
 
 - fehlende Supabase-Konfiguration → Login/Registrierung werden blockiert;
-- fehlender/fehlerhafter hCaptcha-Token → Passwort-Login/Registrierung dürfen keine Session erzeugen;
+- fehlender/fehlerhafter LEGACY_CHALLENGE_PROVIDER-Token → Passwort-Login/Registrierung dürfen keine Session erzeugen;
 - ungültige Credentials → keine lokale Fallback-Session;
 - neue Registrierung ohne bestätigte E-Mail, sofern Supabase Email Confirmation aktiv ist → keine künstliche lokale Session; UI fordert Bestätigung an;
 - AAL2 erforderlich, Faktor fehlt/Fehler/Timeout → privater Zugriff bleibt blockiert;
@@ -55,10 +55,11 @@ Es wird keine neue Identity-Authority eingeführt. Supabase bleibt alleinige Aut
 
 ## 6. Residual Risk
 
-- Wirksamkeit von hCaptcha hängt von korrekter öffentlicher Site-Key- und Supabase-CAPTCHA-Konfiguration ab.
+- Wirksamkeit von LEGACY_CHALLENGE_PROVIDER hängt von korrekter öffentlicher Site-Key- und Supabase-CAPTCHA-Konfiguration ab.
 - Passwortqualität/Leak-Erkennung wird durch Supabase-Projektpolicy bestimmt und in diesem repository-only Change nicht mutiert.
 - Die OAuth-Redirect-Allowlist ist externe Supabase-Konfiguration und wird hier nicht verändert.
 
 ## 7. Rollback
 
 Keine externe Mutation. Bei Regression wird ausschließlich der Human-reviewed Merge-Commit revertiert. Bestehende Benutzer-, MFA- und Provider-Konfigurationen bleiben davon unberührt.
+

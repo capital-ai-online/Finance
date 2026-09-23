@@ -80,12 +80,19 @@ COPY --chown=root:root package*.json ./
 COPY --from=prod-deps --chown=root:root /app/node_modules ./node_modules
 COPY --from=builder --chown=root:root /app/dist ./dist
 COPY --from=builder --chown=root:root /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
+COPY --from=builder --chown=root:root /app/scripts/operations/supabaseAuthRegistrationControl.mjs ./scripts/operations/supabaseAuthRegistrationControl.mjs
+COPY --from=builder --chown=root:root /app/supabase/templates ./supabase/templates
 
 # Activate runtime-only governance controls only after the preload artifact exists.
 ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
+    CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL=true \
     NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs \
     HOME=/tmp/capitalai \
     TMPDIR=/tmp/capitalai
+
+# Preserve the established R-002 preload contract and append the auth reconciler in a second ENV
+# instruction so existing runtime-artifact governance remains byte-detectable and PID 1 stays Node.
+ENV NODE_OPTIONS="${NODE_OPTIONS} --import=/app/scripts/operations/supabaseAuthRegistrationControl.mjs"
 
 # COPY --chown=root:root above already gives the immutable application/dependency trees
 # their final ownership. Avoid recursive chown/chmod here: on OverlayFS those metadata rewrites

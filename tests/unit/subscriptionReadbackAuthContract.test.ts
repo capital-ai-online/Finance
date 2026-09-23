@@ -35,17 +35,18 @@ describe('authenticated subscription readback contract', () => {
     }
   });
 
-  it('keeps cached Dashboard entitlement subordinate to the live authenticated UserSession', () => {
+  it('keeps Dashboard entitlement bound to the live authenticated UserSession without a legacy profile cache', () => {
     const source = readRepoFile('src/app/dashboard/Dashboard.tsx');
-    const cacheStart = source.indexOf('if (savedStr)');
-    const cacheEnd = source.indexOf('const handleUpdateProfile', cacheStart);
-    const cacheBlock = source.slice(cacheStart, cacheEnd);
 
-    expect(cacheStart).toBeGreaterThan(-1);
-    expect(cacheBlock).toContain('email: userSession.email');
-    expect(cacheBlock).toContain(
+    expect(source).not.toContain('if (savedStr)');
+    expect(source).not.toContain('capital_ai_user_profile');
+    expect(source).toContain('email: userSession.email');
+    expect(source).toContain(
       "subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier",
     );
+    expect(source).toContain('React.useEffect(() => {');
+    expect(source).toContain('setProfile({');
+    expect(source).toContain('}, [userSession]);');
   });
 
   it('does not issue authenticated subscription reads for guest sessions', () => {

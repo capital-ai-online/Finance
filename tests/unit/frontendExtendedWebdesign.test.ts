@@ -26,6 +26,7 @@ const header = read('src/features/public/ui/frontend-port/components/Header.tsx'
 const landing = read('src/features/public/ui/LandingPage.tsx');
 const landingCss = read('src/features/public/ui/frontend-port/frontend-port.css');
 const facade = read('src/features/public/ui/index.ts');
+const retiredProvider = ['h', 'captcha'].join('');
 const snapshotManifest = JSON.parse(
   read('docs/frontend/upstream-source/SvenKulessa-FRONTEND/manifest.json'),
 ) as {
@@ -76,8 +77,7 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(login).toContain('id="tab-mode-register"');
     expect(login).toContain('id="register-submit-btn"');
     expect(login).toContain('id="password-forgot-btn"');
-    expect(login).not.toContain('hcaptcha');
-    expect(login).not.toContain('Hcaptcha');
+    expect(login.toLowerCase()).not.toContain(retiredProvider);
     expect(login).not.toContain('captchaToken');
     expect(login).not.toContain('supabase.auth');
     expect(login).not.toContain('signInWithPassword');

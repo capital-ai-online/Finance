@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';
 import { authFetch } from '../lib/authFetch';
+import { SecuritySettingsPanel } from './SecuritySettingsPanel';
 import {
   User,
   Mail,
@@ -19,6 +20,7 @@ import {
   Loader2,
   Download,
   ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 
 export interface UserProfile {
@@ -49,7 +51,7 @@ const AVATARS = [
 
 export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email);
+  const [email] = useState(profile.email);
   const [preferredAssetClass, setPreferredAssetClass] = useState(profile.preferredAssetClass);
   const [riskProfile, setRiskProfile] = useState(profile.riskProfile);
   const [capital, setCapital] = useState(profile.capital);
@@ -59,6 +61,9 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const [success, setSuccess] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Client-visible profile snapshot export state. This intentionally does not
   // claim to be a complete server-side GDPR archive because this view has no
@@ -100,15 +105,16 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSuccess(false);
+    setProfileError(null);
 
-    setTimeout(() => {
-      onUpdateProfile({
+    try {
+      const nextProfile: UserProfile = {
         name,
-        email,
+        email: profile.email,
         avatarId,
         avatarColor: activeAvatar.color,
         preferredAssetClass,
@@ -116,11 +122,61 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         capital,
         subscriptionTier: profile.subscriptionTier,
         customAvatarUrl,
+        id: profile.id,
+      };
+      const response = await authFetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(nextProfile),
       });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.error || 'Profil konnte nicht gespeichert werden.');
+      onUpdateProfile(nextProfile);
       setSaving(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    }, 1200);
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Profil konnte nicht gespeichert werden.');
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarFile = async (file: File) => {
+    setUploadingAvatar(true);
+    setProfileError(null);
+    try {
+      const payload = new FormData();
+      payload.set('avatar', file);
+      const response = await authFetch('/api/auth/profile/avatar', { method: 'POST', body: payload });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || typeof body?.avatarUrl !== 'string') {
+        throw new Error(body?.error || 'Avatar konnte nicht gespeichert werden.');
+      }
+      setCustomAvatarUrl(body.avatarUrl);
+      onUpdateProfile({ ...profile, name, avatarId, avatarColor: activeAvatar.color, preferredAssetClass, riskProfile, capital, customAvatarUrl: body.avatarUrl });
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Avatar konnte nicht gespeichert werden.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarRemoval = async () => {
+    setUploadingAvatar(true);
+    setProfileError(null);
+    try {
+      const response = await authFetch('/api/auth/profile/avatar', { method: 'DELETE' });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Avatar konnte nicht entfernt werden.');
+      }
+      setCustomAvatarUrl('');
+      onUpdateProfile({ ...profile, name, avatarId, avatarColor: activeAvatar.color, preferredAssetClass, riskProfile, capital, customAvatarUrl: undefined });
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Avatar konnte nicht entfernt werden.');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleExportGDPR = () => {
@@ -172,6 +228,16 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
 
   return (
     <div className="space-y-6">
+      <div className="mx-auto flex max-w-4xl gap-2 rounded-xl border border-white/10 bg-black/40 p-1.5" role="tablist" aria-label="Kontoeinstellungen">
+        <button type="button" role="tab" aria-selected={activeTab === 'profile'} onClick={() => setActiveTab('profile')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition ${activeTab === 'profile' ? 'bg-brand-primary text-black' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
+          <User size={15} /> Profil
+        </button>
+        <button type="button" role="tab" aria-selected={activeTab === 'security'} onClick={() => setActiveTab('security')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition ${activeTab === 'security' ? 'bg-brand-cyan text-black' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
+          <KeyRound size={15} /> Sicherheit
+        </button>
+      </div>
+
+      <div className={activeTab === 'profile' ? 'space-y-6' : 'hidden'}>
       <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md max-w-4xl mx-auto relative overflow-hidden">
         {/* Decorative glass border glow uses the canonical brand role. */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-brand-primary/40 to-transparent" />
@@ -232,15 +298,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                 onDrop={(e) => {
                   e.preventDefault();
                   const file = e.dataTransfer.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                      if (event.target?.result) {
-                        setCustomAvatarUrl(event.target.result as string);
-                      }
-                    };
-                    reader.readAsDataURL(file);
-                  }
+                  if (file) void handleAvatarFile(file);
                 }}
                 onClick={() => {
                   const input = document.createElement('input');
@@ -248,29 +306,22 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                   input.accept = 'image/*';
                   input.onchange = (e) => {
                     const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        if (event.target?.result) {
-                          setCustomAvatarUrl(event.target.result as string);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
+                    if (file) void handleAvatarFile(file);
                   };
                   input.click();
                 }}
               >
                 <div className="text-white/60 group-hover/upload:text-brand-primary text-xs font-medium font-sans flex flex-col items-center gap-1">
                   <Download size={16} className="text-white/40 group-hover/upload:text-brand-primary group-hover/upload:scale-110 transition-all rotate-180" />
-                  <span>Bild ablegen oder anklicken</span>
-                  <span className="text-[9px] text-white/30 font-mono">PNG, JPG, WebP</span>
+                  <span>{uploadingAvatar ? 'Bild wird sicher gespeichert…' : 'Bild ablegen oder anklicken'}</span>
+                  <span className="text-[9px] text-white/30 font-mono">PNG, JPG, WebP · maximal 2 MB</span>
                 </div>
               </div>
               {customAvatarUrl && (
                 <button
                   type="button"
-                  onClick={() => setCustomAvatarUrl('')}
+                  onClick={() => void handleAvatarRemoval()}
+                  disabled={uploadingAvatar}
                   className="w-full py-1 text-[10px] uppercase font-bold tracking-wider text-score-worst hover:brightness-110 transition-colors font-mono"
                 >
                   Bild entfernen
@@ -346,9 +397,9 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                       id="profile-email-input"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      readOnly
+                      aria-readonly="true"
+                      className="w-full bg-black/40 border border-white/15 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white/60 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -434,6 +485,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                   </button>
                 </div>
               </div>
+              {profileError && <p role="alert" className="text-xs text-red-300">{profileError}</p>}
             </form>
           </div>
         </div>
@@ -483,23 +535,9 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         </div>
       </div>
 
-      {/* OPS-AUTH-BACKEND-01: browser-owned Supabase factor controls are intentionally
-          unavailable during the backend-session rebuild. Existing provider factors remain
-          untouched; a backend-owned security-settings flow will be reintroduced separately. */}
-      <div className="max-w-4xl mx-auto rounded-2xl border border-amber-400/15 bg-amber-400/5 p-5">
-        <div className="flex items-start gap-3">
-          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-amber-300" />
-          <div>
-            <h3 className="text-sm font-bold text-white">Sicherheitseinstellungen werden neu angebunden</h3>
-            <p className="mt-1 text-xs leading-relaxed text-white/55">
-              TOTP- und Passkey-Faktoren bleiben bei Supabase erhalten. Die bisherigen
-              browserseitigen Verwaltungscontrols sind während des Backend-Auth-Cutovers
-              deaktiviert und werden anschließend über einen serverseitig verifizierten Flow
-              wieder freigeschaltet.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {activeTab === 'security' && <SecuritySettingsPanel />}
     </div>
   );
 }

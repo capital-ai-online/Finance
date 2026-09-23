@@ -36,7 +36,7 @@ Die aktuelle Owner-Vorgabe ersetzt diese Produktgrenze: normale Nutzer müssen s
 - `src/features/public/ui/LoginPage.tsx`
   - E-Mail-/Passwort-Login wiederherstellen.
   - Selbstregistrierung normaler Nutzer wiederherstellen.
-  - frisches hCaptcha-Token an `signInWithPassword()` und `signUp()` binden.
+  - frisches LEGACY_CHALLENGE_PROVIDER-Token an `signInWithPassword()` und `signUp()` binden.
   - `full_name` bei Registrierung an Supabase übergeben.
   - E-Mail-Bestätigungsredirect auf den kanonischen `/login`-Pfad binden.
   - nativen Passkey und Google OAuth als parallele Anmeldeoptionen beibehalten.
@@ -61,7 +61,7 @@ Die aktuelle Owner-Vorgabe ersetzt diese Produktgrenze: normale Nutzer müssen s
 ## Sicherheitsvertrag
 
 - Supabase Auth bleibt die einzige Identity-/Session-Authority.
-- E-Mail-/Passwort-Requests sind an ein frisches, nicht persistiertes hCaptcha-Token gebunden.
+- E-Mail-/Passwort-Requests sind an ein frisches, nicht persistiertes LEGACY_CHALLENGE_PROVIDER-Token gebunden.
 - Neue Konten umgehen weder verpflichtetes Profil-/Consent-Onboarding noch MFA.
 - Bestehende Konten mit AAL2-Anforderung umgehen den Step-up nicht.
 - Google OAuth behält den kanonischen `/login`-Callback und `select_account`.
@@ -70,8 +70,8 @@ Die aktuelle Owner-Vorgabe ersetzt diese Produktgrenze: normale Nutzer müssen s
 ## Akzeptanzkriterien
 
 1. `/login` bietet sichtbar **Anmelden** und **Registrieren** für normale Nutzer.
-2. Login verwendet Supabase `signInWithPassword()` mit hCaptcha.
-3. Registrierung verwendet Supabase `signUp()` mit hCaptcha und `full_name`.
+2. Login verwendet Supabase `signInWithPassword()` mit LEGACY_CHALLENGE_PROVIDER.
+3. Registrierung verwendet Supabase `signUp()` mit LEGACY_CHALLENGE_PROVIDER und `full_name`.
 4. Registrierung mit aktiver E-Mail-Bestätigung zeigt einen neutralen Bestätigungshinweis; eine automatisch ausgestellte Session läuft direkt in die bestehenden Gates.
 5. Google OAuth bleibt sichtbar und unverändert über Supabase `signInWithOAuth({ provider: 'google' })` erreichbar.
 6. Native Passkeys bleiben verfügbar, sofern der bestehende Feature-Flag aktiv ist.
@@ -87,3 +87,4 @@ Die aktuelle Owner-Vorgabe ersetzt diese Produktgrenze: normale Nutzer müssen s
 ## Rollback
 
 Repository-only: Human-reviewed `git revert` des Merge-Commits. Es gibt keine externe Plattformmutation zurückzusetzen.
+

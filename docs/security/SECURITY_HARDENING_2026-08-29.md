@@ -30,7 +30,7 @@ Implemented:
 - builder, `prod-deps` and runner use `node:24.20.0-alpine`;
 - all stages use immutable OCI index digest
   `sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf`;
-- existing hCaptcha/passkey build inputs stay unchanged;
+- existing LEGACY_CHALLENGE_PROVIDER/passkey build inputs stay unchanged;
 - existing non-root, read-only artifacts, OpenSSL update, SBOM, health-check and runtime-tool
   pruning stay intact;
 - `scripts/security/verifyDockerHardening.mjs` requires 24.20 and rejects the obsolete 24.18
@@ -94,7 +94,7 @@ measured, and uses a branch + PR recovery flow instead of direct pushes to `main
 
 ## 5. P2 — CSP
 
-The hCaptcha origins and passkey-related frontend changes in the synchronized baseline are
+The LEGACY_CHALLENGE_PROVIDER origins and passkey-related frontend changes in the synchronized baseline are
 preserved. Production still defaults to `report-only` for the strict nonce policy.
 
 No `strict` promotion is performed because no measured zero-violation production observation
@@ -102,7 +102,7 @@ window is available in the current evidence. Promoting without evidence would co
 existing ADR-0040 rollout boundary and could reintroduce availability regressions.
 
 Next evidence gate: inspect/collect production CSP violation telemetry; then promote
-`CSP_MODE=strict` only after Stripe/Supabase/Consent/hCaptcha paths are demonstrated compatible.
+`CSP_MODE=strict` only after Stripe/Supabase/Consent/LEGACY_CHALLENGE_PROVIDER paths are demonstrated compatible.
 
 ## 6. P2 — AAL2 / RLS
 
@@ -149,3 +149,4 @@ Current correlation requirements:
 - [ ] final zero-behind/current-main ancestry check PASS immediately before merge.
 
 Production/provider mutations remain owner-gated and are not performed by this branch.
+

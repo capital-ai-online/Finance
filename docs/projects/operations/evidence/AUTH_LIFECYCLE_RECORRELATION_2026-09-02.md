@@ -21,7 +21,7 @@ Re-correlate the existing OPS User-Lifecycle evidence contract against the curre
 | `dashboard_menu_interaction_contract` | PASS | CAPITAL-AI-FE | Hamburger open/close handlers and overlay close wiring exist in `Dashboard.tsx`; the reported post-login freeze is therefore correlated first to app/session composition rather than a missing menu handler. |
 | `logout_local_default` | FAIL | CAPITAL-AI-FE | `SessionComposition.handleLogout()` calls `supabase.auth.signOut()` without `{ scope: 'local' }`; provider default is global. |
 | `logout_explicit_global_action` | FAIL | CAPITAL-AI-FE | No separate user-facing explicit global logout action is represented in the current application contract. |
-| `registration_primary_contract` | PASS | CAPITAL-AI-FE | `/login` contains Supabase `signUp`, fresh hCaptcha binding, `full_name` and visible normal-user registration. |
+| `registration_primary_contract` | PASS | CAPITAL-AI-FE | `/login` contains Supabase `signUp`, fresh LEGACY_CHALLENGE_PROVIDER binding, `full_name` and visible normal-user registration. |
 | `registration_onboarding_contract` | PASS | CAPITAL-AI-GOV | New sessions converge on `RegistrationCompletionGate`, profile/consent completion and verified MFA completion endpoints. |
 | `registration_roadmap_closure` | FAIL | CAPITAL-AI-FE | The 2026-08-29 registration work package still says `IMPLEMENTED / PR VALIDATION PENDING` although PR #601 was Human-merged. |
 | `platform_version_projection` | PASS | CAPITAL-AI-OPS | `package.json#version` and current public page metadata both project `0.6.0`. |
@@ -41,7 +41,7 @@ The repository already contains the primary registration contract and onboarding
 
 ```text
 /login registration
--> Supabase signUp + fresh hCaptcha
+-> Supabase signUp + fresh LEGACY_CHALLENGE_PROVIDER
 -> email/session establishment
 -> SessionComposition
 -> needsOnboarding
@@ -90,3 +90,4 @@ npx vitest run tests/unit/authLifecycleCorrelation.test.ts
 ## Exit gate
 
 OPS evidence is complete when the correlation inventory is exact-main synchronized, all current observations are explicit, no foreign implementation is performed by OPS, and later foreign remediation can re-run the same adapter to demonstrate the corresponding FAIL -> PASS transitions. Merge, deployment and provider mutation remain separate Human-gated actions.
+

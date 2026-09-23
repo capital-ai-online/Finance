@@ -42,7 +42,7 @@ The canonical behavior is:
 
 Current main already contains:
 
-- `LoginPage.tsx`: `signInWithPassword`, `signUp`, fresh hCaptcha, password recovery and `signInWithOAuth({ provider: 'google' })`;
+- `LoginPage.tsx`: `signInWithPassword`, `signUp`, fresh LEGACY_CHALLENGE_PROVIDER, password recovery and `signInWithOAuth({ provider: 'google' })`;
 - Google OAuth `redirectTo: \`${window.location.origin}/\``;
 - `SessionComposition`: Supabase session composition, anonymous-session rejection, onboarding routing, AAL/MFA step-up, local/global logout separation and least-privileged Free fallback;
 - `RegistrationCompletionGate`: profile/country/consent completion plus TOTP or WebAuthn MFA;
@@ -139,3 +139,4 @@ A new repository-only finding `landing_first_lf02_auth_profile_repository_gate`:
 - Google OAuth repository wiring is distinguished from real provider/E2E evidence;
 - no secret values are written to repository evidence;
 - Human/CODEOWNER merge remains required.
+

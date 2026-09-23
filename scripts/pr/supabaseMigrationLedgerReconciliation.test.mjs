@@ -10,10 +10,10 @@ test('OPS/PVC-02 Supabase migration reconciliation classifies the full checked-i
   assert.deepEqual(validateSupabaseMigrationLedgerReconciliation(), []);
 
   const ledger = loadSupabaseMigrationLedger();
-  assert.equal(ledger.summary.remote_total, 75);
+  assert.equal(ledger.summary.remote_total, 76);
   assert.equal(ledger.summary.exact_match, 17);
   assert.equal(ledger.summary.timestamp_alias, 32);
-  assert.equal(ledger.summary.remote_only_history, 26);
+  assert.equal(ledger.summary.remote_only_history, 27);
   assert.equal(ledger.summary.unknown, 0);
 });
 

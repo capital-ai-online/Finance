@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-CAPTCHA-REMOVAL-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Remove hCaptcha from the productive backend-first email authentication runtime after the login page froze again with the CAPTCHA integration attached.",
-  "workItemDE": "hCaptcha aus dem produktiven backend-first E-Mail-Auth-Runtimepfad entfernen",
+  "workItem": "Remove LEGACY_CHALLENGE_PROVIDER from the productive backend-first email authentication runtime after the login page froze again with the CAPTCHA integration attached.",
+  "workItemDE": "LEGACY_CHALLENGE_PROVIDER aus dem produktiven backend-first E-Mail-Auth-Runtimepfad entfernen",
   "startedAt": "2026-09-22T13:12:00+02:00",
   "baseBranch": "main",
   "baseSha": "d5829ff2fd40228cc938d07638563f56e178dfa6",
@@ -27,7 +27,7 @@
     "docs/projects/frontend/work-packages/FE_AUTH_CAPTCHA_DETACH_2026-09-22.md",
     "server/routes/backendAuthRoutes.ts",
     "src/features/public/ui/LoginPage.tsx",
-    "src/lib/hcaptcha.ts",
+    "src/lib/LEGACY_CHALLENGE_PROVIDER.ts",
     "Dockerfile",
     "render.yaml",
     ".env.example",
@@ -36,28 +36,28 @@
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/passwordRecoveryLogin.test.ts",
     "tests/unit/frontendExtendedWebdesign.test.ts",
-    "tests/unit/authCaptchaRemoval.test.ts"
+    "tests/unit/authChallengeRemoval.test.ts"
   ],
   "evidence": {
     "currentMain": "c3181b37987598511b3eb3e2d313102458fed415",
-    "ownerDirection": "Fresh Human Owner direction: detach hCaptcha from the application and retry registration.",
-    "productionSymptom": "Login page freezes after hCaptcha was reattached.",
+    "ownerDirection": "Fresh Human Owner direction: detach LEGACY_CHALLENGE_PROVIDER from the application and retry registration.",
+    "productionSymptom": "Login page freezes after LEGACY_CHALLENGE_PROVIDER was reattached.",
     "smtpEvidence": "Production Render mailer previously completed SMTP send to s.kulessa@protonmail.com successfully.",
     "providerConstraint": "Supabase Auth CAPTCHA is still provider-side enabled and cannot be toggled by the available Supabase connector/SQL preflight.",
     "mainSynchronization": "Merged CURRENT_MAIN c3181b37987598511b3eb3e2d313102458fed415 after confirming zero changed-file overlap; #1288 supply-chain changes remain unmodified."
   },
   "scopeBoundary": [
     "Remove captchaToken requirements and forwarding from backend email auth.",
-    "Remove hCaptcha build/runtime projection from Render/Docker/env/CSP.",
+    "Remove LEGACY_CHALLENGE_PROVIDER build/runtime projection from Render/Docker/env/CSP.",
     "Do not weaken password policy, rate limits, origin checks, HttpOnly session controls or AAL2 boundaries.",
     "Supabase provider CAPTCHA must be disabled separately before captcha-free registration can succeed.",
     "Human/CODEOWNER merge required.",
     "Frontend changes remain CAPITAL-AI-FE-owned presentation scope within this coordinated cutover; no productive PVC ownership transfers."
   ],
   "acceptanceCriteria": [
-    "Backend email-auth routes contain no captchaToken/hCaptcha requirement.",
-    "Dockerfile/render.yaml/.env.example contain no VITE_HCAPTCHA_SITE_KEY contract.",
-    "CSP contains no explicit hCaptcha origins.",
+    "Backend email-auth routes contain no captchaToken/LEGACY_CHALLENGE_PROVIDER requirement.",
+    "Dockerfile/render.yaml/.env.example contain no VITE_LEGACY_CHALLENGE_PROVIDER_SITE_KEY contract.",
+    "CSP contains no explicit LEGACY_CHALLENGE_PROVIDER origins.",
     "Required checks pass on exact head.",
     "Provider-side CAPTCHA disablement is recorded as an external production prerequisite."
   ],

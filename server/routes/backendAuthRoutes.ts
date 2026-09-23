@@ -1,6 +1,7 @@
 import express, { Router, type NextFunction, type Request, type Response } from 'express';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { getSubscription } from '../db';
+import { readAccountProfile } from './accountSecurityRoutes';
 import { createLogger } from '../logger';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
 import { PasswordSecurityError } from '../../src/lib/passwordSecurity';
@@ -47,6 +48,8 @@ const EMAIL_MAX_LENGTH = 320;
 const PASSWORD_MAX_LENGTH = 1_024;
 const DISPLAY_NAME_MAX_LENGTH = 120;
 const TOKEN_HASH_MAX_LENGTH = 1_024;
+const TERMS_VERSION = '2026-08-14';
+const PRIVACY_VERSION = '2026-08-14';
 
 const TIERS = new Set(['Free', 'Starter', 'Pro', 'Enterprise']);
 
@@ -132,17 +135,30 @@ function renderEmailConfirmationPage(tokenHash: string, type: 'email' | 'recover
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>${escapeHtml(title)} · CAPITAL-AI</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; color: #f8fafc; background: radial-gradient(circle at 20% 10%, rgba(245,196,83,.13), transparent 34%), radial-gradient(circle at 85% 80%, rgba(13,221,221,.1), transparent 30%), #02050e; }
+    main { width: min(100%, 520px); padding: 36px; border: 1px solid rgba(245,196,83,.28); border-radius: 24px; background: rgba(3,7,18,.88); box-shadow: 0 28px 80px rgba(0,0,0,.55), 0 0 40px rgba(245,196,83,.08); }
+    .eyebrow { margin: 0 0 14px; color: #f5c453; font-size: 12px; font-weight: 800; letter-spacing: .18em; }
+    h1 { margin: 0; font-size: clamp(25px, 5vw, 36px); letter-spacing: -.025em; }
+    p { margin: 14px 0 26px; color: #aeb8cb; line-height: 1.65; }
+    button { width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; font: inherit; font-weight: 900; cursor: pointer; color: #02050e; background: linear-gradient(90deg, #f5c453, #0ddddd, #b026ff); }
+    .hint { margin: 18px 0 0; font-size: 12px; color: #738099; }
+  </style>
 </head>
 <body>
   <main>
+    <p class="eyebrow">CAPITAL-AI · SICHERER ZUGANG</p>
     <h1>${escapeHtml(title)}</h1>
-    <p>Bestätige die Aktion, um die sichere Supabase-Sitzung serverseitig aufzubauen.</p>
+    <p>Bestätige diese Aktion im geschützten Backend-Sessionpfad. Erst danach wird deine Sitzung aufgebaut.</p>
     <form method="post" action="/api/auth/email/confirm">
       <input type="hidden" name="token_hash" value="${escapeHtml(tokenHash)}">
       <input type="hidden" name="type" value="${escapeHtml(type)}">
       <input type="hidden" name="next" value="${escapeHtml(next)}">
       <button type="submit">${escapeHtml(action)}</button>
     </form>
+    <p class="hint">Diese zusätzliche Bestätigung verhindert, dass automatische Link-Scanner den einmaligen Link verbrauchen.</p>
   </main>
 </body>
 </html>`;
@@ -254,9 +270,16 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
   const email = normalizeEmail(req.body?.email);
   const password = normalizePassword(req.body?.password);
   const fullName = normalizeDisplayName(req.body?.name);
+  const termsAccepted = req.body?.termsAccepted === true;
+  const privacyAcknowledged = req.body?.privacyAcknowledged === true;
+  const marketingConsent = req.body?.marketingConsent === true;
 
-  if (!email || !password) {
-    res.status(400).json({ error: 'Bitte eine gültige E-Mail-Adresse und ein Passwort angeben.' });
+  if (!email || !password || !fullName) {
+    res.status(400).json({ error: 'Bitte Name, gültige E-Mail-Adresse und Passwort vollständig angeben.' });
+    return;
+  }
+  if (!termsAccepted || !privacyAcknowledged) {
+    res.status(400).json({ error: 'AGB-Akzeptanz und Datenschutzbestätigung sind erforderlich.' });
     return;
   }
 
@@ -280,8 +303,16 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
       email,
       password,
       options: {
-        emailRedirectTo: new URL('/', origin).toString(),
-        data: fullName ? { full_name: fullName } : undefined,
+        emailRedirectTo: new URL('/api/auth/email/confirm', origin).toString(),
+        data: {
+          full_name: fullName,
+          terms_accepted: true,
+          terms_version: TERMS_VERSION,
+          privacy_acknowledged: true,
+          privacy_version: PRIVACY_VERSION,
+          marketing_consent: marketingConsent,
+          registration_locale: 'de-DE',
+        },
       },
     });
 
@@ -401,7 +432,7 @@ backendAuthRouter.post('/confirmation/resend', AUTH_MAIL_RATE_LIMIT, async (req,
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: new URL('/', origin).toString() },
+      options: { emailRedirectTo: new URL('/api/auth/email/confirm', origin).toString() },
     });
 
     if (error) {
@@ -447,7 +478,7 @@ backendAuthRouter.post('/password/forgot', AUTH_MAIL_RATE_LIMIT, async (req, res
     const origin = resolveApplicationOrigin(req);
     const supabase = createBackendEmailAuthClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: new URL('/account/update-password', origin).toString(),
+      redirectTo: new URL('/api/auth/email/confirm', origin).toString(),
     });
 
     if (error) {
@@ -662,7 +693,9 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
     const user = verified.user;
     const tier = normalizeTier(await getSubscription(user.id));
     const metadata = user.user_metadata || {};
+    const profile = await readAccountProfile(user.id);
     const name =
+      (typeof profile.name === 'string' && profile.name.trim()) ||
       (typeof metadata.full_name === 'string' && metadata.full_name.trim()) ||
       (typeof metadata.name === 'string' && metadata.name.trim()) ||
       (user.email ? user.email.split('@')[0] : 'User');
@@ -674,6 +707,12 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
         email: user.email ?? '',
         name,
         subscriptionTier: tier,
+        avatarId: profile.avatarId,
+        avatarColor: profile.avatarColor,
+        preferredAssetClass: profile.preferredAssetClass,
+        riskProfile: profile.riskProfile,
+        capital: profile.capital,
+        customAvatarUrl: profile.customAvatarUrl,
       },
     });
   } catch (error) {

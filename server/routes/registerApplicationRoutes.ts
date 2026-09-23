@@ -40,6 +40,7 @@ import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { createHealthRouter } from './health';
 import { passwordSecurityRouter } from './passwordSecurityRoutes';
 import { backendAuthRootCallback, backendAuthRouter } from './backendAuthRoutes';
+import { accountSecurityRouter } from './accountSecurityRoutes';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -76,6 +77,7 @@ export function registerApplicationRoutes(
   // to the SPA. Backend auth APIs own login/session/logout from this point onward.
   app.get('/', backendAuthRootCallback);
   app.use('/api/auth', backendAuthRouter);
+  app.use('/api/auth', accountSecurityRouter);
 
   installProductionSoft404Intercept();
 

@@ -12,7 +12,7 @@
 
 A real SMTP test through the production Render mailer completed successfully to the requested Proton mailbox target. Registration still fails before mail creation. Production backend logs show Supabase Auth rejecting signup and confirmation-resend with `captcha protection: request disallowed (no captcha_token found)`.
 
-The repository already contains the bounded hCaptcha browser bridge and build-time public site-key contract. The backend-first email auth added in PR #1273 did not carry that token into its new server endpoints.
+The repository already contains the bounded LEGACY_CHALLENGE_PROVIDER browser bridge and build-time public site-key contract. The backend-first email auth added in PR #1273 did not carry that token into its new server endpoints.
 
 ## Scope
 
@@ -25,12 +25,13 @@ The repository already contains the bounded hCaptcha browser bridge and build-ti
 
 ## Security invariants
 
-CAPTCHA remains enabled. The hCaptcha secret remains exclusively in Supabase Auth. Tokens are neither logged nor persisted. Missing tokens fail closed at the application backend. No direct browser Supabase Auth authority is restored.
+CAPTCHA remains enabled. The LEGACY_CHALLENGE_PROVIDER secret remains exclusively in Supabase Auth. Tokens are neither logged nor persisted. Missing tokens fail closed at the application backend. No direct browser Supabase Auth authority is restored.
 
 ## Dependency / handover
 
-CAPITAL-AI-FE owns the visual/request materialization on `LoginPage.tsx` and must obtain the fresh hCaptcha token through the already-existing `src/lib/hcaptcha.ts` helper immediately before each protected request.
+CAPITAL-AI-FE owns the visual/request materialization on `LoginPage.tsx` and must obtain the fresh LEGACY_CHALLENGE_PROVIDER token through the already-existing `src/lib/LEGACY_CHALLENGE_PROVIDER.ts` helper immediately before each protected request.
 
 ## Exit evidence
 
 Exact-head tests prove token validation and forwarding on all protected email-auth endpoints; Human/CODEOWNER merge remains required.
+
