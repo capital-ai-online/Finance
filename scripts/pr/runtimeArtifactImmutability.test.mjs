@@ -186,6 +186,6 @@ test('production build emits immutable manifest and Docker preloads R-002 guard'
   assert.match(packageJson.scripts.build, /buildRuntimeReleaseManifest\.ts/);
   const dockerfile = fs.readFileSync(path.join(repoRoot, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly/);
-  assert.match(dockerfile, /NODE_OPTIONS=--import=\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/);
+  assert.match(dockerfile, /NODE_OPTIONS="--import=\/app\/server\/runtime\/runtimeArtifactGuard\.mjs(?:\s+--import=[^"]+)*"/);
   assert.match(dockerfile, /chmod 0555 \/app\/docs/);
 });
