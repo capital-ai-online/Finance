@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -51,5 +51,17 @@
   "scopeNote": "Adds two deterministic scenarios only: optional frontend initialization rejection is observe/escalate fail-closed with no generic retry; stale CI expectation drift reuses the existing one-attempt repository.pr.autofix specialist and exact-head readback. No real production fault or provider mutation.",
   "activationBoundary": "SH-2/SH-3 and all held generic actions remain HELD. SH-02.10 validates bounded failure behavior only; staged activation remains SH-02.11.",
   "assuranceBoundary": "QM and Security remain independent assurance owners. OPS may produce reproducible exact-head evidence but cannot self-issue QM/Security VERIFIED or CLOSED states.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-23T13:28:00Z",
+  "releaseReason": "Associated PR #1297 was Human/CODEOWNER-merged; the declared release condition is satisfied and SH-02.11 readiness now owns the successor coordination slice.",
+  "terminalPullRequest": 1297,
+  "terminalHeadSha": "165bd104cce3b2add37f9ee55e17d8efb7e5553e",
+  "terminalMergeSha": "444393b1b1db9dfd95ef6aae42261bf0085663e3",
+  "releaseEvidence": {
+    "pullRequest": 1297,
+    "merged": true,
+    "mergeCommit": "444393b1b1db9dfd95ef6aae42261bf0085663e3",
+    "currentMain": "31643012f42368b6f85ce9953e19b991248a73d8",
+    "mainContainsImplementation": true
+  }
 }
