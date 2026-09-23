@@ -15,14 +15,14 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
+**Current implementation baseline:** `main@31643012f42368b6f85ce9953e19b991248a73d8`  
 **SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
 **SH-02.9A merge:** PR #1246 → `7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
 **SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
-**Current functional slice:** `SH-02.10` — deterministic non-destructive Fault Injection & Convergence implemented and repository/production validated on `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
-**Next functional slice:** `SH-02.11` — `BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE`; staged production activation only after fresh QM and Security returns for the current SH-02.10 generation  
+**Current functional slice:** `SH-02.11` — dependency-ready staged production activation; activation has not started and no HELD action changes in the readiness slice  
+**SH-02.10 terminal evidence:** Security PR #1311 + QM PR #1312 independently assure implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main/Production readback is `31643012f42368b6f85ce9953e19b991248a73d8`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
@@ -51,8 +51,8 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
 | SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN / POST_MERGE_CONVERGED via PR #1262 + #1271 |
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
-| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED / INDEPENDENT_ASSURANCE_PENDING |
-| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE |
+| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE / PRODUCTION_READBACK_VERIFIED |
+| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | DEPENDENCY_READY / ACTIVATION_NOT_STARTED |
 
 ## SH-02.9 — Observability/SLO/incident convergence
 
@@ -325,11 +325,21 @@ At minimum simulate:
 - `CURRENT_STATE_PROJECTION_BASELINE_STALE` is a deterministic repository-projection drift scenario: it resolves to `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, reuses the single Current-State Baseline Autofix writer, permits at most one idempotent attempt and requires exact-head CI/Governance readback.
 - missing capability and exhausted budget are explicit fail-closed scenarios.
 - SH-02.8 protected rollback/restore remains `HELD`; its unavailable capability is a negative-control input, not an activation prerequisite for this non-destructive suite.
-- hosted repository validation and exact-SHA production identity are now verified on `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`: main CI #5836, Container Security #2838 and Post-Merge Production Correlation #242 completed successfully, and Render production read back the same exact SHA. Fresh independent QM and Security assurance remain required before SH-02.10 may be terminal and before SH-02.11 may activate any production tier.
+- SH-02.10 is terminal: Security PR #1311 and QM PR #1312 are Human/CODEOWNER-merged and independently bind implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main `31643012f42368b6f85ce9953e19b991248a73d8` completed main CI #5845, Container Security #2847 and Post-Merge Production Correlation #245 successfully, and Render deployment `dep-dapt6qjncjis73fkpjag` is live on that exact SHA. The enabled-tier readiness contract is recorded separately before SH-02.11 activation starts.
 
 Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md`.
 
 ## SH-02.11 — Rollout
+
+**Readiness state:** `DEPENDENCY_READY / ACTIVATION_NOT_STARTED` on `main@31643012f42368b6f85ce9953e19b991248a73d8`.
+
+Readiness is bound by `docs/projects/operations/evidence/SH_02_11_DEPENDENCY_READINESS_2026-09-23.md` and `tests/unit/sh0211DependencyReadiness.test.ts`.
+
+The current readiness generation allows exactly these already-enabled actions to remain enabled:
+- SH-0: `OBSERVE_ONLY`, `VERIFY_ISSUE_PROJECT_DISPATCH`;
+- SH-1: `FRONTEND_RELOAD_ONCE`, `RECONCILE_REPOSITORY_PROJECTION`, `RECONCILE_PR_DECISION_EVIDENCE`.
+
+The readiness slice does **not** activate `RETRY_SAFE_OPERATION`, `QUARANTINE_WORK_ITEM`, `RECONCILE_PR_GOVERNANCE_METADATA`, `RUNTIME_PROCESS_RECYCLE`, `REDEPLOY_EXACT_SHA` or `PROTECTED_ROLLBACK_RESTORE`. Any future activation requires a fresh current-main slice and must preserve kill-switch, budget, verification/readback and independent-assurance gates.
 
 Activation order:
 1. SH-0 observation;
