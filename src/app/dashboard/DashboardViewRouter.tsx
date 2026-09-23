@@ -14,7 +14,7 @@ import {
   StocksUI,
   UserUI,
 } from '../../features';
-import type { SubscriptionTier, UserSession } from '../types/UserSession';
+import type { UserSession } from '../types/UserSession';
 import type { DashboardView } from './dashboardViews';
 
 export type DashboardAdminTab =
@@ -39,7 +39,6 @@ export interface DashboardViewRouterProps {
   onUpdateProfile: (profile: UserUI.UserProfile) => void;
   adminTab: DashboardAdminTab;
   onChangeAdminTab: (tab: DashboardAdminTab) => void;
-  onUpdateTier: (tier: SubscriptionTier) => void;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
@@ -92,7 +91,6 @@ export function DashboardViewRouter({
   onUpdateProfile,
   adminTab,
   onChangeAdminTab,
-  onUpdateTier,
   triggerAttempt,
   searchQuery,
   onSearchQueryChange,
@@ -153,8 +151,6 @@ export function DashboardViewRouter({
     case 'heatmap':
       return (
         <AnalyticsUI.HeatmapCreator
-          subscriptionTier={profile.subscriptionTier}
-          onUpgradeClick={() => onNavigate('abonnements')}
           triggerAttempt={triggerAttempt}
         />
       );
@@ -168,14 +164,7 @@ export function DashboardViewRouter({
       );
 
     case 'abonnements':
-      return (
-        <BillingUI.Abonnements
-          currentTier={profile.subscriptionTier}
-          onUpdateTier={onUpdateTier}
-          email={profile.email}
-          userId={profile.id}
-        />
-      );
+      return <BillingUI.Abonnements />;
 
     case 'sentiment-dashboard':
       return <NewsUI.SentimentDashboard />;

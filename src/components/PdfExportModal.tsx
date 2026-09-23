@@ -4,7 +4,6 @@ import {
   X,
   FileDown,
   Check,
-  CreditCard,
   AlertTriangle,
   Sparkles,
   CheckCircle,
@@ -37,7 +36,7 @@ type PdfExportModalProps = PdfExportModalBaseProps & (
     }
 );
 
-export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }: PdfExportModalProps) {
+export function PdfExportModal({ isOpen, onClose, onPrepare, onSuccess }: PdfExportModalProps) {
   const [loading, setLoading] = useState(false);
   // Fail closed until the authenticated server ledger confirms a balance.
   const [credits, setCredits] = useState<number>(0);
@@ -81,7 +80,7 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
 
   const handleConsumeAndExport = async () => {
     if (!isUnlimited && credits <= 0) {
-      setError('Sie haben keine verifizierten Export-Credits. Bitte laden Sie den Credit-Stand neu oder erwerben Sie weitere Exporte.');
+      setError('Sie haben keine verifizierten Export-Credits. Das frühere Credit-Pricing ist archiviert; neue Käufe sind derzeit deaktiviert.');
       return;
     }
 
@@ -110,7 +109,7 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
         setCredits(consumption.credits);
         setSuccessMsg('Download erfolgreich gestartet. 1 Export-Credit wurde serverseitig abgezogen.');
       } else {
-        setSuccessMsg('Download erfolgreich gestartet. Enterprise-Export bleibt unbegrenzt.');
+        setSuccessMsg('Download erfolgreich gestartet. Serverseitig freigegebener Export bleibt unbegrenzt.');
       }
 
       setTimeout(() => {
@@ -124,38 +123,6 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
     }
   };
 
-  const handleBuyCredits = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const res = await authFetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planId: 'EXPORT_PDF',
-          ...(email ? { email } : {}),
-          successUrl: window.location.href,
-          cancelUrl: window.location.href,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Fehler beim Erstellen der Checkout-Sitzung.');
-      }
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error('Keine Checkout-URL vom Server erhalten.');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Konnte Bezahlvorgang nicht starten.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -214,7 +181,7 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
             </div>
             {isUnlimited && (
               <span className="px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest bg-brand-primary/15 text-brand-primary uppercase font-mono">
-                Enterprise-Vorteil
+                Bestehender Serverstatus
               </span>
             )}
           </div>
@@ -250,18 +217,11 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
                 </button>
               </ComplianceConsentWrapper>
             ) : (
-              <button
-                disabled={loading}
-                onClick={handleBuyCredits}
-                className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-text-primary text-background hover:brightness-95 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {loading ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <CreditCard size={14} />
-                )}
-                <span>3 PDF-Exporte freischalten</span>
-              </button>
+              <div className="w-full rounded-xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-xs leading-relaxed text-amber-100">
+                Das bisherige PDF-Credit-Pricing ist archiviert. Neue Credit-Käufe sind derzeit
+                deaktiviert; die Export-Komponente bleibt sichtbar und zeigt den verifizierten
+                Serverstatus an.
+              </div>
             )}
 
             <button

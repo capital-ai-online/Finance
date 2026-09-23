@@ -8,25 +8,27 @@ const read = (relativePath: string) =>
 const checkout = read('src/features/billing/ui/Checkout.tsx');
 const subscriptions = read('src/features/billing/ui/Abonnements.tsx');
 const billingFacade = read('src/features/billing/ui/index.ts');
+const pricingPolicy = read('src/config/productAccessPolicy.ts');
 const login = read('src/features/public/ui/LoginPage.tsx');
 const session = read('src/app/auth/SessionComposition.tsx');
 const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
 
 describe('frontend user lifecycle projection', () => {
-  it('keeps productive billing implementation in the canonical feature slice', () => {
+  it('keeps the former checkout implementation compatibility-only while pricing is archived', () => {
     expect(billingFacade).toContain("export { Abonnements } from './Abonnements'");
     expect(billingFacade).toContain("export { Checkout } from './Checkout'");
-  });
-
-  it('never treats checkout redirect state as entitlement evidence', () => {
-    expect(checkout).toContain('successUrl:');
+    expect(pricingPolicy).toContain("pricingLifecycle: 'archived_pending_replacement'");
+    expect(pricingPolicy).toContain('checkoutEntryPointsEnabled: false');
+    expect(subscriptions).not.toContain('<Checkout');
+    expect(subscriptions).not.toContain('SUBSCRIPTION_PRICES_EUR');
+    expect(subscriptions).toContain('Pricing-Modell archiviert');
     expect(checkout).toContain("authFetch('/api/stripe/create-checkout-session'");
-    expect(subscriptions).toContain('readAuthenticatedSubscriptionTier()');
   });
 
-  it('uses backend-session billing access', () => {
-    expect(subscriptions).toContain("authFetch('/api/stripe/create-portal-session'");
-    expect(subscriptions).not.toContain('email: profile.email');
+  it('keeps existing-account billing management outside the archived pricing catalogue', () => {
+    expect(subscriptions).not.toContain("authFetch('/api/stripe/create-portal-session'");
+    expect(subscriptions).toContain('Bestehende');
+    expect(subscriptions).toContain('verwaltet');
   });
 
   it('opens registration AGB and Datenschutz links in isolated new tabs', () => {
