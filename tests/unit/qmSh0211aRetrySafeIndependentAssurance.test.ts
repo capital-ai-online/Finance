@@ -84,7 +84,7 @@ describe('SH-02.11A independent QM assurance', () => {
 
   it('does not execute or verify an otherwise safe operation while HELD', async () => {
     const operation = vi.fn(async () => ({ ok: true }));
-    const verify = vi.fn(() => ({ status: 'PASS' as const, probe: 'dependency-operation-readback' }));
+    const verify = vi.fn(() => ({ status: 'NOT_RUN' as const, probe: 'dependency-operation-readback' }));
 
     const result = await executeContractBoundDependencyRecovery(
       {
