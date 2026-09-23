@@ -824,3 +824,71 @@ test('other malformed current v1.8 shapes remain fail-closed', () => {
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'current-v1.8-unsupported-shape');
 });
+test('repairs the exact PR #1298 hybrid v1.8 baseline shape without a second body architecture', () => {
+  const baseline = [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test1298`',
+    '- **Produktions-Commit:** `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`',
+    '- **Aktueller main-Commit:** `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`',
+    '- **PR-Head-Commit:** `cccccccccccccccccccccccccccccccccccccccc`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  ].join('\n');
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# FE-VOCABULARY-RETURN-01',
+    '',
+    '> 🧭 **Entscheidungsstatus: BLOCKED**',
+    '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Priorität:** P1 🟠 Hoch',
+    '- **Versionsimpact:** PATCH 🩹',
+    '- **Version-Manager-Check:** NOT_RUN — fixture.',
+    '- **PR-Klasse:** C',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    '',
+    '</details>',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    baseline,
+    '',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.8-hybrid-baseline-section-repaired');
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.doesNotMatch(result.body, /NOT_RUN — wird durch die kanonische PR-Evidence-Automation/);
+  assert.match(result.body, /sha256:test1298/);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
+});
