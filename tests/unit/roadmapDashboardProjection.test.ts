@@ -9,16 +9,16 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 describe('Roadmap dashboard projection', () => {
   it('binds the projection to the freshly correlated main baseline without claiming runtime identity', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha).toBe(
-      '98c8889ac5f34c8123470b9b5ac57648ccd38877',
+      '426a98d4703271e438cbc6df4b1442fb3a9b032d',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha).toBe(
       ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha,
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'CURRENT_MAIN_DEPLOY_FAILED',
+      'CURRENT_MAIN_DEPLOY_PENDING_AFTER_RECOVERY_MERGE',
     );
-    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.failedDeployId).toBe(
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.previousFailedDeployId).toBe(
       'dep-daq378mk1f9s738adt70',
     );
   });
@@ -34,13 +34,11 @@ describe('Roadmap dashboard projection', () => {
     const retrySafe = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
       (item) => item.id === 'SH-02.11',
     );
-    const productionRecovery = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
-      (item) => item.prNumber === 1334,
-    );
     expect(retrySafe?.state).toBe('active');
     expect(retrySafe?.detail).toContain('RETRY_SAFE_OPERATION');
-    expect(productionRecovery?.id).toBe('PR-1334');
-    expect(productionRecovery?.sourceType).toBe('provider-pr');
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some((item) => item.prNumber === 1334),
+    ).toBe(false);
   });
 
   it('keeps canonical active packages traceable to owner roadmap sources', () => {
@@ -91,8 +89,8 @@ describe('Roadmap dashboard projection', () => {
       'production-covered',
     );
     expect(integration('AUTH-REGISTRATION-PROFILE')?.state).toBe('main-only');
-    expect(integration('OPS-DEPLOY-98C8889')?.state).toBe('main-only');
-    expect(integration('OPS-DEPLOY-98C8889')?.detail).toContain(
+    expect(integration('OPS-DEPLOY-426A98')?.state).toBe('main-only');
+    expect(integration('OPS-DEPLOY-426A98')?.detail).toContain(
       'SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING',
     );
   });
