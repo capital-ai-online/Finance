@@ -363,6 +363,83 @@ function repairCurrentDecisionBodyStructure(bodyText, { prClass = 'N/A', durable
   }
 
   const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
+  const hybridNotRunSentinel =
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.';
+  const exactHybridLegacyBaselineShape =
+    visibleHeadings.length === 4 &&
+    expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+    visibleHeadings[3] === legacyHeading &&
+    occurrenceCount(body, placeholder) === 0 &&
+    occurrenceCount(body, legacyHeading) === 1 &&
+    Boolean(baselineBlock) &&
+    occurrenceCount(body, machineBaselineSummary) === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
+
+  if (exactHybridLegacyBaselineShape) {
+    const legacyIndex = body.indexOf('\n' + legacyHeading);
+    if (legacyIndex < 0) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-heading-not-isolated', body };
+    }
+
+    const prefix = body.slice(0, legacyIndex).trimEnd();
+    const legacyTail = body.slice(legacyIndex + 1).trim();
+    const expectedLegacyTail = [legacyHeading, '', baselineBlock.trim()].join('\n').trim();
+    if (legacyTail !== expectedLegacyTail) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-legacy-baseline-tail-has-extra-content', body };
+    }
+
+    const summaryIndex = prefix.indexOf(machineBaselineSummary);
+    const detailsStart = summaryIndex >= 0 ? prefix.lastIndexOf('<details>', summaryIndex) : -1;
+    const detailsEnd = summaryIndex >= 0 ? prefix.indexOf('</details>', summaryIndex) : -1;
+    if (
+      summaryIndex < 0 ||
+      detailsStart < 0 ||
+      detailsEnd < 0 ||
+      !(detailsStart < summaryIndex && summaryIndex < detailsEnd)
+    ) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-machine-baseline-details-unresolved', body };
+    }
+
+    const managedContentStart = summaryIndex + machineBaselineSummary.length;
+    const managedContent = prefix.slice(managedContentStart, detailsEnd).trim();
+    if (managedContent !== hybridNotRunSentinel) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-hybrid-baseline-content-unresolved', body };
+    }
+
+    const repaired =
+      prefix.slice(0, managedContentStart).trimEnd() +
+      '\n\n' +
+      baselineBlock.trim() +
+      '\n\n' +
+      prefix.slice(detailsEnd).trimStart() +
+      '\n';
+
+    const repairedHeadings = repaired.match(/^## .+$/gm) || [];
+    if (
+      repairedHeadings.length !== expectedHeadings.length ||
+      !expectedHeadings.every((heading, index) => repairedHeadings[index] === heading)
+    ) {
+      throw new Error('Current v1.8 hybrid baseline repair did not converge to exactly three visible main sections.');
+    }
+    if (occurrenceCount(repaired, placeholder) !== 0 || occurrenceCount(repaired, legacyHeading) !== 0) {
+      throw new Error('Current v1.8 hybrid baseline repair left legacy structure behind.');
+    }
+    if (
+      occurrenceCount(repaired, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') !== 1 ||
+      occurrenceCount(repaired, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') !== 1
+    ) {
+      throw new Error('Current v1.8 hybrid baseline repair did not converge to one canonical baseline block.');
+    }
+
+    return {
+      eligible: true,
+      changed: repaired !== body,
+      reason: 'current-v1.8-hybrid-baseline-section-repaired',
+      body: repaired,
+    };
+  }
+
   const exactLegacyBaselineOnlyShape =
     visibleHeadings.length === 4 &&
     expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
