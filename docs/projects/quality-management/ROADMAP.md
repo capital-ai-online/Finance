@@ -3,6 +3,7 @@
 **Project:** `CAPITAL-AI-QM`  
 **Status:** `MIGRATED_TO_LIVE_ROADMAP / NON_AUTHORIZING_COMPATIBILITY`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
+**Migration baseline:** `main@72a22038c88d3cc170cbecac6d04547d7226853d`  
 **Current status source:** [`docs/architecture/ROADMAP.md#live-quality-management-state--capital-ai-qm`](../../architecture/ROADMAP.md#live-quality-management-state--capital-ai-qm)  
 **Project folder:** `docs/projects/quality-management/`  
 **Project label:** `project:CAPITAL-AI-QM`
