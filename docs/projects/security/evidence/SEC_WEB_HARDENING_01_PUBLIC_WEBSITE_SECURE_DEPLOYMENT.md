@@ -1,9 +1,11 @@
-# SEC-WEB-HARDENING-01 — Public Website & Secure Deployment Convergence
+> **Live-status supersession — 2026-09-23:** This document preserves the threat model, finding catalog, owner-return boundaries and verification/exit contracts for provenance. It is not an independent work-package queue. Current state and sequencing are maintained in the repository Live Roadmap.
+
+# SEC-WEB-HARDENING-01 — Security Program Detail & Evidence Contract
 
 **Project:** CAPITAL-AI-SEC  
 **Canonical project folder:** docs/projects/security/  
 **Work Package ID:** SEC-WEB-HARDENING-01  
-**Status:** MATERIALIZED_MAIN / PROMOTED_TO_SEC_ROADMAP / IMPLEMENTATION_OPEN  
+**Status:** DETAIL_EVIDENCE_ONLY — LIVE STATUS IN `docs/architecture/ROADMAP.md`  
 **Priority:** P0/P1 security program  
 **Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
 **Roadmap promotion baseline:** main@8a64644ad6257f2c295959f6d79a80cc29a51b28  
@@ -13,7 +15,7 @@
 **Implementation owners:** owner-correct by affected surface; primarily CAPITAL-AI-OPS for release/production/runtime, CAPITAL-AI-FE for browser/landing implementation, CAPITAL-AI-GOV for repository protection, CAPITAL-AI-CLIENT where client/session semantics are affected, CAPITAL-AI-COMP for supply-chain/compliance requirements  
 **Independent assurance:** CAPITAL-AI-QM  
 **Human boundary:** final Pull Request merge remains subject to /AGENTS.md@CURRENT_MAIN and the active merge-safety contract
-**Roadmap projection:** docs/projects/security/ROADMAP.md + docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md
+**Live status source:** `docs/architecture/ROADMAP.md` · UI projection: `/roadmap`
 
 ## 1. Objective
 

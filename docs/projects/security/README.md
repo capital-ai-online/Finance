@@ -33,13 +33,16 @@ CAPITAL-AI-SEC owns **no productive `PVC-*` stage**. A Security finding does not
 
 ## Canonical Security sources
 
-- [Security Roadmap](../../roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md) — detailed cross-cutting Security roadmap/work graph.
-- [Security Work Packages](../../roadmaps/work-packages/CAPITAL_AI_SECURITY_WORK_PACKAGES_2026-08-31.md) — Security work-package/evidence surface.
+- [Live Roadmap](../../architecture/ROADMAP.md) — single current SEC task/status source after the 2026-09-23 SEC migration.
+- [Public Roadmap projection](/roadmap) — read-only branded UI projection of the Live Roadmap state.
+- [Security Evidence](./evidence/) — preserved finding, program-detail and superseded-work evidence; never an independent active backlog.
 - [Security Traceability Matrix](../../traceability/CAPITAL_AI_SECURITY_TRACEABILITY_MATRIX_2026-08-31.md) — finding/control/owner/PVC/evidence traceability.
 - [Technical Security component](../../../src/platform/Security/README.md) — reusable technical Security implementation boundary under ESS-0006.
 - [Project Value Chain](../PROJECT_VALUE_CHAIN.md) — canonical `PVC-01..PVC-18` Primary Owners.
 - [Project folder mapping](../README.md) — canonical folder-to-PVC connection and preserved presentation metadata.
 - [Agent trust root](../../../AGENTS.md) — sole repository-wide AI/chat/development instruction surface.
+
+`docs/projects/security/ROADMAP.md`, `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`, `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` and the dated Security work-package inventory are retained only as compatibility/detail/history surfaces. They do not carry current task status. The former `work-packages/` entries are migrated into `evidence/`.
 
 The former standalone DevelopmentChain execution policy and its stable historical authority identity are compatibility/history only and grant no current Security remediation delegation outside `/AGENTS.md@CURRENT_MAIN`.
 

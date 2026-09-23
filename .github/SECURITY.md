@@ -184,7 +184,7 @@ This policy is intentionally subordinate to and aligned with the current reposit
 - `docs/projects/security/README.md` — `CAPITAL-AI-SEC` ownership and independent-verification model;
 - `docs/projects/compliance/README.md` — `CAPITAL-AI-COMP` applicability/evidence/Legal-handoff boundary;
 - `docs/projects/governance/README.md` — `CAPITAL-AI-GOV` Governance boundary;
-- `docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md` — current Security execution roadmap and finding lifecycle.
+- `docs/architecture/ROADMAP.md` — current Security execution roadmap and finding lifecycle.
 
 External guidance such as CVSS, OWASP, CISA, NIST, SLSA, or vendor security recommendations is advisory input unless separately adopted by an effective CAPITAL-AI authority. External guidance does not independently create repository authority.
 

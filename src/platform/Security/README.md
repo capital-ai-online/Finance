@@ -16,7 +16,7 @@ The component path is not an exclusive authorization boundary. An eligible Secur
 
 Canonical non-authorizing roadmap:
 
-`docs/roadmaps/CAPITAL_AI_SECURITY_ROADMAP.md`
+`docs/architecture/ROADMAP.md` (Live Roadmap current-state source)
 
 Primary Productive PVC ownership of Security:
 

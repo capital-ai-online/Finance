@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-LIVE-ROADMAP-CONVERGENCE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "owner": "CAPITAL-AI-SEC",
+  "primaryProductivePvc": [],
+  "branchName": "security/live-roadmap-convergence-20260923",
+  "baseBranch": "main",
+  "baseSha": "8f5fff57613f183e0e1a2a8c8b41017338e63491",
+  "workItem": "Correlate all current SEC work-package/roadmap status against CURRENT_MAIN and converge SEC onto the repository Live Roadmap as the single current-state source.",
+  "ownerDirection": "2026-09-23 current interaction",
+  "scope": [
+    "Promote only fresh SEC current state into docs/architecture/ROADMAP.md and /roadmap.",
+    "Retire docs/projects/security/ROADMAP.md as an independent current-status source.",
+    "Move SEC work-package documents to evidence/detail so they cannot act as parallel task queues.",
+    "Mark older Security roadmaps/backlog documents historical/detail-only.",
+    "Release stale roadmap-promotion coordination metadata after merged PR #1196.",
+    "Preserve Security owner/PVC boundaries and historical evidence."
+  ],
+  "exclusions": [
+    "No productive foreign-owner remediation.",
+    "No AGENTS.md, Governance authority, provider, production, IAM, secret, billing, DNS or database mutation.",
+    "No repo-wide removal of other projects' Roadmaps while their owner-correct migration and Governance overlap remain unresolved."
+  ],
+  "acceptanceCriteria": [
+    "SEC-WEB-HARDENING-01 is the only active SEC program identity after fresh CURRENT_MAIN correlation.",
+    "SEC-AUTH-DIAG-AAL2-01 is represented as superseded/not active.",
+    "SEC-WEB-00/10/20/30/40/50 gates are visible in the Live Roadmap projection.",
+    "No SEC work-package file remains under docs/projects/security/work-packages/.",
+    "Project-local and legacy Security roadmap/backlog files carry no independent current status.",
+    "The public roadmap snapshot is correlated to the exact branch base main SHA.",
+    "Historical evidence remains provenance-preserving."
+  ],
+  "startedAt": "2026-09-23T22:42:00+02:00",
+  "authority": "/AGENTS.md@CURRENT_MAIN"
+}
