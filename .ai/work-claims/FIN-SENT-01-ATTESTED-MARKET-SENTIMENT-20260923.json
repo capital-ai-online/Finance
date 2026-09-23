@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FIN-SENT-01-ATTESTED-MARKET-SENTIMENT-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..14 provider evidence, Data Quality, feature/scoring contract and read-only sentiment projection.",
+  "workItem": "Convert existing provider evidence into a complete attested sentiment feature contract and expose an owner-correct projection for the Market Sentiment frontend.",
+  "startedAt": "2026-09-23T18:59:00Z",
+  "baseBranch": "main",
+  "baseSha": "f4b00e7c04e3b4c68a84d9c70936da692be3f570",
+  "branch": "fintech/sentiment-feature-attestation-20260923",
+  "dependencies": [
+    "Human-merged PR #1323 Market Sentiment evidence presentation",
+    "Human-merged PR #1324 public read-only visibility",
+    "crypto-sentiment-research/0.1.0"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FIN-SENT-01-ATTESTED-MARKET-SENTIMENT-20260923.json",
+    ".ai/work-claims/CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22.json",
+    ".ai/work-claims/NEWSFEED-PROVIDER-FILTER-INTEGRITY-2026-08-25.json",
+    "docs/projects/fintech/work-packages/FIN_SENT_01_ATTESTED_MARKET_SENTIMENT_2026-09-23.md",
+    "src/platform/Scoring/SentimentEvidenceProjection.ts",
+    "src/features/news/newsRoutes.ts",
+    "tests/unit/sentimentEvidenceProjection.test.ts",
+    "tests/unit/marketSentimentProjectionRoute.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No headline heuristic promotion to financial scoring",
+    "No missing-field defaults",
+    "No second provider gateway or scoring engine",
+    "No CanonicalScoreResult/ranking/execution mutation",
+    "Frontend remains presentation-only"
+  ],
+  "currentProviderGap": [
+    "polarity is not provider-attested by current article metadata",
+    "intensity is not provider-attested",
+    "novelty is not provider-attested",
+    "credibility is not provider-attested",
+    "botProbability is not provider-attested",
+    "sourceWeight is not provider-attested",
+    "mentionIntensity is not provider-attested",
+    "regimeAdjustment is not provider-attested"
+  ],
+  "overlapReadback": {
+    "currentMain": "f4b00e7c04e3b4c68a84d9c70936da692be3f570",
+    "openPullRequests": [],
+    "predecessorClaimsReleased": [
+      "CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22 / PR #488 merged",
+      "NEWSFEED-PROVIDER-FILTER-INTEGRITY-2026-08-25 / PR #529 merged"
+    ],
+    "directOpenPrFileOverlap": false
+  },
+  "exitGate": "Exact-head required checks PASS; projection contract fail-closes incomplete evidence; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
