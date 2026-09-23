@@ -11,7 +11,7 @@ test('Documentary AUTO_SYNC uses exactly one trusted Draft-PR handoff', async ()
   );
   assert.match(workflow, /trusted_handoff:\s*documentary-autosync/);
   assert.match(workflow, /needs\.autosync-branch\.outputs\.branch/);
-  assert.match(workflow, /permissions:\s*\n\s+contents:\s*read\s*\n\s+pull-requests:\s*write/);
+  assert.match(workflow, /permissions:\s*\n\s+contents:\s*read\s*\n\s+issues:\s*write\s*\n\s+pull-requests:\s*write/);
   assert.doesNotMatch(workflow, /pull_request_target/);
 });
 
