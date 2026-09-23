@@ -107,7 +107,7 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
   RETRY_SAFE_OPERATION: {
     id: 'RETRY_SAFE_OPERATION',
     tier: 'SH-1',
-    activation: 'HELD',
+    activation: 'ENABLED',
     idempotencyClass: 'IDEMPOTENT',
     blastRadius: 'LOCAL_RUNTIME',
     requiredCapability: null,
