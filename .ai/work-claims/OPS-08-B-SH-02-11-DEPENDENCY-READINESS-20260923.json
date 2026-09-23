@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-11-DEPENDENCY-READINESS-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -115,5 +115,33 @@
     "SH-02.11 is represented as DEPENDENCY_READY / ACTIVATION_NOT_STARTED, not as activated or terminal.",
     "Merged OPS predecessor claims are released; foreign-owner claim lifecycle remains handoff-only."
   ],
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T13:52:00Z",
+  "releaseReason": "Associated PR #1313 was Human/CODEOWNER-merged as db4ad93bb3bac7d4f31242b7f74f8f300d24e757; the declared release condition is satisfied and the successor SH-02.11 pre-activation slice now owns coordination.",
+  "terminalPullRequest": 1313,
+  "terminalHeadSha": "823771199833baaba7d033b655b849b4e8dfa142",
+  "terminalMergeSha": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+  "releaseEvidence": {
+    "pullRequest": 1313,
+    "merged": true,
+    "mergeCommit": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+    "currentMain": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+    "mainCi": {
+      "run": 5849,
+      "status": "PASS"
+    },
+    "containerSecurity": {
+      "run": 2851,
+      "status": "PASS"
+    },
+    "postMergeProductionCorrelation": {
+      "run": 246,
+      "status": "PASS"
+    },
+    "render": {
+      "deployId": "dep-daptgsad0e5s73acahjg",
+      "sha": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+      "status": "live"
+    }
+  }
 }
