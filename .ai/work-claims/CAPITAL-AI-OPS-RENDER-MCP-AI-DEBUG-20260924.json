@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RENDER-MCP-AI-DEBUG-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Render connectors"
+  },
+  "workItem": "OPS-RENDER-MCP-AI-DEBUG-01 — declare the official hosted Render MCP endpoint for Claude Code and Cursor project sessions, with no committed Render credentials and no provider mutation.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "claimedPaths": [
+    ".mcp.json",
+    ".cursor/mcp.json",
+    "scripts/deployment/renderMcpClient.ts",
+    "tests/unit/renderMcpDeveloperConfig.test.ts",
+    "docs/runbooks/RENDER_MCP_AI_DEBUGGING.md",
+    "docs/projects/operations/work-packages/OPS_RENDER_MCP_AI_DEBUG_2026-09-24.md",
+    ".ai/work-claims/GA4-MCP-SERVER-SETUP-2026-08-08.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-RENDER-MCP-AI-DEBUG-20260924.json"
+  ],
+  "releaseCondition": "Release when the associated work is merged, closed, superseded or abandoned."
+}

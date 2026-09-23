@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GA4-MCP-SERVER-SETUP-2026-08-08",
-  "status": "superseded",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "Anthropic",
     "model": "Claude",
@@ -21,5 +21,7 @@
     ".ai/work-claims/GA4-MCP-SERVER-SETUP-2026-08-08.json"
   ],
   "releaseCondition": "Claim is released when the associated work is merged, closed, superseded or abandoned.",
-  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete.",
+  "releasedAt": "2026-09-24",
+  "releasedReason": "Superseded historical MCP claim touched during OPS Render-MCP correlation; /AGENTS.md@CURRENT_MAIN requires released/non-exclusive coordination metadata."
 }
