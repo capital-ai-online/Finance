@@ -3,7 +3,7 @@
 **Owner:** CAPITAL-AI-OPS  
 **PVC:** PVC-02 / PVC-08  
 **Baseline:** `main@fdc6c2f1ad831bbd7fe7f9078231b855a744adc7`  
-**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED
+**State:** PRODUCTION_RUNTIME_RECOVERED / AUTH_CONTROL_HOST_IMPLEMENTING
 
 ## Observed production drift
 
@@ -40,3 +40,11 @@ This keeps privileged Management API credentials in an explicit control-plane co
 4. Render becomes `live` and `/healthz` reports the then-current main identity.
 5. Supabase Auth configuration is reconciled through the explicit Management API control path with a scoped credential, without exposing the credential to application logs.
 6. Apply/read back the pending versioned Supabase migration, run security/performance advisors, then execute the registration user test.
+
+## Explicit Management API control host
+
+After exact Production ↔ CURRENT_MAIN convergence on `ba3e69c364627fd5c36faf650cd58ffa160a02c5` via Render deploy `dep-daq5um6gekts73bnebvg`, the remaining provider gate is the explicit Auth configuration reconciliation. The existing owner-only Issue #1192 workflow is extended rather than creating a second control plane.
+
+The fixed command `/supabase-auth-registration-config` executes the existing canonical `scripts/operations/supabaseAuthRegistrationControl.mjs` with the already-established GitHub secret contract `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN`. It accepts no caller-supplied config payload, performs a Management API post-write readback, and publishes only config-key names/counts to the control issue. A missing credential or readback mismatch fails closed.
+
+Database migration remains sequenced after this verified provider-config gate.

@@ -1,4 +1,4 @@
-name: Supabase URL Configuration Control
+name: Supabase Production Configuration Control
 
 on:
   issue_comment:
@@ -7,7 +7,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: supabase-url-config-control
+  group: supabase-production-config-control
   cancel-in-progress: false
 
 jobs:
@@ -42,7 +42,11 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          printf '%s\n'             '### ❌ Supabase URL Configuration nicht geändert'             ''             'Fail-closed: Mutation wurde nicht erfolgreich verifiziert.'             > "${REPORT_PATH}"
+          printf '%s\n' \
+            '### ❌ Supabase URL Configuration nicht geändert' \
+            '' \
+            'Fail-closed: Mutation wurde nicht erfolgreich verifiziert.' \
+            > "${REPORT_PATH}"
 
       - name: Management-Zugang fail-closed pruefen
         id: access
@@ -54,7 +58,11 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${SUPABASE_MANAGEMENT_ACCESS_TOKEN}" ]]; then
-            printf '%s\n'               '### ❌ Supabase URL Configuration nicht geändert'               ''               'Fail-closed reason: `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN_MISSING`'               > "${REPORT_PATH}"
+            printf '%s\n' \
+              '### ❌ Supabase URL Configuration nicht geändert' \
+              '' \
+              'Fail-closed reason: `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN_MISSING`' \
+              > "${REPORT_PATH}"
             exit 1
           fi
 
@@ -75,11 +83,130 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api             --method POST             "repos/${GITHUB_REPOSITORY}/issues/1192/comments"             -f "body=$(cat "${REPORT_PATH}")"             >/dev/null
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/1192/comments" \
+            -f "body=$(cat "${REPORT_PATH}")" \
+            >/dev/null
 
       - name: Fehlgeschlagene Mutation als Workflow-Fehler markieren
         if: steps.access.outcome != 'success' || steps.apply.outcome != 'success'
         shell: bash
         run: |
           echo "::error::Supabase URL Configuration wurde nicht erfolgreich und verifiziert aktualisiert."
+          exit 1
+
+  apply-auth-registration-config:
+    name: Owner-controlled Supabase Auth registration configuration
+    if: >-
+      github.event.issue.number == 1192 &&
+      github.actor == 'SvenKulessa' &&
+      (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'MEMBER') &&
+      github.event.comment.body == '/supabase-auth-registration-config'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: Fail-closed Auth-Report initialisieren
+        env:
+          REPORT_PATH: ${{ runner.temp }}/supabase-auth-registration-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' \
+            '### ❌ Supabase Auth Registration Configuration nicht geändert' \
+            '' \
+            'Fail-closed: Mutation wurde nicht erfolgreich verifiziert.' \
+            > "${REPORT_PATH}"
+
+      - name: Management-Zugang fail-closed pruefen
+        id: access
+        continue-on-error: true
+        env:
+          SUPABASE_MANAGEMENT_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN }}
+          REPORT_PATH: ${{ runner.temp }}/supabase-auth-registration-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_MANAGEMENT_ACCESS_TOKEN}" ]]; then
+            printf '%s\n' \
+              '### ❌ Supabase Auth Registration Configuration nicht geändert' \
+              '' \
+              'Fail-closed reason: `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN_MISSING`' \
+              > "${REPORT_PATH}"
+            exit 1
+          fi
+
+      - name: Auth Registration Configuration atomar aktualisieren und verifizieren
+        id: apply
+        if: steps.access.outcome == 'success'
+        continue-on-error: true
+        env:
+          SUPABASE_MANAGEMENT_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN }}
+          RESULT_PATH: ${{ runner.temp }}/supabase-auth-registration-result.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          node scripts/operations/supabaseAuthRegistrationControl.mjs > "${RESULT_PATH}"
+
+      - name: Verifizierten Auth-Readback ohne Secrets dokumentieren
+        if: steps.apply.outcome == 'success'
+        env:
+          RESULT_PATH: ${{ runner.temp }}/supabase-auth-registration-result.json
+          REPORT_PATH: ${{ runner.temp }}/supabase-auth-registration-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, 'utf8'));
+          const changedKeys = Array.isArray(result.changedKeys) ? result.changedKeys : [];
+          const lines = [
+            '### ✅ Supabase Auth Registration Configuration verifiziert',
+            '',
+            `- Projekt: \`${result.projectRef}\``,
+            `- Credential-Quelle: \`${result.credentialSource}\``,
+            `- Verifizierte Config-Keys: \`${result.verifiedKeyCount}\``,
+            `- Geänderte Config-Keys: ${changedKeys.length ? changedKeys.map((key) => `\`${key}\``).join(', ') : 'keine — Desired State war bereits aktuell'}`,
+            '',
+            'Der Controller hat nach der Mutation einen Management-API-Readback durchgeführt; Secret-Werte werden nicht ausgegeben.',
+          ];
+          fs.writeFileSync(process.env.REPORT_PATH, `${lines.join('\n')}\n`, { mode: 0o600 });
+          NODE
+
+      - name: Ergebnis im Control Issue dokumentieren
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_PATH: ${{ runner.temp }}/supabase-auth-registration-config-report.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/1192/comments" \
+            -f "body=$(cat "${REPORT_PATH}")" \
+            >/dev/null
+
+      - name: Fehlgeschlagene Auth-Mutation als Workflow-Fehler markieren
+        if: steps.access.outcome != 'success' || steps.apply.outcome != 'success'
+        shell: bash
+        run: |
+          echo "::error::Supabase Auth Registration Configuration wurde nicht erfolgreich und verifiziert aktualisiert."
           exit 1

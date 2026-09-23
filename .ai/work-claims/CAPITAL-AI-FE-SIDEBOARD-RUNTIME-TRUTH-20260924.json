@@ -12,7 +12,7 @@
   "workItemDE": "Kanonische Webanwendungsversion im öffentlichen Sideboard anzeigen und unbelegte Echtzeit-Latenz-/Sicherheitsangaben durch belegbare Current-Main-Angaben ersetzen.",
   "startedAt": "2026-09-24T01:30:00+02:00",
   "baseBranch": "main",
-  "baseSha": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+  "baseSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
   "branch": "agent/frontend-sideboard-runtime-truth-20260924",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -21,7 +21,7 @@
   "priority": "P2",
   "priorityReason": "Public footer currently exposes a hard-coded latency promise and conflates transport security with MiCA; the Owner requested current-version visibility and factual current-main correlation.",
   "productionBaseline": {
-    "checkedAt": "2026-09-24T01:30:00+02:00",
+    "checkedAt": "2026-09-24T01:40:00+02:00",
     "version": "0.6.0",
     "commitSha": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
     "branch": "main",
@@ -48,5 +48,14 @@
     "Focused version-projection regression test and required exact-head checks pass.",
     "No changed-file or advisory-claim overlap exists with open PRs."
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "lastSyncedMainSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "evidence": {
+    "currentMainAtFinalCorrelation": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+    "productionRenderDeploy": "dep-daq5um6gekts73bnebvg",
+    "productionCommit": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+    "openWriterOverlap": "PASS — merged PR #1347 moved main only in OPS Auth-Control paths; no changed-file overlap with this FE slice.",
+    "feedTruth": "CURRENT_MAIN requires provider/licensing entitlement evidence for realtime claims; no guaranteed sub-45ms SLO found.",
+    "securityTruth": "CURRENT_MAIN implements CSP; public transport is HTTPS. MiCA is modeled as regulatory/governance guidance, not as a transport security standard."
+  }
 }
