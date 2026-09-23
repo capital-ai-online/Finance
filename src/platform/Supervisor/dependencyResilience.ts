@@ -110,9 +110,10 @@ export function isRetrySafeIdempotency(idempotencyClass: IdempotencyClass): bool
 /**
  * Contract-bound generic retry executor.
  *
- * It intentionally remains fail-closed while RETRY_SAFE_OPERATION is HELD by
- * self-healing-contract/1.2.0. Existing provider-native resilience continues to own
- * its own retry/circuit/LKG loop and must never be wrapped by this executor.
+ * RETRY_SAFE_OPERATION is enabled only for READ_ONLY or explicitly IDEMPOTENT
+ * SUPERVISOR_SAFE_RETRY operations under self-healing-contract/1.2.0. Existing
+ * provider-native resilience continues to own its own retry/circuit/LKG loop and
+ * must never be wrapped by this executor.
  */
 export async function executeContractBoundDependencyRecovery<T>(
   contract: DependencyOperationContract,
