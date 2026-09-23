@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-REPOSITORY-IDENTITY-HARDENING-2026-09-14",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -27,5 +27,8 @@
     "tests/unit/qualityGateRunner.test.ts",
     "tests/unit/chapter12ValidatorRunner.test.ts"
   ],
-  "releaseCondition": "Release after the identity-hardening PR is merged, closed, superseded or abandoned."
+  "releaseCondition": "Release after the identity-hardening PR is merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-24T00:25:00+02:00",
+  "releaseReason": "PR #910 merged on 2026-09-14. The repository-identity hardening work is terminal on main; this stale coordination claim is released.",
+  "mergeCommitSha": "615d0a4efe0fdbefec1a06bd89f86f0d20aec19c"
 }

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-LIVE-ROADMAP-CONVERGENCE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "docs/projects/security/",
   "owner": "CAPITAL-AI-SEC",
@@ -35,5 +35,8 @@
     "Historical evidence remains provenance-preserving."
   ],
   "startedAt": "2026-09-23T22:42:00+02:00",
-  "authority": "/AGENTS.md@CURRENT_MAIN"
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "releasedAt": "2026-09-24T00:25:00+02:00",
+  "releaseReason": "PR #1337 merged the SEC Live Roadmap convergence. The branch is terminal; this coordination claim must not remain an active/exclusive writer.",
+  "mergeCommitSha": "86fb86c69df1b65a69c006b4b08eee262c7db40c"
 }

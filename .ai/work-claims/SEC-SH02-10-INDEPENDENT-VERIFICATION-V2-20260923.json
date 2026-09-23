@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "SEC-SH02-10-INDEPENDENT-VERIFICATION-V2-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -33,5 +33,8 @@
     "instruction": "When reporting next steps in chat, render them as a fenced plain-text code block.",
     "authorityImpact": "NONE"
   },
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T00:25:00+02:00",
+  "releaseReason": "PR #1311 merged on 2026-09-23 and superseded the stale PR #1304 assurance attempt. The v2 Security verification claim is terminal and released.",
+  "mergeCommitSha": "2cedd1afa69b5ec28872acbda5335358e949ac7f"
 }
