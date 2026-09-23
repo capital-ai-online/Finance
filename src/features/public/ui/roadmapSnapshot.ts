@@ -19,6 +19,8 @@ export interface RoadmapWorkPackage {
   sourceType: 'canonical-roadmap' | 'provider-pr' | 'provider-branch' | 'human-directed';
   detail: string;
   prNumber?: number;
+  executionGroup?: string;
+  dependsOn?: string[];
 }
 
 export interface RoadmapQueuedItem {
@@ -28,6 +30,8 @@ export interface RoadmapQueuedItem {
   stateLabel: string;
   source: string;
   gate: string;
+  executionGroup?: string;
+  dependsOn?: string[];
 }
 
 export interface RoadmapIntegrationItem {
@@ -42,11 +46,11 @@ export interface RoadmapIntegrationItem {
 }
 
 export const ROADMAP_DASHBOARD_SNAPSHOT = {
-  schemaVersion: '1.3.0',
+  schemaVersion: '1.4.0',
   role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
-  correlatedDate: '2026-09-23',
-  correlatedMainSha: '8f5fff57613f183e0e1a2a8c8b41017338e63491',
-  currentMainSha: '8f5fff57613f183e0e1a2a8c8b41017338e63491',
+  correlatedDate: '2026-09-24',
+  correlatedMainSha: 'fdc6c2f1ad831bbd7fe7f9078231b855a744adc7',
+  currentMainSha: 'fdc6c2f1ad831bbd7fe7f9078231b855a744adc7',
   productionAudit: {
     observedCommitSha: '7c1d9293ee4c61e32791e447463fcaf263644c6d',
     deployId: 'dep-daq2vqou01pc73fjldv0',
@@ -73,10 +77,12 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       stateLabel: 'SEO + PRODUCTION CONVERGENCE',
       source: 'Fresh Human/Owner direction 2026-09-23',
       sourceType: 'human-directed',
+      executionGroup: 'FE-ROADMAP-LIVE',
       detail: 'Re-correlates the read-only /roadmap projection to CURRENT_MAIN, removes terminal provider writers and adds a production/SEO integration ledger without creating a second task authority.',
     },
     {
       id: 'SH-02.11',
+      executionGroup: 'OPS-SH-02.11',
       title: 'Retry-Safe Operation',
       owner: 'CAPITAL-AI-OPS',
       relationship: 'PVC-08 · Self-Healing runtime',
@@ -89,6 +95,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'GOV-SH-V3',
+      executionGroup: 'GOV-SH-V3',
       title: 'Self-Healing Convergence Program',
       owner: 'CAPITAL-AI-GOV',
       relationship: 'PVC-05',
@@ -101,6 +108,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'OPS-02-CI-01E',
+      executionGroup: 'OPS-02-CI-01E',
       title: 'ChatGPT Preflight & Runner-Minute Convergence',
       owner: 'CAPITAL-AI-OPS',
       relationship: 'PVC-02 · QM assurance · SEC boundary',
@@ -113,6 +121,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-HARDENING-01',
+      executionGroup: 'SEC-WEB-HARDENING-01',
       title: 'Public Website & Secure Deployment Convergence',
       owner: 'CAPITAL-AI-SEC',
       relationship: 'cross-cutting Security; productive remediation stays with canonical owners',
@@ -149,6 +158,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'WP-SEO-LAUNCH-01',
+      executionGroup: 'SEO-LAUNCH',
       title: 'Public Web & Social Launch Management',
       owner: 'CAPITAL-AI-SEO',
       relationship: 'cross-cutting SEO / launch coordination',
@@ -161,6 +171,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SOCIAL-P1',
+      executionGroup: 'SOCIAL-P1-P2',
       title: 'Real TTS Runtime Evidence',
       owner: 'CAPITAL-AI-SOCIAL',
       relationship: 'cross-cutting Social · OPS runtime return',
@@ -173,6 +184,8 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SOCIAL-P2',
+      executionGroup: 'SOCIAL-P1-P2',
+      dependsOn: ['SOCIAL-P1'],
       title: 'Short-Video + Voice-Over Integration',
       owner: 'CAPITAL-AI-SOCIAL',
       relationship: 'cross-cutting Social',
@@ -303,6 +316,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
   queuedItems: [
     {
       id: 'SEC-WEB-00',
+      executionGroup: 'SEC-WEB-HARDENING-01',
       owner: 'CAPITAL-AI-SEC',
       state: 'ready',
       stateLabel: 'READY · P0 BASELINE',
@@ -311,6 +325,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-10',
+      executionGroup: 'SEC-WEB-HARDENING-01',
       owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
       state: 'ready',
       stateLabel: 'READY · P0 ARTIFACT CHAIN',
@@ -319,6 +334,8 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-20',
+      executionGroup: 'SEC-WEB-HARDENING-01',
+      dependsOn: ['SEC-WEB-00', 'SEC-WEB-10'],
       owner: 'CAPITAL-AI-SEC · CAPITAL-AI-FE · CAPITAL-AI-OPS',
       state: 'held',
       stateLabel: 'HELD · READY AFTER P0',
@@ -327,6 +344,8 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-30',
+      executionGroup: 'SEC-WEB-HARDENING-01',
+      dependsOn: ['SEC-WEB-00', 'SEC-WEB-10'],
       owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
       state: 'held',
       stateLabel: 'HELD · READY AFTER P0',
@@ -335,6 +354,8 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-40',
+      executionGroup: 'SEC-WEB-HARDENING-01',
+      dependsOn: ['SEC-WEB-00', 'SEC-WEB-10'],
       owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
       state: 'held',
       stateLabel: 'HELD · READY AFTER P0',
@@ -343,6 +364,8 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
     {
       id: 'SEC-WEB-50',
+      executionGroup: 'SEC-WEB-HARDENING-01',
+      dependsOn: ['SEC-WEB-20', 'SEC-WEB-30', 'SEC-WEB-40'],
       owner: 'CAPITAL-AI-SEC · CAPITAL-AI-QM',
       state: 'queued',
       stateLabel: 'QUEUED · IMPLEMENTATION RETURN',
@@ -350,15 +373,27 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       gate: 'Independent runtime/DAST/transport verification starts only after owner implementation returns; no unresolved CRITICAL/HIGH finding may be promoted as PASS.',
     },
     {
-      id: 'QM-PR900-02',
+      id: 'QM-PR900-03',
+      executionGroup: 'QM-ACTIONS-ASSURANCE',
       owner: 'CAPITAL-AI-QM',
       state: 'ready',
-      stateLabel: 'READY FOR EXECUTION',
-      source: 'docs/projects/quality-management/ROADMAP.md',
-      gate: 'Exact-snapshot Quality evidence remains the current QM successor; proposed QM-V2 coordination authority still depends on ADR-0103 acceptance/Human merge.',
+      stateLabel: 'READY · INDEPENDENT ASSURANCE',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Run read-only assurance of Actions/runner efficiency against current OPS evidence; workflow/provider mutation remains OPS-owned.',
+    },
+    {
+      id: 'QM-PR900-04',
+      executionGroup: 'QM-READINESS',
+      dependsOn: ['QM-PR900-03'],
+      owner: 'CAPITAL-AI-QM',
+      state: 'held',
+      stateLabel: 'HELD · DEPENDS ON QM-PR900-03',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Cross-project readiness/provenance evidence is meaningful only after QM-PR900-03 reaches a terminal outcome.',
     },
     {
       id: 'SH-02.12',
+      executionGroup: 'OPS-SH-02.12',
       owner: 'CAPITAL-AI-OPS',
       state: 'held',
       stateLabel: 'HELD · ROUTED ISSUE AUTO-FIX',

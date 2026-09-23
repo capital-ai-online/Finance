@@ -9,7 +9,7 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 describe('Roadmap dashboard projection', () => {
   it('binds the projection to the freshly correlated main baseline without claiming runtime identity', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha).toBe(
-      '8f5fff57613f183e0e1a2a8c8b41017338e63491',
+      'fdc6c2f1ad831bbd7fe7f9078231b855a744adc7',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha).toBe(
       ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha,
@@ -87,6 +87,16 @@ describe('Roadmap dashboard projection', () => {
     for (const id of ['SEC-WEB-00', 'SEC-WEB-10', 'SEC-WEB-20', 'SEC-WEB-30', 'SEC-WEB-40', 'SEC-WEB-50']) {
       expect(ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.some((item) => item.id === id)).toBe(true);
     }
+  });
+
+  it('consumes the merged QM live-roadmap migration without reviving QM-PR900-02', () => {
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.some((item) => item.id === 'QM-PR900-02')).toBe(false);
+    const qm03 = ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.find((item) => item.id === 'QM-PR900-03');
+    const qm04 = ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.find((item) => item.id === 'QM-PR900-04');
+    expect(qm03?.state).toBe('ready');
+    expect(qm03?.source).toBe('docs/architecture/ROADMAP.md');
+    expect(qm04?.state).toBe('held');
+    expect(qm04?.dependsOn).toContain('QM-PR900-03');
   });
 
   it('keeps canonical active packages traceable to owner roadmap sources', () => {
@@ -169,5 +179,9 @@ describe('Roadmap dashboard projection', () => {
     expect(dashboard).toContain('Live Runtime separat');
     expect(dashboard).toContain('Korrelations-Basis');
     expect(dashboard).toContain('Production / SEO Integration Ledger');
+    expect(dashboard).toContain("docs/projects/README.md?raw");
+    expect(dashboard).toContain('Nach Project Owner, Folder und Label filtern');
+    expect(dashboard).toContain('Parallel Worker Projection');
+    expect(dashboard).toContain('parallelisierbare Worker-Lanes');
   });
 });
