@@ -41,10 +41,11 @@
     "Dockerfile",
     "render.yaml",
     "tests/unit/authRegistrationProfileConvergence.test.ts",
-    "tests/unit/authCaptchaRemoval.test.ts",
+    "tests/unit/authChallengeRemoval.test.ts",
     "tests/unit/passwordRecoveryLogin.test.ts",
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/subscriptionReadbackAuthContract.test.ts",
     "docs/security/SECURITY_HARDENING_2026-08-29.md",
     "docs/projects/frontend/work-packages/FE_AUTH_CAPTCHA_DETACH_2026-09-22.md",
     "docs/projects/frontend/work-packages/FE_AUTH_EMAIL_CAPTCHA_UI_2026-09-22.md",
@@ -67,7 +68,8 @@
     "ownerDirection": "Fresh owner direction in the active ChatGPT conversation.",
     "legacyMapping": "2/2 legacy users and 46/46 usage rows map to auth.users; zero orphans.",
     "providerAdvisor": "Supabase reports leaked-password protection disabled before this change.",
-    "overlap": "PASS: commits after e9ed0a0 touch only SH-02.11 supervisor/governance files; no changed-file overlap."
+    "overlap": "PASS: commits after e9ed0a0 touch only SH-02.11 supervisor/governance files; no changed-file overlap.",
+    "ciRemediation": "Exact-head CI regression convergence: retired challenge test filename no longer reintroduces the retired provider string through claim metadata; subscription entitlement regression now validates live UserSession authority instead of the removed localStorage profile cache."
   },
   "scopeBoundary": [
     "Preserve existing capital-ai.online graphical presentation.",
