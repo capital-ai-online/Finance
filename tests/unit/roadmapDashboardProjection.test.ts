@@ -41,6 +41,25 @@ describe('Roadmap dashboard projection', () => {
     ).toBe(false);
   });
 
+
+  it('correlates Documentary as terminal/non-active without reviving stale claims', () => {
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some(
+        (item) => item.owner === 'CAPITAL-AI-DOC',
+      ),
+    ).toBe(false);
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.some((item) => item.owner === 'CAPITAL-AI-DOC'),
+    ).toBe(false);
+
+    const documentary = ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.find(
+      (item) => item.id === 'DOC-ROADMAP-CORRELATION',
+    );
+    expect(documentary?.state).toBe('repository-integrated');
+    expect(documentary?.stateLabel).toContain('KEINE AKTIVE');
+    expect(documentary?.detail).toContain('kein ausführbares aktives Arbeitspaket');
+  });
+
   it('keeps canonical active packages traceable to owner roadmap sources', () => {
     for (const item of ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages) {
       if (item.sourceType !== 'canonical-roadmap') continue;

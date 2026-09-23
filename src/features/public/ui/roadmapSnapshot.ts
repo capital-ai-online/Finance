@@ -42,7 +42,7 @@ export interface RoadmapIntegrationItem {
 }
 
 export const ROADMAP_DASHBOARD_SNAPSHOT = {
-  schemaVersion: '1.2.0',
+  schemaVersion: '1.2.1',
   role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
   correlatedDate: '2026-09-23',
   correlatedMainSha: '426a98d4703271e438cbc6df4b1442fb3a9b032d',
@@ -184,6 +184,16 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
   ] satisfies RoadmapWorkPackage[],
   integrationLedger: [
+    {
+      id: 'DOC-ROADMAP-CORRELATION',
+      title: 'Documentary Roadmap Correlation',
+      owner: 'CAPITAL-AI-DOC',
+      state: 'repository-integrated',
+      stateLabel: 'KORRELIERT · KEINE AKTIVE AUSFÜHRUNG',
+      source: 'docs/projects/documentary/ROADMAP.md · PRs #1310/#1154/#1131',
+      detail: 'CAPITAL-AI-DOC / PVC-03 hat auf dieser CURRENT_MAIN-Generation kein ausführbares aktives Arbeitspaket: WP-DOC-14..16 sind terminal, WP-DOC-17 ist historisch/not-applicable, WP-06A..E ist terminal, AUTO-01 und die startup_failure-Remediation sind gemergt. Verbliebene active-Marker sind stale Coordination-Evidence und werden nicht als Live-Arbeit reaktiviert.',
+      nextGate: 'Nur frische Failure-Evidence oder neue Human/Owner-Direction darf DOC-Arbeit aktivieren; die spätere Roadmap-Entfernung bleibt an den kanonischen Post-Social-Handoff gebunden.',
+    },
     {
       id: 'SEO-FAQ-PUBLIC-ROUTE',
       title: 'FAQ als indexierbare Public Route',

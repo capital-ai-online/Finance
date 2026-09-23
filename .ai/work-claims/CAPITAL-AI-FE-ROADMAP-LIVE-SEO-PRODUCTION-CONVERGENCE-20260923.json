@@ -38,7 +38,8 @@
     "production": "Render live deploy dep-daq2vqou01pc73fjldv0 @ 7c1d9293ee4c61e32791e447463fcaf263644c6d; prior exact-main deploy dep-daq378mk1f9s738adt70 failed at runtime startup; bounded recovery PR #1334 is merged on main@426a98d4 and its new Production deploy/readback is pending.",
     "seo": "SEO issues #1233/#1252/#1254/#1258/#1263 are terminal; no open project:CAPITAL-AI-SEO issue lane; GSC/GA4/GenAI current provider reads remain evidence gates.",
     "legacyDrift": "/universe is absent from current client routing but remains in route SEO metadata, sitemap, prerender and public server route/fallback surfaces.",
-    "openWriterOverlap": "No foreign open PR after #1334 merged; only this FE draft PR #1335 remains open at the re-correlation boundary."
+    "openWriterOverlap": "No foreign open PR after #1334 merged; only this FE draft PR #1335 remains open at the re-correlation boundary.",
+    "documentary": "CAPITAL-AI-DOC resolves to PVC-03. Canonical ROADMAP has no executable active item: WP-DOC-14/15/16 are terminal; WP-DOC-17 is historical NOT_APPLICABLE; WP-06A..E are terminal through #1131; AUTO-01 is terminal through #1154; startup_failure remediation is terminal through #1310. Residual active claim/package markers are stale coordination evidence and are not projected as live work."
   },
   "acceptanceCriteria": [
     "Roadmap projection is bound to the exact correlated main SHA and reads live Production identity separately through /healthz.",
@@ -46,7 +47,8 @@
     "Implemented production-covered, repository-integrated, main-only/deploy-blocked, provider-gate and legacy-drift states are distinguishable.",
     "SEO provider gates are not converted into synthetic PASS and /universe is not reactivated.",
     "Focused Roadmap projection tests plus ordinary required FE/governance/build/security checks pass on the exact PR head.",
-    "Human/CODEOWNER merge remains required."
+    "Human/CODEOWNER merge remains required.",
+    "Documentary correlation is represented without reactivating terminal work: no CAPITAL-AI-DOC active/queued card exists, and the non-active DOC correlation ledger records the terminal state."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
 }
