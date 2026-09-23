@@ -208,8 +208,8 @@ describe('CookieConsent stylesheet readiness', () => {
 
     expect(r.runCount).toBe(1);
     expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(true);
-    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-analytics')).toBe(true);
-    expect(r.elements.some((element) => element.id === 'capital-ai-cookie-save')).toBe(true);
+    expect(r.getElementById('capital-ai-cookie-analytics')).toBeTruthy();
+    expect(r.getElementById('capital-ai-cookie-save')).toBeTruthy();
   });
 
   it('saves an Analytics opt-in through the canonical CookieConsent category API', async () => {
