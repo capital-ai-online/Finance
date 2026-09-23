@@ -48,6 +48,11 @@ describe('post-merge production correlation workflow', () => {
     expect(workflow).toContain('does not authorize Production mutation');
   });
 
+  it('does not serialize literal backslashes before GitHub expression syntax', () => {
+    expect(workflow).not.toContain('\\${{');
+    expect(workflow).toContain('ref: ${{ steps.main.outputs.sha }}');
+  });
+
   it('uses least privilege and immutable pinned actions', () => {
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('actions: read');
