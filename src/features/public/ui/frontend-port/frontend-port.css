@@ -100,8 +100,9 @@
 /*
  * Finance-owned responsive adapter for the pinned FRONTEND presentation.
  *
- * <1024px keeps the upstream mobile/tablet presentation. >=1024px is a real
- * website layout: the React composition switches to fullscreen and this
+ * <960px keeps the upstream mobile/tablet presentation. 960-1023px is handled
+ * by the bounded desktop-site compatibility bridge above. >=1024px is the
+ * canonical website layout: the React composition switches to fullscreen and this
  * adapter expands typography, spacing and card rails for desktop. This avoids
  * using an iPhone-preview tree as the desktop rendering mode.
  */
