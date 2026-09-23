@@ -6,7 +6,7 @@ import {
   type TerminalRecoveryState,
 } from './selfHealingContract';
 
-export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.1.0' as const;
+export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.2.0' as const;
 
 export const REQUIRED_SH_02_10_SCENARIOS = [
   'PROCESS_FATAL',
@@ -17,6 +17,7 @@ export const REQUIRED_SH_02_10_SCENARIOS = [
   'FRONTEND_RENDER_FAILURE',
   'FRONTEND_OPTIONAL_INIT_REJECTION',
   'STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE',
+  'PR_GOVERNANCE_V18_METADATA_OMISSION',
   'API_503',
   'API_429',
   'DEPLOYMENT_IDENTITY_MISMATCH',
@@ -135,6 +136,14 @@ export const SH_02_10_FAULT_MATRIX: readonly FaultInjectionScenario[] = Object.f
     'REPOSITORY_MODEL',
     'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
     'RECONCILE_REPOSITORY_PROJECTION',
+    'CONVERGED',
+  ),
+  scenario(
+    'PR_GOVERNANCE_V18_METADATA_OMISSION',
+    'Model a structurally canonical v1.8 PR body whose required Technical Evidence metadata is missing even though the canonical banner and branch claim evidence are sufficient for deterministic reconstruction.',
+    'REPOSITORY_MODEL',
+    'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+    'RECONCILE_PR_GOVERNANCE_METADATA',
     'CONVERGED',
   ),
   scenario(
