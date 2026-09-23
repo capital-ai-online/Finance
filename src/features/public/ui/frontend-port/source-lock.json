@@ -57,8 +57,8 @@
     {
       "sourcePath": "src/components/AllMarketsModal.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/AllMarketsModal.tsx",
-      "blobSha": "d5ae7730e67a100acd652e4ae736f0433a85ff88",
-      "mode": "EXACT_GIT_BLOB"
+      "blobSha": "457516c3cea80566eae00118ba0c0d61accb46b4",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
       "sourcePath": "src/components/AnalysisModal.tsx",
@@ -69,8 +69,8 @@
     {
       "sourcePath": "src/components/AssetDetailModal.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/AssetDetailModal.tsx",
-      "blobSha": "023b6864ec9bc6631a5720069e62b256988c0b4a",
-      "mode": "EXACT_GIT_BLOB"
+      "blobSha": "dac012f87cfa90f437b33e91061fea8583996fde",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
       "sourcePath": "src/components/BrandLogo.tsx",
@@ -141,8 +141,8 @@
     {
       "sourcePath": "src/components/SubclassDetailModal.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/SubclassDetailModal.tsx",
-      "blobSha": "6920091350e100e03ff3bc54237a789eb22711c3",
-      "mode": "EXACT_GIT_BLOB"
+      "blobSha": "cf3fd1d521a11df4c351d51140553d0cffe471b5",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
       "sourcePath": "src/data/mockData.ts",
