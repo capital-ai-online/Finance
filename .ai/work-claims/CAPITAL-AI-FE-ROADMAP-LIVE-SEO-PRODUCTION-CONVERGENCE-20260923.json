@@ -12,7 +12,7 @@
   "startedAt": "2026-09-23T22:09:00+02:00",
   "baseBranch": "main",
   "baseSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
-  "lastSyncedMainSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+  "lastSyncedMainSha": "426a98d4703271e438cbc6df4b1442fb3a9b032d",
   "branch": "frontend/roadmap-live-seo-production-convergence-20260923",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -34,11 +34,11 @@
     "Human/CODEOWNER merge authority is preserved."
   ],
   "evidence": {
-    "currentMain": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
-    "production": "Render live deploy dep-daq2vqou01pc73fjldv0 @ 7c1d9293ee4c61e32791e447463fcaf263644c6d; exact-main deploy dep-daq378mk1f9s738adt70 failed at runtime startup after successful build.",
+    "currentMain": "426a98d4703271e438cbc6df4b1442fb3a9b032d",
+    "production": "Render live deploy dep-daq2vqou01pc73fjldv0 @ 7c1d9293ee4c61e32791e447463fcaf263644c6d; prior exact-main deploy dep-daq378mk1f9s738adt70 failed at runtime startup; bounded recovery PR #1334 is merged on main@426a98d4 and its new Production deploy/readback is pending.",
     "seo": "SEO issues #1233/#1252/#1254/#1258/#1263 are terminal; no open project:CAPITAL-AI-SEO issue lane; GSC/GA4/GenAI current provider reads remain evidence gates.",
     "legacyDrift": "/universe is absent from current client routing but remains in route SEO metadata, sitemap, prerender and public server route/fallback surfaces.",
-    "openWriterOverlap": "Exactly one open PR at final pre-claim readback: #1334 CAPITAL-AI-OPS; no changed-file overlap with this claim."
+    "openWriterOverlap": "No foreign open PR after #1334 merged; only this FE draft PR #1335 remains open at the re-correlation boundary."
   },
   "acceptanceCriteria": [
     "Roadmap projection is bound to the exact correlated main SHA and reads live Production identity separately through /healthz.",
