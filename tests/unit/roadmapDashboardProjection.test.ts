@@ -16,10 +16,13 @@ describe('Roadmap dashboard projection', () => {
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'CURRENT_MAIN_DEPLOY_PENDING_AFTER_RECOVERY_MERGE',
+      'CURRENT_MAIN_DEPLOY_FAILED_AFTER_RECOVERY_MERGE',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.previousFailedDeployId).toBe(
       'dep-daq378mk1f9s738adt70',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.latestFailedDeployId).toBe(
+      'dep-daq3dkmgekts73be39i0',
     );
   });
 
@@ -27,7 +30,10 @@ describe('Roadmap dashboard projection', () => {
     const stalePrNumbers = new Set([1299, 1300, 1315]);
     expect(
       ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some(
-        (item) => item.prNumber && stalePrNumbers.has(item.prNumber),
+        (item) =>
+          'prNumber' in item &&
+          typeof item.prNumber === 'number' &&
+          stalePrNumbers.has(item.prNumber),
       ),
     ).toBe(false);
 
@@ -37,7 +43,9 @@ describe('Roadmap dashboard projection', () => {
     expect(retrySafe?.state).toBe('active');
     expect(retrySafe?.detail).toContain('RETRY_SAFE_OPERATION');
     expect(
-      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some((item) => item.prNumber === 1334),
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some(
+        (item) => 'prNumber' in item && item.prNumber === 1334,
+      ),
     ).toBe(false);
   });
 
