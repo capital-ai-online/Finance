@@ -5,9 +5,9 @@
 **Primary PVC:** `PVC-08`  
 **Supporting PVCs:** `PVC-04`, `PVC-18`  
 **Independent assurance:** `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`  
-**Correlation baseline:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
-**Current generation:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
-**Status:** `IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED / INDEPENDENT_ASSURANCE_PENDING`
+**Correlation baseline:** `main@31643012f42368b6f85ce9953e19b991248a73d8`  
+**Assured implementation generation:** `main@bc7edc096450be6b368ea706b97479567cc6ee55`  
+**Status:** `TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE / PRODUCTION_READBACK_VERIFIED`
 
 ## Dependency convergence
 
@@ -30,6 +30,15 @@ Therefore the historical blocker "SH-02.9 post-merge projection pending" is term
 - Post-Merge Production Correlation run #242 completed successfully.
 - Render production readback is live on the same exact SHA `05892a28d179316962c19bd52843c2e0e3cfbc9d`.
 - Open PRs #1299, #1300 and #1304 do not contain current main; the leading PR Decision Evidence Reconciler correctly refuses baseline mutation for those stale heads. This is fail-closed behavior, not a second writer or a failed convergence of the current generation.
+
+## Terminal independent-assurance readback — PR #1311 + PR #1312
+
+- Security PR #1311 exact head `38883093f355a9023efe1e5e8cdfe019639390f7` completed CI #5842, Governance #5411, Container Security #2844, Project Execution Directive #366 and OSS Quality #395 successfully and was Human/CODEOWNER-merged as `2cedd1afa69b5ec28872acbda5335358e949ac7f`.
+- QM PR #1312 exact head `70a84ab53f5f74af3cae2be510ed973396465316` completed CI #5844, Governance #5412, Container Security #2846, Project Execution Directive #368, OSS Quality #396 and GitGuardian successfully and was Human/CODEOWNER-merged as `31643012f42368b6f85ce9953e19b991248a73d8`.
+- Both independent returns explicitly bind the same SH-02.10 implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`.
+- The only repository changes after that implementation generation and before the terminal current main are the independent Security and QM assurance artifacts; no SH-02.10 runtime, fault-matrix, workflow, provider or remediation implementation changed.
+- Current main `31643012f42368b6f85ce9953e19b991248a73d8` completed main CI #5845, Container Security #2847 and Post-Merge Production Correlation #245 successfully; Render is live on the same exact SHA.
+- Therefore `QM=VERIFIED` and `SECURITY=VERIFIED` are owner-correct current-generation assurance facts and SH-02.10 is terminal.
 
 ## Injection boundary
 
@@ -98,7 +107,7 @@ OPS may produce reproducible implementation/test evidence. It may not issue
 independent `QM=VERIFIED` or `SECURITY=VERIFIED` state for its own implementation.
 Those remain owner-correct assurance results.
 
-Hosted repository validation and exact-SHA production identity are now read back for `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`. SH-02.10 still must not be represented as terminal PASS until the required fresh independent QM and Security assurance is read back. SH-02.11 production activation remains blocked until both owner-correct assurance returns exist.
+Hosted repository validation and exact-SHA production identity were first read back for `main@05892a28d179316962c19bd52843c2e0e3cfbc9d` and subsequently revalidated through the terminal assurance generation. Security PR #1311 and QM PR #1312 are Human/CODEOWNER-merged and independently bind the same SH-02.10 implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`. Current main `31643012f42368b6f85ce9953e19b991248a73d8` completed main CI #5845, Container Security #2847 and Post-Merge Production Correlation #245 successfully, and Render deployment `dep-dapt6qjncjis73fkpjag` is live on that exact SHA. SH-02.10 is therefore terminal. SH-02.11 may be marked dependency-ready only through the separate enabled-tier readiness evidence; no activation is inferred from assurance completion alone.
 
 
 ## Observed PR #1294 consent/runtime regression
