@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR-SINGLE-WRITER-POSTMERGE-REGRESSION-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the post-merge full-suite regression exposed after PR #1306 by superseding the stale Vitest contract that still expected a second post-merge PR-body writer.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "83b120f1ee494df3276db5a2c55d856a7c22018c",
+  "branch": "agent/operations-pr-single-writer-postmerge-regression-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR-SINGLE-WRITER-POSTMERGE-REGRESSION-20260923.json",
+    "tests/unit/productionBaselinePostMergeRefresh.test.ts"
+  ],
+  "origin": {
+    "mergedPr": 1306,
+    "mainCiRun": 35858738477,
+    "failingStep": "Vollständige Test-Suite ausführen",
+    "rootCause": "The Vitest contract still asserted the retired post-merge baseline writer architecture after PR #1306 intentionally demoted that workflow to a read-only observer in the single-writer chain."
+  },
+  "acceptanceCriteria": [
+    "Vitest contract asserts observer-only post-merge behavior and no PR-body write authority.",
+    "The canonical per-PR PR-body writer lease remains owned only by PR Decision Evidence Reconciler.",
+    "No workflow or production behavior is changed in this slice.",
+    "Exact-head CI, Governance and Security checks pass.",
+    "Main full-suite regression is demonstrably addressed before production deployment resumes."
+  ],
+  "dependencies": {
+    "currentMain": "83b120f1ee494df3276db5a2c55d856a7c22018c",
+    "independentAssurance": "SH-02.11 remains blocked; this regression fix does not manufacture QM or Security assurance."
+  },
+  "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
+}
