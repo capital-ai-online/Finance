@@ -29,7 +29,7 @@ This FE projection is re-correlated to `main@7bcc6aee2700d6fa3f926ff8615b04cde13
 **Canonical identity:** `FE-ROADMAP-LIVE-01`  
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** read-only presentation/aggregation of canonical current-state evidence; no productive PVC ownership  
-**Status:** `IMPLEMENTED_ON_BRANCH / DIRECT_ROUTE_HANDOFF_REQUIRED`  
+**Status:** `IMPLEMENTED_ON_BRANCH / OWNER_CORRECT_OPS_DIRECT_ROUTE_BRANCH_ACTIVE`  
 **Fresh baseline:** `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`  
 **Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/shared/branding/CapitalAiLogo.tsx`, `src/shared/ui/Card.tsx`
 
@@ -40,9 +40,9 @@ Fresh Human/Owner direction requests a real `/roadmap` page that projects the cu
 - open PRs and active exclusive branches are shown only as provider evidence, not as instruction or ownership authority;
 - `CapitalAiLogo` uses the canonical brandmark geometry; colors/typography/roadmap roles resolve from `design-tokens.json` and the existing CSS token projection;
 - Production identity is read from same-origin `/healthz` and remains explicitly separate from repository CURRENT_MAIN;
-- direct production deep-link fallback for `/roadmap` is an OPS-owned server/runtime concern and is not silently absorbed by FE.
+- direct production deep-link fallback for `/roadmap` is owner-correctly active on `agent/operations-roadmap-direct-route-20260923`; FE does not absorb OPS runtime ownership.
 
-**Exit:** exact-head FE tests/build are green; `/roadmap` is wired in the client router; the owner-correct OPS direct-route fallback is merged or otherwise evidenced; current-main/open-writer correlation remains PASS; Human/CODEOWNER merge remains required.
+**Exit:** exact-head FE tests/build are green; `/roadmap` is wired in the client router; the owner-correct OPS direct-route fallback reaches its own Human/CODEOWNER merge gate; current-main/open-writer correlation remains PASS; Human/CODEOWNER merge remains required.
 
 ## FE-LF-01-UPSTREAM-ARCH — Current presentation architecture adoption
 
