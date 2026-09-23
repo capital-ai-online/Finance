@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.2.0",
+  "schemaVersion": "1.3.0",
   "sourceRepository": "SvenKulessa/FRONTEND",
   "sourceBranch": "main",
   "sourceCommit": "cbc558019ae6785f44079fe6fca3403460774df3",
@@ -27,7 +27,7 @@
     {
       "sourcePath": "src/App.tsx",
       "targetPath": "src/features/public/ui/frontend-port/ReferenceApp.tsx",
-      "blobSha": "29189a37e9778ace6e8aac0553f38d400faf1d31",
+      "blobSha": "6e1998c644fd9d2cd470b9460708d22e96bc3fdb",
       "mode": "FINANCE_COMPOSITION_ADAPTER"
     },
     {
@@ -93,7 +93,7 @@
     {
       "sourcePath": "src/components/Header.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/Header.tsx",
-      "blobSha": "71443f436ab0db3d22a279b47e07b41e19dc57f6",
+      "blobSha": "e5c4f3ae04fe53a930105dc6dd79f6ad9040344d",
       "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
@@ -111,8 +111,8 @@
     {
       "sourcePath": "src/components/MarketOverview.tsx",
       "targetPath": "src/features/public/ui/frontend-port/components/MarketOverview.tsx",
-      "blobSha": "c0805cb8b370fae15c80c10a506a92b9c4cce80b",
-      "mode": "EXACT_GIT_BLOB"
+      "blobSha": "e18f4bd6eeb20fa9a1d8943b4955a09b37a148ac",
+      "mode": "FINANCE_PRESENTATION_ADAPTER"
     },
     {
       "sourcePath": "src/components/MarketVocabularyModal.tsx",
@@ -213,6 +213,16 @@
       "sourcePath": "src/data/mockData.ts",
       "runtimeTarget": "src/features/public/ui/frontend-port/data/mockData.ts",
       "authority": "Upstream expanded asset fixtures are not promoted as market truth; existing Finance verified-data binding and CAPITAL-AI-FINTECH authority remain unchanged"
+    },
+    {
+      "sourcePath": "src/components/AssetLogo.tsx",
+      "runtimeTarget": "src/features/public/ui/runtime/AssetLogo.tsx",
+      "authority": "Owner-uploaded logo presentation is adopted without promoting mock prices, scores, ratings or local market truth."
+    },
+    {
+      "sourcePath": "src/components/MarketSentiment.tsx",
+      "runtimeTarget": "src/features/public/ui/runtime/MarketSentimentPresentation.tsx",
+      "authority": "Owner-uploaded Fear & Greed visual architecture only; category scores, generated history and driver fixtures are explicitly excluded. Future values must arrive from CAPITAL-AI-FINTECH evidence."
     }
   ],
   "analyticsAdapter": {
@@ -249,5 +259,13 @@
       "sourcePath": "src/data/assets/stockAssets.ts",
       "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
     }
-  ]
+  ],
+  "ownerDesignOverlay": {
+    "id": "owner-upload-2026-09-23-no-scoring",
+    "source": "owner-provided FRONTEND-main (1).zip",
+    "sha256": "a016e7874436ff17c16621269153923aae11fe1b4009e8a72d002d8af87fbca1",
+    "policy": "PRESENTATION_ONLY_NO_LOCAL_SCORING",
+    "authorityBoundary": "CAPITAL-AI-FINTECH remains the only productive scoring/data authority.",
+    "deferredIntegration": "Altcoin Pattern Trooper stays outside the landing composition until a later owner-directed integration into the leading graphic."
+  }
 }
