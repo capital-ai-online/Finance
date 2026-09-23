@@ -303,7 +303,6 @@ At minimum simulate:
 - persistent React render failure;
 - optional frontend initialization Promise rejection;
 - stale CI expectation after an intentional runtime-contract change;
-- structurally canonical PR-v1.8 body with missing required Governance metadata;
 - API 503/429;
 - deployment identity mismatch;
 - failed exact-SHA redeploy verification;
@@ -312,7 +311,7 @@ At minimum simulate:
 
 ### SH-02.10 branch implementation
 
-- `sh-02.10-fault-convergence/1.2.0` defines sixteen deterministic scenarios and creates no second recovery authority.
+- `sh-02.10-fault-convergence/1.1.0` defines fifteen deterministic scenarios and creates no second recovery authority.
 - injections are limited to in-memory state, pure model input and mocked HTTP I/O; Production faults, provider mutation, runtime recycle, deployment, rollback and restore are prohibited.
 - fatal process state is injected through the existing process-health seam and must project unhealthy liveness while `RUNTIME_PROCESS_RECYCLE` stays `HELD`.
 - transient and persistent provider failures reuse `dependencyResilience`; provider-native retry/circuit/LKG ownership is preserved and no nested retry executor is created.
@@ -320,7 +319,6 @@ At minimum simulate:
 - frontend stale-chunk recovery proves exactly one automatic reload per fingerprint/session; persistent render failure remains observe-only.
 - optional frontend initialization rejection is classified as `FRONTEND_OPTIONAL_INIT_FAILURE -> OBSERVE_ONLY`; no generic retry or silent Promise suppression is granted by the Self-Healing registry.
 - stale CI expectations after an intentional runtime-contract change are classified as `REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`; repair is restricted to the existing one-attempt `repository.pr.autofix` specialist with exact-head CI/Governance readback.
-- PR-v1.8 bodies that are structurally canonical but omit required Technical-Evidence metadata are classified as `REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT -> RECONCILE_PR_GOVERNANCE_METADATA`; the existing PR Production Baseline Auto-Refresh remains the sole body writer, may perform at most one idempotent reconstruction from the canonical banner/trusted scope/durable claim evidence, and must fail closed on ambiguity before exact-head/base Governance readback.
 - mocked 503/429 responses prove bounded safe-read retry and no automatic mutation-method replay.
 - deployment identity drift and failed exact-SHA readback prove escalation while `REDEPLOY_EXACT_SHA` stays `HELD`.
 - `CURRENT_STATE_PROJECTION_BASELINE_STALE` is a deterministic repository-projection drift scenario: it resolves to `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, reuses the single Current-State Baseline Autofix writer, permits at most one idempotent attempt and requires exact-head CI/Governance readback.
