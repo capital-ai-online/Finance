@@ -164,7 +164,144 @@ function bootstrapMarkerlessBody(bodyText, { prClass, durableClaimEvidence = [] 
   }
   return { eligible: true, changed: true, reason: 'markerless-body-bootstrapped-to-v1.6', body: repaired };
 }
-function repairCurrentDecisionBodyStructure(bodyText) {
+
+const CURRENT_V18_PRIORITIES = Object.freeze([
+  'P0 🔴 Kritisch',
+  'P1 🟠 Hoch',
+  'P2 🟡 Normal',
+  'P3 🟢 Niedrig',
+]);
+const CURRENT_V18_VERSION_IMPACTS = Object.freeze([
+  'NOT_EVALUATED ⚪',
+  'NONE ➖',
+  'PATCH 🩹',
+  'MINOR ✨',
+  'MAJOR 💥',
+]);
+const CURRENT_V18_TECHNICAL_SUMMARY = '<summary>Technische Details & Traceability</summary>';
+const CURRENT_V18_HUMAN_MERGE_GATE = '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja';
+const CURRENT_V18_VERSION_MANAGER_DEFAULT =
+  '- **Version-Manager-Check:** NOT_RUN — repositoryseitige Checks liefern die technische Evidence; keine fehlende Prüfung wird als PASS dargestellt.';
+
+function parseCurrentDecisionBanner(bodyText) {
+  const body = String(bodyText || '');
+  const match = body.match(
+    /^> (P[0-3] (?:🔴 Kritisch|🟠 Hoch|🟡 Normal|🟢 Niedrig)) · PR-Klasse ([DCR]) · (NOT_EVALUATED ⚪|NONE ➖|PATCH 🩹|MINOR ✨|MAJOR 💥)\s*$/m,
+  );
+  if (!match) return null;
+  return { priority: match[1], prClass: match[2], versionImpact: match[3] };
+}
+
+function repairCurrentDecisionRequiredMetadata(
+  bodyText,
+  { prClass = 'N/A', durableClaimEvidence = [] } = {},
+) {
+  const body = String(bodyText || '');
+  const priority = body.match(/^- \*\*Priorität:\*\* (.+)$/m)?.[1]?.trim() || null;
+  const versionImpact = body.match(/^- \*\*Versionsimpact:\*\* (.+)$/m)?.[1]?.trim() || null;
+  const versionManager = body.match(/^- \*\*Version-Manager-Check:\*\* (.+)$/m)?.[1]?.trim() || null;
+  const technicalPrClass = body.match(/^- \*\*PR-Klasse:\*\* ([DCR])\s*$/m)?.[1] || null;
+  const missingDurableEvidence = [...new Set(
+    durableClaimEvidence.map((value) => String(value || '').trim()).filter(Boolean),
+  )].filter((value) => !body.includes(value));
+
+  const needsRepair =
+    !priority ||
+    !versionImpact ||
+    !versionManager ||
+    !body.includes(CURRENT_V18_HUMAN_MERGE_GATE) ||
+    (!technicalPrClass && ['D', 'C', 'R'].includes(String(prClass))) ||
+    missingDurableEvidence.length > 0;
+
+  if (!needsRepair) {
+    return { eligible: false, changed: false, reason: 'already-canonical', body };
+  }
+
+  if (priority && !CURRENT_V18_PRIORITIES.includes(priority)) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-priority-metadata-conflict', body };
+  }
+  if (versionImpact && !CURRENT_V18_VERSION_IMPACTS.includes(versionImpact)) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-version-impact-metadata-conflict', body };
+  }
+
+  const banner = parseCurrentDecisionBanner(body);
+  if ((!priority || !versionImpact) && !banner) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-required-metadata-unresolved', body };
+  }
+  if (banner && priority && banner.priority !== priority) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-priority-metadata-conflict', body };
+  }
+  if (banner && versionImpact && banner.versionImpact !== versionImpact) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-version-impact-metadata-conflict', body };
+  }
+  if (
+    banner &&
+    ['D', 'C', 'R'].includes(String(prClass)) &&
+    banner.prClass !== String(prClass)
+  ) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-pr-class-metadata-conflict', body };
+  }
+  if (
+    technicalPrClass &&
+    ['D', 'C', 'R'].includes(String(prClass)) &&
+    technicalPrClass !== String(prClass)
+  ) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-pr-class-metadata-conflict', body };
+  }
+
+  const summaryIndex = body.indexOf(CURRENT_V18_TECHNICAL_SUMMARY);
+  const detailsStart = summaryIndex >= 0 ? body.lastIndexOf('<details>', summaryIndex) : -1;
+  const detailsEnd = summaryIndex >= 0 ? body.indexOf('</details>', summaryIndex) : -1;
+  if (summaryIndex < 0 || detailsStart < 0 || detailsEnd < 0 || !(detailsStart < summaryIndex && summaryIndex < detailsEnd)) {
+    return { eligible: false, changed: false, reason: 'current-v1.8-technical-details-unresolved', body };
+  }
+
+  const additions = [];
+  if (!priority) additions.push('- **Priorität:** ' + banner.priority);
+  if (!versionImpact) additions.push('- **Versionsimpact:** ' + banner.versionImpact);
+  if (!versionManager) additions.push(CURRENT_V18_VERSION_MANAGER_DEFAULT);
+  if (!technicalPrClass && ['D', 'C', 'R'].includes(String(prClass))) {
+    additions.push('- **PR-Klasse:** ' + String(prClass));
+  }
+  if (!body.includes(CURRENT_V18_HUMAN_MERGE_GATE)) additions.push(CURRENT_V18_HUMAN_MERGE_GATE);
+  for (const value of missingDurableEvidence) {
+    additions.push('- **Dauerhafte Claim-Evidence:** ' + value);
+  }
+  if (additions.length === 0) {
+    return { eligible: false, changed: false, reason: 'already-canonical', body };
+  }
+
+  const beforeEnd = body.slice(0, detailsEnd).trimEnd();
+  const afterEnd = body.slice(detailsEnd);
+  const repaired = beforeEnd + '\n' + additions.join('\n') + '\n' + afterEnd;
+
+  const repairedPriority = repaired.match(/^- \*\*Priorität:\*\* (.+)$/m)?.[1]?.trim();
+  const repairedVersionImpact = repaired.match(/^- \*\*Versionsimpact:\*\* (.+)$/m)?.[1]?.trim();
+  if (!CURRENT_V18_PRIORITIES.includes(repairedPriority)) {
+    throw new Error('Current v1.8 metadata repair did not converge to a canonical priority.');
+  }
+  if (!CURRENT_V18_VERSION_IMPACTS.includes(repairedVersionImpact)) {
+    throw new Error('Current v1.8 metadata repair did not converge to a canonical version impact.');
+  }
+  if (!/^- \*\*Version-Manager-Check:\*\* .+$/m.test(repaired)) {
+    throw new Error('Current v1.8 metadata repair did not materialize Version-Manager-Check.');
+  }
+  if (!repaired.includes(CURRENT_V18_HUMAN_MERGE_GATE)) {
+    throw new Error('Current v1.8 metadata repair did not preserve the Human/CODEOWNER merge gate.');
+  }
+  if (missingDurableEvidence.some((value) => !repaired.includes(value))) {
+    throw new Error('Current v1.8 metadata repair did not materialize durable claim evidence.');
+  }
+
+  return {
+    eligible: true,
+    changed: repaired !== body,
+    reason: 'current-v1.8-required-metadata-repaired',
+    body: repaired,
+  };
+}
+
+function repairCurrentDecisionBodyStructure(bodyText, { prClass = 'N/A', durableClaimEvidence = [] } = {}) {
   const body = String(bodyText || '');
   const expectedHeadings = [
     '## 1. 🧭 Entscheidung',
@@ -186,28 +323,34 @@ function repairCurrentDecisionBodyStructure(bodyText) {
     occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1;
 
   if (canonical) {
-    const summaryPriorityDrift = /^> P0-HIGHEST 🔴 Kritisch ·/m.test(body);
-    const technicalPriorityDrift =
-      /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m.test(body);
+    let repaired = body;
+    let priorityTokenNormalized = false;
 
-    if (summaryPriorityDrift || technicalPriorityDrift) {
-      let repaired = body;
-      if (summaryPriorityDrift) {
-        repaired = repaired.replace(/^> P0-HIGHEST 🔴 Kritisch ·/m, '> P0 🔴 Kritisch ·');
-      }
-      if (technicalPriorityDrift) {
-        repaired = repaired.replace(
-          /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m,
-          '- **Priorität:** P0 🔴 Kritisch',
-        );
-      }
-      if (
-        repaired === body ||
-        /^> P0-HIGHEST 🔴 Kritisch ·/m.test(repaired) ||
-        /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m.test(repaired)
-      ) {
-        throw new Error('Current v1.8 priority-token repair did not converge.');
-      }
+    if (/^> P0-HIGHEST 🔴 Kritisch ·/m.test(repaired)) {
+      repaired = repaired.replace(/^> P0-HIGHEST 🔴 Kritisch ·/m, '> P0 🔴 Kritisch ·');
+      priorityTokenNormalized = true;
+    }
+    if (/^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m.test(repaired)) {
+      repaired = repaired.replace(
+        /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m,
+        '- **Priorität:** P0 🔴 Kritisch',
+      );
+      priorityTokenNormalized = true;
+    }
+    if (
+      /^> P0-HIGHEST 🔴 Kritisch ·/m.test(repaired) ||
+      /^- \*\*Priorität:\*\* P0-HIGHEST 🔴 Kritisch\s*$/m.test(repaired)
+    ) {
+      throw new Error('Current v1.8 priority-token repair did not converge.');
+    }
+
+    const metadataRepair = repairCurrentDecisionRequiredMetadata(repaired, {
+      prClass,
+      durableClaimEvidence,
+    });
+    if (metadataRepair.changed) return metadataRepair;
+    if (!metadataRepair.eligible && metadataRepair.reason !== 'already-canonical') return metadataRepair;
+    if (priorityTokenNormalized) {
       return {
         eligible: true,
         changed: true,
@@ -367,7 +510,7 @@ export function repairLegacyPrBodyStructure(bodyText, { prClass = 'N/A', durable
   // legacy level-two section while the canonical machine-details block still held the
   // renderer placeholder. Live Dashboard drift remains owned by the Decision Reconciler.
   if (detectedVersion === PR_TEMPLATE_VERSION) {
-    return repairCurrentDecisionBodyStructure(body);
+    return repairCurrentDecisionBodyStructure(body, { prClass, durableClaimEvidence });
   }
 
   const missing = findMissingRequiredSections(
