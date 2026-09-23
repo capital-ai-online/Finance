@@ -1,12 +1,12 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
+**Baseline:** `main@8f5fff57613f183e0e1a2a8c8b41017338e63491`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — SH-V3/v1.8 Self-Healing state and merged SH-02.9 re-correlated to CURRENT_MAIN; OPS post-merge continuation remains owner-correct  
+**Reconciliation:** 2026-09-23 — Owner-directed deploy-batch correlation contract defined against fresh CURRENT_MAIN; productive CI/Render materialization remains owner-correct with CAPITAL-AI-OPS  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -16,6 +16,20 @@
 This file remains a temporary project status projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Historical, pre-consolidation, non-terminal, branch-only, chat-derived or superseded entries are ledger/evidence only and are not executable merely because they were previously open.
 
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
+
+## GOV-DEPLOY-BATCH-01 — Application-wide post-merge deploy batching contract
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Priority:** `P1 🟠 Hoch`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Fresh baseline:** `main@8f5fff57613f183e0e1a2a8c8b41017338e63491`  
+**Foreign-owner handoff after merge:** `CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08`
+
+Fresh Human/Owner direction replaces the repository-wide assumption that every main merge must immediately become the live Render commit. The Trust Root now separates mandatory post-merge correlation from deployment mutation: a healthy canonical Production SHA that is an ancestor of CURRENT_MAIN is `DEPLOYMENT_QUEUED`, not drift. The non-authorizing queue projection reports merged PRs since the live SHA, open main PRs, observed merge progress, the then-current next target SHA and `package.json#version@CURRENT_MAIN`.
+
+This Governance slice intentionally performs **no** CI, Render, runtime or provider mutation. After Human/CODEOWNER merge, CAPITAL-AI-OPS owns the productive materialization: stop the per-main-push deploy hook, converge Post-Merge Production Correlation and PR production baselines to queue semantics, expose the read-only queue projection to application consumers, retain true-drift fail-closed behavior, and preserve a separately verified exact-SHA deployment-batch path. CAPITAL-AI-FE may then consume that OPS projection without creating release authority.
+
+**Exit:** `/AGENTS.md`, Authority Registry and Control Catalog express one coherent batching rule; former five-minute per-merge deployment semantics are superseded prospectively; true Production drift remains fail-closed; ordinary Human/CODEOWNER merge authority remains unchanged; OPS implementation is an explicit owner-correct successor rather than hidden in this Governance PR.
 
 
 ## GOV-SH-V3 — Self-Healing Convergence Program

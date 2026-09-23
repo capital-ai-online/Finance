@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.8.0`  
+**Control Plane Version:** `4.9.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
-**Effective date:** 2026-09-20  
+**Effective date:** 2026-09-23  
 **Repository:** `capital-ai-online/Finance`
 
 ## 1. Single instruction surface
@@ -187,21 +187,22 @@ A PR that does not satisfy every applicable condition remains `HUMAN_MERGE_REQUI
 
 Protected Production, IAM, Billing, Secret, DNS, destructive-data and equivalent external mutations MAY execute without a separate per-run Owner approval only when they are already inside an authorized workflow/provider capability boundary and all configured technical controls permit the action. Repository scope does not grant new credentials or capability. Mutations outside an already-authorized workflow/provider capability boundary fail closed.
 
-### Post-merge production correlation SLA
+### Post-merge production correlation and deployment batching
 
-Every Human/CODEOWNER merge into `main` creates a mandatory post-merge correlation obligation for the chat or execution context that created or materially advanced the merged Pull Request. That originating context MUST, when it is next active and has the required capabilities, read back the merged Pull Request, the then-current `main` SHA, the related open dependent Pull Requests and the production deployment identity. It MUST report the correlation in that same originating chat/context rather than silently relying on CI status alone.
+Every Human/CODEOWNER merge into `main` creates a mandatory post-merge correlation obligation for the chat or execution context that created or materially advanced the merged Pull Request. That originating context MUST, when it is next active and has the required capabilities, read back the merged Pull Request, the then-current `main` SHA, related open dependent Pull Requests and the production deployment identity. It MUST report that correlation in the same originating chat/context rather than silently relying on CI status alone.
 
-For the canonical GitHub→Render production path, the post-merge SLA is:
+For the canonical GitHub→Render production path, merge correlation and production deployment are deliberately separate:
 
-1. the merge commit SHA and then-current `main` SHA MUST be read back and compared;
-2. the `deploy-production` path for that exact SHA MUST be observed as triggered no later than five minutes after the merge commit timestamp; the GitHub Actions deploy-hook step timestamp is valid trigger evidence when Render provider timing is not directly readable;
-3. production MUST be verified against the exact then-current `main` SHA through the canonical deployment-identity surface (`/healthz` deployment headers or a stronger provider readback); branch/repository identity and health MUST remain consistent;
-4. a missing deploy trigger, trigger later than five minutes, failed deployment verification, or production SHA different from then-current `main` is `PRODUCTION_DRIFT` and MUST NOT be represented as PASS;
-5. every dependent/open Pull Request whose base, ancestry, production baseline, owner projection or semantic assumptions changed because of the merge MUST be re-correlated in dependency order before it is treated merge-ready;
-6. after exact Production ↔ `CURRENT_MAIN` correlation PASS, repository automation MUST immediately advance exactly one next eligible review-ready Pull Request into current-main synchronization. Eligibility requires an open same-repository non-draft Pull Request against `main` with a trusted work-branch identity. Among otherwise eligible Pull Requests, ascending PR number is the deterministic FIFO tie-breaker. That synchronization MUST trigger the ordinary scope-classified `pull_request` pipeline checks automatically and requires no separate Human/Owner workflow-start action. The automatic synchronization MUST use a credential class whose PR update can emit downstream workflow events; a GitHub App installation token is preferred and a `GITHUB_TOKEN`-only update is not sufficient evidence that the required PR checks were started. If the selected Pull Request cannot be safely synchronized, automation MUST stop fail-closed instead of skipping ahead to a later PR;
-7. the repository automation SHOULD create or update one deduplicated production-drift issue containing expected SHA, observed production SHA, detection time, workflow/deploy evidence and current remediation state; after exact convergence is proven, that issue SHOULD be automatically annotated and closed.
+1. the merge commit SHA and then-current `CURRENT_MAIN` SHA MUST be read back and compared;
+2. a merge into `main` MUST NOT by itself require or trigger a Render production deployment. Render native Auto Deploy remains off. Verified main CI MAY build, test, attest and retain exact-SHA deployment artifacts after a merge, but production mutation belongs to the separate deployment-batch path;
+3. production identity MUST still be read through the canonical deployment-identity surface (`/healthz` deployment headers or a stronger provider readback). When Production is healthy, reports the canonical repository and `main` branch, and its deployed SHA is an ancestor of `CURRENT_MAIN`, a newer repository state is `DEPLOYMENT_QUEUED`, not `PRODUCTION_DRIFT`;
+4. the observed deployment-batch projection MUST report, when provider evidence is available: the number of PR-merge commits already present between the live Production SHA and `CURRENT_MAIN`; the number of currently open same-repository Pull Requests targeting `main`; `observed_required_merges = merged_since_production + open_main_pull_requests`; `observed_merge_progress = merged_since_production / observed_required_merges`; the next deploy target SHA as the then-current `CURRENT_MAIN`; and the next expected live version from `package.json#version@CURRENT_MAIN`. This projection is informational and recalculated whenever main or the open-PR set changes; it is not a fixed global merge threshold and creates no deployment or merge authority;
+5. `PRODUCTION_DRIFT` is reserved for evidence-backed unexpected states: Production is unhealthy or unreachable; branch/repository identity is wrong; the live SHA is not an ancestor of `CURRENT_MAIN` or histories have diverged; an unexpected provider mutation is observed; or an explicitly requested deployment batch fails exact-target deployment/identity verification. Expected ancestor lag MUST NOT create or maintain a production-drift issue and MUST NOT fail correlation solely because Production is behind main;
+6. every dependent/open Pull Request whose base, ancestry, production baseline, owner projection or semantic assumptions changed because of a merge MUST still be re-correlated in dependency order before it is treated merge-ready. A truthful post-merge state of either exact `CONVERGED` or expected `DEPLOYMENT_QUEUED` may advance the existing next-PR synchronization lane when all other gates pass; an actual `PRODUCTION_DRIFT` remains fail-closed;
+7. repository automation MUST present expected queued deployment state as a notice/summary with merge progress, remaining observed merges, next target SHA and next expected version. It SHOULD create or update a deduplicated production-drift issue only for actual `PRODUCTION_DRIFT`; after recovery is proven, that issue SHOULD be annotated and closed;
+8. an actual deployment batch MUST re-read `CURRENT_MAIN` immediately before mutation, bind to a successful exact-SHA verified build/provenance artifact, preserve the configured Production/Render protection boundary, and verify the deployed identity and health afterward. If main moved, provenance is missing, or exact-target verification fails, deployment stops fail-closed.
 
-The five-minute value is an operational SLA for observing the deploy trigger, not permission to bypass required pre-deploy validation. If required CI prevents a safe deployment from starting within the SLA, the condition is reported as an SLA breach with its blocking evidence; controls are never weakened merely to meet the clock.
+Historical evidence that recorded exact Production↔main convergence under the former per-merge deployment SLA remains valid evidence for its observation time, but it does not reactivate the superseded per-merge deployment requirement.
 
 ## 6. Bounded self-healing and convergence
 
