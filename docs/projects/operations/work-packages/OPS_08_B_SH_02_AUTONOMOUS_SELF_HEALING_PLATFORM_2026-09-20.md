@@ -22,6 +22,7 @@
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
 **SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
 **Current functional slice:** `SH-02.11` — dependency-ready staged production activation; activation has not started and no HELD action changes in the readiness slice  
+**Next functional slice:** `SH-02.11` — staged rollout remains the next functional slice; current state is `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`  
 **SH-02.10 terminal evidence:** Security PR #1311 + QM PR #1312 independently assure implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main/Production readback is `31643012f42368b6f85ce9953e19b991248a73d8`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
