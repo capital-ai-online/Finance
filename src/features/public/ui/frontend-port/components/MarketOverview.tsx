@@ -3,6 +3,7 @@ import { ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MARKET_ASSETS } from '../data/mockData';
 import { MarketAsset, MainCategory } from '../types';
+import { AssetLogo } from '../../runtime/AssetLogo';
 
 interface MarketOverviewProps {
   onSelectAsset: (asset: MarketAsset) => void;
@@ -44,73 +45,6 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelectAsset, o
     }
   };
 
-  const renderAssetIcon = (type: string, assetColor?: string) => {
-    switch (type) {
-      case 'trend':
-      case 'index':
-        // Emerald (#44DE88)
-        return (
-          <div className="w-6 h-6 rounded-md bg-[#44DE88]/15 border border-[#44DE88]/30 flex items-center justify-center shadow-[0_0_8px_rgba(68,222,136,0.25)] shrink-0">
-            <TrendingUp className="w-3.5 h-3.5 text-[#44DE88]" />
-          </div>
-        );
-      case 'bitcoin':
-        // AIF Gold (#F9BF21) Bitcoin node
-        return (
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-[#F9BF21] border border-[#F9BF21]/50 flex items-center justify-center font-bold text-[12px] text-black shadow-[0_0_8px_rgba(249,191,33,0.3)] shrink-0">
-            ₿
-          </div>
-        );
-      case 'crypto':
-        // Purple / Magenta (#8D26FF)
-        return (
-          <div className="w-6 h-6 rounded-md bg-[#8D26FF]/20 border border-[#8D26FF]/40 flex items-center justify-center text-[#E879F9] shadow-[0_0_8px_rgba(141,38,255,0.3)] shrink-0">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L4 12l8 10 8-10L12 2zm0 3.8l5.2 6.2H6.8L12 5.8z" />
-            </svg>
-          </div>
-        );
-      case 'stock':
-        // Stock Candlestick / Bar (#44DE88)
-        return (
-          <div className="w-6 h-6 rounded-md bg-[#44DE88]/15 border border-[#44DE88]/30 flex items-center justify-center text-[#44DE88] shadow-[0_0_8px_rgba(68,222,136,0.25)] shrink-0">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 19h16M7 15V9m3 6V5m4 10v-4m3 4V7" strokeLinecap="round" />
-            </svg>
-          </div>
-        );
-      case 'gold':
-        // AIF Gold (#F9BF21) Ingot
-        return (
-          <div className="w-6 h-6 rounded-md bg-[#F9BF21]/20 border border-[#F9BF21]/40 flex items-center justify-center shadow-[0_0_8px_rgba(249,191,33,0.25)] shrink-0">
-            <svg className="w-3.5 h-3.5 text-[#F9BF21]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 16l3-6h10l3 6H4z" />
-              <path d="M6 18h12l-1 2H7l-1-2z" opacity="0.8" />
-            </svg>
-          </div>
-        );
-      case 'commodity':
-        // Commodity Barrel / Resource
-        return (
-          <div className="w-6 h-6 rounded-md bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#F9BF21] shadow-[0_0_8px_rgba(249,191,33,0.25)] shrink-0">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <ellipse cx="12" cy="5" rx="8" ry="3" />
-              <path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
-              <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
-            </svg>
-          </div>
-        );
-      case 'forex':
-        // Purple Accent (#8D26FF)
-        return (
-          <div className="w-6 h-6 rounded-full bg-[#8D26FF]/20 border border-[#8D26FF]/50 flex items-center justify-center font-bold text-[10.5px] text-[#E879F9] shadow-[0_0_8px_rgba(141,38,255,0.3)] shrink-0">
-            €/$
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <section className="px-5 py-4">
@@ -195,7 +129,7 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelectAsset, o
                   boxShadow: `0 8px 20px -8px ${asset.glowColor}`,
                 }}
               >
-                {/* Category & AI Score Bar */}
+                {/* Category & owner-correct data authority */}
                 <div className="flex items-center justify-between mb-2">
                   <span
                     className="text-[9.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded border font-mono"
@@ -207,15 +141,18 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({ onSelectAsset, o
                   >
                     {asset.mainCategory}
                   </span>
-                  <span className="text-[9.5px] font-mono text-slate-400 bg-slate-800/60 px-1 py-0.5 rounded">
-                    KI <span className="text-white font-bold">{asset.aiScore}</span>
+                  <span
+                    className="text-[9px] font-mono text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded"
+                    data-local-scoring="disabled"
+                  >
+                    FINTECH
                   </span>
                 </div>
 
                 {/* Name & Icon */}
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    {renderAssetIcon(asset.iconType, asset.waveColor)}
+                    <AssetLogo asset={asset} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="text-[12.5px] font-bold text-white truncate group-hover:text-amber-300 transition-colors">
                         {asset.name}
