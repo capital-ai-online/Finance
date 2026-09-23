@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "QM-SH02-11A-RETRY-SAFE-INDEPENDENT-ASSURANCE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -52,5 +52,9 @@
     "Kill switch self-healing.safe-retry and dependency-operation-readback remain mandatory.",
     "Security #1316 and this QM return are independent evidence domains for the same pre-activation generation."
   ],
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T15:46:09Z",
+  "releaseReason": "Associated independent QM assurance PR #1318 was Human/CODEOWNER-merged as e3f4ce2b5aaaefd62ec562860e0dc3cafa1c38b2; together with Security #1316 it satisfies the same-generation SH-02.11A pre-activation assurance prerequisite.",
+  "terminalPullRequest": 1318,
+  "terminalMergeCommit": "e3f4ce2b5aaaefd62ec562860e0dc3cafa1c38b2"
 }
