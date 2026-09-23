@@ -5,8 +5,8 @@
 **Primary PVC:** `PVC-08`  
 **Supporting PVCs:** `PVC-04`, `PVC-18`  
 **Independent assurance:** `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`  
-**Correlation baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`  
-**Branch:** `agent/operations-sh02-10-fault-convergence-v2-20260922`  
+**Correlation baseline:** `main@444393b1b1db9dfd95ef6aae42261bf0085663e3`  
+**Branch:** `agent/operations-sh02-pr-governance-metadata-heal-20260923`  
 **Status:** `IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING`
 
 ## Dependency convergence
@@ -54,6 +54,9 @@ The suite does **not**:
 | API_429 | frontendDegradedMode | bounded retry for safe reads; mutation methods never auto-retried |
 | DEPLOYMENT_IDENTITY_MISMATCH | selfHealingContract | exact-SHA action classified but held |
 | FAILED_EXACT_SHA_REDEPLOY_VERIFICATION | convergence contract | READBACK_FAILED => ESCALATED |
+| FRONTEND_OPTIONAL_INIT_REJECTION | frontend optional initialization + selfHealingContract | fail-closed containment; observe/escalate; no generic retry |
+| STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE | PR autofix + selfHealingContract | deterministic allowlisted expectation repair; one attempt; exact-head readback |
+| PR_GOVERNANCE_V18_METADATA_OMISSION | PR Production Baseline Auto-Refresh + selfHealingContract | reconstruct only missing required v1.8 Technical-Evidence metadata from canonical banner/trusted scope/durable claim evidence; one attempt; ambiguity fails closed; exact-head/base Governance readback |
 | CURRENT_STATE_PROJECTION_BASELINE_STALE | Current-State Baseline Autofix + selfHealingContract | classify as repository current-state projection drift; one bounded idempotent specialist attempt; exact-head CI/Governance readback required |
 | POLICY_CAPABILITY_BLOCKED | eligibility contract | missing external capability => fail-closed BLOCKED |
 | RECOVERY_BUDGET_EXHAUSTION | eligibility contract | no further attempt admitted |
@@ -124,3 +127,35 @@ This extension does not activate SH-2/SH-3, does not add a second frontend recov
 loop, and does not authorize test weakening. The observed #1294 repair remains
 historical evidence; future occurrences must be re-observed and revalidated against
 their exact generation.
+
+
+## Observed PR #1297 Governance metadata regression
+
+PR #1297 failed the canonical v1.8 Governance validator even though its visible
+three-section structure and production-baseline block were valid. The failing
+validator evidence was:
+
+`PR #1297 enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v1.8.0.`
+
+The root cause was a contract gap between structure repair and semantic metadata
+validation. `repairCurrentDecisionBodyStructure()` treated a body as
+`already-canonical` when the three level-two sections and baseline cardinality
+were correct. It only normalized the historical `P0-HIGHEST` token and did not
+materialize missing v1.8 Technical-Evidence fields such as `Priorität`,
+`Versionsimpact`, `Version-Manager-Check`, the explicit Human/CODEOWNER merge
+gate, or durable claim-path evidence.
+
+The bounded fix is:
+`REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT -> RECONCILE_PR_GOVERNANCE_METADATA`.
+
+The action remains SH-1, idempotent and limited to one attempt. It delegates to
+the existing PR Production Baseline Auto-Refresh body writer. Missing priority
+and version impact may be reconstructed only when the existing canonical v1.8
+banner resolves them unambiguously. PR class comes from trusted scope
+classification, durable Claim evidence only from the actual branch diff, and a
+missing Version-Manager state is materialized as `NOT_RUN`, never PASS.
+Conflicting or ambiguous metadata remains fail-closed.
+
+Regression coverage reproduces the #1297 body shape and preserves
+Decision/Evidence ownership, required checks, Human/CODEOWNER merge authority,
+and held SH-2/SH-3 actions.
