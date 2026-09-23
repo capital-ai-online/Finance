@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT via GitHub, Render and Supabase connectors"
+  },
+  "workItem": "Recover the post-merge Render startup by resolving already-provisioned Supabase Management API credentials under established server-only environment aliases.",
+  "startedAt": "2026-09-23T20:18:00Z",
+  "baseBranch": "main",
+  "baseSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+  "lastSyncedMainSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+  "branch": "agent/operations-auth-render-management-token-recovery-20260923",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation / PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "The Human-merged authentication release cannot start on Render because the runtime controller resolves only one management-token environment name.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-REGISTRATION-PROFILE-20260923.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-20260923.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_RENDER_MANAGEMENT_TOKEN_RECOVERY_2026-09-23.md",
+    "scripts/operations/supabaseAuthRegistrationControl.mjs",
+    "scripts/pr/supabaseAuthRegistrationControl.test.mjs"
+  ],
+  "observedBefore": {
+    "currentMain": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+    "mergedPr": 1331,
+    "renderDeploy": "dep-daq378mk1f9s738adt70",
+    "renderStatus": "update_failed",
+    "failure": "SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING",
+    "mergeToDeploySeconds": 251,
+    "supabaseMigrationState": "20260923193000_auth_registration_profile_convergence remains unapplied"
+  },
+  "scopeBoundary": [
+    "No credential value is read into repository evidence or logs.",
+    "No new secret or provider identity is created.",
+    "Canonical SUPABASE_MANAGEMENT_ACCESS_TOKEN remains first priority.",
+    "Only established server-only aliases CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN and SUPABASE_ACCESS_TOKEN are accepted as fallbacks.",
+    "Missing or invalid credentials remain fail-closed.",
+    "Supabase migration and registration user test remain blocked until exact Render deployment succeeds."
+  ],
+  "acceptanceCriteria": [
+    "Resolver prefers SUPABASE_MANAGEMENT_ACCESS_TOKEN when present.",
+    "Established aliases resolve without exposing the credential value.",
+    "No valid alias throws SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING.",
+    "Exact-head Governance, build/test and Security checks pass.",
+    "After Human/CODEOWNER merge, Render deploy of then-current main becomes live and exact-SHA health verification passes."
+  ],
+  "releaseCondition": "Human/CODEOWNER merge followed by exact-main Render deployment PASS and post-merge correlation."
+}
