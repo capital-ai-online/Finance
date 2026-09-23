@@ -22,10 +22,12 @@
   "branch": "agent/operations-sh02-10-post1308-correlation-20260923",
   "claimedPaths": [
     ".ai/work-claims/OPS-08-B-SH-02-10-POST1308-CORRELATION-20260923.json",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
     "docs/projects/operations/ROADMAP.md",
     "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md",
     "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
-    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md"
+    "tests/unit/selfHealingSupersession.test.ts"
   ],
   "openWriterCorrelation": {
     "openPullRequests": [
@@ -62,7 +64,8 @@
     "Active OPS projections use self-healing-contract/1.2.0 and fault-suite/1.3.0 for the current generation.",
     "SH-02.10 is represented as IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED while independent assurance remains pending.",
     "SH-02.11 remains blocked and is not represented as dependency-ready.",
-    "No Security or QM VERIFIED/CLOSED state is synthesized by OPS."
+    "No Security or QM VERIFIED/CLOSED state is synthesized by OPS.",
+    "AUTONOMOUS_SELF_HEALING_PLATFORM.md and selfHealingSupersession.test.ts both bind the current executable Self-Healing contract to self-healing-contract/1.2.0; no active 1.0.0 architecture assertion remains."
   ],
   "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
 }
