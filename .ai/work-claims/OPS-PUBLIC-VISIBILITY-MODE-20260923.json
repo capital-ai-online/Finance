@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PUBLIC-VISIBILITY-MODE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "operations",
+  "projectStage": "PVC-02",
+  "workItem": "Temporarily separate public component/read-only visibility from subscription-tier execution entitlements, and make the canonical news evidence GET path visible independent of subscription tier.",
+  "startedAt": "2026-09-23T17:10:00Z",
+  "baseBranch": "main",
+  "baseSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "branch": "operations/public-visibility-mode-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PUBLIC-VISIBILITY-MODE-20260923.json",
+    "docs/projects/operations/work-packages/OPS_PUBLIC_VISIBILITY_MODE_2026-09-23.md",
+    "src/config/subscriptionEntitlements.ts",
+    "server/middleware/realtimeAiNewsfeedEntitlement.ts",
+    "tests/unit/realtimeAiNewsfeedEntitlement.test.ts",
+    "tests/unit/landingNewsfeedIntegration.test.ts"
+  ],
+  "protectedBoundaries": [
+    "canUseFeature remains protected execution authority",
+    "no Stripe/Supabase mutation",
+    "no billing/checkout activation",
+    "no scoring/provider semantics changed",
+    "public read-only visibility only"
+  ],
+  "dependencies": [
+    "CAPITAL-AI-FINTECH / PVC-09..17 evidence authority",
+    "CAPITAL-AI-FE presentation consumers"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

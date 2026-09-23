@@ -12,8 +12,8 @@
   "workItemDE": "Aktuelles Pricing archivieren, Abo-Sichtbarkeitsgates entfernen und aktive Frontend-Checkout-Einstiege deaktivieren.",
   "startedAt": "2026-09-23T19:05:00+02:00",
   "baseBranch": "main",
-  "baseSha": "abc97f51ae0af3cae04ffa59d1976f104c954876",
-  "lastSyncedMainSha": "abc97f51ae0af3cae04ffa59d1976f104c954876",
+  "baseSha": "f65753961359d74cdf19de996bace459a98725b9",
+  "lastSyncedMainSha": "f65753961359d74cdf19de996bace459a98725b9",
   "branch": "frontend/pricing-archive-open-component-visibility-20260923-r2",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -55,10 +55,10 @@
     "Human/CODEOWNER merge remains required."
   ],
   "evidence": {
-    "currentMain": "abc97f51ae0af3cae04ffa59d1976f104c954876",
-    "openWriterOverlap": "Fresh CURRENT_MAIN correlation shows no direct changed-file overlap with active PR #1324 or the merged #1328 delta.",
+    "currentMain": "f65753961359d74cdf19de996bace459a98725b9",
+    "openWriterOverlap": "Fresh CURRENT_MAIN correlation after merged PR #1324 shows no direct changed-file overlap with the remaining pricing slice.",
     "handovers": "OPS #1326; COMP #1327",
-    "currentMainCorrelation": "Clean r2 pricing archive slice correlated onto fresh CURRENT_MAIN abc97f51ae0af3cae04ffa59d1976f104c954876; behind_by must remain 0 through merge decision."
+    "currentMainCorrelation": "Clean r2 pricing archive slice correlated onto fresh CURRENT_MAIN f65753961359d74cdf19de996bace459a98725b9; behind_by must remain 0 through merge decision."
   },
   "acceptanceCriteria": [
     "The active pricing UI is an archive notice with no price or checkout action.",
