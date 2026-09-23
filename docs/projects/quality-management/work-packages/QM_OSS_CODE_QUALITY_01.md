@@ -5,8 +5,8 @@
 **Owner/PVC:** `CAPITAL-AI-QM / cross-cutting; no productive PVC`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Implementation baseline:** `main@4088582d6b49f1551002022638ee0bcb187c8923`  
-**Status:** `DONE_MAIN / MERGED_PR_1191`  
-**Authority:** evidence/status only; this document creates no Quality, Security, Governance, merge, release or production authority.
+**Status:** `TERMINAL_EVIDENCE / DONE_MAIN / MERGED_PR_1191`  
+**Authority:** terminal evidence only; current task status is projected from `docs/architecture/ROADMAP.md`. This document creates no Quality, Security, Governance, merge, release or production authority.
 
 ## Owner-directed scope
 
@@ -76,7 +76,9 @@ Knip and jscpd are initially advisory because the repository has not yet establi
 
 ## Existing-tool non-duplication
 
-- Semgrep + reviewdog remain owned by the existing OSS code-review path.
+> Current-state correction: the former Semgrep + reviewdog OSS code-review ownership statement was superseded by later OPS convergence. The historical statement is not a current work/ownership source; see `docs/projects/operations/evidence/OPS_OSS_CODE_REVIEW_SUPERSESSION_2026-09-21.md`.
+
+- Historical implementation context referenced Semgrep + reviewdog through the then-existing OSS code-review path.
 - Trivy remains the container/SBOM/CVE authority path.
 - Zizmor remains the GitHub Actions security analyzer.
 - Existing Quality Center contracts remain the central read-only Quality projection.
@@ -101,3 +103,8 @@ No branch-only or pending evidence is represented as `PASS`.
 ## Post-merge readback
 
 PR #1191 wurde am 2026-09-21 Human/CODEOWNER-gated gemerged. Die Funktion ist auf CURRENT_MAIN vorhanden. Der urspruengliche per-PR Vollausfuehrungsmodus wurde danach als kostenineffizient identifiziert: aktuelle erfolgreiche Samples benoetigen etwa 2:54–2:59 Minuten Runner-Zeit; davon entfallen rund 108–125 Sekunden allein auf eine zweite vollstaendige Vitest-V8-Coverage-Ausfuehrung. Die owner-gerechte Kostenremediation wird separat als `QM-OSS-CODE-QUALITY-02` verfolgt; sie aendert nicht die historische Exit-Evidence dieses Pakets.
+
+
+## Live Roadmap disposition — 2026-09-24
+
+This package is terminal evidence and is dissolved as a current work-package status source. It must not be re-enqueued from this file. Any fresh Quality work requires a current Live Roadmap identity or fresh Human/Owner direction under `/AGENTS.md@CURRENT_MAIN`.
