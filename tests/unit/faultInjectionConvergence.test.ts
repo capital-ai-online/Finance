@@ -221,7 +221,7 @@ describe('SH-02.10 fault injection and convergence suite', () => {
     });
   });
 
-  it('PR #1297 v1.8 metadata omission uses the bounded sole-writer Governance metadata repair path', () => {
+  it('PR #1297 v1.8 metadata omission uses the bounded single PR-body convergence path', () => {
     const scenario = SH_02_10_FAULT_MATRIX.find(
       item => item.id === 'PR_GOVERNANCE_V18_METADATA_OMISSION',
     );
@@ -229,25 +229,25 @@ describe('SH-02.10 fault injection and convergence suite', () => {
     expect(scenario).toMatchObject({
       surface: 'REPOSITORY_MODEL',
       findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
-      actionId: 'RECONCILE_PR_GOVERNANCE_METADATA',
+      actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
       expectedTerminalState: 'CONVERGED',
       protectedMutationAllowed: false,
       productionFaultAllowed: false,
     });
 
-    const action = getRemediationAction('RECONCILE_PR_GOVERNANCE_METADATA');
+    const action = getRemediationAction('RECONCILE_PR_DECISION_EVIDENCE');
     expect(action).toMatchObject({
       tier: 'SH-1',
       activation: 'ENABLED',
       idempotencyClass: 'IDEMPOTENT',
-      requiredCapability: 'repository.pr.production-baseline-refresh',
-      verificationProbe: 'exact-pr-governance-metadata-readback',
+      requiredCapability: 'repository.pr.decision-evidence-reconciler',
+      verificationProbe: 'exact-pr-body-convergence-readback',
       budget: { maxAttempts: 1 },
     });
 
     const eligibility = evaluateRemediationEligibility({
       findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
-      actionId: 'RECONCILE_PR_GOVERNANCE_METADATA',
+      actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
       attemptsUsed: 0,
       nowMs: 0,
       killSwitchActive: false,
@@ -256,6 +256,26 @@ describe('SH-02.10 fault injection and convergence suite', () => {
       operationIdempotency: 'IDEMPOTENT',
     });
     expect(eligibility).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
+  });
+
+
+  it('PR #1298 hybrid baseline section converges through the same single PR-body action', () => {
+    const scenario = SH_02_10_FAULT_MATRIX.find(
+      item => item.id === 'PR_GOVERNANCE_V18_HYBRID_BASELINE_SECTION',
+    );
+
+    expect(scenario).toMatchObject({
+      surface: 'REPOSITORY_MODEL',
+      findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+      actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+      expectedTerminalState: 'CONVERGED',
+      protectedMutationAllowed: false,
+      productionFaultAllowed: false,
+    });
+
+    const policy = getRemediationPolicy('REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT');
+    expect(policy.preferredActionId).toBe('RECONCILE_PR_DECISION_EVIDENCE');
+    expect(policy.allowedActionIds).not.toContain('RECONCILE_PR_GOVERNANCE_METADATA');
   });
 
   it('API_503: retries boundedly for a safe GET and then converges on success', async () => {
