@@ -23,7 +23,7 @@ interface LandingPageProps {
  * outside the imported design snapshot.
  *
  * Mobile remains the source presentation baseline. The Finance-owned responsive adapter activates
- * the website desktop canvas at >=1024px without changing the pinned FRONTEND component tree.
+ * the website desktop canvas at >=1024px, with a 960–1023px browser desktop-site compatibility bridge, without changing the pinned FRONTEND component tree.
  */
 export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPageProps) {
   return (
