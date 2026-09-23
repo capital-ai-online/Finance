@@ -80,7 +80,8 @@ describe('S1-R2-00 entitlement authority boundary', () => {
 
     expect(modal).toContain("authFetch('/api/stripe/pdf-credits')");
     expect(modal).toContain("authFetch('/api/stripe/consume-pdf-credit'");
-    expect(modal).toContain("authFetch('/api/stripe/create-checkout-session'");
+    expect(modal).not.toContain("authFetch('/api/stripe/create-checkout-session'");
+    expect(modal).toContain('Das bisherige PDF-Credit-Pricing ist archiviert');
     expect(modal).toContain('if (isOpen) {');
     expect(modal).not.toContain('if (isOpen && email)');
   });
