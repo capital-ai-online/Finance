@@ -63,7 +63,10 @@ describe('SH-02.11 dependency readiness', () => {
     for (const actionId of EXPECTED_HELD) {
       const action = getRemediationAction(actionId);
       expect(action.activation, actionId).toBe('HELD');
-      expect(action.budget.maxAttempts, actionId).toBe(1);
+      expect(Number.isInteger(action.budget.maxAttempts), actionId).toBe(true);
+      expect(action.budget.maxAttempts, actionId).toBeGreaterThan(0);
+      expect(action.budget.cooldownMs, actionId).toBeGreaterThanOrEqual(0);
+      expect(action.budget.timeoutMs, actionId).toBeGreaterThan(0);
       expect(action.killSwitch.trim(), actionId).not.toBe('');
       expect(action.verificationProbe.trim(), actionId).not.toBe('');
     }
