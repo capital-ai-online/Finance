@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-10-POST1308-CORRELATION-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Reconcile SH-02.10 canonical OPS roadmap, work-package index, work package and evidence against the Human-merged PR #1308 generation and its exact Main/Production readback without manufacturing independent assurance.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "05892a28d179316962c19bd52843c2e0e3cfbc9d",
+  "branch": "agent/operations-sh02-10-post1308-correlation-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-10-POST1308-CORRELATION-20260923.json",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "tests/unit/selfHealingSupersession.test.ts"
+  ],
+  "openWriterCorrelation": {
+    "openPullRequests": [
+      1299,
+      1300,
+      1304
+    ],
+    "changedFileOverlap": "NONE",
+    "note": "#1299 owns Vocabulary paths; #1300 owns frontend consent paths; #1304 owns Security evidence/claim paths. No changed-file overlap with this OPS reconciliation slice."
+  },
+  "sourceEvidence": {
+    "currentMain": "05892a28d179316962c19bd52843c2e0e3cfbc9d",
+    "mainCiRun": 35860291537,
+    "containerSecurityRun": 35860291543,
+    "postMergeProductionCorrelationRun": 35860291485,
+    "renderProductionCommit": "05892a28d179316962c19bd52843c2e0e3cfbc9d",
+    "singleWriterMergePr": 1306,
+    "postMergeRegressionPrs": [
+      1307,
+      1308
+    ],
+    "selfHealingContractVersion": "self-healing-contract/1.2.0",
+    "faultSuiteVersion": "sh-02.10-fault-convergence/1.3.0"
+  },
+  "assuranceBoundary": {
+    "qm": "PENDING_FRESH_INDEPENDENT_ASSURANCE",
+    "security": "PENDING_FRESH_INDEPENDENT_ASSURANCE",
+    "staleSecurityPr": 1304,
+    "closedUnmergedQmPr": 1303,
+    "sh0211": "BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE"
+  },
+  "acceptanceCriteria": [
+    "Active OPS projections no longer describe the retired PR Production Baseline workflow as a PR-body writer.",
+    "Active OPS projections use self-healing-contract/1.2.0 and fault-suite/1.3.0 for the current generation.",
+    "SH-02.10 is represented as IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED while independent assurance remains pending.",
+    "SH-02.11 remains blocked and is not represented as dependency-ready.",
+    "No Security or QM VERIFIED/CLOSED state is synthesized by OPS.",
+    "AUTONOMOUS_SELF_HEALING_PLATFORM.md and selfHealingSupersession.test.ts both bind the current executable Self-Healing contract to self-healing-contract/1.2.0; no active 1.0.0 architecture assertion remains."
+  ],
+  "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
+}

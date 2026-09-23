@@ -5,9 +5,9 @@
 **Primary PVC:** `PVC-08`  
 **Supporting PVCs:** `PVC-04`, `PVC-18`  
 **Independent assurance:** `CAPITAL-AI-QM`, `CAPITAL-AI-SEC`  
-**Correlation baseline:** `main@444393b1b1db9dfd95ef6aae42261bf0085663e3`  
-**Branch:** `agent/operations-sh02-pr-governance-metadata-heal-20260923`  
-**Status:** `IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING`
+**Correlation baseline:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
+**Current generation:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
+**Status:** `IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED / INDEPENDENT_ASSURANCE_PENDING`
 
 ## Dependency convergence
 
@@ -20,6 +20,16 @@ PR #1271 as `886486e057fea2fe833104b23f7a36d05d0b9b58`. Its exact head
 Container Security and Project Execution Directive validation successfully.
 
 Therefore the historical blocker "SH-02.9 post-merge projection pending" is terminal. SH-02.10 is dependency-ready for deterministic non-destructive verification. SH-02.8 remains HELD and is exercised only as a negative-control capability state; no rollback/restore activation is inferred.
+
+## Current generation readback — PR #1306 → #1308
+
+- PR #1306 Human-merged the Single-Writer convergence and #1298 regression coverage. The current runtime contract is `self-healing-contract/1.2.0`; the current fault suite is `sh-02.10-fault-convergence/1.3.0` with seventeen required scenarios.
+- PR #1307 and PR #1308 removed the two stale full-suite tests that still asserted the superseded second PR-body writer. They did not reintroduce workflow or runtime mutation authority.
+- `CURRENT_MAIN=05892a28d179316962c19bd52843c2e0e3cfbc9d` completed main CI run #5836 successfully, including the full test suite, production build, provenance and verified Render deployment.
+- Container Security run #2838 completed successfully, including the HIGH/CRITICAL CVE gate and signed private GHCR exact-digest publication.
+- Post-Merge Production Correlation run #242 completed successfully.
+- Render production readback is live on the same exact SHA `05892a28d179316962c19bd52843c2e0e3cfbc9d`.
+- Open PRs #1299, #1300 and #1304 do not contain current main; the leading PR Decision Evidence Reconciler correctly refuses baseline mutation for those stale heads. This is fail-closed behavior, not a second writer or a failed convergence of the current generation.
 
 ## Injection boundary
 
@@ -56,7 +66,8 @@ The suite does **not**:
 | FAILED_EXACT_SHA_REDEPLOY_VERIFICATION | convergence contract | READBACK_FAILED => ESCALATED |
 | FRONTEND_OPTIONAL_INIT_REJECTION | frontend optional initialization + selfHealingContract | fail-closed containment; observe/escalate; no generic retry |
 | STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE | PR autofix + selfHealingContract | deterministic allowlisted expectation repair; one attempt; exact-head readback |
-| PR_GOVERNANCE_V18_METADATA_OMISSION | PR Production Baseline Auto-Refresh + selfHealingContract | reconstruct only missing required v1.8 Technical-Evidence metadata from canonical banner/trusted scope/durable claim evidence; one attempt; ambiguity fails closed; exact-head/base Governance readback |
+| PR_GOVERNANCE_V18_METADATA_OMISSION | PR Decision Evidence Reconciler + selfHealingContract | reconstruct only missing required v1.8 Technical-Evidence metadata from canonical banner/trusted scope/durable claim evidence; one attempt; ambiguity fails closed; exact-head/base Governance readback |
+| PR_GOVERNANCE_V18_HYBRID_BASELINE_SECTION | PR Decision Evidence Reconciler + selfHealingContract | exact #1298 shape: v1.8 machine-baseline details with canonical NOT_RUN sentinel plus trailing legacy `## 7`; repair to exactly three H2 sections and one canonical baseline block; no second writer; ambiguity fails closed |
 | CURRENT_STATE_PROJECTION_BASELINE_STALE | Current-State Baseline Autofix + selfHealingContract | classify as repository current-state projection drift; one bounded idempotent specialist attempt; exact-head CI/Governance readback required |
 | POLICY_CAPABILITY_BLOCKED | eligibility contract | missing external capability => fail-closed BLOCKED |
 | RECOVERY_BUDGET_EXHAUSTION | eligibility contract | no further attempt admitted |
@@ -87,9 +98,7 @@ OPS may produce reproducible implementation/test evidence. It may not issue
 independent `QM=VERIFIED` or `SECURITY=VERIFIED` state for its own implementation.
 Those remain owner-correct assurance results.
 
-Until hosted exact-head validation and the required independent assurance are read
-back, SH-02.10 must not be represented as terminal PASS and SH-02.11 production
-activation remains blocked.
+Hosted repository validation and exact-SHA production identity are now read back for `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`. SH-02.10 still must not be represented as terminal PASS until the required fresh independent QM and Security assurance is read back. SH-02.11 production activation remains blocked until both owner-correct assurance returns exist.
 
 
 ## Observed PR #1294 consent/runtime regression
@@ -148,20 +157,17 @@ gate, or durable claim-path evidence.
 The bounded fix is:
 `REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT -> RECONCILE_PR_GOVERNANCE_METADATA`.
 
-The action remains SH-1, idempotent and limited to one attempt. It delegates to
-the existing PR Production Baseline Auto-Refresh body writer. Missing priority
+The action remains SH-1, idempotent and limited to one attempt. After PR #1306, all PR-body repair/baseline/Decision-Evidence mutation delegates to the single leading `PR Decision Evidence Reconciler` writer. `PR Production Baseline Auto-Refresh` is a compatibility observer/relay and has no PR-body write authority. Missing priority
 and version impact may be reconstructed only when the existing canonical v1.8
 banner resolves them unambiguously. PR class comes from trusted scope
 classification, durable Claim evidence only from the actual branch diff, and a
 missing Version-Manager state is materialized as `NOT_RUN`, never PASS.
 Conflicting or ambiguous metadata remains fail-closed.
 
-Regression coverage reproduces the #1297 body shape and preserves
-Decision/Evidence ownership, required checks, Human/CODEOWNER merge authority,
-and held SH-2/SH-3 actions.
+Regression coverage reproduces the #1297 body shape and preserves Decision/Evidence ownership, required checks, Human/CODEOWNER merge authority and held SH-2/SH-3 actions. PR #1306 additionally fixes the #1298 hybrid v1.8 baseline shape at its formation source, removes the legacy `## 7` fallback for v1.8 and converges all PR-body self-healing through one writer.
 
 
-## Concurrent writer correlation — PR #1302
+## Historical concurrent-writer correlation — PR #1302
 
 After PR #1305 was opened, the canonical Decision/Evidence reconciler discovered
 PR #1302 as a concurrent writer of

@@ -8,7 +8,7 @@
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
 **Correlation baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`  
-**Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.0.0`
+**Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.2.0`
 
 ## 1. Goal
 
@@ -29,12 +29,12 @@ Within the Self-Healing subject-matter scope, the current contract set is delibe
 
 - `/AGENTS.md@CURRENT_MAIN` remains the repository-wide trust root and is never superseded by this architecture;
 - this document (`CAPITAL-AI-ASH-01`) is the current Self-Healing architecture contract;
-- `src/platform/Supervisor/selfHealingContract.ts` (`self-healing-contract/1.0.0`) is the executable finding/action/eligibility/convergence contract;
+- `src/platform/Supervisor/selfHealingContract.ts` (`self-healing-contract/1.2.0`) is the executable finding/action/eligibility/convergence contract;
 - `OPS-08-B-SH-02` is an execution/status projection and cannot create authority.
 
 After Human/CODEOWNER merge of the SH-02.3 contract change, all older Self-Healing execution-rule projections are retired. This includes `OPS-08-B-SH-01`, legacy `SH-R*` classifications, blanket per-run Owner-gating rules for eligible recovery, and historical claims that generic retry behavior alone constitutes current Self-Healing.
 
-Historical material may remain only as clearly historical evidence or under `docs/archive/**`. It cannot activate, deny, broaden or weaken a current remediation. Current eligibility is derived only from the trust root, applicable current Security/Compliance/QM/domain controls and `self-healing-contract/1.0.0`.
+Historical material may remain only as clearly historical evidence or under `docs/archive/**`. It cannot activate, deny, broaden or weaken a current remediation. Current eligibility is derived only from the trust root, applicable current Security/Compliance/QM/domain controls and `self-healing-contract/1.2.0`.
 
 The only current recovery tiers are `SH-0`, `SH-1`, `SH-2` and `SH-3`. Legacy `SH-R*` names have no current execution semantics.
 
