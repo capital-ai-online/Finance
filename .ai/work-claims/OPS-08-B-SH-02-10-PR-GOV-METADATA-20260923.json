@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-10-PR-GOV-METADATA-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend SH-02.10 with deterministic recovery for canonical PR v1.8 Governance metadata omissions observed on PR #1297 without creating a second PR-body writer.",
+  "workItemDE": "SH-02.10 um die deterministische Reparatur fehlender kanonischer PR-v1.8-Governance-Metadaten aus PR #1297 erweitern, ohne einen zweiten PR-Body-Writer zu erzeugen.",
+  "priority": "P1",
+  "priorityReason": "PR #1297 reproduced a Governance-blocking metadata omission that the existing body repairer falsely classified as already canonical.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "assuranceOwners": [
+    "CAPITAL-AI-QM",
+    "CAPITAL-AI-SEC"
+  ],
+  "startedAt": "2026-09-23T11:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "444393b1b1db9dfd95ef6aae42261bf0085663e3",
+  "branch": "agent/operations-sh02-pr-governance-metadata-heal-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-10-PR-GOV-METADATA-20260923.json",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/selfHealingContract.test.ts",
+    "src/platform/Supervisor/faultInjectionConvergence.ts",
+    "tests/unit/faultInjectionConvergence.test.ts",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md"
+  ],
+  "openWriterCorrelation": {
+    "currentMain": "444393b1b1db9dfd95ef6aae42261bf0085663e3",
+    "openPullRequests": [
+      1298,
+      1299,
+      1300
+    ],
+    "changedFileOverlap": "NONE",
+    "note": "PR #1298 changes AppRoutes/vocabulary navigation tests; #1299 changes Vocabulary registry/evidence; #1300 changes cookie-consent runtime/CSS/tests. None overlaps this SH-02.10 Governance metadata repair slice."
+  },
+  "dependencyResolution": {
+    "sh02_9": "TERMINAL on main",
+    "sh02_10": "ACTIVE_EXTENSION: PR #1297 Governance metadata regression added to deterministic non-destructive verification",
+    "sh02_11": "BLOCKED until SH-02.10 exact-head validation and independent QM/Security assurance"
+  },
+  "scopeNote": "One bounded current-v1.8 metadata convergence path in the existing PR Production Baseline Auto-Refresh writer plus Self-Healing contract/fault-matrix coverage. Unknown or conflicting metadata remains fail-closed.",
+  "activationBoundary": "No SH-2/SH-3 activation, no direct merge, no required-check weakening, no second PR-body writer.",
+  "assuranceBoundary": "OPS may produce implementation/test evidence but cannot self-issue independent QM/Security VERIFIED state.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+}
