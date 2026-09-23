@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-10-PR-GOV-METADATA-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -62,5 +62,17 @@
   "scopeNote": "Bounded current-v1.8 metadata convergence in the existing PR Production Baseline Auto-Refresh writer plus Self-Healing contract/fault-matrix coverage and dedicated evidence. Canonical SH-02.10 work-package status projection is excluded because PR #1302 is its active writer. Unknown or conflicting metadata remains fail-closed.",
   "activationBoundary": "No SH-2/SH-3 activation, no direct merge, no required-check weakening, no second PR-body writer.",
   "assuranceBoundary": "OPS may produce implementation/test evidence but cannot self-issue independent QM/Security VERIFIED state.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-23T13:28:00Z",
+  "releaseReason": "Associated PR #1305 was Human/CODEOWNER-merged; the declared release condition is satisfied and SH-02.11 readiness now owns the successor coordination slice.",
+  "terminalPullRequest": 1305,
+  "terminalHeadSha": "5ad49aeb8fd5f699cb93ea8bff1015df881ff23e",
+  "terminalMergeSha": "d5bac1575796f7f73238527abfac0fd1cc4d836b",
+  "releaseEvidence": {
+    "pullRequest": 1305,
+    "merged": true,
+    "mergeCommit": "d5bac1575796f7f73238527abfac0fd1cc4d836b",
+    "currentMain": "31643012f42368b6f85ce9953e19b991248a73d8",
+    "mainContainsImplementation": true
+  }
 }
