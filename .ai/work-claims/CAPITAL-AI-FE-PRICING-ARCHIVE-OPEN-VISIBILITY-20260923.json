@@ -12,9 +12,9 @@
   "workItemDE": "Aktuelles Pricing archivieren, Abo-Sichtbarkeitsgates entfernen und aktive Frontend-Checkout-Einstiege deaktivieren.",
   "startedAt": "2026-09-23T19:05:00+02:00",
   "baseBranch": "main",
-  "baseSha": "928431741d23ad5c4ea712f6898ca392cf9852da",
-  "lastSyncedMainSha": "928431741d23ad5c4ea712f6898ca392cf9852da",
-  "branch": "frontend/pricing-archive-open-component-visibility-20260923",
+  "baseSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "lastSyncedMainSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "branch": "frontend/pricing-archive-open-component-visibility-20260923-r2",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
   "projectStage": "cross-cutting presentation; no productive PVC",
@@ -55,9 +55,10 @@
     "Human/CODEOWNER merge remains required."
   ],
   "evidence": {
-    "currentMain": "928431741d23ad5c4ea712f6898ca392cf9852da",
+    "currentMain": "84137c8d24507523c59cf22d6b888a24329a56e5",
     "openWriterOverlap": "Open PR #1322 and #1323 changed no files in this pricing slice; #1319 is OPS documentary scope.",
-    "handovers": "OPS #1326; COMP #1327"
+    "handovers": "OPS #1326; COMP #1327",
+    "currentMainCorrelation": "Replayed the pricing archive slice onto fresh CURRENT_MAIN after PR #1319 and PR #1322 merged; compare shows behind_by=0."
   },
   "acceptanceCriteria": [
     "The active pricing UI is an archive notice with no price or checkout action.",
