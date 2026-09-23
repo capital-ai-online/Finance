@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-POSTMERGE-CADENCE-EXPRESSION-FIX-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair literal backslashes before GitHub expression syntax introduced in the Human-merged #1338 Post-Merge Production Correlation workflow and add a regression test.",
+  "startedAt": "2026-09-24T00:14:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "lastSyncedMainSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "branch": "operations/postmerge-cadence-expression-fix-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-08",
+  "priority": "P0",
+  "priorityReason": "The merged workflow fails before correlation because actions/checkout receives a backslash-prefixed CURRENT_MAIN SHA.",
+  "claimedPaths": [
+    ".github/workflows/post-merge-production-correlation.yml",
+    "tests/unit/postMergeProductionCorrelationWorkflow.test.ts",
+    ".ai/work-claims/CAPITAL-AI-OPS-POSTMERGE-CADENCE-EXPRESSION-FIX-20260924.json"
+  ],
+  "scopeBoundary": [
+    "Remove serialization-only backslashes; do not alter 5/10 cadence semantics.",
+    "No Render/provider mutation, credential, IAM or Production configuration change.",
+    "No second correlation workflow or recovery controller.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "dependencies": [
+    "/AGENTS.md@72a22038c88d3cc170cbecac6d04547d7226853d",
+    "Human-merged PR #1338"
+  ],
+  "exitEvidence": [
+    "No literal backslash precedes GitHub expression syntax in post-merge-production-correlation.yml.",
+    "Regression test prevents recurrence.",
+    "Exact-head Governance/CI/Workflow Security checks pass."
+  ],
+  "acceptanceCriteria": [
+    "Workflow preserves immutable pinned actions and least privilege.",
+    "CURRENT_MAIN checkout resolves the exact SHA without a prefixed backslash.",
+    "No cadence, version or Self-Healing authority expansion.",
+    "No agent self-merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
