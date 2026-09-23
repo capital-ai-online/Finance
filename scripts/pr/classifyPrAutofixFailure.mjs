@@ -207,6 +207,15 @@ export function classifyPrAutofixFailure(
     }
 
     if (EXACT_V18_STRUCTURE_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V18_HYBRID_BASELINE_SECTION') {
+        return result({
+          classification: 'PR_TEMPLATE_METADATA_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+          reason: 'current-v1.8-hybrid-baseline-convergence-reconciler-owned',
+          findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+          actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+        });
+      }
       if (metadataShape === 'CURRENT_V18_LEGACY_BASELINE_SECTION') {
         return result({
           classification: 'PR_TEMPLATE_METADATA_DRIFT',
