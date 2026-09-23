@@ -14,6 +14,14 @@ describe('SH-02.7 exact-SHA runtime recovery workflow', () => {
     expect(workflow).toContain("github.event.workflow_run.head_repository.full_name == github.repository");
   });
 
+  it('suppresses recovery for expected queued lag through the shared cadence helper', () => {
+    expect(workflow).toContain('scripts/operations/mergeCadence.mjs');
+    expect(workflow).toContain("if: steps.cadence.outputs.recovery_eligible != 'true'");
+    expect(workflow).toContain("if: steps.cadence.outputs.recovery_eligible == 'true'");
+    expect(workflow).toContain('DEPLOYMENT_QUEUED: mergeOrdinal=');
+    expect(workflow).toContain('fetch-depth: 0');
+  });
+
   it('does not create a second Render deployment authority', () => {
     expect(workflow).toContain("workflow_id: 'ci.yml'");
     expect(workflow).toContain("event: 'push'");

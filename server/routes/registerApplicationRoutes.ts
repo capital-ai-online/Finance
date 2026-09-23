@@ -41,6 +41,7 @@ import { createHealthRouter } from './health';
 import { passwordSecurityRouter } from './passwordSecurityRoutes';
 import { backendAuthRootCallback, backendAuthRouter } from './backendAuthRoutes';
 import { accountSecurityRouter } from './accountSecurityRoutes';
+import { roadmapCadenceRouter } from './roadmapCadenceRoutes';
 import { registerMarketDataAdapters } from './registerMarketDataAdapters';
 import { assetRegistry } from '../../src/lib/assetRegistry';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -149,6 +150,11 @@ export function registerApplicationRoutes(
     socialMediaRouter,
   );
   app.use('/api/seo', seoEngineRouter);
+  app.use(
+    '/api/roadmap',
+    rateLimitMiddleware({ name: 'roadmap-cadence', maxRequests: 60, windowMs: 60_000 }),
+    roadmapCadenceRouter,
+  );
   app.use('/api', aiRouter);
   // Router-Anbindung (2026-08-25): bis dahin definiert, aber nirgends eingebunden (toter Code,
   // siehe docs/security/FULL_ARCHITECTURE_SECURITY_REVIEW_2026-08-25.md, "Nebenbefund"). Die

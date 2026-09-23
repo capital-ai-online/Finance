@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-MERGE-CADENCE-RUNTIME-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Materialize dual-mode 5-merge Render deployment and 10-merge PATCH cadence through the existing CI, Post-Merge Correlation, Exact-SHA Recovery, Release Gate and registered PR Autofix writers, plus a read-only live cadence projection for the dashboard.",
+  "startedAt": "2026-09-23T23:25:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "86fb86c69df1b65a69c006b4b08eee262c7db40c",
+  "lastSyncedMainSha": "86fb86c69df1b65a69c006b4b08eee262c7db40c",
+  "branch": "operations/merge-cadence-runtime-20260923",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-06 / PVC-07 / PVC-08",
+  "priority": "P1",
+  "priorityReason": "Governance PR #1336 must be the last activation merge; existing productive controllers need dual-mode cadence support beforehand to avoid a transition window or competing authority.",
+  "claimedPaths": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/post-merge-production-correlation.yml",
+    ".github/workflows/ops-exact-sha-runtime-recovery.yml",
+    "scripts/operations/mergeCadence.mjs",
+    "scripts/pr/prAutofixRepairRegistry.mjs",
+    "scripts/pr/repairers/mergeCadencePatchV1.mjs",
+    "server/routes/roadmapCadenceRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "tests/unit/mergeCadence.test.ts",
+    "tests/unit/roadmapCadenceRoutes.test.ts",
+    "tests/unit/postMergeProductionCorrelationWorkflow.test.ts",
+    "tests/unit/exactShaRuntimeRecoveryWorkflow.test.ts",
+    "tests/unit/ciDeploymentControlPlane.test.ts",
+    "tests/unit/productionCiRunnerConsolidation.test.ts",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md",
+    ".ai/work-claims/CAPITAL-AI-OPS-MERGE-CADENCE-RUNTIME-20260923.json"
+  ],
+  "scopeBoundary": [
+    "No second deployment, version, branch-sync or Self-Healing controller.",
+    "No Frontend presentation mutation; CAPITAL-AI-FE consumes the read-only OPS projection in a successor slice.",
+    "No new provider credential or Render-native Auto Deploy.",
+    "SH-02.12 and all held protected Self-Healing actions remain HELD.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "dependencies": [
+    "/AGENTS.md@86fb86c69df1b65a69c006b4b08eee262c7db40c",
+    "Human-merged PR #1337",
+    "Draft Governance activation PR #1336"
+  ],
+  "exitEvidence": [
+    "Legacy behavior remains active while Contract v1.1 is not on CURRENT_MAIN.",
+    "Cadence mode deploys at fixed merge ordinals divisible by 5 and targets latest CURRENT_MAIN.",
+    "Healthy queued lag does not trigger production drift or exact-SHA recovery.",
+    "10th-merge PATCH uses the existing Release Version Gate through the existing registered PR Autofix writer.",
+    "Read-only cadence API projects live GitHub CURRENT_MAIN independently from Production."
+  ],
+  "acceptanceCriteria": [
+    "CI remains two-runner and exact-head/provenance bound.",
+    "No expected queued state is represented as PASS for Production equivalence or as PRODUCTION_DRIFT.",
+    "Version authority remains package.json with governed mirrors.",
+    "All workflow/security/required checks pass on exact PR head.",
+    "No self-merge."
+  ],
+  "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
