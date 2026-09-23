@@ -38,6 +38,7 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
     "core.setOutput('pr_metadata_shape', prMetadataShape)",
     'CURRENT_V18_CANONICAL',
     'CURRENT_V18_LEGACY_BASELINE_SECTION',
+    'CURRENT_V18_HYBRID_BASELINE_SECTION',
     'CURRENT_V18_OTHER',
     'CURRENT_V16_GENERIC_MISSING_SECTIONS',
     'CURRENT_V16_SECURITY_BOUNDARY_EXACT',
@@ -52,7 +53,7 @@ test('controller derives a bounded PR metadata shape before semantic delegation'
   assert.doesNotMatch(block, /core\.setOutput\('pr_body'/);
 });
 
-test('v1.8 legacy-baseline shape detection is exact and bounded', () => {
+test('v1.8 legacy and PR #1298 hybrid baseline shape detection is exact and bounded', () => {
   const block = workflow.split('  classify:\n')[1].split('\n  sync-before-fix:\n')[0];
   for (const token of [
     "v18Headings.length === 4",
@@ -60,7 +61,11 @@ test('v1.8 legacy-baseline shape detection is exact and bounded', () => {
     "occurrenceCount('{{PRODUCTION_BASELINE_BLOCK}}') === 1",
     "occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 1",
     "occurrenceCount('<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 1",
-  ]) assert.ok(block.includes(token), 'missing exact v1.8 legacy-baseline shape guard: ' + token);
+    'currentV18HybridBaselineSection',
+    "occurrenceCount(machineBaselineSummary) === 1",
+    "occurrenceCount('NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.') === 1",
+    "'CURRENT_V18_HYBRID_BASELINE_SECTION'",
+  ]) assert.ok(block.includes(token), 'missing exact v1.8 baseline shape guard: ' + token);
 });
 
 test('completed source binding accepts every valid run_attempt without polling', () => {
@@ -85,27 +90,29 @@ test('failure logs are bounded, redacted and never uploaded as artifacts', () =>
   assert.doesNotMatch(workflow, /path: \$\{\{ runner\.temp \}\}\/pr-autofix-failed/);
 });
 
-test('existing specialist writers remain single-owner with Decision/Evidence assigned to the reconciler', () => {
-  assert.ok(workflow.includes('Current-State Baseline Autofix owns CURRENT_STATE_PROJECTION_BASELINE_* repository writes.'));
-  assert.ok(workflow.includes('PR Production Baseline Auto-Refresh owns production-baseline and bounded legacy-template writes.'));
-  assert.ok(workflow.includes('PR Decision Evidence Reconciler owns the canonical v1.8 Decision/Evidence projection.'));
+test('controller declares one leading PR-body writer and keeps repository-file autofix separate', () => {
+  assert.ok(workflow.includes('Current-State Baseline Autofix owns repository-file CURRENT_STATE_PROJECTION_BASELINE_* writes only.'));
+  assert.ok(workflow.includes('PR Decision Evidence Reconciler is the sole mutable owner of PR-body structure, production baseline,'));
+  assert.ok(workflow.includes('PR Production Baseline workflows are compatibility observers/relays and own no PR-body mutation.'));
+  assert.doesNotMatch(workflow, /PR Production Baseline Auto-Refresh owns production-baseline/);
   assert.doesNotMatch(workflow, /updatePrProductionBaseline\.mjs|repairLegacyPrBodyStructure\.mjs|reconcilePrDecisionEvidence\.mjs/);
 });
 
-test('metadata delegation creates no second writer and no rerun dispatch', () => {
-  const block = workflow.split('  delegate_pr_metadata:\n')[1].split('\n\n  repair:\n')[0];
-  assert.ok(block.includes("needs.classify.outputs.decision == 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH'"));
+test('all PR-body metadata delegation uses the single Decision/Evidence convergence job', () => {
+  assert.doesNotMatch(workflow, /^  delegate_pr_metadata:/m);
+  const block = workflow.split('  delegate_pr_decision_evidence:\n')[1].split('\n\n  repair:\n')[0];
+  assert.ok(block.includes("needs.classify.outputs.decision == 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER'"));
   assert.match(block, /permissions:\n      contents: read/);
-  assert.ok(block.includes('independently subscribed PR Production Baseline Auto-Refresh workflow'));
+  assert.ok(block.includes('structure -> baseline -> Governance metadata -> Decision/Evidence'));
   assert.doesNotMatch(block, /actions: write|pull-requests: write|contents: write/);
-  assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun|exactSpecialist/);
+  assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun/);
 });
 
 test('Decision/Evidence delegation creates no second PR-body writer and no Governance rerun', () => {
   const block = workflow.split('  delegate_pr_decision_evidence:\n')[1].split('\n\n  repair:\n')[0];
   assert.ok(block.includes("needs.classify.outputs.decision == 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER'"));
   assert.match(block, /permissions:\n      contents: read/);
-  assert.ok(block.includes('exclusively owned by the already subscribed PR Decision Evidence Reconciler'));
+  assert.ok(block.includes('exclusively owned by PR Decision Evidence Reconciler'));
   assert.doesNotMatch(block, /actions: write|pull-requests: write|contents: write/);
   assert.doesNotMatch(block, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/runs\/\{run_id\}\/rerun|reconcilePrDecisionEvidence\.mjs/);
 });

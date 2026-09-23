@@ -90,10 +90,22 @@ function runtime({
     return element;
   }
 
+  function findElementById(id: string) {
+    const queue = [...elements];
+    while (queue.length) {
+      const element = queue.shift();
+      if (element?.id === id) return element;
+      if (Array.isArray(element?.children)) {
+        queue.push(...(element.children as Array<ReturnType<typeof createElement>>));
+      }
+    }
+    return null;
+  }
+
   const document = {
     cookie: validConsent ? 'capital_ai_consent_v3=stored-choice' : '',
     getElementById(id: string) {
-      return styles.get(id) ?? elements.find((element) => element.id === id) ?? null;
+      return styles.get(id) ?? findElementById(id);
     },
     createElement,
     body: {
@@ -154,6 +166,7 @@ function runtime({
     errors,
     accepted,
     flush,
+    getElementById: findElementById,
     get runCount() {
       return runCount;
     },
@@ -190,7 +203,7 @@ describe('CookieConsent stylesheet readiness', () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
-    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    r.getElementById('capital-ai-cookie-settings')?.click();
     await r.flush();
 
     expect(r.runCount).toBe(1);
@@ -203,11 +216,11 @@ describe('CookieConsent stylesheet readiness', () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
-    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    r.getElementById('capital-ai-cookie-settings')?.click();
     await r.flush();
 
-    const analytics = r.elements.find((element) => element.id === 'capital-ai-cookie-analytics');
-    const save = r.elements.find((element) => element.id === 'capital-ai-cookie-save');
+    const analytics = r.getElementById('capital-ai-cookie-analytics');
+    const save = r.getElementById('capital-ai-cookie-save');
     expect(analytics).toBeTruthy();
     expect(save).toBeTruthy();
 
@@ -222,9 +235,9 @@ describe('CookieConsent stylesheet readiness', () => {
     const r = runtime({ vendorReady: true, themeReady: true });
     await r.flush();
 
-    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    r.getElementById('capital-ai-cookie-settings')?.click();
     await r.flush();
-    r.elements.find((element) => element.id === 'capital-ai-cookie-save')?.click();
+    r.getElementById('capital-ai-cookie-save')?.click();
 
     expect(r.accepted).toEqual([[]]);
     expect(r.elements.some((element) => element.id === 'capital-ai-cookie-panel')).toBe(false);
@@ -240,10 +253,10 @@ describe('CookieConsent stylesheet readiness', () => {
     await r.flush();
 
     expect(r.runCount).toBe(1);
-    r.elements.find((element) => element.id === 'capital-ai-cookie-settings')?.click();
+    r.getElementById('capital-ai-cookie-settings')?.click();
     await r.flush();
 
-    expect(r.elements.find((element) => element.id === 'capital-ai-cookie-analytics')?.checked).toBe(true);
+    expect(r.getElementById('capital-ai-cookie-analytics')?.checked).toBe(true);
   });
 
   it('waits for required stylesheets only when a stored choice requires vendor initialization', async () => {

@@ -156,6 +156,49 @@ describe('self-healing contract', () => {
     expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
   });
 
+  it('routes PR Governance metadata drift through the same leading PR-body convergence action', () => {
+    const policy = getRemediationPolicy('REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT');
+    expect(policy.preferredActionId).toBe('RECONCILE_PR_DECISION_EVIDENCE');
+    expect(policy.allowedActionIds).toEqual([
+      'RECONCILE_PR_DECISION_EVIDENCE',
+      'OBSERVE_ONLY',
+    ]);
+
+    const superseded = getRemediationAction('RECONCILE_PR_GOVERNANCE_METADATA');
+    expect(superseded).toMatchObject({
+      tier: 'SH-1',
+      activation: 'HELD',
+      requiredCapability: null,
+      killSwitch: 'self-healing.pr-governance-metadata-superseded',
+      verificationProbe: 'superseded-pr-body-action-held',
+      budget: { maxAttempts: 1 },
+    });
+
+    const held = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+      actionId: 'RECONCILE_PR_GOVERNANCE_METADATA',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(held).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_NOT_ALLOWED_FOR_FINDING' });
+
+    const eligible = evaluateRemediationEligibility({
+      findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+      actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+      attemptsUsed: 0,
+      nowMs: 1_000,
+      killSwitchActive: false,
+      capabilityAuthorized: true,
+      verificationAvailable: true,
+      operationIdempotency: 'IDEMPOTENT',
+    });
+    expect(eligible).toMatchObject({ state: 'ELIGIBLE', remainingAttempts: 1 });
+  });
+
   it('routes Decision/Evidence drift only through the existing single PR-body reconciler', () => {
     const policy = getRemediationPolicy('REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
     expect(policy.preferredActionId).toBe('RECONCILE_PR_DECISION_EVIDENCE');
@@ -172,7 +215,7 @@ describe('self-healing contract', () => {
       blastRadius: 'WORK_ITEM',
       requiredCapability: 'repository.pr.decision-evidence-reconciler',
       killSwitch: 'self-healing.pr-decision-evidence-reconciler',
-      verificationProbe: 'exact-pr-decision-evidence-readback',
+      verificationProbe: 'exact-pr-body-convergence-readback',
       budget: { maxAttempts: 1 },
     });
   });

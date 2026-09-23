@@ -1,0 +1,258 @@
+export type RoadmapWorkState = 'in-flight' | 'active' | 'in-progress' | 'evidence-gate';
+export type RoadmapQueueState = 'ready' | 'held' | 'queued';
+
+export interface RoadmapWorkPackage {
+  id: string;
+  title: string;
+  owner: string;
+  relationship: string;
+  phase: 'Automation' | 'Self-Healing Runtime' | 'Product & Market' | 'Security & Compliance';
+  state: RoadmapWorkState;
+  stateLabel: string;
+  source: string;
+  sourceType: 'canonical-roadmap' | 'provider-pr' | 'provider-branch' | 'human-directed';
+  detail: string;
+  prNumber?: number;
+}
+
+export interface RoadmapQueuedItem {
+  id: string;
+  owner: string;
+  state: RoadmapQueueState;
+  stateLabel: string;
+  source: string;
+  gate: string;
+}
+
+export const ROADMAP_DASHBOARD_SNAPSHOT = {
+  schemaVersion: '1.1.0',
+  role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
+  correlatedDate: '2026-09-23',
+  currentMainSha: '7bcc6aee2700d6fa3f926ff8615b04cde136750c',
+  branding: {
+    brandmark: 'docs/frontend/brandmark.json',
+    designTokens: 'docs/frontend/design-tokens.json',
+    logoProjection: 'src/shared/branding/CapitalAiLogo.tsx',
+    panelPrimitive: 'src/shared/ui/Card.tsx',
+    tokenProjection: 'src/index.css',
+  },
+  activeWorkPackages: [
+    {
+      id: 'FE-ROADMAP-LIVE-01',
+      title: 'Branded Roadmap Live Dashboard',
+      owner: 'CAPITAL-AI-FE',
+      relationship: 'cross-cutting Frontend presentation; canonical task state remains in owner project Roadmaps',
+      phase: 'Product & Market',
+      state: 'in-progress',
+      stateLabel: 'IMPLEMENTATION · CURRENT SLICE',
+      source: 'Fresh Human/Owner direction 2026-09-23 · frontend/roadmap-live-dashboard-v2-20260923',
+      sourceType: 'human-directed',
+      detail: 'Builds the read-only /roadmap presentation from canonical brand/template contracts and a freshly correlated repository snapshot.',
+    },
+    {
+      id: 'PR-1299',
+      title: 'Vocabulary aus Repository-Dokumenten erweitern',
+      owner: 'CAPITAL-AI-GOV',
+      relationship: 'PVC-05 · Vocabulary/Governance projection',
+      phase: 'Automation',
+      state: 'in-flight',
+      stateLabel: 'PR #1299 · OPEN',
+      source: 'GitHub PR #1299',
+      sourceType: 'provider-pr',
+      detail: 'Open Governance writer extending documentation-derived concepts without creating a second Vocabulary registry.',
+      prNumber: 1299,
+    },
+    {
+      id: 'PR-1300',
+      title: 'Cookie-Auswahl Save-Action ohne Freeze',
+      owner: 'CAPITAL-AI-FE',
+      relationship: 'cross-cutting Frontend consent presentation',
+      phase: 'Product & Market',
+      state: 'in-flight',
+      stateLabel: 'PR #1300 · OPEN',
+      source: 'GitHub PR #1300',
+      sourceType: 'provider-pr',
+      detail: 'Open FE remediation for the consent save path; no overlap with the Roadmap dashboard files in this slice.',
+      prNumber: 1300,
+    },
+    {
+      id: 'DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING',
+      title: 'Documentary Change Impact startup_failure beheben',
+      owner: 'CAPITAL-AI-DOC',
+      relationship: 'PVC-03 · documentary workflow convergence',
+      phase: 'Automation',
+      state: 'in-flight',
+      stateLabel: 'ACTIVE BRANCH · EXACT-MAIN BASED',
+      source: 'agent/documentary-startup-failure-permission-ceiling-20260923',
+      sourceType: 'provider-branch',
+      detail: 'Active exclusive claim removes the reproducible workflow startup_failure and requires post-merge job-start evidence.',
+    },
+    {
+      id: 'SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION',
+      title: 'SH-02.11A Retry-Safe Security Assurance',
+      owner: 'CAPITAL-AI-SEC',
+      relationship: 'cross-cutting independent Security verification; no productive PVC transfer',
+      phase: 'Security & Compliance',
+      state: 'in-flight',
+      stateLabel: 'ACTIVE BRANCH · INDEPENDENT VERIFICATION',
+      source: 'agent/security-sh02-11a-retry-safe-independent-verification-20260923',
+      sourceType: 'provider-branch',
+      detail: 'Verifies the exact merged pre-activation generation while RETRY_SAFE_OPERATION remains HELD.',
+    },
+    {
+      id: 'OPS-ROADMAP-DIRECT-ROUTE-01',
+      title: 'Production SPA Fallback für /roadmap',
+      owner: 'CAPITAL-AI-OPS',
+      relationship: 'PVC-02 · owner-correct server/runtime handoff for FE-ROADMAP-LIVE-01',
+      phase: 'Product & Market',
+      state: 'in-flight',
+      stateLabel: 'PR #1315 · OPEN',
+      source: 'GitHub PR #1315',
+      sourceType: 'provider-pr',
+      detail: 'Adds /roadmap to the non-indexable application SPA fallback without changing the SEO public/prerender contract.',
+      prNumber: 1315,
+    },
+    {
+      id: 'SH-02.11A',
+      title: 'Retry-Safe Pre-Activation',
+      owner: 'CAPITAL-AI-OPS',
+      relationship: 'PVC-08 · Self-Healing activation preparation',
+      phase: 'Self-Healing Runtime',
+      state: 'evidence-gate',
+      stateLabel: 'PRE-ACTIVATION MERGED · ASSURANCE REQUIRED',
+      source: 'docs/projects/operations/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'PR #1314 is on main; RETRY_SAFE_OPERATION remains HELD until fresh independent Security and QM assurance converge on the same generation.',
+    },
+    {
+      id: 'GOV-SH-V3',
+      title: 'Self-Healing Convergence Program',
+      owner: 'CAPITAL-AI-GOV',
+      relationship: 'PVC-05',
+      phase: 'Automation',
+      state: 'active',
+      stateLabel: 'ACTIVE · CONTINUOUS CONVERGENCE',
+      source: 'docs/projects/governance/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Merged convergence/autofix foundations remain the Governance-side continuous invariant without becoming a second control plane.',
+    },
+    {
+      id: 'OPS-02-CI-01E',
+      title: 'ChatGPT Preflight & Runner-Minute Convergence',
+      owner: 'CAPITAL-AI-OPS',
+      relationship: 'PVC-02 · QM assurance · SEC boundary',
+      phase: 'Automation',
+      state: 'active',
+      stateLabel: 'ACTIVE · P0 FOUNDATION',
+      source: 'docs/projects/operations/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Machine-readable pre-PR evidence plus the bounded lifecycle runner-minute baseline remain active cost-control work.',
+    },
+    {
+      id: 'SEC-WEB-HARDENING-01',
+      title: 'Public Website & Secure Deployment Convergence',
+      owner: 'CAPITAL-AI-SEC',
+      relationship: 'cross-cutting Security; productive remediation stays with canonical owners',
+      phase: 'Security & Compliance',
+      state: 'active',
+      stateLabel: 'ACTIVE · IMPLEMENTATION OPEN',
+      source: 'docs/projects/security/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'P0/P1 website, artifact, identity and deployment controls remain evidence-driven and independently verified.',
+    },
+    {
+      id: 'COMP-LF-01',
+      title: 'Static Landing Compliance Evidence Gate',
+      owner: 'CAPITAL-AI-COMP',
+      relationship: 'cross-cutting Compliance',
+      phase: 'Security & Compliance',
+      state: 'evidence-gate',
+      stateLabel: 'ACTIVE · EVIDENCE GATE',
+      source: 'docs/projects/compliance/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Truthful preview/live separation, consent/legal navigation and independent SEC/QM evidence remain explicit gates.',
+    },
+    {
+      id: 'COMP-FINREG-01',
+      title: 'Financial Regulatory Perimeter',
+      owner: 'CAPITAL-AI-COMP',
+      relationship: 'cross-cutting Compliance · Human/Legal decision boundary',
+      phase: 'Security & Compliance',
+      state: 'evidence-gate',
+      stateLabel: 'ACTIVE · LEGAL REVIEW REQUIRED',
+      source: 'docs/projects/compliance/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Repository evidence informs the perimeter review; legal/licensing conclusions remain competent Human/Legal decisions.',
+    },
+    {
+      id: 'WP-SEO-LAUNCH-01',
+      title: 'Public Web & Social Launch Management',
+      owner: 'CAPITAL-AI-SEO',
+      relationship: 'cross-cutting SEO / launch coordination',
+      phase: 'Product & Market',
+      state: 'active',
+      stateLabel: 'ACTIVE CANONICAL · EVIDENCE GATED',
+      source: 'docs/projects/seo/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Launch readiness stays bounded by owner returns and real provider measurement evidence; no missing provider read becomes PASS.',
+    },
+    {
+      id: 'SOCIAL-P1',
+      title: 'Real TTS Runtime Evidence',
+      owner: 'CAPITAL-AI-SOCIAL',
+      relationship: 'cross-cutting Social · OPS runtime return',
+      phase: 'Product & Market',
+      state: 'active',
+      stateLabel: 'ACTIVE · HUMAN LISTENING GATE',
+      source: 'docs/projects/social-media/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Technical evidence remains separate from Human listening acceptance; rejected audio cannot be promoted as production-ready.',
+    },
+    {
+      id: 'SOCIAL-P2',
+      title: 'Short-Video + Voice-Over Integration',
+      owner: 'CAPITAL-AI-SOCIAL',
+      relationship: 'cross-cutting Social',
+      phase: 'Product & Market',
+      state: 'in-progress',
+      stateLabel: 'IN PROGRESS · P1 GATE ENFORCED',
+      source: 'docs/projects/social-media/ROADMAP.md',
+      sourceType: 'canonical-roadmap',
+      detail: 'Repository-side integration may advance, but only technically evidenced and Human-listening-PASS audio may be consumed.',
+    },
+  ] satisfies RoadmapWorkPackage[],
+  queuedItems: [
+    {
+      id: 'QM-PR900-02',
+      owner: 'CAPITAL-AI-QM',
+      state: 'ready',
+      stateLabel: 'READY FOR EXECUTION',
+      source: 'docs/projects/quality-management/ROADMAP.md',
+      gate: 'Exact-snapshot Quality evidence is the next QM successor; proposed QM-V2 coordination authority still depends on ADR-0103 acceptance/Human merge.',
+    },
+    {
+      id: 'SH-02.11',
+      owner: 'CAPITAL-AI-OPS',
+      state: 'held',
+      stateLabel: 'DEPENDENCY READY · ACTIVATION HELD',
+      source: 'docs/projects/operations/ROADMAP.md',
+      gate: 'Staged production activation remains blocked until enabled tiers and SH-02.11A independent assurance are verified.',
+    },
+    {
+      id: 'FIN-LF-01',
+      owner: 'CAPITAL-AI-FINTECH',
+      state: 'held',
+      stateLabel: 'HELD · LATER PHASE DEPENDENCY',
+      source: 'docs/projects/fintech/ROADMAP.md',
+      gate: 'Productive landing scorer consumption remains held behind later integration readiness plus Security/QM evidence.',
+    },
+    {
+      id: 'SOCIAL-P3',
+      owner: 'CAPITAL-AI-SOCIAL',
+      state: 'held',
+      stateLabel: 'DEPENDENCY HELD',
+      source: 'docs/projects/social-media/ROADMAP.md',
+      gate: 'Requires real provider publication identity plus real analytics evidence.',
+    },
+  ] satisfies RoadmapQueuedItem[],
+} as const;

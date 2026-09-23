@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`
+**Baseline:** `main@db4ad93bb3bac7d4f31242b7f74f8f300d24e757`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — SH-02.9 post-merge convergence is terminal; SH-02.10 is the current dependency-ready P0 verification slice  
+**Reconciliation:** 2026-09-23 — SH-02.11 is dependency-ready; child SH-02.11A prepares RETRY_SAFE_OPERATION for independent Security/QM assurance while the action remains HELD  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -16,9 +16,9 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). Against `main@c3181b37987598511b3eb3e2d313102458fed415`, SH-02.10 — Fault Injection & Convergence Suite — is the current dependency-ready P0 slice. It is non-destructive: SH-02.8 remains HELD and is exercised only as negative-control capability evidence. Hosted exact-head validation and independent QM/Security assurance remain required before SH-02.10 terminal closure or SH-02.11 staged activation.
+SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). SH-02.10 is now terminal for implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`: Security PR #1311 and QM PR #1312 independently verified that same generation and are Human/CODEOWNER-merged. Current main `db4ad93bb3bac7d4f31242b7f74f8f300d24e757` completed main CI #5849, Container Security #2851 and Post-Merge Production Correlation #246 successfully, and Render deployment `dep-daptgsad0e5s73acahjg` is live on the same exact SHA. The currently enabled action set is limited to five bounded SH-0/SH-1 actions with one-attempt budgets, kill switches and verification probes; all generic retry/quarantine plus SH-2/SH-3 actions remain HELD. SH-02.11 remains `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`. The current child `SH-02.11A` prepares only `RETRY_SAFE_OPERATION`; it remains `HELD` until fresh independent Security and QM assurance passes for the exact pre-activation generation.
 
-Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
+Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.2.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
 Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 

@@ -6,7 +6,7 @@
  * Execution remains with the existing Supervisor/provider/runtime paths.
  */
 
-export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.0.0' as const;
+export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.2.0' as const;
 
 export const FINDING_CLASSES = [
   'PROCESS_FATAL',
@@ -19,11 +19,13 @@ export const FINDING_CLASSES = [
   'DEPLOYMENT_IDENTITY_DRIFT',
   'FRONTEND_STALE_ASSET',
   'FRONTEND_RENDER_FAILURE',
+  'FRONTEND_OPTIONAL_INIT_FAILURE',
   'VERSION_SKEW',
   'DATA_RECOVERY_REQUIRED',
   'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT',
   'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
   'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+  'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
   'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
   'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
   'SECURITY_OR_POLICY_BLOCKED',
@@ -42,6 +44,7 @@ export type RemediationActionId =
   | 'QUARANTINE_WORK_ITEM'
   | 'RECONCILE_REPOSITORY_PROJECTION'
   | 'RECONCILE_PR_DECISION_EVIDENCE'
+  | 'RECONCILE_PR_GOVERNANCE_METADATA'
   | 'VERIFY_ISSUE_PROJECT_DISPATCH'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
@@ -140,6 +143,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'ESCALATED',
     description: 'Delegate an exact allowlisted repository projection or deterministic expectation repair to the existing PR autofix specialists, then require exact-head CI/Governance readback.',
   },
+  RECONCILE_PR_GOVERNANCE_METADATA: {
+    id: 'RECONCILE_PR_GOVERNANCE_METADATA',
+    tier: 'SH-1',
+    activation: 'HELD',
+    idempotencyClass: 'IDEMPOTENT',
+    blastRadius: 'WORK_ITEM',
+    requiredCapability: null,
+    killSwitch: 'self-healing.pr-governance-metadata-superseded',
+    verificationProbe: 'superseded-pr-body-action-held',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Superseded compatibility action. Productive PR Governance metadata remediation is routed only through RECONCILE_PR_DECISION_EVIDENCE so no second PR-body writer remains.',
+  },
   RECONCILE_PR_DECISION_EVIDENCE: {
     id: 'RECONCILE_PR_DECISION_EVIDENCE',
     tier: 'SH-1',
@@ -148,10 +164,10 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     blastRadius: 'WORK_ITEM',
     requiredCapability: 'repository.pr.decision-evidence-reconciler',
     killSwitch: 'self-healing.pr-decision-evidence-reconciler',
-    verificationProbe: 'exact-pr-decision-evidence-readback',
+    verificationProbe: 'exact-pr-body-convergence-readback',
     budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
     exhaustionState: 'ESCALATED',
-    description: 'Delegate canonical v1.7 Decision/Evidence projection drift to the existing PR Decision Evidence Reconciler; no second PR-body writer is created.',
+    description: 'Single leading PR-body remediation: converge allowlisted structure, production baseline, Governance metadata and Decision/Evidence under one per-PR writer lease and one atomic body write, then require exact-head/base readback.',
   },
   VERIFY_ISSUE_PROJECT_DISPATCH: {
     id: 'VERIFY_ISSUE_PROJECT_DISPATCH',
@@ -218,6 +234,7 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
   DEPLOYMENT_IDENTITY_DRIFT: policy('DEPLOYMENT_IDENTITY_DRIFT', 'REDEPLOY_EXACT_SHA', ['REDEPLOY_EXACT_SHA', 'OBSERVE_ONLY']),
   FRONTEND_STALE_ASSET: policy('FRONTEND_STALE_ASSET', 'FRONTEND_RELOAD_ONCE', ['FRONTEND_RELOAD_ONCE', 'OBSERVE_ONLY']),
   FRONTEND_RENDER_FAILURE: policy('FRONTEND_RENDER_FAILURE', 'OBSERVE_ONLY', ['OBSERVE_ONLY']),
+  FRONTEND_OPTIONAL_INIT_FAILURE: policy('FRONTEND_OPTIONAL_INIT_FAILURE', 'OBSERVE_ONLY', ['OBSERVE_ONLY']),
   VERSION_SKEW: policy('VERSION_SKEW', 'FRONTEND_RELOAD_ONCE', ['FRONTEND_RELOAD_ONCE', 'OBSERVE_ONLY']),
   DATA_RECOVERY_REQUIRED: policy('DATA_RECOVERY_REQUIRED', 'PROTECTED_ROLLBACK_RESTORE', ['PROTECTED_ROLLBACK_RESTORE', 'OBSERVE_ONLY']),
   REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT: policy(
@@ -229,6 +246,11 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
     'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
     'RECONCILE_REPOSITORY_PROJECTION',
     ['RECONCILE_REPOSITORY_PROJECTION', 'OBSERVE_ONLY'],
+  ),
+  REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT: policy(
+    'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+    'RECONCILE_PR_DECISION_EVIDENCE',
+    ['RECONCILE_PR_DECISION_EVIDENCE', 'OBSERVE_ONLY'],
   ),
   REPOSITORY_PR_DECISION_EVIDENCE_DRIFT: policy(
     'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',

@@ -80,7 +80,7 @@ test('does not treat the 45k guard source echoed in failed Governance logs as an
   });
   assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(result.reason, 'existing-pr-production-baseline-refresh-specialist-owns-write');
+  assert.equal(result.reason, 'single-pr-body-convergence-reconciler-owned');
 });
 
 test('does not let echoed 45k guard source hide an unrelated CI failure', () => {
@@ -150,7 +150,7 @@ test('delegates an exact stale production baseline before broad protected-provid
   });
   assert.equal(result.classification, 'PR_PRODUCTION_BASELINE_DRIFT');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(result.reason, 'stale-production-baseline-specialist-owned');
+  assert.equal(result.reason, 'single-pr-body-convergence-reconciler-owned');
 });
 
 test('delegates the exact observed v1.8 P0-HIGHEST priority drift only for canonical bodies', () => {
@@ -164,7 +164,7 @@ test('delegates the exact observed v1.8 P0-HIGHEST priority drift only for canon
   });
   assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(allowed.reason, 'current-v1.8-priority-token-repairable');
+  assert.equal(allowed.reason, 'current-v1.8-priority-convergence-reconciler-owned');
 
   const denied = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
@@ -185,7 +185,7 @@ test('delegates only the exact allowlisted v1.8 legacy baseline-section drift', 
   });
   assert.equal(allowed.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(allowed.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(allowed.reason, 'current-v1.8-legacy-baseline-section-repairable');
+  assert.equal(allowed.reason, 'current-v1.8-legacy-baseline-convergence-reconciler-owned');
 
   const routed = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
@@ -199,6 +199,18 @@ test('delegates only the exact allowlisted v1.8 legacy baseline-section drift', 
   assert.equal(routed.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
 });
 
+test('routes the exact PR #1298 hybrid v1.8 baseline shape to the single PR-body convergence writer', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1298 muss in v1.8.0 exakt drei sichtbare Hauptabschnitte besitzen: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence',
+    prMetadataShape: 'CURRENT_V18_HYBRID_BASELINE_SECTION',
+  });
+  assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(result.reason, 'current-v1.8-hybrid-baseline-convergence-reconciler-owned');
+  assert.equal(result.findingClass, 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT');
+  assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+});
 test('routes current v1.8 missing-section drift to the single Decision Evidence writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
@@ -212,7 +224,7 @@ test('routes current v1.8 missing-section drift to the single Decision Evidence 
   assert.equal(result.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
 });
 
-test('delegates repairable PR metadata drift to the existing baseline/template writer', () => {
+test('delegates repairable PR metadata drift to the single PR-body convergence writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: 'Error: PR #1 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ## 4. 📌 Priorität & Roadmap',
@@ -222,7 +234,7 @@ test('delegates repairable PR metadata drift to the existing baseline/template w
 });
 
 
-test('delegates the exact PR #1123 missing-sections failure to the metadata specialist', () => {
+test('delegates the exact PR #1123 missing-sections failure to the single PR-body convergence writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: [
@@ -233,7 +245,7 @@ test('delegates the exact PR #1123 missing-sections failure to the metadata spec
   });
   assert.equal(result.classification, 'PR_TEMPLATE_METADATA_DRIFT');
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
-  assert.equal(result.reason, 'existing-pr-production-baseline-refresh-specialist-owns-write');
+  assert.equal(result.reason, 'single-pr-body-convergence-reconciler-owned');
 });
 
 test('delegates the exact current v1.6 security-boundary shape but blocks semantic lookalikes', () => {
@@ -268,7 +280,7 @@ test('missing-section delegation requires a controller-provided semantic body sh
   assert.equal(result.reason, 'pr-metadata-shape-unavailable-or-unsupported');
 });
 
-test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metadata writer', () => {
+test('delegates canonical Human/CODEOWNER merge-gate drift to the single PR-body convergence writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: 'Error: Der kanonische PR muss die Human-/CODEOWNER-Freigabe ausdrücklich beibehalten.',
@@ -277,7 +289,7 @@ test('delegates canonical Human/CODEOWNER merge-gate drift to the existing metad
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA);
 });
 
-test('delegates missing template marker drift to the deterministic metadata writer', () => {
+test('delegates missing template marker drift to the single PR-body convergence writer', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/pr-governance.yml',
     logText: 'Error: PR #1 verwendet keinen unterstützten PR-Vorlagenmarker.',

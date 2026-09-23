@@ -62,8 +62,8 @@ describe('self-healing supersession surfaces', () => {
       'utf8',
     );
 
-    expect(architecture).toContain('self-healing-contract/1.0.0');
-    expect(workPackage).toContain('self-healing-contract/1.0.0');
+    expect(architecture).toContain('self-healing-contract/1.2.0');
+    expect(workPackage).toContain('self-healing-contract/1.2.0');
     expect(architecture).toContain('/AGENTS.md@CURRENT_MAIN');
   });
 });

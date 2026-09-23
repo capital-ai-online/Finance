@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "QM-SH02-11A-RETRY-SAFE-INDEPENDENT-ASSURANCE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Independently assure the SH-02.11A RETRY_SAFE_OPERATION pre-activation Quality boundary on the same implementation generation already verified by Security, while keeping activation HELD.",
+  "workItemDE": "Die SH-02.11A-Qualitätsgrenze für RETRY_SAFE_OPERATION unabhängig auf derselben bereits von Security verifizierten Pre-Activation-Generation absichern und die Aktivierung weiterhin HELD halten.",
+  "priority": "P0",
+  "priorityReason": "RETRY_SAFE_OPERATION must remain HELD until same-generation independent Security and QM assurance are canonical.",
+  "projectId": "CAPITAL-AI-QM",
+  "projectFolder": "docs/projects/quality-management/",
+  "projectStage": "cross-cutting Quality assurance / no productive PVC transfer",
+  "baseBranch": "main",
+  "baseSha": "18c340bd1c946753c210f57f0b6104ead3bb6a64",
+  "branch": "agent/quality-management-sh02-11a-retry-safe-independent-assurance-20260923",
+  "assuranceTarget": {
+    "preactivationMergeGeneration": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
+    "preactivationPr": 1314,
+    "preactivationHead": "0be35d066c608d69ed9fb23294c64e15dc822065",
+    "securityAssurancePr": 1316,
+    "securityAssuranceHead": "54cc350af6df3da96f6f6a516e7a56c8425d4914",
+    "securityAssuranceMergeGeneration": "18c340bd1c946753c210f57f0b6104ead3bb6a64",
+    "currentMainAtStart": "18c340bd1c946753c210f57f0b6104ead3bb6a64",
+    "actionId": "RETRY_SAFE_OPERATION",
+    "requiredState": "HELD",
+    "contractVersion": "self-healing-contract/1.2.0",
+    "dependencyResilienceVersion": "dependency-resilience/1.0.0",
+    "implementationMutationSincePreactivation": false
+  },
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923.json",
+    ".ai/work-claims/SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION-20260923.json",
+    ".ai/work-claims/QM-SH02-10-INDEPENDENT-ASSURANCE-V3-20260923.json",
+    ".ai/work-claims/QM-SH02-11A-RETRY-SAFE-INDEPENDENT-ASSURANCE-20260923.json",
+    "docs/projects/quality-management/evidence/QM_SH02_11A_RETRY_SAFE_INDEPENDENT_ASSURANCE_2026-09-23.md",
+    "tests/unit/qmSh0211aRetrySafeIndependentAssurance.test.ts"
+  ],
+  "implementationBoundary": "Assurance-only. No OPS, Security, runtime, provider, workflow, deployment, retry activation, rollback/restore or Self-Healing implementation mutation.",
+  "authorityBoundary": "QM evaluates determinism, boundedness, evidence truthfulness and regression safety; it grants no activation, accepted-risk, merge, release, deployment or production authority.",
+  "acceptanceCriteria": [
+    "RETRY_SAFE_OPERATION remains HELD and automatic generic retry remains disabled.",
+    "Contract generations remain self-healing-contract/1.2.0 and dependency-resilience/1.0.0.",
+    "Only READ_ONLY and explicitly IDEMPOTENT operation classes are retry-safe.",
+    "SIDE_EFFECTING and PROTECTED operations fail closed before invocation.",
+    "DEPENDENCY_NATIVE and NO_AUTOMATIC_RETRY remain outside generic retry ownership.",
+    "Budget remains finite at maxAttempts=3, cooldownMs=500, timeoutMs=10000.",
+    "Kill switch self-healing.safe-retry and dependency-operation-readback remain mandatory.",
+    "Security #1316 and this QM return are independent evidence domains for the same pre-activation generation."
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

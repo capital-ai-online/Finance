@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-PR-POSTDEPLOY-SINGLE-WRITER-REGRESSION-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the second post-merge full-suite regression exposed after PR #1307 by superseding the stale post-deploy Vitest contract that still expected the retired PR Production Baseline body writer.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "76b3f91d70d753e6bb302cdd854d10e6f5765ee8",
+  "branch": "agent/operations-pr-postdeploy-single-writer-regression-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-PR-POSTDEPLOY-SINGLE-WRITER-REGRESSION-20260923.json",
+    "tests/unit/productionBaselinePostDeployReconciliation.test.ts"
+  ],
+  "origin": {
+    "mergedPr": 1307,
+    "mainCiRun": 35859453674,
+    "failingFile": "tests/unit/productionBaselinePostDeployReconciliation.test.ts",
+    "result": "528 test files passed; only this file failed with 8 stale assertions against the retired second writer."
+  },
+  "acceptanceCriteria": [
+    "Post-deploy relay tests assert verified CI deployment handoff into PR Decision Evidence Reconciler.",
+    "Relay owns no PR-body write, template repair, baseline mutation or Governance rerun authority.",
+    "Single-writer architecture remains unchanged.",
+    "Exact-head CI/Governance/Security pass.",
+    "Main full suite can proceed to deployment."
+  ],
+  "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
+}

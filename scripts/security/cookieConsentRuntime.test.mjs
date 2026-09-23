@@ -190,9 +190,19 @@ test('initialization config keeps opt-in and uses the native non-blocking settin
     return element;
   }
 
+  function findElementById(id) {
+    const queue = [...elements];
+    while (queue.length) {
+      const element = queue.shift();
+      if (element && element.id === id) return element;
+      if (Array.isArray(element?.children)) queue.push(...element.children);
+    }
+    return null;
+  }
+
   const document = {
     cookie: '',
-    getElementById: (id) => readyStyles.get(id) || elements.find((e) => e.id === id) || null,
+    getElementById: (id) => readyStyles.get(id) || findElementById(id),
     createElement,
     body: { appendChild: (element) => elements.push(element) },
   };
@@ -213,7 +223,7 @@ test('initialization config keeps opt-in and uses the native non-blocking settin
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.equal(config, undefined);
-  const trigger = elements.find((e) => e.id === 'capital-ai-cookie-settings');
+  const trigger = findElementById('capital-ai-cookie-settings');
   assert.ok(trigger);
 
   trigger.click();
@@ -229,8 +239,8 @@ test('initialization config keeps opt-in and uses the native non-blocking settin
   assert.equal(config.manageScriptTags, false);
   assert.equal(vendorPreferencesOpened, 0);
 
-  const analytics = elements.find((e) => e.id === 'capital-ai-cookie-analytics');
-  const save = elements.find((e) => e.id === 'capital-ai-cookie-save');
+  const analytics = findElementById('capital-ai-cookie-analytics');
+  const save = findElementById('capital-ai-cookie-save');
   assert.ok(analytics);
   assert.ok(save);
   analytics.checked = true;

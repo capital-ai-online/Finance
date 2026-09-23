@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923",
+  "status": "released",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Prepare the first SH-02.11 activation candidate RETRY_SAFE_OPERATION for independent Security/QM assurance while keeping activation HELD.",
+  "workItemDE": "Den ersten SH-02.11-Aktivierungskandidaten RETRY_SAFE_OPERATION für unabhängige Security-/QM-Assurance vorbereiten und die Aktivierung weiterhin HELD halten.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+  "branch": "agent/operations-sh02-11-retry-safe-preactivation-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-11-DEPENDENCY-READINESS-20260923.json",
+    ".ai/work-claims/OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/evidence/SH_02_11A_RETRY_SAFE_PREACTIVATION_2026-09-23.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "src/platform/Supervisor/dependencyResilience.ts",
+    "tests/unit/sh0211RetrySafePreactivation.test.ts"
+  ],
+  "activationCandidate": {
+    "actionId": "RETRY_SAFE_OPERATION",
+    "tier": "SH-1",
+    "requiredCurrentState": "HELD",
+    "targetStateAfterIndependentAssurance": "ENABLED",
+    "idempotencyBoundary": [
+      "READ_ONLY",
+      "IDEMPOTENT"
+    ],
+    "prohibitedIdempotency": [
+      "SIDE_EFFECTING",
+      "PROTECTED"
+    ],
+    "prohibitedResilienceOwner": [
+      "DEPENDENCY_NATIVE",
+      "NO_AUTOMATIC_RETRY"
+    ],
+    "killSwitch": "self-healing.safe-retry",
+    "verificationProbe": "dependency-operation-readback",
+    "budget": {
+      "maxAttempts": 3,
+      "cooldownMs": 500,
+      "timeoutMs": 10000
+    }
+  },
+  "assuranceGate": {
+    "security": "REQUIRED_FRESH",
+    "qm": "REQUIRED_FRESH",
+    "activationMutationAllowedBeforeBothPass": false
+  },
+  "acceptanceCriteria": [
+    "RETRY_SAFE_OPERATION remains HELD in this slice.",
+    "Only READ_ONLY or explicitly IDEMPOTENT operations are retry-safe.",
+    "SIDE_EFFECTING and PROTECTED operations fail closed before retry execution.",
+    "DEPENDENCY_NATIVE and NO_AUTOMATIC_RETRY ownership blocks the generic executor.",
+    "Budget remains maxAttempts=3, cooldownMs=500, timeoutMs=10000.",
+    "Kill switch and dependency-operation-readback remain mandatory.",
+    "Independent Security and QM assurance is required before a later HELD->ENABLED mutation."
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T14:11:28Z",
+  "releaseReason": "Associated SH-02.11A pre-activation PR #1314 was Human/CODEOWNER-merged as 7bcc6aee2700d6fa3f926ff8615b04cde136750c; successor coordination moved to independent Security/QM assurance.",
+  "terminalPullRequest": 1314,
+  "terminalMergeCommit": "7bcc6aee2700d6fa3f926ff8615b04cde136750c"
+}

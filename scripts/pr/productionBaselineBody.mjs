@@ -1,4 +1,5 @@
 import {
+  PR_TEMPLATE_VERSION,
   PRODUCTION_BASELINE_END,
   PRODUCTION_BASELINE_START,
   extractBaselineGeneratedAt,
@@ -39,10 +40,68 @@ function repairMissingProductionBaselineBlock(text, baseline, markers) {
     );
   }
 
+  const templateVersion = detectPrTemplateVersion(text);
+  if (templateVersion === PR_TEMPLATE_VERSION) {
+    const expectedHeadings = [
+      '## 1. 🧭 Entscheidung',
+      '## 2. ✅ Evidence',
+      '## 3. 🔍 Technical Evidence',
+    ];
+    const visibleHeadings = text.match(/^## .+$/gm) || [];
+    const machineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
+    const summaryIndex = text.indexOf(machineSummary);
+    const detailsStart = summaryIndex >= 0 ? text.lastIndexOf('<details>', summaryIndex) : -1;
+    const detailsEnd = summaryIndex >= 0 ? text.indexOf('</details>', summaryIndex) : -1;
+    const structureIsCanonical =
+      visibleHeadings.length === expectedHeadings.length &&
+      expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+      occurrenceCount(text, TERMINAL_BASELINE_HEADING) === 0 &&
+      occurrenceCount(text, machineSummary) === 1 &&
+      summaryIndex >= 0 &&
+      detailsStart >= 0 &&
+      detailsEnd >= 0 &&
+      detailsStart < summaryIndex &&
+      summaryIndex < detailsEnd;
+
+    if (!structureIsCanonical) {
+      fail(
+        'v1.8-PR-Body besitzt keine eindeutig kanonische Maschinen-Baseline-Grenze; ' +
+          'ein Legacy-##7-Fallback ist für v1.8 verboten.',
+      );
+    }
+
+    const managedContentStart = summaryIndex + machineSummary.length;
+    const managedContent = text.slice(managedContentStart, detailsEnd).trim();
+    const allowedMarkerFreeStates = new Set([
+      '',
+      '{{PRODUCTION_BASELINE_BLOCK}}',
+      'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    ]);
+    if (!allowedMarkerFreeStates.has(managedContent)) {
+      fail(
+        'v1.8-Maschinen-Baseline enthält markerfreien, aber nicht allowlisteten Inhalt; ' +
+          'Auto-Refresh bleibt fail-closed.',
+      );
+    }
+
+    const replacement = renderProductionBaselineBlock(baseline);
+    return {
+      body:
+        text.slice(0, managedContentStart).trimEnd() +
+        '\n\n' +
+        replacement +
+        '\n\n' +
+        text.slice(detailsEnd),
+      changed: true,
+      evidenceState: 'STALE',
+      baselineId: baseline.baselineId,
+    };
+  }
+
   const candidates = PRODUCTION_BASELINE_SECTION_PAIRS.filter(({ baseline: heading, next }) =>
     occurrenceCount(text, heading) === 1 && (next === null || occurrenceCount(text, next) === 1),
   );
-  if (candidates.length === 0 && detectPrTemplateVersion(text) !== null && occurrenceCount(text, TERMINAL_BASELINE_HEADING) === 0) {
+  if (candidates.length === 0 && templateVersion !== null && occurrenceCount(text, TERMINAL_BASELINE_HEADING) === 0) {
     const replacement = renderProductionBaselineBlock(baseline);
     return {
       body: `${text.trimEnd()}\n\n${TERMINAL_BASELINE_HEADING}\n\n${replacement}\n`,

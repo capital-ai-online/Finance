@@ -482,6 +482,7 @@ test('canonical current v1.8 Human Decision + Live Dashboard body is left unchan
     '# Human Decision PR',
     '',
     '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '> P2 🟡 Normal · PR-Klasse C · NONE ➖',
     '',
     '## 1. 🧭 Entscheidung',
     '| Frage | Ergebnis |',
@@ -499,7 +500,16 @@ test('canonical current v1.8 Human Decision + Live Dashboard body is left unchan
     '| Production Baseline | 🟢 PASS |',
     '',
     '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- **Priorität:** P2 🟡 Normal',
+    '- **Versionsimpact:** NONE ➖',
+    '- **Version-Manager-Check:** PASS — fixture evidence.',
+    '- **PR-Klasse:** C',
     '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '',
+    '</details>',
     '',
     '<details>',
     '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
@@ -545,6 +555,9 @@ test('normalizes only the observed current v1.8 P0-HIGHEST priority token', () =
     '<summary>Technische Details & Traceability</summary>',
     '',
     '- **Priorität:** P0-HIGHEST 🔴 Kritisch',
+    '- **Versionsimpact:** NONE ➖',
+    '- **Version-Manager-Check:** PASS — fixture evidence.',
+    '- **PR-Klasse:** C',
     '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
     '',
     '</details>',
@@ -568,6 +581,104 @@ test('normalizes only the observed current v1.8 P0-HIGHEST priority token', () =
   assert.match(result.body, /^> P0 🔴 Kritisch · PR-Klasse C · NONE ➖$/m);
   assert.match(result.body, /^- \*\*Priorität:\*\* P0 🔴 Kritisch$/m);
   assert.doesNotMatch(result.body, /P0-HIGHEST 🔴 Kritisch/);
+});
+
+
+test('repairs PR #1297-style v1.8 required metadata omissions from canonical banner and durable branch evidence', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# OPS-08-B-SH-02.10',
+    '',
+    '> 🧭 **Entscheidungsstatus: BLOCKED**',
+    '> P0 🔴 Kritisch · PR-Klasse C · PATCH 🩹',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- **Claim:** `OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922`',
+    '- **Merge-Modus:** HUMAN_MERGE_REQUIRED',
+    '',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, {
+    prClass: 'C',
+    durableClaimEvidence: [
+      'OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922',
+      '.ai/work-claims/OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922.json',
+    ],
+  });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.8-required-metadata-repaired');
+  assert.match(result.body, /^- \*\*Priorität:\*\* P0 🔴 Kritisch$/m);
+  assert.match(result.body, /^- \*\*Versionsimpact:\*\* PATCH 🩹$/m);
+  assert.match(result.body, /^- \*\*Version-Manager-Check:\*\* NOT_RUN /m);
+  assert.match(result.body, /^- \*\*PR-Klasse:\*\* C$/m);
+  assert.match(result.body, /^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja$/m);
+  assert.match(
+    result.body,
+    /- \*\*Dauerhafte Claim-Evidence:\*\* \.ai\/work-claims\/OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922\.json/,
+  );
+  assert.equal((result.body.match(/^- \*\*Priorität:\*\*/gm) || []).length, 1);
+  assert.equal((result.body.match(/^- \*\*Versionsimpact:\*\*/gm) || []).length, 1);
+});
+
+test('keeps current v1.8 required metadata repair fail-closed when the canonical banner cannot resolve missing values', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Ambiguous Human Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: BLOCKED**',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'current-v1.8-required-metadata-unresolved');
+  assert.equal(result.body, body);
 });
 
 test('repairs only the exact current v1.8 legacy baseline-section migration artifact', () => {
@@ -712,4 +823,72 @@ test('other malformed current v1.8 shapes remain fail-closed', () => {
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'current-v1.8-unsupported-shape');
+});
+test('repairs the exact PR #1298 hybrid v1.8 baseline shape without a second body architecture', () => {
+  const baseline = [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test1298`',
+    '- **Produktions-Commit:** `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`',
+    '- **Aktueller main-Commit:** `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`',
+    '- **PR-Head-Commit:** `cccccccccccccccccccccccccccccccccccccccc`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  ].join('\n');
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# FE-VOCABULARY-RETURN-01',
+    '',
+    '> 🧭 **Entscheidungsstatus: BLOCKED**',
+    '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Priorität:** P1 🟠 Hoch',
+    '- **Versionsimpact:** PATCH 🩹',
+    '- **Version-Manager-Check:** NOT_RUN — fixture.',
+    '- **PR-Klasse:** C',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    '',
+    '</details>',
+    '',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    baseline,
+    '',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.changed, true);
+  assert.equal(result.reason, 'current-v1.8-hybrid-baseline-section-repaired');
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.doesNotMatch(result.body, /NOT_RUN — wird durch die kanonische PR-Evidence-Automation/);
+  assert.match(result.body, /sha256:test1298/);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
 });
