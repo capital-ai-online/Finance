@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — merged landing/runtime/data/desktop/consent outcomes re-correlated on fresh CURRENT_MAIN; no productive domain ownership changes  
-**Baseline:** `main@aee799282298596a5f2d9140a4e805edf52783a0`  
+**Reconciliation:** 2026-09-23 — branded Roadmap Live Dashboard correlated to fresh CURRENT_MAIN; merged Vocabulary route return retained; no productive domain ownership changes  
+**Baseline:** `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -14,18 +14,35 @@
 
 Archive/superseded copies and historical non-terminal markers are evidence only. Executable work must resolve from CURRENT_MAIN and current Owner direction.
 
-## Current-main reconciliation — 2026-09-22
+## Current-main reconciliation — 2026-09-23
 
-This bounded status-only reconciliation records merged FE evidence without changing runtime behavior:
+This FE projection is re-correlated to `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`.
 
-- PR #1226 → `de035ee4fdec2fdc270745d4966a6fd484f9e7c2`: extended landing/legal paths/assets synchronized;
-- PR #1227 → `b1e6b1259641f767f11ea14385ea60a7911ec6ae`: verified data binding integrated into the landing composition;
-- PR #1241 → `9c8a3e80c4451ed0b6ea45f368175604608f6f4b`: current FRONTEND graphical generation promoted into productive Finance runtime;
-- PR #1243 → `3a1e43743fed486668371dd9251d19c66e9397d3`: verified data binding re-correlated to the current `f2a101` landing generation;
-- PR #1245 → `4a095d7e267b284ed4456750ad031457a2ef9a0a`: native desktop landing responsiveness fixed and merged;
-- PR #1261 → `aee799282298596a5f2d9140a4e805edf52783a0`: incognito first-visit cookie interaction unblocked without changing FE/domain ownership.
+- PR #1298 is Human/CODEOWNER-merged; the former `AppRoutes.tsx` writer overlap for Vocabulary return is terminal.
+- PR #1297 is Human/CODEOWNER-merged; SH-02.10 is no longer an open PR and is not projected as active FE work.
+- Open PR #1300 remains an independent FE consent writer with no changed-file overlap against the Roadmap dashboard slice.
+- Open PR #1299 remains a GOV Vocabulary writer and does not transfer Governance ownership to FE.
+- Production/deployment state is not inferred from repository merge state; the Roadmap UI reads the non-secret `/healthz` deployment identity independently.
 
-The former `main@4a095d7e...` correlation point remains valid historical merge evidence, but it is no longer CURRENT_MAIN. Production/deployment readback is not inferred from repository merge state and remains owner-correct outside FE.
+## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
+
+**Canonical identity:** `FE-ROADMAP-LIVE-01`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Scope:** read-only presentation/aggregation of canonical current-state evidence; no productive PVC ownership  
+**Status:** `IMPLEMENTED_ON_BRANCH / OWNER_CORRECT_OPS_DIRECT_ROUTE_BRANCH_ACTIVE`  
+**Fresh baseline:** `main@7bcc6aee2700d6fa3f926ff8615b04cde136750c`  
+**Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/shared/branding/CapitalAiLogo.tsx`, `src/shared/ui/Card.tsx`
+
+Fresh Human/Owner direction requests a real `/roadmap` page that projects the current Roadmap and all actively processed work packages. The implementation remains a non-authorizing derived view:
+
+- canonical task state remains in each owner-correct `docs/projects/<project>/ROADMAP.md` or exact provider-backed PR/branch evidence;
+- the UI snapshot is bound to the exact correlated CURRENT_MAIN SHA and is never a second task registry;
+- open PRs and active exclusive branches are shown only as provider evidence, not as instruction or ownership authority;
+- `CapitalAiLogo` uses the canonical brandmark geometry; colors/typography/roadmap roles resolve from `design-tokens.json` and the existing CSS token projection;
+- Production identity is read from same-origin `/healthz` and remains explicitly separate from repository CURRENT_MAIN;
+- direct production deep-link fallback for `/roadmap` is owner-correctly active in OPS PR #1315 (`agent/operations-roadmap-direct-route-20260923`); FE does not absorb OPS runtime ownership.
+
+**Exit:** exact-head FE tests/build are green; `/roadmap` is wired in the client router; the owner-correct OPS direct-route fallback reaches its own Human/CODEOWNER merge gate; current-main/open-writer correlation remains PASS; Human/CODEOWNER merge remains required.
 
 ## FE-LF-01-UPSTREAM-ARCH — Current presentation architecture adoption
 
@@ -60,7 +77,7 @@ After #1206 merged, the owner clarified the device contract: the synchronized mo
 **Scope:** Frontend presentation only; affected rendered `PVC-01..PVC-18` output may be used as presentation/adaptation scope; no productive PVC ownership  
 **Desktop breakpoint:** `>=1024px`  
 **Status:** `DONE_MAIN / TERMINAL`  
-**Merged evidence:** PR #1245 → `4a095d7e267b284ed4456750ad031457a2ef9a0a`; contained in `main@aee799282298596a5f2d9140a4e805edf52783a0`
+**Merged evidence:** PR #1245 → `4a095d7e267b284ed4456750ad031457a2ef9a0a`; contained in current main ancestry
 
 The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance adapts only desktop presentation through `frontend-port.css`:
 
@@ -71,8 +88,6 @@ The pinned upstream `ReferenceApp` remains unchanged and source-locked. Finance 
 - when a rendered surface consumes an owner-correct PVC output, FE may adapt its own layout, responsive behavior, accessibility and interaction while the PVC Primary Owner and domain semantics remain unchanged;
 - every upstream sync requires the desktop adapter and validates the current `src/App.tsx` preview-shell markers;
 - marker drift fails closed with a desktop-adapter correlation error so a future sync cannot silently restore the phone preview on desktop.
-
-The hourly upstream sync therefore keeps future source visibility through review PRs while requiring desktop re-correlation before changed preview-shell architecture is accepted.
 
 ## FE-LF-03-RUNTIME-PROMOTION-F2A101 — Current graphical generation
 
@@ -108,4 +123,4 @@ FINTECH provides verified scoring/data contracts; OPS owns runtime/deployment re
 
 ## Project exit gate
 
-One active FE architecture; upstream visual source pinned and hash-verifiable; canonical root bound to the pinned graphical composition; Finance branding authority preserved with logo-only upstream geometry; no fixture promoted to productive authority; merged FE-LF-02/03 outcomes are contained in current main. Productive deployment/readback remains a separate owner-correct concern and is not asserted from FE merge evidence.
+One active FE architecture; canonical branding remains source-bound; `FE-ROADMAP-LIVE-01` is a read-only non-authorizing projection; upstream graphical composition remains pinned/hash-verifiable; no fixture becomes productive authority; productive deployment/readback stays an owner-correct OPS concern.
