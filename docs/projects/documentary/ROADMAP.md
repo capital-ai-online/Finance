@@ -1,12 +1,12 @@
 # CAPITAL-AI-DOC — Canonical Roadmap
 
-**Baseline:** `main@99b957b84ba99fb7847024655b137c96814a451c`
+**Baseline:** `main@6be29d46879ad413084a5e3027ac3adc77ce6f9b`
 
 **Project:** `CAPITAL-AI-DOC`  
 **Folder:** `docs/projects/documentary/`  
 **Owner/PVC:** `CAPITAL-AI-DOC / PVC-03`  
 **Status:** `ACTIVE — TEMPORARY CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** `2026-09-17 — historical task activation removed`  
+**Reconciliation:** `2026-09-24 — fresh Owner-directed version hygiene and archive-integrity work activated`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -19,6 +19,7 @@ No historical Documentary item becomes active because it was previously `NOW`, `
 
 ## Current bounded state
 
+- `DOC-VERSION-ARCHIVE-INTEGRITY-01` — `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`: removes historical component-version literals from maintenance closure, binds current version projections to `manifest.json#version`, and adds complete read-only tamper-evident `docs/archive/**` verification to the existing main-push Documentary workflow. Legacy sanitizer source deletion remains dependency-held until FE/OPS consumers are removed.
 - `WP-DOC-14` — D8 Migration Execution Contract & Dry-Run: `DONE_MAIN / TERMINAL` through Human-merged PR #928; dry-run evidence grants no physical migration authority.
 - `WP-DOC-15` — Documentary Quality/SLO model: `DONE_MAIN / TERMINAL` through Human-merged PR #935; point-in-time evaluation is not temporal SLO proof or mutation authority.
 - `WP-DOC-16` — Documentary Plugin Extension Model: `DONE_MAIN / TERMINAL` through Human-merged PR #938; no second registry/provider/connector plane.

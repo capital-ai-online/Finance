@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 2
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Before-Snapshot ohne persistierte Zugangsdaten auschecken
@@ -72,6 +72,14 @@ jobs:
       - name: Abhängigkeiten für trusted Analyse installieren
         if: steps.freshness.outputs.current == 'true'
         run: npm ci --ignore-scripts
+
+      - name: Documentary-Komponentenversion fail-closed verifizieren
+        if: steps.freshness.outputs.current == 'true'
+        run: npm run documentary:version:verify
+
+      - name: Vollständige Archive-Integrität und historische Provenance fail-closed verifizieren
+        if: steps.freshness.outputs.current == 'true'
+        run: npm run documentary:archive:verify
 
       - name: Exakten before..after Impact-Plan erzeugen
         if: steps.freshness.outputs.current == 'true'

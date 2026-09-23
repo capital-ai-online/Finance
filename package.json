@@ -52,9 +52,9 @@
     "vocabulary:governance:check": "npm run vocabulary:wording:check && npm run vocabulary:wiki:check && npm run vocabulary:migration:check && npm run vocabulary:closure:check",
     "vocabulary:governance:prepr": "npm run vocabulary:wording:test && npm run vocabulary:governance:check && npm run docs:hygiene:check && npm run repository:quality:check",
     "documentary:maintenance": "tsx scripts/automation/runDocumentaryMaintenanceControlLoop.ts",
-    "documentary:maintenance:test": "vitest run tests/unit/archiveRetentionAgent.test.ts tests/unit/documentarySemanticFreshness.test.ts tests/unit/documentaryMaintenanceAgent.test.ts tests/unit/documentaryMaintenanceOrchestrator.test.ts tests/unit/documentaryMaintenanceGitHost.test.ts tests/unit/documentaryMaintenanceObservability.test.ts",
+    "documentary:maintenance:test": "vitest run tests/unit/archiveRetentionAgent.test.ts tests/unit/documentaryArchiveIntegrity.test.ts tests/unit/documentaryVersionIntegrity.test.ts tests/unit/documentarySemanticFreshness.test.ts tests/unit/documentaryMaintenanceAgent.test.ts tests/unit/documentaryMaintenanceOrchestrator.test.ts tests/unit/documentaryMaintenanceGitHost.test.ts tests/unit/documentaryMaintenanceObservability.test.ts",
     "documentary:maintenance:validate": "node scripts/automation/validateDocumentaryMaintenanceControlLoop.mjs",
-    "documentary:maintenance:prepr": "npm run documentary:maintenance:test && npm run lint && npm run docs:hygiene:check && npm run governance:control-plane && npm run repository:quality:check && npm run documentary:maintenance:validate",
+    "documentary:maintenance:prepr": "npm run documentary:maintenance:test && npm run lint && npm run docs:hygiene:check && npm run documentary:version:verify && npm run documentary:archive:verify && npm run governance:control-plane && npm run repository:quality:check && npm run documentary:maintenance:validate",
     "sandbox:policy:test": "node --test scripts/automation/chatGptSandboxPolicy.test.mjs",
     "sandbox:prepr": "node scripts/automation/runChatGptSandboxPrePr.mjs",
     "sandbox:prepr:full": "node scripts/automation/runChatGptSandboxPrePr.mjs --full",
@@ -73,7 +73,9 @@
     "documentary:impact:plan": "tsx scripts/automation/planDocumentaryChangeImpact.ts",
     "documentary:autosync:plan": "tsx scripts/automation/planDocumentaryAutoSync.ts",
     "documentary:handoff:build": "tsx scripts/automation/buildDocumentaryMaintenanceHandoff.ts",
-    "documentary:convergence:evidence": "tsx scripts/automation/buildDocumentaryConvergenceEvidence.ts"
+    "documentary:convergence:evidence": "tsx scripts/automation/buildDocumentaryConvergenceEvidence.ts",
+    "documentary:archive:verify": "tsx scripts/automation/verifyDocumentaryArchiveIntegrity.ts",
+    "documentary:version:verify": "node scripts/automation/verifyDocumentaryVersionIntegrity.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

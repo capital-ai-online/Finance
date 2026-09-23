@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DOC-VERSION-ARCHIVE-INTEGRITY-20260924-V2",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge Documentary component version projections on manifest.json#version and add complete tamper-evident archive integrity verification to the existing current-main Documentary workflow.",
+  "startedAt": "2026-09-24T01:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "lastSyncedMainSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "branch": "documentary/current-version-archive-integrity-20260924",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "priority": "P1",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DOC-VERSION-ARCHIVE-INTEGRITY-20260924-V2.json",
+    ".github/workflows/documentary-change-impact.yml",
+    "docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md",
+    "docs/archive/ARCHIVE_INTEGRITY_INDEX.json",
+    "docs/projects/documentary/ROADMAP.md",
+    "docs/projects/documentary/work-packages/DOC_VERSION_ARCHIVE_INTEGRITY_01_2026-09-24.md",
+    "package.json",
+    "scripts/automation/validateDocumentaryMaintenanceControlLoop.mjs",
+    "scripts/automation/verifyDocumentaryArchiveIntegrity.ts",
+    "scripts/automation/verifyDocumentaryVersionIntegrity.mjs",
+    "src/platform/Documentary/ArchiveIntegrity/ArchiveIntegrityVerifier.ts",
+    "src/platform/Documentary/README.md",
+    "src/platform/Documentary/manifest.json",
+    "tests/unit/documentaryArchiveIntegrity.test.ts",
+    "tests/unit/documentaryVersionIntegrity.test.ts"
+  ],
+  "scopeBoundary": [
+    "Read-only version/archive verification only; no archive deletion or restore authority.",
+    "Existing documentary-change-impact workflow remains the single background Documentary workflow.",
+    "Legacy documentHygiene/documentSanitizer source deletion remains dependency-held for later FE/OPS consumer retirement.",
+    "No platform package version mutation; platform version remains governed by the 10-merge cadence."
+  ],
+  "exitEvidence": [
+    "Documentary component authority is manifest.json#version 1.22.0 and current projections match.",
+    "Every pre-existing docs/archive file is covered by exact Git blob identity.",
+    "BYTE_PRESERVED manifests verify historical source commit/blob identity.",
+    "Main-push Documentary workflow fails closed before AUTO_SYNC on version/archive drift."
+  ],
+  "acceptanceCriteria": [
+    "No hard-coded historical Documentary version literal in maintenance validator.",
+    "No unexplained archive file-set or content drift passes.",
+    "No second archive mutation controller or workflow.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

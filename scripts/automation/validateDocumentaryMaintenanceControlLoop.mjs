@@ -144,11 +144,13 @@ for (const [name, expected] of Object.entries({
   'repository:quality:check': 'tsx scripts/automation/validateRepositoryQuality.ts',
   'documentary:maintenance': 'tsx scripts/automation/runDocumentaryMaintenanceControlLoop.ts',
   'documentary:maintenance:validate': 'node scripts/automation/validateDocumentaryMaintenanceControlLoop.mjs',
+  'documentary:archive:verify': 'tsx scripts/automation/verifyDocumentaryArchiveIntegrity.ts',
+  'documentary:version:verify': 'node scripts/automation/verifyDocumentaryVersionIntegrity.mjs',
   'sandbox:prepr': 'node scripts/automation/runChatGptSandboxPrePr.mjs',
 })) {
   if (packageJson.scripts?.[name] !== expected) fail(`package.json script ${name} is missing or unexpected.`);
 }
-const expectedPrePr = 'npm run documentary:maintenance:test && npm run lint && npm run docs:hygiene:check && npm run governance:control-plane && npm run repository:quality:check && npm run documentary:maintenance:validate';
+const expectedPrePr = 'npm run documentary:maintenance:test && npm run lint && npm run docs:hygiene:check && npm run documentary:version:verify && npm run documentary:archive:verify && npm run governance:control-plane && npm run repository:quality:check && npm run documentary:maintenance:validate';
 if (packageJson.scripts?.['documentary:maintenance:prepr'] !== expectedPrePr) {
   fail('documentary:maintenance:prepr must run the exact targeted test/type/hygiene/governance/repository-quality/closure sequence.');
 }
@@ -211,7 +213,17 @@ for (const [documentId, documentPath] of EXPECTED_DOCUMENTS) {
 }
 
 const documentaryManifest = json('src/platform/Documentary/manifest.json');
-if (documentaryManifest.version !== '1.13.0') fail(`Documentary component version must be 1.13.0, got ${documentaryManifest.version}.`);
+const documentaryComponentVersion = String(documentaryManifest.version ?? '');
+if (!/^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$/.test(documentaryComponentVersion)) {
+  fail(`Documentary manifest version is not canonical SemVer: ${documentaryComponentVersion}.`);
+}
+if (documentaryManifest.versionAuthority?.componentVersion !== 'manifest.json#version') {
+  fail('Documentary manifest must remain the sole component-version authority.');
+}
+const documentaryReadme = read('src/platform/Documentary/README.md');
+if (!documentaryReadme.includes(`Version: ${documentaryComponentVersion}`)) {
+  fail(`Documentary README version projection must equal manifest authority ${documentaryComponentVersion}.`);
+}
 for (const contract of [
   'Discovery/SemanticFreshnessAnalyzer.ts',
   'Agents/DocumentaryMaintenanceAgent.ts',
