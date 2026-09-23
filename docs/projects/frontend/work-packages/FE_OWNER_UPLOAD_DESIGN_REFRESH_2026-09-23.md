@@ -29,7 +29,7 @@ Adopt the new graphical FRONTEND generation while applying these explicit constr
 ### Graphical adoption
 
 - added a Finance presentation adapter for recognizable asset logos;
-- MarketOverview uses the new logo treatment;
+- MarketOverview, AllMarkets, AssetDetail and Subclass surfaces use the new logo treatment;
 - added the new Fear & Greed / Market Sentiment graphical architecture between KeyPillars and MarketOverview;
 - retained the uploaded gauge, sector-switch, history-panel and driver-panel visual concepts.
 
@@ -58,7 +58,7 @@ The Altcoin Pattern Trooper is deliberately **not** moved into the landing now. 
 ## Exit gate
 
 - no `/universe` link or `data-public-navigation="universe"` in the public Header;
-- no `asset.aiScore` or `asset.aiRating` consumption in MarketOverview;
+- no `asset.aiScore` or `asset.aiRating` consumption in MarketOverview or AssetDetail; AssetDetail exposes only the FINTECH scoring-authority boundary;
 - new Sentiment UI present with `data-local-scoring="disabled"`;
 - no hard-coded sentiment category score table or synthetic history generator in the promoted runtime adapter;
 - no CryptoPatternTrooper import in the landing composition;
