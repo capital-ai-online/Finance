@@ -16,7 +16,10 @@ describe('Roadmap dashboard projection', () => {
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'BEHIND_CORRELATED_MAIN',
+      'CURRENT_MAIN_DEPLOY_FAILED',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.failedDeployId).toBe(
+      'dep-daq378mk1f9s738adt70',
     );
   });
 
@@ -83,6 +86,10 @@ describe('Roadmap dashboard projection', () => {
       'production-covered',
     );
     expect(integration('AUTH-REGISTRATION-PROFILE')?.state).toBe('main-only');
+    expect(integration('OPS-DEPLOY-98C8889')?.state).toBe('main-only');
+    expect(integration('OPS-DEPLOY-98C8889')?.detail).toContain(
+      'SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING',
+    );
   });
 
   it('uses only canonical branding and shared presentation contracts', () => {
