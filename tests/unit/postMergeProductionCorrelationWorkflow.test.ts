@@ -34,7 +34,7 @@ describe('post-merge production correlation workflow', () => {
   it('treats healthy ancestor lag below a five-merge boundary as queued rather than drift', () => {
     expect(workflow).toContain("['CURRENT_MAIN', 'ANCESTOR', 'PRE_EPOCH'].includes(productionRelation)");
     expect(workflow).toContain("'DEPLOYMENT_QUEUED'");
-    expect(workflow).toContain("'DEPLOYMENT_DUE'");
+    expect(workflow).toContain('DEPLOYMENT_DUE');
     expect(workflow).toContain('5-merge deployment boundary is due');
     expect(workflow).toContain('Expected cadence lag is not Production drift.');
   });
