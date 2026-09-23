@@ -41,7 +41,7 @@
     "Dockerfile",
     "render.yaml",
     "tests/unit/authRegistrationProfileConvergence.test.ts",
-    "tests/unit/authChallengeRemoval.test.ts",
+    "tests/unit/auth*Removal.test.ts",
     "tests/unit/passwordRecoveryLogin.test.ts",
     "tests/unit/authPrimaryLoginRegression.test.ts",
     "tests/unit/frontendExtendedWebdesign.test.ts",
