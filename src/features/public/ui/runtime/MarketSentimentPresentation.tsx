@@ -61,6 +61,77 @@ type NewsEvidenceState =
   | { state: 'ready'; items: VerifiedNewsEvidenceItem[]; provider: string | null }
   | { state: 'unavailable'; items: VerifiedNewsEvidenceItem[]; provider: string | null };
 
+type FintechProjectionState =
+  | { state: 'loading'; projection: null }
+  | { state: 'ready'; projection: MarketSentimentProjection }
+  | { state: 'unavailable'; projection: null };
+
+const FINTECH_SENTIMENT_PROJECTION_VERSION = 'market-sentiment-projection/1.0.0';
+const FINTECH_SENTIMENT_CONTRACT_VERSION = 'sentiment-feature-contract/1.0.0';
+
+function parseFintechSentimentProjection(body: unknown): MarketSentimentProjection | null {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const value = body as Record<string, unknown>;
+  if (
+    value.projectionVersion !== FINTECH_SENTIMENT_PROJECTION_VERSION
+    || value.contractVersion !== FINTECH_SENTIMENT_CONTRACT_VERSION
+    || value.category !== 'KRYPTO'
+    || value.authority !== 'RESEARCH_CONTEXT_ONLY'
+    || value.scoreEligible !== false
+    || value.executionEligible !== false
+  ) {
+    return null;
+  }
+
+  const status = value.status;
+  if (status !== 'READY' && status !== 'NOT_COMPUTABLE' && status !== 'SOURCE_UNAVAILABLE') return null;
+
+  const rawScore = value.score;
+  if (status === 'READY' && (typeof rawScore !== 'number' || !Number.isFinite(rawScore))) return null;
+  if (status !== 'READY' && rawScore !== null) return null;
+
+  const history = Array.isArray(value.history30d)
+    ? value.history30d.filter((point): point is MarketSentimentHistoryPoint => {
+        if (!point || typeof point !== 'object') return false;
+        const candidate = point as Record<string, unknown>;
+        return typeof candidate.observedAt === 'string'
+          && typeof candidate.score === 'number'
+          && Number.isFinite(candidate.score);
+      })
+    : [];
+
+  const drivers = Array.isArray(value.drivers)
+    ? value.drivers.flatMap((driver) => {
+        if (!driver || typeof driver !== 'object') return [];
+        const candidate = driver as Record<string, unknown>;
+        if (typeof candidate.title !== 'string' || typeof candidate.description !== 'string') return [];
+        const direction = candidate.direction;
+        return [{
+          title: candidate.title,
+          description: candidate.description,
+          direction: direction === 'up' || direction === 'down' || direction === 'neutral' ? direction : undefined,
+        }];
+      })
+    : [];
+
+  const evidenceIds = Array.isArray(value.evidenceIds)
+    ? value.evidenceIds.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : [];
+
+  return {
+    category: 'KRYPTO',
+    status,
+    score: typeof rawScore === 'number' ? rawScore : null,
+    label: typeof value.label === 'string' ? value.label : null,
+    summary: typeof value.summary === 'string' ? value.summary : null,
+    history30d: history,
+    drivers,
+    modelVersion: typeof value.modelVersion === 'string' ? value.modelVersion : null,
+    evidenceIds,
+    observedAt: typeof value.observedAt === 'string' ? value.observedAt : null,
+  };
+}
+
 const CATEGORY_ASSET_CLASS: Partial<Record<MarketSentimentCategory, string>> = {
   KRYPTO: 'crypto',
   AKTIEN: 'stock',
@@ -165,6 +236,10 @@ export function MarketSentimentPresentation({ projections = {}, onExploreMarkets
     items: [],
     provider: null,
   });
+  const [fintechProjection, setFintechProjection] = useState<FintechProjectionState>({
+    state: 'loading',
+    projection: null,
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -186,6 +261,19 @@ export function MarketSentimentPresentation({ projections = {}, onExploreMarkets
         setNewsEvidence({ state: 'unavailable', items: [], provider: null });
       });
 
+    void fetchAuthenticatedNews('/api/news/sentiment-projection?limit=20', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('fintech-sentiment-projection-' + response.status);
+        const parsed = parseFintechSentimentProjection(await response.json().catch(() => null));
+        if (!parsed) throw new Error('fintech-sentiment-projection-invalid-payload');
+        setFintechProjection({ state: 'ready', projection: parsed });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.warn('[MarketSentimentPresentation] FINTECH sentiment projection unavailable:', error);
+        setFintechProjection({ state: 'unavailable', projection: null });
+      });
+
     return () => controller.abort();
   }, []);
 
@@ -198,9 +286,16 @@ export function MarketSentimentPresentation({ projections = {}, onExploreMarkets
     ])) as Partial<Record<MarketSentimentCategory, MarketSentimentProjection>>;
   }, [newsEvidence]);
 
+  const fintechProjections = useMemo<Partial<Record<MarketSentimentCategory, MarketSentimentProjection>>>(
+    () => fintechProjection.state === 'ready'
+      ? { KRYPTO: fintechProjection.projection }
+      : {},
+    [fintechProjection],
+  );
+
   const effectiveProjections = useMemo(
-    () => ({ ...evidenceProjections, ...projections }),
-    [evidenceProjections, projections],
+    () => ({ ...evidenceProjections, ...fintechProjections, ...projections }),
+    [evidenceProjections, fintechProjections, projections],
   );
   const projection = effectiveProjections[selectedCategory] ?? null;
   const score = clampScore(projection?.score ?? null);
