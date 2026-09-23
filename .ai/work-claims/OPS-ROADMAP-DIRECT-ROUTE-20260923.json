@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-ROADMAP-DIRECT-ROUTE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Provide the owner-correct production SPA fallback for the FE Roadmap Dashboard /roadmap route without adding it to the SEO public/prerender contract.",
+  "workItemDE": "Den owner-korrekten Production-SPA-Fallback für die FE-Roadmap-Dashboard-Route /roadmap bereitstellen, ohne sie in den SEO-Public-/Prerender-Vertrag aufzunehmen.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "baseBranch": "main",
+  "baseSha": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
+  "branch": "agent/operations-roadmap-direct-route-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-ROADMAP-DIRECT-ROUTE-20260923.json",
+    "docs/projects/operations/work-packages/OPS_ROADMAP_DIRECT_ROUTE_2026-09-23.md",
+    "server/middleware/seoUrlNormalize.ts",
+    "server/runtime/spaFallback.ts",
+    "tests/unit/roadmapProductionRoute.test.ts"
+  ],
+  "dependency": "FE-ROADMAP-LIVE-01 client route on frontend/roadmap-live-dashboard-v2-20260923",
+  "exitEvidence": [
+    "roadmapProductionRoute.test.ts passes on exact head",
+    "ordinary required checks pass on exact head",
+    "/roadmap is classified as APPLICATION_SPA_PATHS and serves the trusted root SPA entry document",
+    "/roadmap is not added to PUBLIC_SPA_PATHS, sitemap or prerender SEO contract"
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
