@@ -43,11 +43,16 @@
       1298,
       1299,
       1300,
-      1302
+      1302,
+      1303,
+      1304
     ],
     "changedFileOverlap": "NONE_AFTER_SCOPE_REDUCTION",
-    "semanticOverlap": "PR #1302 owns the canonical SH-02.10 work-package/current-main status projection. This branch no longer mutates that path. PR #1302 must re-correlate its terminal/status statements after this implementation generation before its own merge if this PR lands first.",
-    "note": "Changed-file overlap with PR #1302 was removed by restoring the work-package path to CURRENT_MAIN. #1298–#1300 remain non-overlapping."
+    "semanticDependencies": [
+      "PR #1302 owns the SH-02.10 current-main/work-package status projection and must re-correlate terminal statements if this implementation lands first.",
+      "PR #1303 (QM) and PR #1304 (SEC) are independent assurance evidence for the pre-#1305 SH-02.10 generation; they cannot be treated as assurance for this new implementation generation without explicit re-correlation."
+    ],
+    "note": "Changed-file overlap with #1302 was removed by restoring the work-package path to CURRENT_MAIN. #1298–#1300, #1303 and #1304 are changed-file disjoint."
   },
   "dependencyResolution": {
     "sh02_9": "TERMINAL on main",
