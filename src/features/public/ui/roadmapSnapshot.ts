@@ -183,7 +183,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       sourceType: 'canonical-roadmap',
       detail: 'Repository-side integration may advance, but only technically evidenced and Human-listening-PASS audio may be consumed.',
     },
-  ] satisfies RoadmapWorkPackage[],
+  ] as RoadmapWorkPackage[],
   integrationLedger: [
     {
       id: 'DOC-ROADMAP-CORRELATION',
