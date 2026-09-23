@@ -18,19 +18,20 @@ describe('authenticated subscription readback contract', () => {
     expect(source).not.toContain('?userId=');
   });
 
-  it('keeps Dashboard and the canonical subscription surface on authenticated readback', () => {
+  it('keeps Dashboard readback for existing account state while pricing presentation is archived', () => {
     const dashboard = readRepoFile('src/app/dashboard/Dashboard.tsx');
     const compatibility = readRepoFile('src/components/Abonnements.tsx');
     const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
 
     expect(dashboard).toContain('readAuthenticatedSubscriptionTier');
-    expect(subscriptions).toContain('readAuthenticatedSubscriptionTier');
+    expect(subscriptions).not.toContain('readAuthenticatedSubscriptionTier');
+    expect(subscriptions).toContain('Pricing-Modell archiviert');
     expect(compatibility).toContain("export { Abonnements } from '../features/billing/ui/Abonnements'");
 
     for (const source of [dashboard, subscriptions, compatibility]) {
       expect(source).not.toContain('user-subscription?email=');
       expect(source).not.toContain('user-subscription?userId=');
-      expect(source).not.toContain('fetch(`/api/stripe/user-subscription');
+      expect(source).not.toContain('fetch(\`/api/stripe/user-subscription');
     }
   });
 
@@ -49,11 +50,12 @@ describe('authenticated subscription readback contract', () => {
 
   it('does not issue authenticated subscription reads for guest sessions', () => {
     const dashboard = readRepoFile('src/app/dashboard/Dashboard.tsx');
-    const subscriptions = readRepoFile('src/features/billing/ui/Abonnements.tsx');
-
     expect(dashboard).toContain("userSession.type === 'registered' && userSession.id");
-    expect(subscriptions).toContain('if (!userId) {');
-    expect(subscriptions).toContain('if (userId) void synchronizeTier();');
-    expect(subscriptions).toContain('if (!checkoutReturn || !userId) return;');
+  });
+
+  it('does not trust historical checkout return parameters as tier authority', () => {
+    const dashboard = readRepoFile('src/app/dashboard/Dashboard.tsx');
+    expect(dashboard).toContain('if (payment || plan)');
+    expect(dashboard).not.toContain("subscriptionTier: plan as UserUI.UserProfile['subscriptionTier']");
   });
 });

@@ -38,28 +38,18 @@ interface ComplianceExporterProps {
   capital: number;
   selectedSymbol: string;
   userEmail?: string;
-  subscriptionTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
-  onUpgradeClick?: () => void;
 }
 
-export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscriptionTier, onUpgradeClick }: ComplianceExporterProps) {
+export function ComplianceExporter({ capital, selectedSymbol, userEmail }: ComplianceExporterProps) {
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  const isEnterprise = subscriptionTier === 'Enterprise';
-
   const handleExportClick = () => {
-    if (!isEnterprise) {
-      setError("Exports sind erst ab der Version ENTERPRISE ermöglicht. Bitte schalten Sie das Enterprise-Abonnement frei.");
-      if (onUpgradeClick) onUpgradeClick();
-      return;
-    }
-
-    // The browser tier is only a presentation/UX pre-filter. The actual export grant is
-    // resolved in PdfExportModal from the authenticated server-side credit/subscription ledger.
-    // Never fall back to direct client-side generation when identity metadata is absent.
+    // Pricing is archived. Presentation access is no longer tier-gated.
+    // The existing PdfExportModal remains responsible for server-side authorization/credits.
+    setError(null);
     setShowExportModal(true);
   };
 
@@ -590,7 +580,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
             ) : (
               <>
                 <FileDown size={15} className="animate-bounce" />
-                <span>PDF-Report Exportieren {!isEnterprise && '(Enterprise)'}</span>
+                <span>PDF-Report exportieren</span>
               </>
             )}
           </button>

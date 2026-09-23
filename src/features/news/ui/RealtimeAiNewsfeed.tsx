@@ -4,8 +4,6 @@ import { fetchAuthenticatedNews } from '../authenticatedNewsFetch';
 import { VerifiedNewsFeed } from './VerifiedNewsFeed';
 
 interface RealtimeAiNewsfeedProps {
-  subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
-  onUpgradeClick: () => void;
   selectedSymbol?: string;
   searchQuery?: string;
   categoryFilter?: string;
@@ -145,7 +143,7 @@ export function RealtimeAiNewsfeed(props: RealtimeAiNewsfeedProps) {
           <ShieldCheck className="h-4 w-4" />
           <span>Evidence-only Newsfeed · Multi-Asset · Public REST + GDELT · kein direkter Score-Impact</span>
         </div>
-        <span className="text-[10px] font-mono uppercase tracking-wide text-white/35">Tier: {props.subscriptionTier}</span>
+        <span className="text-[10px] font-mono uppercase tracking-wide text-white/35">Abo-unabhängige Sichtbarkeit</span>
       </div>
 
       <div className="rounded-xl border border-white/10 bg-black/35 p-3 sm:p-4">

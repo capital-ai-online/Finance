@@ -1,28 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import type { SubscriptionTier } from '../../../config/subscriptionEntitlements';
 import { Abonnements } from './Abonnements';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentTier: SubscriptionTier;
-  onUpdateTier: (tier: SubscriptionTier) => void;
-  email: string;
-  userId?: string;
 }
 
 /**
- * Modal projection of the canonical billing surface. It intentionally reuses Abonnements so the
- * modal cannot grow a second plan matrix, pricing calculation or entitlement authority.
+ * Compatibility modal for the archived pricing surface.
+ * There is no plan selection, checkout or tier mutation in this projection.
  */
 export function SubscriptionModal({
   isOpen,
   onClose,
-  currentTier,
-  onUpdateTier,
-  email,
-  userId,
 }: SubscriptionModalProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
@@ -53,26 +44,25 @@ export function SubscriptionModal({
       >
         <header className="mb-4 flex items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div>
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-brand-primary">Subscription</p>
-            <h2 id="subscription-dialog-title" className="text-lg font-black text-white">Tarife und Abonnement verwalten</h2>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-brand-primary">
+              Pricing Lifecycle
+            </p>
+            <h2 id="subscription-dialog-title" className="text-lg font-black text-white">
+              Pricing archiviert
+            </h2>
           </div>
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Tarifdialog schließen"
+            aria-label="Pricing-Hinweis schließen"
             className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
           >
             <X size={18} aria-hidden="true" />
           </button>
         </header>
 
-        <Abonnements
-          currentTier={currentTier}
-          onUpdateTier={onUpdateTier}
-          email={email}
-          userId={userId}
-        />
+        <Abonnements />
       </section>
     </div>
   );

@@ -76,9 +76,9 @@ describe('BB-2D dashboard view router boundary', () => {
     expect(router).not.toContain("case 'myworkspace':");
   });
 
-  it('projects existing profile/session values instead of creating business authority', () => {
-    expect(router).toContain('profile.subscriptionTier');
-    expect(router).toContain('onUpdateTier');
+  it('projects session/profile values without reintroducing subscription-tier presentation authority', () => {
+    expect(router).not.toContain('profile.subscriptionTier');
+    expect(router).not.toContain('onUpdateTier');
     expect(router).toContain('triggerAttempt');
     expect(router).toContain('userSession');
 

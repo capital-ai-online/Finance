@@ -4,8 +4,8 @@
 **Project:** `CAPITAL-AI-COMP`  
 **Relationship:** `CROSS_CUTTING / NO_PRODUCTIVE_PVC`  
 **Source issue:** `#1327`  
-**Baseline:** `main@f65753961359d74cdf19de996bace459a98725b9`  
-**Status:** `IMPLEMENTED_ON_BRANCH / FE_1325_DEPENDENCY / HUMAN_MERGE_REQUIRED`
+**Baseline:** `main@5acdac23acce3999394ea05949fc9cd2479ffc63`  
+**Status:** `FE_1325_TERMINAL / SYNCED_TO_CURRENT_MAIN / VALIDATION_PENDING / HUMAN_MERGE_REQUIRED`
 
 ## Objective
 
@@ -21,7 +21,7 @@ Remove the stale representation of the historical Starter/Pro/Enterprise catalog
 
 ## Dependency
 
-FE PR #1325 also writes `src/features/billing/billingContract.ts` to introduce the archive-state contract. This Compliance slice changes only the terms-version fields in that file, but the changed-file overlap must remain fail-closed until #1325 is terminal and this branch is freshly synchronized with the resulting CURRENT_MAIN.
+FE PR #1325 is Human-merged on `main@5acdac23acce3999394ea05949fc9cd2479ffc63`. This Compliance slice is freshly synchronized on top of that generation and changes only the terms-version fields in `src/features/billing/billingContract.ts`; the merged `PRODUCT_ACCESS_POLICY` and archived Frontend lifecycle remain preserved.
 
 ## Acceptance criteria
 

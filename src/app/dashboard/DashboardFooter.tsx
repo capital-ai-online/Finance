@@ -78,7 +78,7 @@ export function DashboardFooter({ onNavigate }: DashboardFooterProps) {
               <span>•</span>
               <a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</a>
               <span>•</span>
-              <button onClick={() => onNavigate('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Abonnements</button>
+              <button onClick={() => onNavigate('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Pricing archiviert</button>
             </div>
           </div>
         </div>
