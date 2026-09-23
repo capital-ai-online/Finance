@@ -34,8 +34,13 @@ describe('Roadmap dashboard projection', () => {
     const retrySafe = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
       (item) => item.id === 'SH-02.11',
     );
+    const productionRecovery = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
+      (item) => item.prNumber === 1334,
+    );
     expect(retrySafe?.state).toBe('active');
     expect(retrySafe?.detail).toContain('RETRY_SAFE_OPERATION');
+    expect(productionRecovery?.id).toBe('PR-1334');
+    expect(productionRecovery?.sourceType).toBe('provider-pr');
   });
 
   it('keeps canonical active packages traceable to owner roadmap sources', () => {
