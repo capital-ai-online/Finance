@@ -340,19 +340,6 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
 
                     <a
-                      href="/universe"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 text-left transition-all"
-                      data-public-navigation="universe"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Globe className="w-4 h-4 text-[#60A5FA]" />
-                        Universe
-                      </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                    </a>
-
-                    <a
                       href="/learning-platform"
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 text-left transition-all"

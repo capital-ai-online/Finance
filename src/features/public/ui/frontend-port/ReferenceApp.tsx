@@ -16,6 +16,7 @@ import { SubclassDetailModal } from './components/SubclassDetailModal';
 import { MarketAsset, CoreModule, MainCategory, AssetSubclass } from './types';
 import { CORE_MODULES } from './data/mockData';
 import { useCurrentLandingRuntimeBinding } from '../runtime/CurrentLandingRuntimeBinding';
+import { MarketSentimentPresentation } from '../runtime/MarketSentimentPresentation';
 
 const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)';
 
@@ -166,6 +167,14 @@ export default function App() {
 
         {/* 4 Feature Key Pillars */}
         <KeyPillars />
+
+        {/* Owner-uploaded Sentiment presentation; productive values remain FINTECH-owned. */}
+        <MarketSentimentPresentation
+          onExploreMarkets={() => {
+            setMarketCategoryFilter('ALLE');
+            setIsAllMarketsOpen(true);
+          }}
+        />
 
         {/* Global Markets Overview */}
         <MarketOverview

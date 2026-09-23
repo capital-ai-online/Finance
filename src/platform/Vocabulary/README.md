@@ -69,6 +69,21 @@ npm run vocabulary:governance:prepr
 
 The checks cover Message contracts, 18-stage correlation, Documentary handoff, Wiki determinism, migration drift and VW-0…VW-8 closure metadata. The existing `test:raw` path invokes the read-only Vocabulary governance gate.
 
+## Repository-document terminology mining
+
+The default registry also includes `documentationDerivedConcepts`, a curated terminology projection derived from the repository-wide Markdown inventory.
+
+The 2026-09-22 mining baseline covers:
+
+- all 1,045 Markdown paths present on the correlated repository tree;
+- all 970 Markdown documents below `docs/` at inventory level;
+- all 71 repository README files at content level;
+- current definition-bearing ADR, runbook, platform and project documents for every promoted concept.
+
+Promotion is deliberately curated rather than automatic: filenames, headings and repeated wording are candidate signals only. A term is registered only when it can be defined from current repository evidence, does not collide with an existing canonical/display/alias term, and remains a terminology projection rather than a transfer of the source document's authority.
+
+Current examples include Idempotency, Event Replay, Operational Telemetry, Edge Trust, AAL2, CSP, SBOM, Durable Inbox/Outbox, Provider Routing, Screening Eligibility, RPO/RTO, Documentation Hygiene, Semantic Freshness, Quality Gate, Technical Debt, Reconciliation and Position Sizing.
+
 ## Runtime entry points
 
 - `index.ts` — browser-safe public catalog, registry, bindings and delivery contracts; no Node built-ins.

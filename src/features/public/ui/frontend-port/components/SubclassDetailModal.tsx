@@ -2,6 +2,7 @@ import React from 'react';
 import { X, TrendingUp, Sparkles, Shield, ArrowRight, Layers, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AssetSubclass, MainCategory } from '../types';
+import { AssetLogo } from '../../runtime/AssetLogo';
 
 interface SubclassDetailModalProps {
   isOpen: boolean;
@@ -103,11 +104,7 @@ export const SubclassDetailModal: React.FC<SubclassDetailModalProps> = ({
                   key={ticker}
                   className="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs font-mono font-bold text-white flex items-center gap-1.5 shadow-sm"
                 >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: themeColor }}
-                  />
-                  <span>{ticker}</span>
+                  <AssetLogo symbol={ticker} category={category} size="xs" />\n                  <span>{ticker}</span>
                 </div>
               ))}
             </div>

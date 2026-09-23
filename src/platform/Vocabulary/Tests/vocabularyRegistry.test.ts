@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultVocabularyRegistry, frontendPresentationConcepts } from '../index';
+import { createDefaultVocabularyRegistry, documentationDerivedConcepts, frontendPresentationConcepts } from '../index';
 import { VocabularyRegistry } from '../Registry/VocabularyRegistry';
 import type { VocabularyConcept } from '../Domain/VocabularyConcept';
 
@@ -152,7 +152,7 @@ describe('VocabularyRegistry contracts', () => {
 
   it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
     const registry = createDefaultVocabularyRegistry();
-    expect(registry.list()).toHaveLength(69 + frontendPresentationConcepts.length);
+    expect(registry.list()).toHaveLength(69 + frontendPresentationConcepts.length + documentationDerivedConcepts.length);
     for (const item of registry.list()) {
       expect(item.adrReferences).toContain('ADR-0078');
       expect(item.adrReferences).not.toContain('ADR-0046');
@@ -181,11 +181,32 @@ describe('VocabularyRegistry contracts', () => {
     expect(navigationDrawer?.adrReferences).toContain('ADR-0078');
   });
 
+  it('registers documentation-derived terminology with source traceability and thesaurus aliases', () => {
+    const registry = createDefaultVocabularyRegistry();
+
+    expect(documentationDerivedConcepts).toHaveLength(39);
+    expect(registry.resolveTerm('AAL2')?.canonicalCodeTerm).toBe('AuthenticationAssuranceLevel2');
+    expect(registry.resolveTerm('CSP')?.canonicalCodeTerm).toBe('ContentSecurityPolicy');
+    expect(registry.resolveTerm('SBOM')?.canonicalCodeTerm).toBe('SoftwareBillOfMaterials');
+    expect(registry.resolveTerm('RPO')?.canonicalCodeTerm).toBe('RecoveryPointObjective');
+    expect(registry.resolveTerm('RTO')?.canonicalCodeTerm).toBe('RecoveryTimeObjective');
+    expect(registry.resolveTerm('DSAR')?.canonicalCodeTerm).toBe('DataSubjectAccessRequest');
+    expect(registry.resolveTerm('Screening-Eignung')?.canonicalCodeTerm).toBe('ScreeningEligibility');
+    expect(registry.resolveTerm('Event-Replay')?.canonicalCodeTerm).toBe('EventReplay');
+
+    const telemetry = registry.resolveTerm('Operational Telemetry');
+    expect(telemetry?.traceabilityReferences).toContain(
+      'docs/adr/ADR-0056-observability-telemetry-baseline.md',
+    );
+    expect(telemetry?.adrReferences).toContain('ADR-0056');
+    expect(telemetry?.adrReferences).toContain('ADR-0078');
+  });
+
   it('provides the canonical AI Development Chat & Execution Terminology category', () => {
     const registry = createDefaultVocabularyRegistry();
     const developmentTerms = registry.list().filter((item) => item.category === 'ai-development-chat-execution');
 
-    expect(developmentTerms).toHaveLength(43);
+    expect(developmentTerms).toHaveLength(45);
     expect(registry.resolveTerm('Pre-check')?.canonicalCodeTerm).toBe('PreCheck');
     expect(registry.resolveTerm('Re-sync')?.canonicalCodeTerm).toBe('MainResync');
     expect(registry.resolveTerm('Changed-file overlap')?.canonicalCodeTerm).toBe('ChangedFileOverlap');
