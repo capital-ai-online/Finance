@@ -17,6 +17,7 @@ const documentary = read('src/components/DocumentHygienePanel.tsx');
 const dashboard = read('src/app/dashboard/Dashboard.tsx');
 const dashboardHome = read('src/app/dashboard/DashboardHome.tsx');
 const legacyDashboard = read('src/components/Dashboard.tsx');
+const publicHeader = read('src/features/public/ui/frontend-port/components/Header.tsx');
 
 const auditedRuntimePaths = [
   'src/components/AuditLogs.tsx',
@@ -57,6 +58,21 @@ describe('client platform version projection', () => {
     expect(dashboardHome).toContain('Beta · Version {platformVersion}');
     expect(dashboardHome).not.toContain('Beta · Version 0.7.0');
     expect(legacyDashboard).not.toContain('Beta · Version 0.7.0');
+  });
+
+  it('keeps the public sideboard version and status claims on current-main evidence', () => {
+    expect(publicHeader).toContain(
+      "import { CAPITAL_AI_VERSION_LABEL } from '../../../../../platform/Release/clientVersion';",
+    );
+    expect(publicHeader).toContain('{CAPITAL_AI_VERSION_LABEL}');
+    expect(publicHeader).not.toContain('Sub-45ms Latenz');
+    expect(publicHeader).not.toContain('SSL 256-Bit • MiCA');
+    expect(publicHeader).toContain('Marktdaten-Feed:');
+    expect(publicHeader).toContain('Providerabhängig');
+    expect(publicHeader).toContain('Sicherheitsprofil:');
+    expect(publicHeader).toContain('HTTPS • CSP');
+    expect(publicHeader).toContain('Regulatorik:');
+    expect(publicHeader).toContain('MiCA-Leitplanken');
   });
 
   it('keeps SEO client and prerender projections on the same authority', () => {
