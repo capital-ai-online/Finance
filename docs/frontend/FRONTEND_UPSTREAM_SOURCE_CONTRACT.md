@@ -79,3 +79,19 @@ The cbc5580 delta is synchronized with explicit owner-correct adapters instead o
 - expanded source asset fixtures are not promoted as verified market data; CAPITAL-AI-FINTECH retains asset/data/scoring authority and the existing verified selection binding remains unchanged;
 - `KrakenReferralBanner.tsx` is mirrored only as inert source evidence and is not promoted into runtime pending CAPITAL-AI-COMP review of affiliate/referral and public financial claims;
 - the source mobile-first presentation and Finance >=1024px desktop website adapter remain active.
+
+
+## Owner design overlay — 2026-09-23
+
+The owner-provided archive `FRONTEND-main (1).zip` (SHA-256 `a016e7874436ff17c16621269153923aae11fe1b4009e8a72d002d8af87fbca1`) is an additional **presentation source**, not a new productive data or scoring authority.
+
+The promoted overlay is intentionally narrower than the archive:
+
+- the public landing Header no longer exposes the `Universe` navigation tab;
+- `MarketOverview` may adopt the archive's `AssetLogo` treatment, but it does not render archive-provided `aiScore` / `aiRating` values;
+- the archive's `MarketSentiment` visual hierarchy may be rendered only through a fail-closed Finance adapter;
+- hard-coded category sentiment scores, locally generated 30-day history, driver scores/text fixtures and alert-score coupling are not promoted;
+- productive sentiment/scoring values remain owned by `CAPITAL-AI-FINTECH / PVC-09..17` and must carry owner-correct evidence;
+- the existing Altcoin Pattern Trooper is not moved in this slice. Its later integration target is the owner-designated leading graphic and must reuse the existing read-only FINTECH contract rather than create a second scoring path.
+
+The pinned SvenKulessa/FRONTEND Git snapshot remains recorded as the base presentation provenance. The owner archive is recorded separately in `source-lock.json.ownerDesignOverlay` so archive-origin deltas are traceable without inventing a Git source commit.
