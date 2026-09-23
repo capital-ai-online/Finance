@@ -42,7 +42,7 @@ jobs:
       - name: CURRENT_MAIN für Merge-Cadence read-only auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
-          ref: \${{ steps.main.outputs.sha }}
+          ref: ${{ steps.main.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -78,9 +78,9 @@ jobs:
         id: cadence
         if: steps.main.outputs.stale_push != 'true'
         env:
-          CURRENT_MAIN_SHA: \${{ steps.main.outputs.sha }}
-          PRODUCTION_SHA: \${{ steps.production.outputs.sha }}
-          PRODUCTION_HEALTHY: \${{ steps.production.outputs.healthy }}
+          CURRENT_MAIN_SHA: ${{ steps.main.outputs.sha }}
+          PRODUCTION_SHA: ${{ steps.production.outputs.sha }}
+          PRODUCTION_HEALTHY: ${{ steps.production.outputs.healthy }}
         shell: bash
         run: |
           set -euo pipefail
@@ -94,19 +94,19 @@ jobs:
         if: steps.main.outputs.stale_push != 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
-          EXPECTED_SHA: \${{ steps.main.outputs.sha }}
-          CADENCE_ACTIVE: \${{ steps.cadence.outputs.cadence_active }}
-          CADENCE_MODE: \${{ steps.cadence.outputs.cadence_mode }}
-          MERGE_ORDINAL: \${{ steps.cadence.outputs.merge_ordinal }}
-          DEPLOY_DUE: \${{ steps.cadence.outputs.deploy_due }}
-          DEPLOY_PROGRESS: \${{ steps.cadence.outputs.deploy_progress }}
-          DEPLOY_REMAINING: \${{ steps.cadence.outputs.deploy_remaining }}
-          PRODUCTION_RELATION: \${{ steps.cadence.outputs.production_relation }}
-          INITIAL_PRODUCTION_REACHABLE: \${{ steps.production.outputs.reachable }}
-          INITIAL_PRODUCTION_STATUS: \${{ steps.production.outputs.status }}
-          INITIAL_PRODUCTION_SHA: \${{ steps.production.outputs.sha }}
-          INITIAL_PRODUCTION_BRANCH: \${{ steps.production.outputs.branch }}
-          INITIAL_PRODUCTION_REPO: \${{ steps.production.outputs.repo }}
+          EXPECTED_SHA: ${{ steps.main.outputs.sha }}
+          CADENCE_ACTIVE: ${{ steps.cadence.outputs.cadence_active }}
+          CADENCE_MODE: ${{ steps.cadence.outputs.cadence_mode }}
+          MERGE_ORDINAL: ${{ steps.cadence.outputs.merge_ordinal }}
+          DEPLOY_DUE: ${{ steps.cadence.outputs.deploy_due }}
+          DEPLOY_PROGRESS: ${{ steps.cadence.outputs.deploy_progress }}
+          DEPLOY_REMAINING: ${{ steps.cadence.outputs.deploy_remaining }}
+          PRODUCTION_RELATION: ${{ steps.cadence.outputs.production_relation }}
+          INITIAL_PRODUCTION_REACHABLE: ${{ steps.production.outputs.reachable }}
+          INITIAL_PRODUCTION_STATUS: ${{ steps.production.outputs.status }}
+          INITIAL_PRODUCTION_SHA: ${{ steps.production.outputs.sha }}
+          INITIAL_PRODUCTION_BRANCH: ${{ steps.production.outputs.branch }}
+          INITIAL_PRODUCTION_REPO: ${{ steps.production.outputs.repo }}
           SLA_MILLISECONDS: '300000'
           CONVERGENCE_MILLISECONDS: '600000'
           POLL_MILLISECONDS: '15000'
