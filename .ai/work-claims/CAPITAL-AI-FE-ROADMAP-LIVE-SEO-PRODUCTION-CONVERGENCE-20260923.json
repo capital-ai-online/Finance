@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-LIVE-SEO-PRODUCTION-CONVERGENCE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Re-correlate FE-ROADMAP-LIVE-01 against fresh CURRENT_MAIN, current Render Production identity, SEO provider gates and legacy public-route drift; project active and implemented state without creating a second authority.",
+  "startedAt": "2026-09-23T22:09:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+  "lastSyncedMainSha": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+  "branch": "frontend/roadmap-live-seo-production-convergence-20260923",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "priority": "P1",
+  "priorityReason": "The public /roadmap projection was materially stale, mixed terminal provider writers with active work, and did not expose current SEO/provider and Production-drift state.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LIVE-SEO-PRODUCTION-CONVERGENCE-20260923.json",
+    "docs/projects/frontend/ROADMAP.md",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "src/features/public/ui/roadmapSnapshot.ts",
+    "tests/unit/roadmapDashboardProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Read-only derived Roadmap presentation only; canonical execution authority remains in /AGENTS.md and owner project Roadmaps/work packages.",
+    "No SEO provider mutation, no Render/Supabase secret mutation, no scoring/data authority and no production deployment action.",
+    "Open OPS PR #1334 remains owner-correct and is projected as provider evidence only.",
+    "The removed /universe client route is not restored; stale SEO/server publication is recorded as retirement drift for owner-correct follow-up.",
+    "Human/CODEOWNER merge authority is preserved."
+  ],
+  "evidence": {
+    "currentMain": "98c8889ac5f34c8123470b9b5ac57648ccd38877",
+    "production": "Render live deploy dep-daq2vqou01pc73fjldv0 @ 7c1d9293ee4c61e32791e447463fcaf263644c6d; exact-main deploy dep-daq378mk1f9s738adt70 failed at runtime startup after successful build.",
+    "seo": "SEO issues #1233/#1252/#1254/#1258/#1263 are terminal; no open project:CAPITAL-AI-SEO issue lane; GSC/GA4/GenAI current provider reads remain evidence gates.",
+    "legacyDrift": "/universe is absent from current client routing but remains in route SEO metadata, sitemap, prerender and public server route/fallback surfaces.",
+    "openWriterOverlap": "Exactly one open PR at final pre-claim readback: #1334 CAPITAL-AI-OPS; no changed-file overlap with this claim."
+  },
+  "acceptanceCriteria": [
+    "Roadmap projection is bound to the exact correlated main SHA and reads live Production identity separately through /healthz.",
+    "Terminal/stale provider writers are removed; currently open PR #1334 is visible as provider evidence while open.",
+    "Implemented production-covered, repository-integrated, main-only/deploy-blocked, provider-gate and legacy-drift states are distinguishable.",
+    "SEO provider gates are not converted into synthetic PASS and /universe is not reactivated.",
+    "Focused Roadmap projection tests plus ordinary required FE/governance/build/security checks pass on the exact PR head.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
