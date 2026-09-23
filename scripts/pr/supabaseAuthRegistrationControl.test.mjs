@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveManagementAccessToken } from '../operations/supabaseAuthRegistrationControl.mjs';
@@ -34,4 +35,24 @@ test('Supabase auth registration control remains fail-closed without a valid man
     () => resolveManagementAccessToken({ SUPABASE_ACCESS_TOKEN: 'short' }),
     /SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING/,
   );
+});
+
+
+test('production runtime does not require a Supabase Management API token', () => {
+  const dockerfile = fs.readFileSync('Dockerfile', 'utf8');
+
+  assert.match(
+    dockerfile,
+    /NODE_OPTIONS=--import=\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/,
+  );
+  assert.doesNotMatch(dockerfile, /CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL=true/);
+  assert.doesNotMatch(
+    dockerfile,
+    /--import=\/app\/scripts\/operations\/supabaseAuthRegistrationControl\.mjs/,
+  );
+  assert.doesNotMatch(
+    dockerfile,
+    /COPY[^\n]*supabaseAuthRegistrationControl\.mjs/,
+  );
+  assert.doesNotMatch(dockerfile, /COPY[^\n]*\/app\/supabase\/templates/);
 });

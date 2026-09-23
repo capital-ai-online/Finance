@@ -1,12 +1,12 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
+**Baseline:** `main@72a22038c88d3cc170cbecac6d04547d7226853d`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — SH-V3/v1.8 Self-Healing state and merged SH-02.9 re-correlated to CURRENT_MAIN; OPS post-merge continuation remains owner-correct  
+**Reconciliation:** 2026-09-23 — Owner-directed deploy-batch correlation contract defined against fresh CURRENT_MAIN; productive CI/Render materialization remains owner-correct with CAPITAL-AI-OPS  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -17,6 +17,28 @@ This file remains a temporary project status projection until the separately req
 
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
 
+## GOV-DEPLOY-BATCH-01 — 5-Merge Deployment / 10-Merge Version Cadence
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Priority:** `P1 🟠 Hoch`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Fresh baseline:** `main@72a22038c88d3cc170cbecac6d04547d7226853d`  
+**OPS runtime prerequisite:** `DONE_MAIN / PR #1338 / CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08`; Live-Roadmap consumption remains `CAPITAL-AI-FE`
+
+Fresh Human/Owner direction defines one application-wide cadence authority. The Human merge of this Governance slice is the non-retroactive `cadenceEpoch`: historical merges do not prefill counters. Repository truth always follows latest `CURRENT_MAIN`; Production is a separate lagging deployment projection.
+
+- normal automatic Render deploy: fixed merge ordinals **5/10/15/...** after the epoch; delayed/failed deployment never shifts later boundaries;
+- target at deployment mutation: freshly reread latest `CURRENT_MAIN`;
+- expected healthy lag below `5/5`: `DEPLOYMENT_QUEUED`, never drift and never an exact-SHA recovery trigger;
+- failed/due deployment: true `PRODUCTION_DRIFT`; bounded existing recovery may retry without another five merges;
+- ordinary automatic platform version: fixed merge ordinals **10/20/30/...**, exact next PATCH on the candidate branch before Human merge through the existing Release Version Gate (`0.6.0 → 0.6.1` example); explicit higher releases do not shift those boundaries;
+- `package.json#version` remains sole authority; root/package-root lockfile versions are governed mirrors;
+- semantic PATCH/MINOR/MAJOR classification remains Release-impact evidence, while between-cadence automatic version mutation is superseded;
+- CI/tests, Self-Healing continuation and live/current-state dashboard always follow latest `CURRENT_MAIN`, not the live Production SHA.
+
+This Governance slice intentionally does **not** mutate OPS workflows, Render/provider state or FE dashboard files. Human-merged OPS PR #1338 has already prepared the existing `ci.yml`, Post-Merge Production Correlation, exact-SHA recovery, Release Version Gate and registered PR Autofix paths for dual-mode cadence activation; no second deploy/version/Self-Healing controller is permitted. Human-merged SEC PR #1337 is terminal on CURRENT_MAIN and completed the Roadmap dashboard convergence. This branch consumes both merged prerequisites as evidence and still avoids creating a second runtime or dashboard writer.
+
+**Exit:** one Trust Root + ADR-0105 v1.1 + Versioning Rule Contract v1.1 define the fixed 5/10 cadence, non-retroactive epoch, latest-main semantics and recovery boundary; Control Catalog/Authority Registry and tests agree; Human-merged OPS PR #1338 satisfies the runtime prerequisite without duplicating authority, while FE remains a read-only consumer.
 
 ## GOV-SH-V3 — Self-Healing Convergence Program
 

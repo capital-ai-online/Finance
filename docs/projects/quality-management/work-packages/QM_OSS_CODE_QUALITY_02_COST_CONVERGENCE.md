@@ -6,8 +6,8 @@
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Baseline:** `main@9c8a3e80c4451ed0b6ea45f368175604608f6f4b`  
 **Parent:** `QM-OSS-CODE-QUALITY-01`  
-**Status:** `IMPLEMENTED_ON_MAIN / MERGED_PR_1244 / PR_FAST_EXECUTION_EVIDENCE_NOT_AVAILABLE`  
-**Authority:** Quality evidence/cost remediation only; no merge, release, deployment or productive PVC authority.
+**Status:** `TERMINAL_EVIDENCE / DONE_MAIN / MERGED_PR_1244 / PR_FAST_EXECUTION_VERIFIED`  
+**Authority:** terminal Quality evidence/cost-remediation record only; current task status is projected from `docs/architecture/ROADMAP.md`. No merge, release, deployment or productive PVC authority.
 
 ## Trigger and reproduced root cause
 
@@ -123,3 +123,17 @@ PR #1244 wurde Human/CODEOWNER-gated als Merge-Commit `71087c960f8c1e99d4b0d4825
 Die noch offene Exit-Evidence wird **nicht** als PASS dargestellt: Auf dem relevanten Exact Head von PR #1273 (`b5d0ea081aa1a3230ee1bdb9ffd9c3a9ff009963`) wurde trotz `server/**`-Änderungen kein pull-request-getriggerter `OSS Quality Assurance`-Run im GitHub-Readback beobachtet. Damit sind Exit-Punkte 4, 5 und 8 für die neue PR_FAST-Lane weiterhin `NOT_AVAILABLE`.
 
 Die Ausführungs-/Preflight-Konvergenz wurde owner-korrekt an `CAPITAL-AI-OPS` als Issue #1274 übergeben. QM verändert die OPS-CI-/Actions-Logik nicht innerhalb dieses Pakets. Ein terminaler `DONE_MAIN`-Status ist erst zulässig, wenn ein aktueller relevanter Exact-Head-Run die PR_FAST-Ausführung und die tatsächlich reduzierte Laufzeit reproduzierbar belegt.
+
+
+## Terminal readback — 2026-09-24
+
+The previously missing execution evidence is now available and closes the remaining package exit gap:
+
+- Issue #1274 is `closed / completed`;
+- owner-correct OPS remediation PR #1291 is merged;
+- PR #1299 exact head `33d955c4d4c0f772d1e90b4322c21248bf01f8bf` produced successful `OSS quality PR fast evidence`;
+- PR #1300 exact head `970ee45b8c89ef2621ca8edcfe0775968d04fb63` produced successful `OSS quality PR fast evidence`;
+- both jobs verify exact source/base identities, execute Gitleaks + OSV, normalize commit-bound evidence and keep deep tools outside `PR_FAST`;
+- observed job wall time from runner log start to cleanup is approximately 29 seconds for #1299 and 43 seconds for #1300, materially below the former ~2:54–2:59 samples.
+
+No workflow mutation is performed by this readback. This package is dissolved as a current work-package status source and retained only as terminal evidence. Fresh efficiency assurance continues, if applicable, under the Live Roadmap identity `QM-PR900-03`.
