@@ -210,7 +210,9 @@ export function RoadmapDashboard() {
   }, []);
 
   const metrics = useMemo(() => {
-    const prBacked = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter((item) => item.prNumber).length;
+    const prBacked = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter(
+      (item) => 'prNumber' in item && typeof item.prNumber === 'number',
+    ).length;
     const owners = new Set(ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.map((item) => item.owner)).size;
     const legacyDrift = ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter(
       (item) => item.state === 'legacy-drift',
