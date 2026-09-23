@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-WEB-HARDENING-ROADMAP-PROMOTION-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-SEC",
   "projectFolder": "docs/projects/security/",
   "owner": "CAPITAL-AI-SEC",
@@ -24,5 +24,9 @@
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
   "initialBaseSha": "30598d9b674285b587f5204da70cc7e89bafd80d",
-  "recorrelatedAt": "2026-09-21T14:08:00+02:00"
+  "recorrelatedAt": "2026-09-21T14:08:00+02:00",
+  "releasedAt": "2026-09-23T22:42:00+02:00",
+  "releaseReason": "PR #1196 merged on 2026-09-21; stale roadmap-promotion coordination state released during SEC Live Roadmap single-source convergence.",
+  "mergeCommitSha": "96bd1eec29ea9edd2b18631d8be09cfa81b5b669",
+  "liveRoadmapSource": "docs/architecture/ROADMAP.md"
 }

@@ -1,9 +1,11 @@
+> **Current-status migration — 2026-09-23:** This dated backlog is retained for provenance only. Current SEC work/status lives in `docs/architecture/ROADMAP.md`; historical READY/OPEN/ACTIVE labels below do not reactivate work.
+
 # CAPITAL-AI-SEC Work Packages
 
 **Document ID:** `DOC-WP-CAPITAL-AI-SEC-2026-08-31`  
 **Project:** `CAPITAL-AI-SEC`  
 **Version:** `2.3.0`  
-**Status:** `ACTIVE — CROSS-CUTTING SECURITY BACKLOG / NON-AUTHORIZING`  
+**Status:** `HISTORICAL / RETIRED SECURITY BACKLOG — NON-AUTHORIZING`  
 **Date:** `2026-09-07`  
 **Baseline:** `main@96119f958cacbf35614747380a066b87fdb1ee40`  
 **Primary Productive PVC ownership:** `[]`  
@@ -188,7 +190,7 @@ CAPITAL-AI-SEC PRs contain Security-owned cross-cutting documentation, evidence,
 **State:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED  
 **Fresh Human/Owner direction:** 2026-09-20  
 **Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
-**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
+**Detailed package:** docs/projects/security/evidence/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md
 
 This package protects the rebuilt public website and its deployment chain without creating a second Security or Release architecture. It decomposes into SEC-WEB-00/10/20/30/40/50 and carries SEC-WEB-F01..F30. P0 starts with exact-current-main attack-surface readback, OCI/GHCR digest convergence, one verified production artifact, client/build/container secret exposure gates and current OAuth/session negative tests.
 

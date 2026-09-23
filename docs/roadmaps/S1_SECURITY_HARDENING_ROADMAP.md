@@ -1,6 +1,8 @@
+> **Current-status migration — 2026-09-23:** This S1 roadmap is historical Security-hardening evidence. It is not a current execution queue. Current SEC state is maintained in `docs/architecture/ROADMAP.md` and projected at `/roadmap`.
+
 # CAPITAL-AI S1 Security Hardening Roadmap
 
-Status: ACTIVE / PARTIAL / ACTION REQUIRED  
+Status: HISTORICAL SECURITY HARDENING SNAPSHOT / RETIRED CURRENT-STATUS SOURCE  
 Status date: 2026-08-30  
 Repository baseline reviewed: `main@3815c7fce44e30bccf227a4399220407f4095706`  
 Last verified production deployment identity: `e311c30d18951785a68154d994a403799819c194`  

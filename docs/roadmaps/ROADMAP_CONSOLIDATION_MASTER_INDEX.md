@@ -4,7 +4,7 @@
 **Status:** `ACTIVE — DERIVED PORTFOLIO INDEX`  
 **Folder-to-PVC mapping:** `docs/projects/README.md` + `docs/projects/PROJECT_VALUE_CHAIN.md`  
 **Trust root:** `/AGENTS.md`  
-**Correlation snapshot:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a` — 2026-09-22; no project-routing change in this reconciliation  
+**Correlation snapshot:** `main@8f5fff57613f183e0e1a2a8c8b41017338e63491` — 2026-09-23; no project-routing change in this reconciliation  
 **DevelopmentChain current-state index (non-authorizing):** `docs/architecture/ROADMAP.md` (`AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`)  
 **Predecessor snapshot:** repository history before the 2026-09-01 single-source consolidation; predecessor blob `7a2c7fd5997bb2406c12bfb0d55cba3ee2a3a2ee`
 
@@ -12,7 +12,7 @@
 
 This file is a **derived portfolio navigation index**. It no longer maintains an independent status truth, Authority hierarchy, execution backlog or next-action table.
 
-Organizational project execution/status is maintained exactly once per canonical project in `docs/projects/<project>/ROADMAP.md`. Detailed domain/program roadmaps remain available for bounded architecture, workstream, finding, migration or historical context. Technical and Governance Authority continues to resolve through `/AGENTS.md`, accepted ADR/ESS/AUTH/CTRL identities, current registries and specific registered authorities.
+Organizational project execution/status is maintained exactly once in the owner-correct canonical status source. `CAPITAL-AI-SEC` has migrated to the repository Live Roadmap at `docs/architecture/ROADMAP.md`; other projects remain on `docs/projects/<project>/ROADMAP.md` until their own owner-correct migration is merged. Detailed domain/program roadmaps remain available for bounded architecture, workstream, finding, migration or historical context. Technical and Governance Authority continues to resolve through `/AGENTS.md`, accepted ADR/ESS/AUTH/CTRL identities, current registries and specific registered authorities.
 
 The withdrawn Roadmap Registry policy surface is not current. Folder-to-PVC ownership is defined only in [`docs/projects/README.md`](../projects/README.md) and [`docs/projects/PROJECT_VALUE_CHAIN.md`](../projects/PROJECT_VALUE_CHAIN.md).
 
@@ -28,7 +28,7 @@ The 2026-09-22 reconciliation intentionally keeps fast-moving FE/GOV/OPS work-pa
 | `CAPITAL-AI-GOV` | `PVC-05` + cross-cutting Governance | [`docs/projects/governance/ROADMAP.md`](../projects/governance/ROADMAP.md) |
 | `CAPITAL-AI-FINTECH` | `PVC-09..PVC-17` | [`docs/projects/fintech/ROADMAP.md`](../projects/fintech/ROADMAP.md) |
 | `CAPITAL-AI-QM` | cross-cutting | [`docs/projects/quality-management/ROADMAP.md`](../projects/quality-management/ROADMAP.md) |
-| `CAPITAL-AI-SEC` | cross-cutting | [`docs/projects/security/ROADMAP.md`](../projects/security/ROADMAP.md) |
+| `CAPITAL-AI-SEC` | cross-cutting | [`docs/architecture/ROADMAP.md`](../architecture/ROADMAP.md) — Live Roadmap |
 | `CAPITAL-AI-COMP` | cross-cutting | [`docs/projects/compliance/ROADMAP.md`](../projects/compliance/ROADMAP.md) |
 | `CAPITAL-AI-FE` | cross-cutting presentation | [`docs/projects/frontend/ROADMAP.md`](../projects/frontend/ROADMAP.md) |
 | `CAPITAL-AI-SEO` | cross-cutting SEO/marketing | [`docs/projects/seo/ROADMAP.md`](../projects/seo/ROADMAP.md) |
@@ -56,7 +56,7 @@ The following are retained as bounded detail, coordination or evidence sources. 
 - [`DEVELOPMENT_CHAIN_ROADMAP.md`](./DEVELOPMENT_CHAIN_ROADMAP.md) — historical DevelopmentChain implementation detail; current state is `docs/architecture/ROADMAP.md`.
 - [`SYSTEMADMIN_AGENT_ROADMAP.md`](./SYSTEMADMIN_AGENT_ROADMAP.md) — Systemadmin program detail under OPS/Governance boundaries.
 - [`VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md`](./VALUE_CHAIN_COVERAGE_AND_HARDENING_ROADMAP_2026-08-30.md) — cross-project coverage/gap coordination; target projects retain execution status.
-- [`CAPITAL_AI_SECURITY_ROADMAP.md`](./CAPITAL_AI_SECURITY_ROADMAP.md) and [`S1_SECURITY_HARDENING_ROADMAP.md`](./S1_SECURITY_HARDENING_ROADMAP.md) — Security domain/workstream detail; project status is `docs/projects/security/ROADMAP.md`.
+- [`CAPITAL_AI_SECURITY_ROADMAP.md`](./CAPITAL_AI_SECURITY_ROADMAP.md) and [`S1_SECURITY_HARDENING_ROADMAP.md`](./S1_SECURITY_HARDENING_ROADMAP.md) — historical/bounded Security domain detail; current SEC status is the Live Roadmap at `docs/architecture/ROADMAP.md`.
 - [`FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md`](./FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md) — FinTech module detail; project status is `docs/projects/fintech/ROADMAP.md`.
 - [`SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`](./SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md) — SEO/Google Marketing program detail; project status is `docs/projects/seo/ROADMAP.md`.
 - [`docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md`](../architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md) — Documentary technical detail; project status is `docs/projects/documentary/ROADMAP.md`.
@@ -77,7 +77,7 @@ For a new work item:
 
 1. read `/AGENTS.md` and applicable current Authorities;
 2. resolve the target project using `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md`;
-3. read the target `docs/projects/<project>/ROADMAP.md` for organizational execution status;
+3. read the owner-correct current status source: `docs/architecture/ROADMAP.md` for CAPITAL-AI-SEC; otherwise the target `docs/projects/<project>/ROADMAP.md` until that project is migrated;
 4. read any detail/technical roadmap required by that work item;
 5. use this file only for navigation and cross-project orientation.
 

@@ -20,7 +20,7 @@ crossReference:
     - .ai/skills/ESS-0006-Security-Compliance.md
     - docs/projects/README.md
     - docs/projects/security/README.md
-    - docs/projects/security/ROADMAP.md
+    - docs/architecture/ROADMAP.md
     - docs/projects/PROJECT_VALUE_CHAIN.md
   assessmentMethodologies:
     authority: ADVISORY_NON_AUTHORIZING

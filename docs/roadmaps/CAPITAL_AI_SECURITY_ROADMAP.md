@@ -1,9 +1,11 @@
+> **Current-status migration — 2026-09-23:** Current `CAPITAL-AI-SEC` task state is maintained only in `docs/architecture/ROADMAP.md` and projected at `/roadmap`. All ACTIVE/OPEN/READY labels below are preserved execution-time/domain-detail snapshots unless the Live Roadmap currently references the same identity.
+
 # CAPITAL-AI Security Roadmap
 
 **Document ID:** `DOC-ROADMAP-CAPITAL-AI-SEC-2026-08-31`  
 **Project ID:** `CAPITAL-AI-SEC`  
 **Version:** `2.5.0`  
-**Status:** `ACTIVE — CROSS-CUTTING SECURITY / NON-AUTHORIZING`  
+**Status:** `RETIRED_CURRENT_STATUS_SOURCE — SECURITY DOMAIN DETAIL / NON-AUTHORIZING`  
 **Date:** `2026-09-21`  
 **Repository baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
 **Role:** `CROSS_CUTTING_SECURITY`  
@@ -214,7 +216,7 @@ PR creation requires separate explicit Human/Owner approval for the exact curren
 **Owner direction:** 2026-09-20; roadmap promotion reaffirmed 2026-09-21  
 **Original materialization:** Human-merged PR #1165  
 **Current roadmap baseline:** `main@8a64644ad6257f2c295959f6d79a80cc29a51b28`  
-**Canonical package:** `docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md`
+**Canonical package:** `docs/projects/security/evidence/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md`
 
 SEC-WEB-HARDENING-01 is the active website/deployment Security roadmap. It reuses SEC-01..SEC-10 and all existing Release/Production/IAM/Governance controls. The roadmap is orchestration/status only and does not become a second instruction, task, finding, evidence or deployment authority.
 

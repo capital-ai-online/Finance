@@ -343,8 +343,8 @@ export function RoadmapDashboard() {
               </h2>
             </div>
             <p className="max-w-xl text-xs leading-5 text-white/50">
-              Phasen sind eine visuelle Portfolio-Projektion. Ausführbare Arbeit bleibt in den owner-korrekten
-              Projekt-Roadmaps und Work Packages.
+              Phasen sind eine visuelle Portfolio-Projektion. SEC wird bereits aus der zentralen Live-Roadmap geführt;
+              andere Owner behalten ihre kanonischen Projektquellen bis zur owner-korrekten Migration.
             </p>
           </div>
 

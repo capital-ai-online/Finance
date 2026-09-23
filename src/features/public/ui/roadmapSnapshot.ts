@@ -42,18 +42,18 @@ export interface RoadmapIntegrationItem {
 }
 
 export const ROADMAP_DASHBOARD_SNAPSHOT = {
-  schemaVersion: '1.2.1',
+  schemaVersion: '1.3.0',
   role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
   correlatedDate: '2026-09-23',
-  correlatedMainSha: '426a98d4703271e438cbc6df4b1442fb3a9b032d',
-  currentMainSha: '426a98d4703271e438cbc6df4b1442fb3a9b032d',
+  correlatedMainSha: '8f5fff57613f183e0e1a2a8c8b41017338e63491',
+  currentMainSha: '8f5fff57613f183e0e1a2a8c8b41017338e63491',
   productionAudit: {
     observedCommitSha: '7c1d9293ee4c61e32791e447463fcaf263644c6d',
     deployId: 'dep-daq2vqou01pc73fjldv0',
-    classification: 'CURRENT_MAIN_DEPLOY_FAILED_AFTER_RECOVERY_MERGE',
+    classification: 'LIVE_HEALTHZ_REQUIRED_FOR_CURRENT_MAIN',
     previousFailedDeployId: 'dep-daq378mk1f9s738adt70',
     latestFailedDeployId: 'dep-daq3dkmgekts73be39i0',
-    note: 'Production remains live on the FIN-SENT-01 merge. The exact CURRENT_MAIN deploy after merged recovery #1334 started within the post-merge SLA and completed build/Quality PASS, but Runtime startup still failed because none of the accepted server-only management-token environment keys resolved a usable credential. Runtime identity continues to be read live from /healthz.',
+    note: 'Repository correlation advanced to current main after the previous production audit snapshot. Runtime identity is intentionally not inferred here and continues to be read live from /healthz.',
   },
   branding: {
     brandmark: 'docs/frontend/brandmark.json',
@@ -119,9 +119,9 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       phase: 'Security & Compliance',
       state: 'active',
       stateLabel: 'ACTIVE · IMPLEMENTATION OPEN',
-      source: 'docs/projects/security/ROADMAP.md',
+      source: 'docs/architecture/ROADMAP.md',
       sourceType: 'canonical-roadmap',
-      detail: 'Public website, artifact, identity and deployment controls remain evidence-driven and independently verified.',
+      detail: 'Fresh main correlation leaves SEC-WEB-HARDENING-01 as the only active SEC program. Former project-local roadmap/work-package queues are retired as current status sources; productive remediation remains owner-correct.',
     },
     {
       id: 'COMP-LF-01',
@@ -185,6 +185,15 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
   ] as RoadmapWorkPackage[],
   integrationLedger: [
+    {
+      id: 'SEC-AUTH-DIAG-AAL2-01',
+      title: 'AAL2 Diagnostic Supersession',
+      owner: 'CAPITAL-AI-SEC',
+      state: 'repository-integrated',
+      stateLabel: 'SUPERSEDED · NOT ACTIVE',
+      source: 'PR #1257 · .ai/work-claims/CAPITAL-AI-SEC-AUTH-AAL2-DIAGNOSTIC-SUPERSESSION-20260922.json',
+      detail: 'The diagnostic slice merged and its claim is released. Fresh Owner direction superseded the client-auth diagnostic work with the backend-first authentication rebuild; retained SEC documentation is evidence only.',
+    },
     {
       id: 'DOC-ROADMAP-CORRELATION',
       title: 'Documentary Roadmap Correlation',
@@ -292,6 +301,54 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
     },
   ] satisfies RoadmapIntegrationItem[],
   queuedItems: [
+    {
+      id: 'SEC-WEB-00',
+      owner: 'CAPITAL-AI-SEC',
+      state: 'ready',
+      stateLabel: 'READY · P0 BASELINE',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Correlate the exact current public attack surface, trust boundaries, controls, owner returns and verification gates before downstream remediation.',
+    },
+    {
+      id: 'SEC-WEB-10',
+      owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
+      state: 'ready',
+      stateLabel: 'READY · P0 ARTIFACT CHAIN',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Converge registry digest, signature, attestation, SBOM, source SHA and deployed artifact identity without transferring OPS ownership to SEC.',
+    },
+    {
+      id: 'SEC-WEB-20',
+      owner: 'CAPITAL-AI-SEC · CAPITAL-AI-FE · CAPITAL-AI-OPS',
+      state: 'held',
+      stateLabel: 'HELD · READY AFTER P0',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Depends on P0 baseline/artifact convergence before strict route-minimal browser isolation and CSP promotion evidence.',
+    },
+    {
+      id: 'SEC-WEB-30',
+      owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
+      state: 'held',
+      stateLabel: 'HELD · READY AFTER P0',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Depends on P0 convergence; requires route-specific AuthN/AuthZ, input, method, rate/budget and abuse negative evidence.',
+    },
+    {
+      id: 'SEC-WEB-40',
+      owner: 'CAPITAL-AI-SEC · CAPITAL-AI-OPS',
+      state: 'held',
+      stateLabel: 'HELD · READY AFTER P0',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Depends on P0 convergence; readiness, rollback and runtime/deployment identity must be proven for the exact safe artifact.',
+    },
+    {
+      id: 'SEC-WEB-50',
+      owner: 'CAPITAL-AI-SEC · CAPITAL-AI-QM',
+      state: 'queued',
+      stateLabel: 'QUEUED · IMPLEMENTATION RETURN',
+      source: 'docs/architecture/ROADMAP.md',
+      gate: 'Independent runtime/DAST/transport verification starts only after owner implementation returns; no unresolved CRITICAL/HIGH finding may be promoted as PASS.',
+    },
     {
       id: 'QM-PR900-02',
       owner: 'CAPITAL-AI-QM',
