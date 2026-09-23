@@ -20,6 +20,11 @@ const MarketVocabularyModal = lazy(() =>
     default: module.MarketVocabularyModal,
   })),
 );
+const RoadmapDashboard = lazy(() =>
+  import('../../features/public/ui/RoadmapDashboard').then((module) => ({
+    default: module.RoadmapDashboard,
+  })),
+);
 const MediaStudio = lazy(() =>
   import('../../features/social/ui/MediaStudio').then((module) => ({ default: module.MediaStudio })),
 );
@@ -189,6 +194,14 @@ export function AppRoutes({
           />
         </RouteLoadingBoundary>
       </div>
+    );
+  }
+
+  if (currentPath === '/roadmap') {
+    return (
+      <RouteLoadingBoundary>
+        <RoadmapDashboard />
+      </RouteLoadingBoundary>
     );
   }
 
