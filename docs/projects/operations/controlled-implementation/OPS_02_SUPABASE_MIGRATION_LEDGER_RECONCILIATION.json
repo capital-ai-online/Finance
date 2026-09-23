@@ -5,7 +5,7 @@
   "primary_pvc": "PVC-02",
   "primary_owner": "CAPITAL-AI-OPS",
   "repository": "capital-ai-online/Finance",
-  "repository_baseline": "c9980602f691b855fd6f8c66a49822e7a9611b4a",
+  "repository_baseline": "3c85160aa304f1e52083ff13f14bde7e615236df",
   "supabase_project_ref": "ryzywoktpmyhwzxmstyu",
   "classification_policy": {
     "EXACT_MATCH": "Remote version equals a current local migration timestamp. The local migration file is recorded.",
@@ -13,11 +13,11 @@
     "REMOTE_ONLY_HISTORY": "No current local migration has the same remote timestamp or normalized migration name. Consolidated/catch-up schema may exist elsewhere, but is not treated as an alias without exact migration-name identity."
   },
   "summary": {
-    "remote_total": 75,
+    "remote_total": 76,
     "local_total": 59,
     "exact_match": 17,
     "timestamp_alias": 32,
-    "remote_only_history": 26,
+    "remote_only_history": 27,
     "unknown": 0,
     "mapped_current_local": 49,
     "local_only": 10
@@ -547,6 +547,13 @@
       "classification": "EXACT_MATCH",
       "local_version": "20260920162905",
       "local_path": "supabase/migrations/20260920162905_m10_shadow_evaluations_credential_fk_index.sql"
+    },
+    {
+      "remote_version": "20260922042903",
+      "remote_name": "revoke_trigger_only_security_definer_execute",
+      "classification": "REMOTE_ONLY_HISTORY",
+      "local_version": null,
+      "local_path": null
     }
   ],
   "local_only_migrations": [
@@ -600,5 +607,11 @@
       "local_name": "auth_registration_profile_convergence",
       "local_path": "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql"
     }
-  ]
+  ],
+  "provider_readback": {
+    "observed_at": "2026-09-23T20:04:00Z",
+    "source": "Supabase list_migrations",
+    "remote_total": 76,
+    "note": "20260922042903_revoke_trigger_only_security_definer_execute is remote-only on this repository baseline; the #1331 auth convergence migration is local-only until protected post-merge deployment."
+  }
 }
