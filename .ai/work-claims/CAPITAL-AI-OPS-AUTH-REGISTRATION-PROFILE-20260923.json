@@ -12,8 +12,8 @@
   "workItemDE": "Registrierung, Profil, gebrandete Auth-Mails und native TOTP-Verwaltung auf den backend-owned Supabase-Sessionpfad konvergieren",
   "startedAt": "2026-09-23T19:10:00Z",
   "baseBranch": "main",
-  "baseSha": "f4b00e7c04e3b4c68a84d9c70936da692be3f570",
-  "lastSyncedMainSha": "f4b00e7c04e3b4c68a84d9c70936da692be3f570",
+  "baseSha": "7c1d9293ee4c61e32791e447463fcaf263644c6d",
+  "lastSyncedMainSha": "7c1d9293ee4c61e32791e447463fcaf263644c6d",
   "branch": "agent/operations-auth-registration-profile-20260923",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -61,7 +61,11 @@
     "docs/projects/operations/work-packages/OPS_LF02_AUTH_PROFILE_PROVIDER_CORRELATION_2026-09-22.md",
     ".ai/work-claims/CAPITAL-AI-FE-AUTH-EMAIL-CAPTCHA-UI-20260922.json",
     ".ai/work-claims/CAPITAL-AI-OPS-AUTH-CAPTCHA-REMOVAL-20260922.json",
-    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-EMAIL-CAPTCHA-BRIDGE-20260922.json"
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-EMAIL-CAPTCHA-BRIDGE-20260922.json",
+    "scripts/pr/runtimeArtifactImmutability.test.mjs",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
+    "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json"
   ],
   "evidence": {
     "currentMain": "f4b00e7c04e3b4c68a84d9c70936da692be3f570",
@@ -69,7 +73,8 @@
     "legacyMapping": "2/2 legacy users and 46/46 usage rows map to auth.users; zero orphans.",
     "providerAdvisor": "Supabase reports leaked-password protection disabled before this change.",
     "overlap": "PASS: commits after e9ed0a0 touch only SH-02.11 supervisor/governance files; no changed-file overlap.",
-    "ciRemediation": "Exact-head CI regression convergence: retired challenge test filename no longer reintroduces the retired provider string through claim metadata; subscription entitlement regression now validates live UserSession authority instead of the removed localStorage profile cache."
+    "ciRemediation": "Exact-head CI regression convergence: retired challenge test filename no longer reintroduces the retired provider string through claim metadata; subscription entitlement regression now validates live UserSession authority instead of the removed localStorage profile cache.",
+    "supabaseMigrationProviderReadback": "Supabase list_migrations readback returned 76 remote migrations; 20260922042903_revoke_trigger_only_security_definer_execute has no current local timestamp/name match and is classified REMOTE_ONLY_HISTORY. Branch migration 20260923193000_auth_registration_profile_convergence remains LOCAL_ONLY until protected post-merge deployment."
   },
   "scopeBoundary": [
     "Preserve existing capital-ai.online graphical presentation.",
