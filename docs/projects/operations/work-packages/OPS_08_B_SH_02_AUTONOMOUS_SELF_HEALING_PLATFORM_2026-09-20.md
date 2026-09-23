@@ -21,8 +21,8 @@
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
 **SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
-**Current functional slice:** `SH-02.11` — dependency-ready staged production activation; activation has not started and no HELD action changes in the readiness slice  
-**Next functional slice:** `SH-02.11` — staged rollout remains the next functional slice; current state is `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`  
+**Current functional slice:** `SH-02.11A` — `RETRY_SAFE_OPERATION` pre-activation verification; action remains HELD pending fresh independent Security/QM assurance  
+**Next functional slice:** `SH-02.11A` — first staged SH-1 activation candidate; pre-activation only, no HELD -> ENABLED mutation in this slice  
 **SH-02.10 terminal evidence:** Security PR #1311 + QM PR #1312 independently assure implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main/Production readback is `31643012f42368b6f85ce9953e19b991248a73d8`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
@@ -54,6 +54,7 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
 | SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE / PRODUCTION_READBACK_VERIFIED |
 | SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | DEPENDENCY_READY / ACTIVATION_NOT_STARTED |
+| SH-02.11A | RETRY_SAFE_OPERATION pre-activation | OPS + SEC + QM / PVC-08,04,18 | SH-02.11 dependency-ready | exact READ_ONLY/IDEMPOTENT boundary, budget, kill switch, verification probe and fresh independent Security/QM assurance before activation | ACTIVE / ACTION_HELD / ASSURANCE_PENDING |
 
 ## SH-02.9 — Observability/SLO/incident convergence
 
@@ -329,6 +330,27 @@ At minimum simulate:
 - SH-02.10 is terminal: Security PR #1311 and QM PR #1312 are Human/CODEOWNER-merged and independently bind implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main `31643012f42368b6f85ce9953e19b991248a73d8` completed main CI #5845, Container Security #2847 and Post-Merge Production Correlation #245 successfully, and Render deployment `dep-dapt6qjncjis73fkpjag` is live on that exact SHA. The enabled-tier readiness contract is recorded separately before SH-02.11 activation starts.
 
 Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md`.
+
+## SH-02.11A — RETRY_SAFE_OPERATION pre-activation
+
+**State:** `ACTIVE / ACTION_HELD / SECURITY_ASSURANCE_PENDING / QM_ASSURANCE_PENDING`
+
+This child slice prepares the first staged SH-1 activation candidate without changing the action activation state.
+
+Candidate invariants:
+- `RETRY_SAFE_OPERATION.activation = HELD`;
+- eligible idempotency classes are only `READ_ONLY` and `IDEMPOTENT`;
+- `SIDE_EFFECTING` and `PROTECTED` fail closed;
+- `DEPENDENCY_NATIVE` and `NO_AUTOMATIC_RETRY` owners never enter the generic retry executor;
+- kill switch remains `self-healing.safe-retry`;
+- verification probe remains `dependency-operation-readback`;
+- budget remains `maxAttempts=3 / cooldownMs=500 / timeoutMs=10000`;
+- exhaustion state remains `DEGRADED`;
+- no SH-2/SH-3 or `QUARANTINE_WORK_ITEM` activation is implied.
+
+Activation is prohibited until fresh independent Security and QM returns bind this exact pre-activation generation and their exact-head checks pass.
+
+Evidence: `docs/projects/operations/evidence/SH_02_11A_RETRY_SAFE_PREACTIVATION_2026-09-23.md`.
 
 ## SH-02.11 — Rollout
 
