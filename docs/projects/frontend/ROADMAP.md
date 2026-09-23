@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-23 — Roadmap Live Dashboard re-correlated to fresh CURRENT_MAIN with SEO/Production integration ledger; terminal provider writers removed; no productive domain ownership changes  
-**Baseline:** `main@98c8889ac5f34c8123470b9b5ac57648ccd38877`  
+**Baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -16,14 +16,14 @@ Archive/superseded copies and historical non-terminal markers are evidence only.
 
 ## Current-main reconciliation — 2026-09-23
 
-This FE projection is re-correlated to `main@98c8889ac5f34c8123470b9b5ac57648ccd38877`.
+This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`.
 
-- Fresh provider readback currently returns exactly one open writer, OPS PR #1334 (`Render Auth-Management-Token Recovery`, exact head `45d10c365eb035c69e6036eb6c533da38567fb7b`). It is the owner-correct Production-drift recovery for #1331 and has no changed-file overlap with this four-file FE slice. Historical PR #1299, #1300 and #1315 entries remain terminal and are removed from the active Work Graph.
+- PR #1334 (`Render Auth-Management-Token Recovery`) merged as `main@426a98d4703271e438cbc6df4b1442fb3a9b032d` while this FE PR was being created. The FE branch was immediately synchronized by a non-conflicting merge; fresh provider readback now returns no foreign open writer (only this draft PR #1335). Historical PR #1299, #1300, #1315 and now #1334 are terminal and are not projected as active provider work.
 - The old UI snapshot baseline `7bcc6aee2700d6fa3f926ff8615b04cde136750c` is 185 commits behind this CURRENT_MAIN correlation and is evidence only.
-- Render Production remains live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0` while #1331 Auth/Profile is already merged on main. The attempted exact-main deploy `dep-daq378mk1f9s738adt70` built successfully but failed at Runtime start because `supabaseAuthRegistrationControl.mjs` did not receive a usable `SUPABASE_MANAGEMENT_ACCESS_TOKEN`. This is an owner-correct OPS deployment/configuration blocker; no secret value is recorded. The UI continues to read `/healthz` at runtime and does not infer Production from merge state.
+- Render Production remains live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0`. The earlier exact-main deploy `dep-daq378mk1f9s738adt70` built successfully but failed at Runtime start with `SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING`; owner-correct recovery PR #1334 is now merged into CURRENT_MAIN. At this correlation boundary a new `426a98d4…` Render deployment was not yet visible, so Production remains truthful DRIFT/PENDING rather than PASS. No secret value is recorded. The UI continues to read `/healthz` at runtime.
 - SEO issues #1233, #1252, #1254, #1258 and #1263 are terminal; no open `project:CAPITAL-AI-SEO` issue was returned in the fresh provider readback.
 - A new current-state drift is explicit rather than silently repaired: `AppRoutes.tsx` no longer renders `/universe`, while `routeSeo.ts`, `sitemap.xml`, prerender and the server public-route allowlist still publish it. FE does **not** restore the removed client route; retirement of the stale projections remains owner-correct across FE/SEO/OPS.
-- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile as main-only, the failed exact-main Render promotion as an explicit OPS blocker, and the active owner-correct recovery PR #1334.
+- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile plus merged recovery #1334 as main-only until Production catches up, and the prior failed Render promotion as historical drift evidence.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 
@@ -31,7 +31,7 @@ This FE projection is re-correlated to `main@98c8889ac5f34c8123470b9b5ac57648ccd
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** read-only presentation/aggregation of canonical current-state evidence; no productive PVC ownership  
 **Status:** `IN_PROGRESS / SEO_PRODUCTION_CONVERGENCE_BRANCH`  
-**Fresh baseline:** `main@98c8889ac5f34c8123470b9b5ac57648ccd38877`  
+**Fresh baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
 **Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/shared/branding/CapitalAiLogo.tsx`, `src/shared/ui/Card.tsx`
 
 Fresh Human/Owner direction requests a real `/roadmap` page that projects the current Roadmap and all actively processed work packages. The implementation remains a non-authorizing derived view:
