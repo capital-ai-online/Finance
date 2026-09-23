@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { BillingUI, UserUI } from '../../features';
+import { UserUI } from '../../features';
 import { secureStorage } from '../../lib/cryptoHelper';
 import { readAuthenticatedSubscriptionTier } from '../../lib/subscriptionReadback';
 import { CAPITAL_AI_VERSION } from '../../platform/Branding/runtimeBrand';
@@ -78,7 +78,6 @@ export function Dashboard({
     typeof window !== 'undefined' ? readDashboardView(window.location.search) : 'dashboard',
   );
   const [adminTab, setAdminTab] = useState<DashboardAdminTab>('users');
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [cliffhangerModalOpen, setCliffhangerModalOpen] = useState(false);
   const [failedActionName, setFailedActionName] = useState('');
@@ -213,11 +212,9 @@ export function Dashboard({
     const payment = params.get('payment');
     const plan = params.get('plan');
 
-    if (payment === 'success' && plan) {
-      setProfile((previous) => ({
-        ...previous,
-        subscriptionTier: plan as UserUI.UserProfile['subscriptionTier'],
-      }));
+    if (payment || plan) {
+      // Historical checkout return parameters are presentation metadata only.
+      // The archived pricing model must never mutate the browser tier from URL state.
       commitDashboardView('abonnements', 'replace', ['payment', 'plan']);
     }
 
@@ -352,7 +349,6 @@ export function Dashboard({
           navigateTo('admin-portal');
           setAdminTab(tab);
         }}
-        onUpgradeClick={() => setIsSubscriptionModalOpen(true)}
       />
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
@@ -394,7 +390,6 @@ export function Dashboard({
             {activeView === 'dashboard' && (
               <DashboardHome
                 userSession={userSession}
-                subscriptionTier={profile.subscriptionTier}
                 platformVersion={CAPITAL_AI_VERSION}
                 capital={profile.capital}
                 preferredAssetClass={profile.preferredAssetClass}
@@ -433,7 +428,6 @@ export function Dashboard({
               onUpdateProfile={handleUpdateProfile}
               adminTab={adminTab}
               onChangeAdminTab={setAdminTab}
-              onUpdateTier={(tier) => setProfile((previous) => ({ ...previous, subscriptionTier: tier }))}
               triggerAttempt={triggerAttempt}
               searchQuery={searchQuery}
               onSearchQueryChange={setSearchQuery}
@@ -449,16 +443,6 @@ export function Dashboard({
       </main>
 
       <AnimatePresence>
-        {isSubscriptionModalOpen && (
-          <BillingUI.SubscriptionModal
-            isOpen={isSubscriptionModalOpen}
-            onClose={() => setIsSubscriptionModalOpen(false)}
-            currentTier={profile.subscriptionTier}
-            onUpdateTier={(tier) => setProfile((previous) => ({ ...previous, subscriptionTier: tier }))}
-            email={profile.email}
-            userId={profile.id}
-          />
-        )}
         {cliffhangerModalOpen && (
           <BillingUI.GuestCliffhangerModal
             isOpen={cliffhangerModalOpen}
