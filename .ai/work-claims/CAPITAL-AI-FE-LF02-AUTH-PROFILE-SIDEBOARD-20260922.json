@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LF02-AUTH-PROFILE-SIDEBOARD-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -55,5 +55,8 @@
     "No duplicate auth/subscription authority is created.",
     "Focused LF-02 regression and existing frontend/source-lock checks pass."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "pullRequest": 1250,
+  "releasedAt": "2026-09-24T00:00:00+02:00",
+  "releaseReason": "Lifecycle correlation: merged PR #1250; stale active/exclusive coordination metadata released before the fresh sideboard runtime-truth slice."
 }
