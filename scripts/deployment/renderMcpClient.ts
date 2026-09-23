@@ -5,11 +5,15 @@
 // Verbindung serverseitig bei Anthropic auf. Dadurch funktioniert dieser Pfad auch aus
 // Umgebungen, deren Egress-Policy mcp.render.com blockiert.
 //
-// Governance (CLAUDE.md, ADR-0035): Render ist eine produktive Control Plane. Der Client
+// Governance (/AGENTS.md@CURRENT_MAIN): Render ist eine produktive Control Plane. Der Client
 // laeuft deshalb standardmaessig als reine Read-/Evidence-Plane - es werden ausschliesslich
 // die in READ_ONLY_TOOLS freigegebenen Tools aktiviert. Mutationen gehoeren weiterhin hinter
 // Policy -> IAM/Grant -> Approval -> Dry-run -> Fingerprint -> Apply -> Verify -> Audit und
 // nicht in dieses Skript.
+//
+// Dieser Anthropic-API-Pfad bleibt ein optionaler Fallback und kann separate Modell/API-Kosten
+// verursachen. Fuer interaktive Coding-Hosts ist der direkte OAuth-Zugriff auf den gehosteten
+// Render-MCP-Endpunkt vorzuziehen; dabei werden keine Render-API-Schluessel ins Repository geschrieben.
 //
 // Aufruf:
 //   tsx scripts/deployment/renderMcpClient.ts --discover

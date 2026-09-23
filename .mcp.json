@@ -2,7 +2,11 @@
   "mcpServers": {
     "ga4-analytics": {
       "command": "uvx",
-      "args": ["--from", "analytics-mcp==0.7.0", "analytics-mcp"],
+      "args": [
+        "--from",
+        "analytics-mcp==0.7.0",
+        "analytics-mcp"
+      ],
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.capital-ai/ga4-mcp-credentials.json",
         "GOOGLE_PROJECT_ID": "${GA4_MCP_PROJECT_ID:-}"
@@ -10,10 +14,17 @@
     },
     "search-console": {
       "command": "npx",
-      "args": ["-y", "@vmandic/searchconsole-mcp@1.1.1"],
+      "args": [
+        "-y",
+        "@vmandic/searchconsole-mcp@1.1.1"
+      ],
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.capital-ai/gsc-mcp-credentials.json"
       }
+    },
+    "render": {
+      "type": "http",
+      "url": "https://mcp.render.com/mcp"
     }
   }
 }
