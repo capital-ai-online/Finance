@@ -19,6 +19,7 @@ import { useCurrentLandingRuntimeBinding } from '../runtime/CurrentLandingRuntim
 import { MarketSentimentPresentation } from '../runtime/MarketSentimentPresentation';
 
 const DESKTOP_LANDING_MEDIA_QUERY = '(min-width: 1024px)';
+const DESKTOP_SITE_COMPAT_MEDIA_QUERY = '(min-width: 960px)';
 
 type LandingViewMode = 'mockup' | 'fullscreen';
 
@@ -27,7 +28,9 @@ function resolveViewportViewMode(): LandingViewMode {
     return 'mockup';
   }
 
-  return window.matchMedia(DESKTOP_LANDING_MEDIA_QUERY).matches ? 'fullscreen' : 'mockup';
+  const canonicalDesktop = window.matchMedia(DESKTOP_LANDING_MEDIA_QUERY).matches;
+  const desktopSiteCompat = window.matchMedia(DESKTOP_SITE_COMPAT_MEDIA_QUERY).matches;
+  return canonicalDesktop || desktopSiteCompat ? 'fullscreen' : 'mockup';
 }
 
 export default function App() {
@@ -47,18 +50,24 @@ export default function App() {
     }
 
     const desktopMedia = window.matchMedia(DESKTOP_LANDING_MEDIA_QUERY);
+    const desktopSiteCompatMedia = window.matchMedia(DESKTOP_SITE_COMPAT_MEDIA_QUERY);
     const syncViewportMode = (matches: boolean) => {
       setViewMode(matches ? 'fullscreen' : 'mockup');
     };
-    const handleViewportChange = (event: MediaQueryListEvent) => {
-      syncViewportMode(event.matches);
+    const syncResponsiveViewportMode = () => {
+      syncViewportMode(desktopMedia.matches || desktopSiteCompatMedia.matches);
+    };
+    const handleViewportChange = () => {
+      syncResponsiveViewportMode();
     };
 
-    syncViewportMode(desktopMedia.matches);
+    syncResponsiveViewportMode();
     desktopMedia.addEventListener('change', handleViewportChange);
+    desktopSiteCompatMedia.addEventListener('change', handleViewportChange);
 
     return () => {
       desktopMedia.removeEventListener('change', handleViewportChange);
+      desktopSiteCompatMedia.removeEventListener('change', handleViewportChange);
     };
   }, []);
 
@@ -135,7 +144,7 @@ export default function App() {
         className={`w-full relative z-10 transition-all duration-300 ${
           viewMode === 'mockup'
             ? 'sm:my-6 sm:max-w-[412px] sm:rounded-[52px] sm:border-[8px] sm:border-[#2a2f3e] sm:ring-1 sm:ring-amber-500/20 sm:shadow-[0_25px_70px_rgba(0,0,0,0.8),0_0_50px_rgba(245,176,20,0.15)] bg-[#02050e] overflow-hidden'
-            : 'max-w-md bg-[#02050e]'
+            : 'max-w-none bg-[#02050e]'
         }`}
       >
         {/* Smartphone Hardware Elements (Only visible in mockup mode on larger screens) */}
