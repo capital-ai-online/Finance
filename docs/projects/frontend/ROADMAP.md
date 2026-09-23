@@ -40,7 +40,7 @@ Fresh Human/Owner direction requests a real `/roadmap` page that projects the cu
 - open PRs and active exclusive branches are shown only as provider evidence, not as instruction or ownership authority;
 - `CapitalAiLogo` uses the canonical brandmark geometry; colors/typography/roadmap roles resolve from `design-tokens.json` and the existing CSS token projection;
 - Production identity is read from same-origin `/healthz` and remains explicitly separate from repository CURRENT_MAIN;
-- direct production deep-link fallback for `/roadmap` is owner-correctly active on `agent/operations-roadmap-direct-route-20260923`; FE does not absorb OPS runtime ownership.
+- direct production deep-link fallback for `/roadmap` is owner-correctly active in OPS PR #1315 (`agent/operations-roadmap-direct-route-20260923`); FE does not absorb OPS runtime ownership.
 
 **Exit:** exact-head FE tests/build are green; `/roadmap` is wired in the client router; the owner-correct OPS direct-route fallback reaches its own Human/CODEOWNER merge gate; current-main/open-writer correlation remains PASS; Human/CODEOWNER merge remains required.
 
