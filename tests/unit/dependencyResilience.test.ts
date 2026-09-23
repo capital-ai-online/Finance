@@ -8,11 +8,11 @@ import {
 } from '../../src/platform/Supervisor/dependencyResilience';
 
 describe('dependency resilience', () => {
-  it('binds the generic retry executor to the canonical held SH-1 action', () => {
+  it('binds the generic retry executor to the canonical enabled SH-1 action', () => {
     expect(getDependencyResilienceSnapshot()).toMatchObject({
       valid: true,
-      genericSafeRetryActivation: 'HELD',
-      automaticGenericRetryEnabled: false,
+      genericSafeRetryActivation: 'ENABLED',
+      automaticGenericRetryEnabled: true,
       maxAttempts: 3,
       cooldownMs: 500,
       timeoutMs: 10_000,
@@ -33,8 +33,9 @@ describe('dependency resilience', () => {
     expect(retryDelayMs(500, 1, () => 0.999)).toBeLessThan(750);
   });
 
-  it('blocks contract-bound generic retry while SH-1 activation remains held', async () => {
+  it('executes a contract-bound safe read but refuses convergence without verification evidence', async () => {
     const operation = vi.fn(async () => ({ ok: true }));
+    const verify = vi.fn(() => ({ status: 'NOT_RUN' as const, probe: 'dependency-operation-readback' }));
     const result = await executeContractBoundDependencyRecovery(
       {
         dependencyId: 'test-read-api',
@@ -43,11 +44,12 @@ describe('dependency resilience', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
+      verify,
     );
 
-    expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
-    expect(operation).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: 'NOT_CONVERGED' });
+    expect(operation).toHaveBeenCalledTimes(1);
+    expect(verify).toHaveBeenCalledTimes(1);
   });
 
   it('blocks side-effecting operations before contract eligibility is evaluated', async () => {

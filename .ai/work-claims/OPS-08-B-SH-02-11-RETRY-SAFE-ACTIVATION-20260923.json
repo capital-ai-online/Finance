@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-11-RETRY-SAFE-ACTIVATION-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Activate the independently assured SH-1 RETRY_SAFE_OPERATION candidate without enabling quarantine, SH-2 or SH-3 actions.",
+  "workItemDE": "Den unabhängig abgesicherten SH-1-Kandidaten RETRY_SAFE_OPERATION aktivieren, ohne Quarantäne-, SH-2- oder SH-3-Aktionen freizuschalten.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b",
+  "branch": "agent/operations-sh02-11-retry-safe-activation-20260923",
+  "productionBaseline": {
+    "expectedMainSha": "e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b",
+    "observedRenderSha": "e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b",
+    "mainCi": "PASS",
+    "postMergeCorrelation": "PASS"
+  },
+  "activation": {
+    "actionId": "RETRY_SAFE_OPERATION",
+    "from": "HELD",
+    "to": "ENABLED",
+    "allowedIdempotency": [
+      "READ_ONLY",
+      "IDEMPOTENT"
+    ],
+    "deniedIdempotency": [
+      "SIDE_EFFECTING",
+      "PROTECTED"
+    ],
+    "deniedResilienceOwners": [
+      "DEPENDENCY_NATIVE",
+      "NO_AUTOMATIC_RETRY"
+    ],
+    "killSwitch": "self-healing.safe-retry",
+    "verificationProbe": "dependency-operation-readback",
+    "budget": {
+      "maxAttempts": 3,
+      "cooldownMs": 500,
+      "timeoutMs": 10000
+    }
+  },
+  "prerequisiteEvidence": {
+    "security": {
+      "pr": 1316,
+      "head": "54cc350af6df3da96f6f6a516e7a56c8425d4914",
+      "merge": "18c340bd1c946753c210f57f0b6104ead3bb6a64",
+      "state": "VERIFIED"
+    },
+    "qm": {
+      "pr": 1318,
+      "head": "549c1cbb4e8950f4e8b0a69bcd13d35faf856f03",
+      "merge": "e3f4ce2b5aaaefd62ec562860e0dc3cafa1c38b2",
+      "state": "VERIFIED"
+    }
+  },
+  "heldActions": [
+    "QUARANTINE_WORK_ITEM",
+    "RECONCILE_PR_GOVERNANCE_METADATA",
+    "RUNTIME_PROCESS_RECYCLE",
+    "REDEPLOY_EXACT_SHA",
+    "PROTECTED_ROLLBACK_RESTORE"
+  ],
+  "issueAutofixFollowup": {
+    "id": "SH-02.12",
+    "state": "HELD",
+    "existing": [
+      "VERIFY_ISSUE_PROJECT_DISPATCH",
+      "RECONCILE_REPOSITORY_PROJECTION via repository.pr.autofix"
+    ],
+    "missing": [
+      "generic Issue-to-code remediation action",
+      "repository.issue.autofix capability"
+    ]
+  },
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

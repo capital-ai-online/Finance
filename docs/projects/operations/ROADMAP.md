@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@db4ad93bb3bac7d4f31242b7f74f8f300d24e757`
+**Baseline:** `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — SH-02.11 is dependency-ready; child SH-02.11A prepares RETRY_SAFE_OPERATION for independent Security/QM assurance while the action remains HELD  
+**Reconciliation:** 2026-09-23 — SH-02.11 activation is implemented from exact Production-aligned `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b` after Human-merged Security #1316 and QM #1318 assurance; `RETRY_SAFE_OPERATION` is the only newly enabled action in this branch, while SH-2/SH-3 remain HELD.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -15,6 +15,35 @@
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, prior branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
+
+### SH-02.11 activation update — 2026-09-23
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Activation baseline:** `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b` with exact Render Production identity and successful Post-Merge Production Correlation.
+
+- Security assurance PR #1316 and QM assurance PR #1318 are Human/CODEOWNER-merged and bind the same pre-activation implementation generation.
+- `RETRY_SAFE_OPERATION` transitions from `HELD` to `ENABLED` only for `READ_ONLY` and explicitly `IDEMPOTENT` operations owned by `SUPERVISOR_SAFE_RETRY`.
+- `DEPENDENCY_NATIVE` and `NO_AUTOMATIC_RETRY` remain outside generic retry ownership.
+- `SIDE_EFFECTING` and `PROTECTED` operation classes still fail closed before invocation.
+- Budget remains `maxAttempts=3 / cooldownMs=500 / timeoutMs=10000`; kill switch remains `self-healing.safe-retry`; verification probe remains `dependency-operation-readback`.
+- `QUARANTINE_WORK_ITEM`, `RUNTIME_PROCESS_RECYCLE`, `REDEPLOY_EXACT_SHA` and `PROTECTED_ROLLBACK_RESTORE` remain `HELD`.
+
+### SH-02.12 — Routed Issue Auto-Fix
+
+**State:** `HELD / FOUNDATION_PARTIAL / DESIGN_GAP_IDENTIFIED`.
+
+Already present:
+- Governance issue router and `READY_FOR_PROJECT_EXECUTION` dispatch;
+- SH-0 `VERIFY_ISSUE_PROJECT_DISPATCH`;
+- SH-1 `RECONCILE_REPOSITORY_PROJECTION` via existing `repository.pr.autofix` for narrowly allowlisted reproducible repository-projection/expectation drift.
+
+Not present and therefore not claimed as active:
+- no generic `Issue -> code remediation -> branch -> PR` executor;
+- no `repository.issue.autofix` capability;
+- no permission to execute free-form Issue body/comment instructions.
+
+Any later SH-02.12 activation must derive executable scope from fresh CURRENT_MAIN + canonical Owner/PVC + reproducible repository evidence, keep Issue text untrusted, use bounded branch-only remediation and exact-head verification, prohibit protected provider mutations, and preserve Human/CODEOWNER merge authority.
+
 
 SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). SH-02.10 is now terminal for implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`: Security PR #1311 and QM PR #1312 independently verified that same generation and are Human/CODEOWNER-merged. Current main `db4ad93bb3bac7d4f31242b7f74f8f300d24e757` completed main CI #5849, Container Security #2851 and Post-Merge Production Correlation #246 successfully, and Render deployment `dep-daptgsad0e5s73acahjg` is live on the same exact SHA. The currently enabled action set is limited to five bounded SH-0/SH-1 actions with one-attempt budgets, kill switches and verification probes; all generic retry/quarantine plus SH-2/SH-3 actions remain HELD. SH-02.11 remains `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`. The current child `SH-02.11A` prepares only `RETRY_SAFE_OPERATION`; it remains `HELD` until fresh independent Security and QM assurance passes for the exact pre-activation generation.
 

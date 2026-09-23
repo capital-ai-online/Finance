@@ -14,7 +14,7 @@ import {
   validateSelfHealingContract,
 } from '../../src/platform/Supervisor/selfHealingContract';
 
-describe('SH-02.11A independent QM assurance', () => {
+describe('SH-02.11A QM assurance + SH-02.11 activation regression', () => {
   it('binds Quality assurance to exact valid contract generations', () => {
     expect(SELF_HEALING_CONTRACT_VERSION).toBe('self-healing-contract/1.2.0');
     expect(DEPENDENCY_RESILIENCE_CONTRACT_VERSION).toBe('dependency-resilience/1.0.0');
@@ -23,8 +23,8 @@ describe('SH-02.11A independent QM assurance', () => {
     expect(getDependencyResilienceSnapshot()).toEqual({
       version: 'dependency-resilience/1.0.0',
       valid: true,
-      genericSafeRetryActivation: 'HELD',
-      automaticGenericRetryEnabled: false,
+      genericSafeRetryActivation: 'ENABLED',
+      automaticGenericRetryEnabled: true,
       maxAttempts: 3,
       cooldownMs: 500,
       timeoutMs: 10_000,
@@ -34,7 +34,7 @@ describe('SH-02.11A independent QM assurance', () => {
   it('preserves the exact finite RETRY_SAFE_OPERATION Quality boundary', () => {
     expect(getRemediationAction('RETRY_SAFE_OPERATION')).toMatchObject({
       tier: 'SH-1',
-      activation: 'HELD',
+      activation: 'ENABLED',
       idempotencyClass: 'IDEMPOTENT',
       blastRadius: 'LOCAL_RUNTIME',
       requiredCapability: null,
@@ -82,7 +82,7 @@ describe('SH-02.11A independent QM assurance', () => {
     expect(retryDelayMs(500, 2, () => 0.999999)).toBeLessThan(1_250);
   });
 
-  it('does not execute or verify an otherwise safe operation while HELD', async () => {
+  it('executes and verifies a safe operation after activation while preserving evidence fail-closed behavior', async () => {
     const operation = vi.fn(async () => ({ ok: true }));
     const verify = vi.fn(() => ({ status: 'NOT_RUN' as const, probe: 'dependency-operation-readback' }));
 
@@ -97,9 +97,9 @@ describe('SH-02.11A independent QM assurance', () => {
       verify,
     );
 
-    expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
-    expect(operation).not.toHaveBeenCalled();
-    expect(verify).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: 'NOT_CONVERGED' });
+    expect(operation).toHaveBeenCalledTimes(1);
+    expect(verify).toHaveBeenCalledTimes(1);
   });
 
   it('blocks unsafe operation classes before invocation', async () => {

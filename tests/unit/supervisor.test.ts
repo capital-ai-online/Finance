@@ -131,7 +131,7 @@ describe('supervisor', () => {
       expect(status.capabilities.taskRouting).toBe(true);
       expect(status.capabilities.retry).toBe(true);
       expect(status.capabilities.selfHealingContract).toBe(true);
-      expect(status.capabilities.selfHealing).toBe(false);
+      expect(status.capabilities.selfHealing).toBe(true);
       expect(status.selfHealingContract.valid).toBe(true);
       expect(status.selfHealingContract.enabledActionIds).toContain('FRONTEND_RELOAD_ONCE');
       expect(status.selfHealingContract.heldActionIds).toContain('REDEPLOY_EXACT_SHA');
@@ -143,10 +143,10 @@ describe('supervisor', () => {
       expect(status.faultInjectionConvergence.scenarioIds).toContain('CURRENT_STATE_PROJECTION_BASELINE_STALE');
       expect(status.dependencyResilience).toMatchObject({
         valid: true,
-        genericSafeRetryActivation: 'HELD',
-        automaticGenericRetryEnabled: false,
+        genericSafeRetryActivation: 'ENABLED',
+        automaticGenericRetryEnabled: true,
       });
-      expect(status.capabilities.selfHealing).toBe(false);
+      expect(status.capabilities.selfHealing).toBe(true);
       expect(status.capabilities.aiGovernance).toBe(true);
       expect(status.capabilities.agentProviderObservation).toBe(true);
       expect(status.capabilities.findings).toBe(true);

@@ -333,7 +333,7 @@ Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENC
 
 ## SH-02.11A — RETRY_SAFE_OPERATION pre-activation
 
-**State:** `ACTIVE / ACTION_HELD / SECURITY_ASSURANCE_PENDING / QM_ASSURANCE_PENDING`
+**State:** `ASSURANCE_COMPLETE / ACTIVATION_IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`
 
 This child slice prepares the first staged SH-1 activation candidate without changing the action activation state.
 
@@ -348,13 +348,13 @@ Candidate invariants:
 - exhaustion state remains `DEGRADED`;
 - no SH-2/SH-3 or `QUARANTINE_WORK_ITEM` activation is implied.
 
-Activation is prohibited until fresh independent Security and QM returns bind this exact pre-activation generation and their exact-head checks pass.
+Activation prerequisites are satisfied: Security PR #1316 and QM PR #1318 were Human/CODEOWNER-merged and bind the same pre-activation implementation generation. This successor slice may therefore enable only `RETRY_SAFE_OPERATION`; every unrelated held action remains held.
 
 Evidence: `docs/projects/operations/evidence/SH_02_11A_RETRY_SAFE_PREACTIVATION_2026-09-23.md`.
 
 ## SH-02.11 — Rollout
 
-**Readiness state:** `DEPENDENCY_READY / ACTIVATION_NOT_STARTED` on `main@31643012f42368b6f85ce9953e19b991248a73d8`.
+**Readiness state:** `ACTIVATION_IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED` from exact Production-aligned `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b`.
 
 Readiness is bound by `docs/projects/operations/evidence/SH_02_11_DEPENDENCY_READINESS_2026-09-23.md` and `tests/unit/sh0211DependencyReadiness.test.ts`.
 
@@ -371,6 +371,22 @@ Activation order:
 4. SH-3 only after separate verified capability contracts.
 
 Each tier has an independent kill switch.
+
+### SH-02.11 first activation slice — 2026-09-23
+
+- Exact baseline: `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b`; Render Production exact-SHA and Post-Merge Production Correlation are PASS before branch creation.
+- `RETRY_SAFE_OPERATION.activation = ENABLED`.
+- Generic safe retry remains restricted to `READ_ONLY` / `IDEMPOTENT` and `SUPERVISOR_SAFE_RETRY` ownership.
+- `SIDE_EFFECTING`, `PROTECTED`, `DEPENDENCY_NATIVE` and `NO_AUTOMATIC_RETRY` remain fail-closed.
+- Budget, kill switch, verification probe and exhaustion semantics are unchanged from the independently assured pre-activation generation.
+- Supervisor `capabilities.selfHealing` now derives from `dependencyResilience.automaticGenericRetryEnabled`; it does not imply SH-2/SH-3 capability.
+- `QUARANTINE_WORK_ITEM`, `RUNTIME_PROCESS_RECYCLE`, `REDEPLOY_EXACT_SHA` and `PROTECTED_ROLLBACK_RESTORE` remain `HELD`.
+
+### SH-02.12 routed Issue Auto-Fix — HELD follow-up
+
+The repository already has safe Issue routing/dispatch plus SH-0 verification and a one-attempt `repository.pr.autofix` specialist for allowlisted repository-projection drift. It does **not** yet have a generic Issue-derived code-remediation executor. This is intentionally not inferred from `READY_FOR_PROJECT_EXECUTION`.
+
+A future implementation may introduce a distinct bounded action only after it proves Issue text remains untrusted, root cause is reproducible from authoritative evidence, Project/Owner/PVC and writer overlap are freshly resolved, path scope is allowlisted, protected provider mutation is excluded, exact-head gates pass, and Human/CODEOWNER merge remains final authority.
 
 ## Pull Request / merge policy
 

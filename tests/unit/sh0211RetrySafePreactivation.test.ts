@@ -10,12 +10,12 @@ import {
   getRemediationPolicy,
 } from '../../src/platform/Supervisor/selfHealingContract';
 
-describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
-  it('keeps the candidate held with the exact bounded activation contract', () => {
+describe('SH-02.11 RETRY_SAFE_OPERATION activation lineage', () => {
+  it('activates the independently assured candidate without widening its bounded contract', () => {
     const action = getRemediationAction('RETRY_SAFE_OPERATION');
     expect(action).toMatchObject({
       tier: 'SH-1',
-      activation: 'HELD',
+      activation: 'ENABLED',
       idempotencyClass: 'IDEMPOTENT',
       blastRadius: 'LOCAL_RUNTIME',
       requiredCapability: null,
@@ -31,8 +31,8 @@ describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
 
     expect(getDependencyResilienceSnapshot()).toMatchObject({
       valid: true,
-      genericSafeRetryActivation: 'HELD',
-      automaticGenericRetryEnabled: false,
+      genericSafeRetryActivation: 'ENABLED',
+      automaticGenericRetryEnabled: true,
       maxAttempts: 3,
       cooldownMs: 500,
       timeoutMs: 10_000,
@@ -52,8 +52,9 @@ describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
     expect(policy.allowedActionIds).toEqual(['RETRY_SAFE_OPERATION', 'OBSERVE_ONLY']);
   });
 
-  it('blocks the generic executor while the activation candidate remains held', async () => {
+  it('executes a safe operation after activation but never treats missing verification as convergence', async () => {
     const operation = vi.fn(async () => ({ ok: true }));
+    const verify = vi.fn(() => ({ status: 'NOT_RUN' as const, probe: 'dependency-operation-readback' }));
     const result = await executeContractBoundDependencyRecovery(
       {
         dependencyId: 'read-api',
@@ -62,11 +63,12 @@ describe('SH-02.11A RETRY_SAFE_OPERATION pre-activation', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
+      verify,
     );
 
-    expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
-    expect(operation).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: 'NOT_CONVERGED' });
+    expect(operation).toHaveBeenCalledTimes(1);
+    expect(verify).toHaveBeenCalledTimes(1);
   });
 
   it('blocks unsafe operation classes before any operation executes', async () => {
