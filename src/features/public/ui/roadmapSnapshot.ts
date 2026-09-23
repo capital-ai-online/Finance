@@ -100,6 +100,18 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       detail: 'Verifies the exact merged pre-activation generation while RETRY_SAFE_OPERATION remains HELD.',
     },
     {
+      id: 'OPS-ROADMAP-DIRECT-ROUTE-01',
+      title: 'Production SPA Fallback für /roadmap',
+      owner: 'CAPITAL-AI-OPS',
+      relationship: 'PVC-02 · owner-correct server/runtime handoff for FE-ROADMAP-LIVE-01',
+      phase: 'Product & Market',
+      state: 'in-flight',
+      stateLabel: 'ACTIVE BRANCH · DIRECT-ROUTE HANDOFF',
+      source: 'agent/operations-roadmap-direct-route-20260923',
+      sourceType: 'provider-branch',
+      detail: 'Adds /roadmap to the non-indexable application SPA fallback without changing the SEO public/prerender contract.',
+    },
+    {
       id: 'SH-02.11A',
       title: 'Retry-Safe Pre-Activation',
       owner: 'CAPITAL-AI-OPS',
