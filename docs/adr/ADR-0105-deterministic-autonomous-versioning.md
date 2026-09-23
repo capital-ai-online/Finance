@@ -1,9 +1,9 @@
 # ADR-0105 — Deterministic Autonomous Versioning
 
 **Authority ID:** `AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11`  
-**Version:** `1.0.0`  
+**Version:** `1.1.0`  
 **Status:** `ACCEPTED — EFFECTIVE ONLY AFTER HUMAN/CODEOWNER MERGE`  
-**Date:** `2026-09-11`  
+**Date:** `2026-09-23`  
 **Decision Owner:** CAPITAL-AI Owner  
 **Primary Governance Project:** `CAPITAL-AI-GOV / PVC-05 — Platform Director`  
 **Affected productive owner:** `CAPITAL-AI-OPS / PVC-06 Version Management / PVC-07 Release Management`  
@@ -17,6 +17,20 @@ An authorized CAPITAL-AI agent MAY determine a platform-version change autonomou
 The Human/Owner authorizes the versioning rules. The agent executes those rules. The agent has no discretionary authority to invent a version classification or target value.
 
 This ADR does not authorize its own PR creation, merge, release acceptance, Git tag, deployment or production mutation. It becomes effective only after Human/CODEOWNER merge under the governance already effective on `main` before this ADR.
+
+
+### 1.1 Owner amendment — merged-PR cadence
+
+Version 1.1 adds a deterministic merge-cadence materialization rule. Where the v1.0 semantic-delta materialization wording below conflicts with this subsection for **ordinary automatic development**, this subsection prevails after Human/CODEOWNER merge of the activating Governance change.
+
+- The activating Governance merge is the non-retroactive `cadenceEpoch` with merge ordinal `0`; the activating PR and all earlier PR merges are not counted.
+- Automatic ordinary platform-version materialization occurs at fixed positive merge ordinals divisible by **10** (`10, 20, 30, ...`) after `cadenceEpoch`.
+- When the current merge ordinal is `9 mod 10`, the next merge candidate is cadence-required and must materialize exactly the next SemVer `PATCH` on its own branch before Human/CODEOWNER merge through the existing Release Version Gate. Example: `0.6.0 → 0.6.1`.
+- `package.json#version` remains the sole platform-version authority. `package-lock.json#version` and `package-lock.json#packages[""]#version` are governed mirrors and must change atomically with it.
+- Direct `main` mutation remains denied. Any movement of `CURRENT_MAIN` before the merge decision invalidates the earlier cadence count and requires recomputation.
+- The semantic `PATCH/MINOR/MAJOR/NONE` engine remains deterministic Release-impact evidence, but ordinary automatic semantic classifications do **not** independently materialize versions between ten-merge boundaries.
+- A separately authorized explicit MINOR/MAJOR Release transition remains possible under existing Release/GA gates, but it does not shift the fixed 10/20/30 merge boundaries; the next cadence boundary applies the strict next PATCH from the then-current platform version.
+- Version cadence does not grant deployment authority. The separate repository-wide deployment cadence remains governed by `/AGENTS.md@CURRENT_MAIN`.
 
 ## 2. Stable authorities and source artifacts
 
@@ -36,7 +50,7 @@ This ADR does not authorize its own PR creation, merge, release acceptance, Git 
 - stable authority ID: `AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11`
 - source: `docs/adr/ADR-0105-deterministic-autonomous-versioning.md`
 - display ID: `ADR-0105`
-- version: `1.0.0`
+- version: `1.1.0`
 - lifecycle: Accepted after Human/CODEOWNER merge
 
 ## 3. Exact partial supersession targets
@@ -53,7 +67,7 @@ This ADR supersedes only the following semantics.
 
 **Old semantics:** the release owner selects exactly one concrete target version.
 
-**New semantics:** the Human/Owner approves the Versioning Rule Contract and its PATCH/MINOR/MAJOR mapping. Once effective, an authorized agent derives the concrete target version deterministically from machine-readable semantic-delta evidence. A separate discretionary Human decision for each individual target value is not required.
+**New semantics:** semantic-delta evidence still classifies Release impact deterministically, but ordinary automatic target materialization is cadence-bound by Section 1.1. On the tenth merged PR, the target is exactly the next PATCH version. Explicit higher Release transitions remain separately gated.
 
 ### Target C — ADR-0030, Section 4 / documentation, tests and internal changes
 
@@ -72,7 +86,7 @@ This is a deliberate semantic replacement. It is not inferred from document age 
 
 **Old semantics:** the platform version remains the released version throughout normal feature development and advances only at the dedicated Release Version Gate after release scope freeze.
 
-**New semantics:** normal feature work does not casually bump the platform version. However, after the deterministic decision is complete, an authorized agent may materialize the next calculated version on the current scoped work branch using the canonical Version Management / Release mutation path. Branch materialization creates a versioned candidate state only; it is not Release Acceptance, Production Acceptance or deployment authority.
+**New semantics:** normal feature work does not casually bump the platform version. For ordinary automatic development, branch materialization occurs only when the candidate is deterministically the tenth merged PR under Section 1.1; the existing Version Management / Release path writes the next PATCH before Human merge. Explicit higher Release transitions remain separately gated. Branch materialization is not Release Acceptance, Production Acceptance or deployment authority.
 
 ## 4. Explicit exclusions — preserved exactly
 
@@ -114,11 +128,11 @@ The canonical rule set is machine-readable and versioned independently at:
 
 `docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json`
 
-Classification precedence is:
+Classification precedence remains:
 
 `MAJOR > MINOR > PATCH > NONE`
 
-The highest triggered severity wins.
+The highest triggered severity wins for Release-impact classification. Classification alone no longer triggers ordinary between-cadence platform-version materialization.
 
 ### PATCH
 
@@ -189,8 +203,8 @@ Repeated evaluation of an already-recorded identical decision returns `NO_CHANGE
 
 No version materialization is allowed when:
 
-- machine-readable semantic evidence is missing;
-- evidence is contradictory;
+- cadence evidence is missing or contradictory for cadence-mode materialization;
+- machine-readable semantic evidence is missing or contradictory when semantic-classification mode is being evaluated;
 - more than one platform-version authority is presented;
 - project/PVC/Owner or applicable authority is unresolved;
 - the rule-set version is unknown or not Accepted;
@@ -200,9 +214,11 @@ No version materialization is allowed when:
 
 ## 10. Operational impact
 
-After this ADR becomes effective, Governance supplies deterministic classification and decision evidence. Productive Version Management and Release mutation remain owned by `CAPITAL-AI-OPS / PVC-06 / PVC-07`.
+After this ADR becomes effective, Governance supplies deterministic semantic classification plus the ten-merge cadence contract. Productive Version Management and Release mutation remain owned by `CAPITAL-AI-OPS / PVC-06 / PVC-07`.
 
-A separate OPS implementation slice must integrate this decision contract into the existing `src/platform/Release/**` version path. It must not create a second VersionManager, second registry or parallel Release architecture.
+The owner-correct OPS implementation prerequisite is already Human-merged through PR #1338 on `CURRENT_MAIN@72a22038c88d3cc170cbecac6d04547d7226853d`. It reuses the existing CI, Post-Merge Production Correlation, Exact-SHA Recovery, Release Version Gate and registered PR Autofix writer; it does not create a second VersionManager, registry, deployment controller or Self-Healing architecture.
+
+Because PR #1338 already implements the cadence-aware materializer and verifies the cadence candidate from fresh `CURRENT_MAIN`, Contract v1.1 may set `branchMaterialization.allowedAfterAuthorityEffective=true`. Eligibility still requires cadence mode plus fresh `currentMergeOrdinal % 10 == 9` evidence and the existing Release Version Gate. Ordinary semantic classification between cadence boundaries remains non-materializing and fail-closed.
 
 ## 11. Security impact
 
@@ -240,7 +256,7 @@ The Stage-1 Governance implementation supplies a deterministic decision engine a
 - automatic merge, release acceptance and deployment implications denied;
 - MAJOR classification remaining separately constrained by current Release/GA policy.
 
-Stage 1 does not mutate `package.json#version`. Productive branch materialization is a separately owned OPS implementation step after this ADR is effective on `main`.
+Stage 1 does not mutate `package.json#version`. Productive cadence-aware branch materialization is already implemented owner-correctly by Human-merged OPS PR #1338, but remains dormant until this v1.1 Governance authority becomes effective on `main`; every eligible mutation still runs through the existing Release Version Gate.
 
 ## 16. Supersession package summary
 
@@ -250,4 +266,4 @@ Stage 1 does not mutate `package.json#version`. Productive branch materializatio
 - **activationCondition:** effective only after Human/CODEOWNER merge; thereafter always within the exact target scope
 - **exact overlapping topic:** discretionary vs deterministic autonomous platform-version decision and branch materialization
 - **exclusions:** Section 4 of this ADR
-- **Owner decision:** `ACCEPT` captured in the initiating chat on 2026-09-11
+- **Owner decision:** v1.0 `ACCEPT` captured 2026-09-11; v1.1 ten-merge cadence amendment freshly directed by the Human/Owner on 2026-09-23 and effective only after Human/CODEOWNER merge
