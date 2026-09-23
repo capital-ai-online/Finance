@@ -159,3 +159,22 @@ Conflicting or ambiguous metadata remains fail-closed.
 Regression coverage reproduces the #1297 body shape and preserves
 Decision/Evidence ownership, required checks, Human/CODEOWNER merge authority,
 and held SH-2/SH-3 actions.
+
+
+## Concurrent writer correlation — PR #1302
+
+After PR #1305 was opened, the canonical Decision/Evidence reconciler discovered
+PR #1302 as a concurrent writer of
+`docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
+
+This slice therefore restored that work-package path exactly to
+`CURRENT_MAIN@444393b1b1db9dfd95ef6aae42261bf0085663e3` and removed it from the
+exclusive claim. PR #1302 remains the active writer for the SH-02.10
+current-main/status projection.
+
+The implementation slice retains only code, tests, its exclusive claim and this
+dedicated evidence document. Changed-file overlap is therefore removed. A
+semantic dependency remains: PR #1302's terminal/status statements must be
+re-correlated to the then-current SH-02.10 implementation generation before its
+own merge if this implementation lands first. No merge order or PASS state is
+manufactured by this evidence.
