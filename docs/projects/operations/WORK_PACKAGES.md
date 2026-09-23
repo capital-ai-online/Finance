@@ -118,7 +118,7 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 | P1 | `OPS-08-A` Production Handoff & Recovery | `PVC-08` | OPEN / PARTIAL |
 | P1 | `OPS-18-A` EventMesh/Traceability Coverage | `PVC-18` | OPEN / PARTIAL; Post-#851 trace-correlation slice implemented |
 | P2 | `OPS-02-CI-01` Build/Test Cost & Scope Reduction | `PVC-02` | `IMPLEMENTED_ON_MAIN / COST_PROFILE_AND_STALE_EVENT_GUARD_MERGED` via PR #988 + PR #996; hosted cost/race evidence remains open and real-evidence-only |
-| P0-HIGHEST | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / SH-02; SH-02.10 is `IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED`; SH-02.11 is `BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE`; current Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` + `self-healing-contract/1.2.0` |
+| P0-HIGHEST | `OPS-08-B` Reliability & Capacity Baseline | `PVC-08` | ACTIVE / SH-02; SH-02.10 is `TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE`; SH-02.11 is `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`; current Self-Healing execution resolves only through `CAPITAL-AI-ASH-01` + `self-healing-contract/1.2.0` |
 | P2 | `OPS-18-B` Traceability Freshness | `PVC-18` | OPEN / PARTIAL |
 
 ## Historical Self-Healing predecessor
@@ -127,10 +127,10 @@ OPS consumes these states as parent inventory evidence only and does not impleme
 
 ## `OPS-08-B-SH-02` — Autonomous Self-Healing Backend & Frontend
 
-**Current coordination baseline:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`  
-**Current package state:** SH-02.10 implementation, repository validation and exact-SHA production identity are verified; independent QM/Security assurance is pending  
+**Current coordination baseline:** `main@31643012f42368b6f85ce9953e19b991248a73d8`  
+**Current package state:** SH-02.10 is terminal with canonical same-generation Security/QM assurance and exact-SHA production readback; SH-02.11 is dependency-ready but staged activation has not started  
 **Primary PVC:** `PVC-08`; supporting `PVC-02`, `PVC-04`, `PVC-07`, `PVC-18`  
-**Status:** OWNER-DIRECTED / ACTIVE / P0 / SH-02.10 REPOSITORY+PRODUCTION VERIFIED / SH-02.11 BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE
+**Status:** OWNER-DIRECTED / ACTIVE / P0 / SH-02.10 TERMINAL / SH-02.11 DEPENDENCY_READY / ACTIVATION_NOT_STARTED
 
 Fresh Owner direction selects one bounded self-healing platform from current main. The package reuses Supervisor, process lifecycle/health, Telemetry/logger, EventMesh, Recovery Evidence Harness, Frontend architecture and the existing exact-SHA GitHub→Render promotion path.
 
@@ -143,12 +143,13 @@ Current implementation starts with:
 Detailed work graph: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
 Current correlation evidence:
-- `CURRENT_MAIN=05892a28d179316962c19bd52843c2e0e3cfbc9d` and Render Production read back the same exact SHA;
-- main CI #5836 completed successfully, including the full test suite, production build, provenance and verified Render deployment;
-- Container Security #2838 completed successfully, including HIGH/CRITICAL CVE gate and signed private GHCR exact-digest publication;
-- Post-Merge Production Correlation #242 completed successfully;
+- `CURRENT_MAIN=31643012f42368b6f85ce9953e19b991248a73d8` and Render Production read back the same exact SHA;
+- main CI #5845 completed successfully, including the full test suite, production build, provenance and verified Render deployment;
+- Container Security #2847 completed successfully, including HIGH/CRITICAL CVE gate and signed private GHCR exact-digest publication;
+- Post-Merge Production Correlation #245 completed successfully;
 - PR #1306 converged PR-body self-healing to one mutating writer (`PR Decision Evidence Reconciler`); PRs #1307/#1308 removed stale tests that still asserted the superseded second-writer architecture;
-- independent `CAPITAL-AI-QM` and `CAPITAL-AI-SEC` assurance for this exact generation is still pending and is the explicit blocker for SH-02.11;
+- Security PR #1311 and QM PR #1312 are Human/CODEOWNER-merged and independently bind the same SH-02.10 implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`;
+- the currently enabled action set is exactly five bounded SH-0/SH-1 actions; generic retry/quarantine and every SH-2/SH-3 action remain HELD;
 - predecessor SH-01 rules and superseded Self-Healing projections remain archived/non-authorizing.
 
 ## DR-03 — Provider Adapter / Execution Integration

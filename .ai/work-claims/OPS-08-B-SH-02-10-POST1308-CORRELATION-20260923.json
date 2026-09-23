@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-10-POST1308-CORRELATION-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -67,5 +67,17 @@
     "No Security or QM VERIFIED/CLOSED state is synthesized by OPS.",
     "AUTONOMOUS_SELF_HEALING_PLATFORM.md and selfHealingSupersession.test.ts both bind the current executable Self-Healing contract to self-healing-contract/1.2.0; no active 1.0.0 architecture assertion remains."
   ],
-  "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
+  "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T13:28:00Z",
+  "releaseReason": "Associated PR #1309 was Human/CODEOWNER-merged; the declared release condition is satisfied and SH-02.11 readiness now owns the successor coordination slice.",
+  "terminalPullRequest": 1309,
+  "terminalHeadSha": "7416f2348555e2d94a08cea5f208db3ed8f6d763",
+  "terminalMergeSha": "bc7edc096450be6b368ea706b97479567cc6ee55",
+  "releaseEvidence": {
+    "pullRequest": 1309,
+    "merged": true,
+    "mergeCommit": "bc7edc096450be6b368ea706b97479567cc6ee55",
+    "currentMain": "31643012f42368b6f85ce9953e19b991248a73d8",
+    "mainContainsImplementation": true
+  }
 }
