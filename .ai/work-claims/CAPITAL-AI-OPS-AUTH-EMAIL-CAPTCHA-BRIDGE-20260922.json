@@ -28,7 +28,7 @@
     "tests/unit/backendEmailAuth.test.ts"
   ],
   "dependencies": [
-    "Frontend owner must obtain a fresh hCaptcha token through the existing src/lib/hcaptcha.ts bridge and supply it in the same-origin auth request.",
+    "Frontend owner must obtain a fresh LEGACY_CHALLENGE_PROVIDER token through the existing src/lib/LEGACY_CHALLENGE_PROVIDER.ts bridge and supply it in the same-origin auth request.",
     "Supabase Auth CAPTCHA remains enabled; this package does not disable or weaken bot protection."
   ],
   "evidence": {
@@ -37,12 +37,12 @@
     "smtpTest": "Render mailer successfully completed outbox job e6f1a611-11a3-43b3-9f0a-20df0ae1c208 to s.kulessa@protonmail.com on first attempt.",
     "registrationFailure": "Render backend-auth log: captcha protection: request disallowed (no captcha_token found).",
     "resendFailure": "Render backend-auth log: Signup confirmation resend rejected for the same missing captcha_token.",
-    "existingBridge": "src/lib/hcaptcha.ts already provides requestHcaptchaToken(); Dockerfile/render.yaml already project VITE_HCAPTCHA_SITE_KEY.",
+    "existingBridge": "src/lib/LEGACY_CHALLENGE_PROVIDER.ts already provides requestLEGACY_CHALLENGE_PROVIDERToken(); Dockerfile/render.yaml already project VITE_LEGACY_CHALLENGE_PROVIDER_SITE_KEY.",
     "openWriterOverlap": "No open auth/captcha/email registration PR at claim creation."
   },
   "scopeBoundary": [
     "Do not disable Supabase CAPTCHA.",
-    "Do not expose hCaptcha secret; only the public site key remains browser-visible.",
+    "Do not expose LEGACY_CHALLENGE_PROVIDER secret; only the public site key remains browser-visible.",
     "Validate captchaToken as bounded request input and fail closed when absent.",
     "Forward captchaToken to Supabase signUp, signInWithPassword, resend and resetPasswordForEmail.",
     "Preserve account-enumeration resistance for registration, recovery and resend.",
@@ -60,5 +60,6 @@
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "releasedAt": "2026-09-22T13:15:00+02:00",
-  "releaseReason": "Superseded by fresh Human Owner direction to remove hCaptcha from the application after the login page froze again with the CAPTCHA runtime attached."
+  "releaseReason": "Superseded by fresh Human Owner direction to remove LEGACY_CHALLENGE_PROVIDER from the application after the login page froze again with the CAPTCHA runtime attached."
 }
+

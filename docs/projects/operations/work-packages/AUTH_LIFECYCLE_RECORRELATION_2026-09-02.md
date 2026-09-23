@@ -27,7 +27,7 @@ The package is evidence/coordination only. It does not implement Frontend, IAM/G
 - FAIL: authenticated `/` has no deterministic `/dashboard` handoff.
 - FAIL: normal logout does not explicitly use `scope: 'local'`.
 - FAIL: no distinct explicit global-logout action is represented.
-- PASS: self-registration is present and hCaptcha-bound.
+- PASS: self-registration is present and LEGACY_CHALLENGE_PROVIDER-bound.
 - PASS: registration converges on profile/consent + verified MFA onboarding.
 - FAIL: registration work-package status remains stale after Human Merge of PR #601.
 - PASS: `package.json` and current public metadata project `0.6.0`.
@@ -88,3 +88,4 @@ The non-strict correlation report may contain expected foreign `FAIL` findings. 
 ## Exit gate
 
 This OPS candidate is ready for PR consideration when its claim/evidence/test adapter are exact-main synchronized, no competing writer exists, static validation is available or explicitly unavailable, all foreign implementation remains unexecuted locally, and the Human/Owner approves the exact Base/Head PR snapshot. Merge and Production/provider mutation remain separate gates.
+

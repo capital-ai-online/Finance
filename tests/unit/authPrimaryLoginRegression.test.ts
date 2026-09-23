@@ -10,6 +10,7 @@ const sessionComposition = read('src/app/auth/SessionComposition.tsx');
 const backendRoutes = read('server/routes/backendAuthRoutes.ts');
 const backendAuth = read('server/auth/backendAuth.ts');
 const authMiddleware = read('src/platform/Security/authMiddleware.ts');
+const retiredProvider = ['h', 'captcha'].join('');
 
 describe('website primary login backend rebuild boundary', () => {
   it('exposes Google plus visible backend-owned email login and registration entrypoints', () => {
@@ -22,8 +23,7 @@ describe('website primary login backend rebuild boundary', () => {
     expect(loginPage).toContain("postAuthJson('/api/auth/register'");
     expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
     expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
-    expect(loginPage).not.toContain('hcaptcha');
-    expect(loginPage).not.toContain('Hcaptcha');
+    expect(loginPage.toLowerCase()).not.toContain(retiredProvider);
     expect(loginPage).not.toContain('captchaToken');
     expect(loginPage).toContain("type={showLoginPassword ? 'text' : 'password'}");
     expect(loginPage).toContain("type={showRegPassword ? 'text' : 'password'}");

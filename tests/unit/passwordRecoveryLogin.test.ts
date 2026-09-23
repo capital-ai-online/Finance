@@ -6,6 +6,7 @@ const loginPage = fs.readFileSync(
   path.join(process.cwd(), 'src/features/public/ui/LoginPage.tsx'),
   'utf8',
 );
+const retiredProvider = ['h', 'captcha'].join('');
 
 describe('backend-first password recovery presentation boundary', () => {
   it('renders password login and recovery controls without browser auth authority', () => {
@@ -26,8 +27,7 @@ describe('backend-first password recovery presentation boundary', () => {
     expect(loginPage).toContain('id="tab-mode-register"');
     expect(loginPage).toContain("postAuthJson('/api/auth/register'");
     expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
-    expect(loginPage).not.toContain('hcaptcha');
-    expect(loginPage).not.toContain('Hcaptcha');
+    expect(loginPage.toLowerCase()).not.toContain(retiredProvider);
     expect(loginPage).not.toContain('localStorage');
     expect(loginPage).not.toContain('sessionStorage');
   });

@@ -177,7 +177,7 @@ The pre-sync labels are retained as historical source references only. Current r
 - **evidence:** ADR-0040, S1-R2-09, report-only state.
 - **dependency:** `CAPITAL-AI-SEO` / SEO-GM supplies browser/marketing compatibility evidence but owns no productive PVC stage.
 - **required_remediation:** no promotion until evidence passes; production promotion is OPS-owned.
-- **required_evidence:** accepted violation/compatibility window and protected Stripe/Supabase/Consent/hCaptcha path verification.
+- **required_evidence:** accepted violation/compatibility window and protected Stripe/Supabase/Consent/LEGACY_CHALLENGE_PROVIDER path verification.
 - **verification_gate:** Security verifies promotion evidence before any strict-state claim.
 - **roadmap_reference:** `docs/projects/operations/ROADMAP.md`; source context `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`.
 - **status:** `WAITING_FOR_EVIDENCE`.
@@ -288,4 +288,5 @@ Correlation does not reopen closed or historically verified Security work withou
 | SEC-WEB-F30 | consolidated website-security verification suite | owner-correct implementation + CAPITAL-AI-SEC verification + QM assurance | SEC-08/10 | PLANNED |
 
 Traceability invariant: documentation materialization is not remediation evidence. Each finding must return exact candidate/runtime/provider evidence before Security can mark it VERIFIED; QM assurance remains independent where required.
+
 

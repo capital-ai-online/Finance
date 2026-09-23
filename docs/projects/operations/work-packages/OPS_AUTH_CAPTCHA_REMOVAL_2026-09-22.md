@@ -1,4 +1,4 @@
-# OPS-AUTH-CAPTCHA-REMOVAL-01 — Remove hCaptcha from productive auth
+# OPS-AUTLEGACY_CHALLENGE_PROVIDER-REMOVAL-01 — Remove LEGACY_CHALLENGE_PROVIDER from productive auth
 
 **Owner:** CAPITAL-AI-OPS  
 **PVC:** PVC-02 / PVC-08  
@@ -6,11 +6,11 @@
 
 ## Evidence
 
-The productive login surface froze again after hCaptcha was reattached. Independent SMTP delivery through the Render mailer was successful, so SMTP is not the freeze source.
+The productive login surface froze again after LEGACY_CHALLENGE_PROVIDER was reattached. Independent SMTP delivery through the Render mailer was successful, so SMTP is not the freeze source.
 
 ## Scope
 
-Remove the application-side CAPTCHA token contract from email registration/login/recovery/resend and remove the hCaptcha build/runtime/CSP projection. Preserve rate limiting, password checks, backend-owned sessions, origin validation, account-enumeration resistance and privileged AAL2 controls.
+Remove the application-side CAPTCHA token contract from email registration/login/recovery/resend and remove the LEGACY_CHALLENGE_PROVIDER build/runtime/CSP projection. Preserve rate limiting, password checks, backend-owned sessions, origin validation, account-enumeration resistance and privileged AAL2 controls.
 
 ## Provider prerequisite
 
@@ -19,3 +19,4 @@ The hosted Supabase project still enforces CAPTCHA at Auth level. The available 
 ## Exit gate
 
 Exact-head tests/security/governance PASS; Human/CODEOWNER merge; provider CAPTCHA disabled; then production registration + confirmation-mail smoke test.
+

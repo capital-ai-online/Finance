@@ -191,6 +191,8 @@ function createStatelessAuthClient() {
   });
 }
 
+export type BackendUserAuthClient = ReturnType<typeof createStatelessAuthClient>;
+
 /**
  * Server-only client for password, signup, confirmation and recovery operations.
  *
@@ -199,6 +201,28 @@ function createStatelessAuthClient() {
  */
 export function createBackendEmailAuthClient() {
   return createStatelessAuthClient();
+}
+
+/**
+ * Binds a stateless Supabase client to a backend-verified cookie session.
+ * Any token rotation stays server-side and is immediately projected back into
+ * the HttpOnly application cookie.
+ */
+export async function createAuthenticatedBackendAuthClient(
+  req: Request,
+  res: Response,
+  verified: VerifiedBackendAuth,
+): Promise<BackendUserAuthClient> {
+  const client = createStatelessAuthClient();
+  const { data, error } = await client.auth.setSession({
+    access_token: verified.accessToken,
+    refresh_token: verified.refreshToken,
+  });
+  if (error || !data.session || !data.user) {
+    throw new Error('[BackendAuth] Verified session could not be bound to the user client.');
+  }
+  persistBackendAuthSession(req, res, data.session);
+  return client;
 }
 
 function pkceStorage(req: Request, res: Response) {

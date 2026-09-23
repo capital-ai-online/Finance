@@ -22,9 +22,9 @@ services:
         sync: false
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
         sync: false
-      # Native Supabase passkey is the preferred first-party authentication path.
+      # Passkey activation remains gated by the owner's post-registration user test.
       - key: VITE_NATIVE_PASSKEY_LOGIN_ENABLED
-        value: "true"
+        value: "false"
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
       - key: STRIPE_PRICE_ID_STARTER_MONTHLY
@@ -49,6 +49,9 @@ services:
       - key: SUPABASE_SECRET_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # Server-only management credential used for idempotent Auth config/template readback.
+      - key: SUPABASE_MANAGEMENT_ACCESS_TOKEN
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false

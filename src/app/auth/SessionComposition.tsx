@@ -79,6 +79,16 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         name: user.name,
         email: user.email,
         subscriptionTier: user.subscriptionTier,
+        avatarId: typeof user.avatarId === 'string' ? user.avatarId : '1',
+        avatarColor: typeof user.avatarColor === 'string' ? user.avatarColor : 'from-brand-primary to-brand-primary',
+        preferredAssetClass: ['Crypto', 'Stocks', 'Commodities', 'Forex'].includes(user.preferredAssetClass)
+          ? user.preferredAssetClass
+          : 'Crypto',
+        riskProfile: ['Sicherheitsorientiert', 'Ausgewogen', 'Spekulativ', 'Hochfrequenz-Trading'].includes(user.riskProfile)
+          ? user.riskProfile
+          : 'Ausgewogen',
+        capital: typeof user.capital === 'number' && Number.isFinite(user.capital) ? user.capital : 0,
+        customAvatarUrl: typeof user.customAvatarUrl === 'string' ? user.customAvatarUrl : undefined,
       });
       setJustLoggedOut(false);
     } catch (error) {

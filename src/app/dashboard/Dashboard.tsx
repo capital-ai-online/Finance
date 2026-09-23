@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import { BillingUI, UserUI } from '../../features';
-import { secureStorage } from '../../lib/cryptoHelper';
 import { readAuthenticatedSubscriptionTier } from '../../lib/subscriptionReadback';
 import { CAPITAL_AI_VERSION } from '../../platform/Branding/runtimeBrand';
 import type { UserSession } from '../types/UserSession';
@@ -95,12 +94,13 @@ export function Dashboard({
   const [profile, setProfile] = useState<UserUI.UserProfile>({
     name: userSession.name,
     email: userSession.email,
-    avatarId: '1',
-    avatarColor: 'from-aif-gold-DEFAULT to-aif-gold-dark',
-    preferredAssetClass: 'Crypto',
-    riskProfile: 'Ausgewogen',
-    capital: 150000,
+    avatarId: userSession.avatarId || '1',
+    avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
+    preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
+    riskProfile: userSession.riskProfile || 'Ausgewogen',
+    capital: userSession.capital || 0,
     subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
+    customAvatarUrl: userSession.customAvatarUrl,
     id: userSession.id,
   });
 
@@ -175,36 +175,18 @@ export function Dashboard({
   }, [userSession.type, activeView, commitDashboardView]);
 
   React.useEffect(() => {
-    const loadSecureProfile = async () => {
-      if (!userSession.email) return;
-
-      try {
-        const pass = `${userSession.email}_aif_secure_passcode`;
-        const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
-        if (savedStr) {
-          const parsed = JSON.parse(savedStr) as UserUI.UserProfile;
-          setProfile({
-            ...parsed,
-            email: userSession.email,
-            subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
-            id: userSession.id,
-          });
-          return;
-        }
-      } catch (error) {
-        console.error('Failed to decrypt local secure profile:', error);
-      }
-
-      setProfile((previous) => ({
-        ...previous,
-        name: userSession.name,
-        email: userSession.email,
-        subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
-        id: userSession.id,
-      }));
-    };
-
-    void loadSecureProfile();
+    setProfile({
+      name: userSession.name,
+      email: userSession.email,
+      avatarId: userSession.avatarId || '1',
+      avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
+      preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
+      riskProfile: userSession.riskProfile || 'Ausgewogen',
+      capital: userSession.capital || 0,
+      subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
+      customAvatarUrl: userSession.customAvatarUrl,
+      id: userSession.id,
+    });
   }, [userSession]);
 
   React.useEffect(() => {
@@ -235,16 +217,8 @@ export function Dashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdateProfile = async (newProfile: UserUI.UserProfile) => {
+  const handleUpdateProfile = (newProfile: UserUI.UserProfile) => {
     setProfile(newProfile);
-    if (!userSession.email) return;
-
-    try {
-      const pass = `${userSession.email}_aif_secure_passcode`;
-      await secureStorage.setItem('aif_encrypted_user_profile', JSON.stringify(newProfile), pass);
-    } catch (error) {
-      console.error('Failed to encrypt and save secure profile:', error);
-    }
   };
 
   const triggerAttempt = (actionName: string, onExecute: () => void) => {

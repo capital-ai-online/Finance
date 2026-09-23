@@ -1,4 +1,4 @@
-# FE-AUTH-EMAIL-CAPTCHA-01 — LoginPage hCaptcha Reconnection
+# FE-AUTH-EMAIL-CAPTCHA-01 — LoginPage LEGACY_CHALLENGE_PROVIDER Reconnection
 
 **Project:** CAPITAL-AI-FE  
 **PVC:** cross-cutting; no productive PVC  
@@ -9,11 +9,11 @@
 
 ## Problem
 
-The email-auth controls are now visible, but the backend-first rebuild omitted the existing hCaptcha token bridge. Supabase Auth has CAPTCHA protection enabled and therefore rejects signup and mail resend before it can emit a confirmation mail.
+The email-auth controls are now visible, but the backend-first rebuild omitted the existing LEGACY_CHALLENGE_PROVIDER token bridge. Supabase Auth has CAPTCHA protection enabled and therefore rejects signup and mail resend before it can emit a confirmation mail.
 
 ## Existing authority reused
 
-`src/lib/hcaptcha.ts` already provides bounded, invisible hCaptcha acquisition using public `VITE_HCAPTCHA_SITE_KEY`. This slice reuses that implementation; it does not introduce a second CAPTCHA stack.
+`src/lib/LEGACY_CHALLENGE_PROVIDER.ts` already provides bounded, invisible LEGACY_CHALLENGE_PROVIDER acquisition using public `VITE_LEGACY_CHALLENGE_PROVIDER_SITE_KEY`. This slice reuses that implementation; it does not introduce a second CAPTCHA stack.
 
 ## Scope
 
@@ -38,3 +38,4 @@ Static/focused tests verify fresh token acquisition and payload binding for ever
 - PR #1280 frontend vocabulary/source-lock changes are inherited from CURRENT_MAIN and preserved.
 - PR #1281 registration legal-link behavior is folded into this slice: AGB and Datenschutz open with `target="_blank"` and `rel="noopener noreferrer"`.
 - The consolidated Exact Head is the only remaining LoginPage writer after #1281 supersession.
+

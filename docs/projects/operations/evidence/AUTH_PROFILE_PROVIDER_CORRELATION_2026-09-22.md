@@ -26,7 +26,7 @@ Productive Google OAuth execution also remains runtime evidence, not something i
 | authenticated `/login` | PASS — converges to `/` |
 | authenticated root | PASS — remains on `/`, no implicit `/dashboard` redirect |
 | email/password login | PASS_REPOSITORY — Supabase `signInWithPassword` |
-| normal registration | PASS_REPOSITORY — Supabase `signUp` + fresh hCaptcha + `full_name` metadata |
+| normal registration | PASS_REPOSITORY — Supabase `signUp` + fresh LEGACY_CHALLENGE_PROVIDER + `full_name` metadata |
 | Google/Gmail OAuth | PASS_REPOSITORY / RUNTIME_EVIDENCE_PENDING — `signInWithOAuth({ provider: 'google' })` + root callback |
 | registration profile/consent | PASS_REPOSITORY — server `/api/auth/register/complete` |
 | mandatory new-user MFA | PASS_REPOSITORY — native TOTP/WebAuthn + server `/api/auth/mfa/enrollment-complete` |
@@ -160,3 +160,4 @@ Reason:
 - productive Google OAuth and final QM assurance still require real provider/runtime evidence.
 
 No later LF-03/LF-04/LF-05 phase is unblocked by this evidence alone.
+

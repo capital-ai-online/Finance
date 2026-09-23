@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+  <body style="margin:0;padding:0;background:#02050e;color:#f8fafc;font-family:Inter,Arial,sans-serif">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#02050e;padding:32px 16px">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#070b19;border:1px solid #28495a;border-radius:20px;overflow:hidden">
+          <tr><td style="height:5px;background:linear-gradient(90deg,#f5c453,#0ddddd,#b026ff)"></td></tr>
+          <tr><td style="padding:38px 34px">
+            <p style="margin:0 0 12px;color:#0ddddd;font-size:12px;font-weight:800;letter-spacing:2px">CAPITAL-AI · SICHERER ZUGANG</p>
+            <h1 style="margin:0 0 16px;color:#ffffff;font-size:28px;line-height:1.2">Passwort zurücksetzen</h1>
+            <p style="margin:0 0 26px;color:#aeb8cb;font-size:15px;line-height:1.65">Für {{ .Email }} wurde ein neues Passwort angefordert. Öffne den geschützten Link und bestätige die Aktion, bevor du ein neues Passwort vergibst.</p>
+            <p style="margin:0 0 28px">
+              <a href="{{ .SiteURL }}/api/auth/email/confirm?token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;border-radius:12px;background:#0ddddd;color:#02050e;text-decoration:none;font-weight:900;padding:14px 22px">Passwort sicher zurücksetzen</a>
+            </p>
+            <p style="margin:0;color:#738099;font-size:12px;line-height:1.6">Wenn du diese Änderung nicht angefordert hast, ignoriere die E-Mail. Dein bisheriges Passwort bleibt unverändert.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>

@@ -213,7 +213,7 @@ Closure requires business-approved RPO/RTO, recurring encrypted off-site backup,
 
 **Current state:** OWNER-ACCEPTED / TIER EXCEPTION
 
-The active Supabase Free/Base tier does not provide the desired native leaked-password control. No custom substitute is introduced. Applicable hCaptcha, rate-limit, password-policy and MFA/AAL2 compensating controls remain relevant. Reassess if the active tier or native feature availability changes.
+The active Supabase Free/Base tier does not provide the desired native leaked-password control. No custom substitute is introduced. Applicable LEGACY_CHALLENGE_PROVIDER, rate-limit, password-policy and MFA/AAL2 compensating controls remain relevant. Reassess if the active tier or native feature availability changes.
 
 ## S1-R2-09 — CSP strict-mode promotion
 

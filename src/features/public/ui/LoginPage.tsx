@@ -82,6 +82,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acknowledgePrivacy, setAcknowledgePrivacy] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
@@ -141,8 +143,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
       setFormError('Die Passwörter stimmen nicht überein.');
       return;
     }
-    if (!acceptTerms) {
-      setFormError('Bitte AGB und Datenschutzhinweise akzeptieren.');
+    if (!acceptTerms || !acknowledgePrivacy) {
+      setFormError('Bitte die AGB akzeptieren und die Datenschutzhinweise bestätigen.');
       return;
     }
 
@@ -152,6 +154,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
         name: regName,
         email: regEmail,
         password: regPassword,
+        termsAccepted: acceptTerms,
+        privacyAcknowledged: acknowledgePrivacy,
+        marketingConsent,
       });
 
       if (!result.ok) {
@@ -475,6 +480,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                     id="reg-name"
                     type="text"
                     required
+                    minLength={2}
+                    maxLength={120}
                     autoComplete="name"
                     value={regName}
                     onChange={(event) => setRegName(event.target.value)}
@@ -513,6 +520,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                     id="reg-password"
                     type={showRegPassword ? 'text' : 'password'}
                     required
+                    minLength={12}
+                    maxLength={128}
                     autoComplete="new-password"
                     value={regPassword}
                     onChange={(event) => setRegPassword(event.target.value)}
@@ -528,6 +537,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                     {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+                  Mindestens 12 Zeichen; verwende eine lange, einzigartige Passphrase.
+                </p>
               </div>
 
               <div>
@@ -540,6 +552,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                     id="reg-confirm-password"
                     type={showRegPassword ? 'text' : 'password'}
                     required
+                    minLength={12}
+                    maxLength={128}
                     autoComplete="new-password"
                     value={regConfirmPassword}
                     onChange={(event) => setRegConfirmPassword(event.target.value)}
@@ -553,6 +567,7 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                 <input
                   id="registration-terms"
                   type="checkbox"
+                  required
                   checked={acceptTerms}
                   onChange={(event) => setAcceptTerms(event.target.checked)}
                   className="mt-0.5 rounded border-slate-700 bg-black/60 text-[#FF2E93] focus:ring-[#FF2E93]/50"
@@ -561,13 +576,38 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                   Ich akzeptiere die{' '}
                   <a href="/agb" target="_blank" rel="noopener noreferrer" className="text-slate-200 underline hover:text-amber-400">
                     Nutzungsbedingungen (AGB)
-                  </a>{' '}
-                  und die{' '}
-                  <a href="/datenschutz" target="_blank" rel="noopener noreferrer" className="text-slate-200 underline hover:text-emerald-400">
-                    Datenschutzrichtlinie
                   </a>
                   .
                 </span>
+              </label>
+
+              <label className="flex items-start gap-2 text-xs leading-snug text-slate-400">
+                <input
+                  id="registration-privacy"
+                  type="checkbox"
+                  required
+                  checked={acknowledgePrivacy}
+                  onChange={(event) => setAcknowledgePrivacy(event.target.checked)}
+                  className="mt-0.5 rounded border-slate-700 bg-black/60 text-[#44DE88] focus:ring-[#44DE88]/50"
+                />
+                <span>
+                  Ich habe die{' '}
+                  <a href="/datenschutz" target="_blank" rel="noopener noreferrer" className="text-slate-200 underline hover:text-emerald-400">
+                    Datenschutzhinweise
+                  </a>
+                  {' '}zur Verarbeitung meiner Registrierungsdaten gelesen.
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 text-xs leading-snug text-slate-500">
+                <input
+                  id="registration-marketing"
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(event) => setMarketingConsent(event.target.checked)}
+                  className="mt-0.5 rounded border-slate-700 bg-black/60 text-[#8D26FF] focus:ring-[#8D26FF]/50"
+                />
+                <span>Optional: Ich möchte Produktneuigkeiten per E-Mail erhalten. Diese Einwilligung kann ich jederzeit widerrufen.</span>
               </label>
 
               <button
