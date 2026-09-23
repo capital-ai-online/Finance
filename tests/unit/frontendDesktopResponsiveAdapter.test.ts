@@ -61,7 +61,7 @@ describe('desktop landing responsive adapter', () => {
     expect(portCss).toContain('.capital-ai-frontend-port > div > main > .hidden.sm\\:block');
 
     const desktopMediaIndex = portCss.indexOf('@media (min-width: 1024px)');
-    const desktopMainIndex = portCss.indexOf('.capital-ai-frontend-port > div > main');
+    const desktopMainIndex = portCss.indexOf('.capital-ai-frontend-port > div > main', desktopMediaIndex);
     expect(desktopMediaIndex).toBeGreaterThanOrEqual(0);
     expect(desktopMainIndex).toBeGreaterThan(desktopMediaIndex);
 
