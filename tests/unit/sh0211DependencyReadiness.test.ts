@@ -11,6 +11,7 @@ const EXPECTED_ENABLED = [
   'OBSERVE_ONLY',
   'RECONCILE_PR_DECISION_EVIDENCE',
   'RECONCILE_REPOSITORY_PROJECTION',
+  'RETRY_SAFE_OPERATION',
   'VERIFY_ISSUE_PROJECT_DISPATCH',
 ] as const;
 
@@ -19,7 +20,6 @@ const EXPECTED_HELD = [
   'QUARANTINE_WORK_ITEM',
   'RECONCILE_PR_GOVERNANCE_METADATA',
   'REDEPLOY_EXACT_SHA',
-  'RETRY_SAFE_OPERATION',
   'RUNTIME_PROCESS_RECYCLE',
 ] as const;
 
@@ -47,7 +47,7 @@ describe('SH-02.11 dependency readiness', () => {
       expect(['SH-0', 'SH-1'], actionId).toContain(action.tier);
       expect(action.blastRadius, actionId).not.toBe('PRODUCTION_RUNTIME');
       expect(action.blastRadius, actionId).not.toBe('PROTECTED_STATE');
-      expect(action.budget.maxAttempts, actionId).toBe(1);
+      expect(action.budget.maxAttempts, actionId).toBe(actionId === 'RETRY_SAFE_OPERATION' ? 3 : 1);
       expect(action.budget.cooldownMs, actionId).toBeGreaterThanOrEqual(0);
       expect(action.budget.timeoutMs, actionId).toBeGreaterThan(0);
       expect(action.killSwitch.trim(), actionId).not.toBe('');
@@ -59,7 +59,7 @@ describe('SH-02.11 dependency readiness', () => {
     expect(killSwitches.size).toBe(EXPECTED_ENABLED.length);
   });
 
-  it('does not activate any held generic, SH-2 or SH-3 action as part of readiness', () => {
+  it('keeps quarantine and all SH-2/SH-3 actions held after the first bounded activation', () => {
     for (const actionId of EXPECTED_HELD) {
       const action = getRemediationAction(actionId);
       expect(action.activation, actionId).toBe('HELD');
@@ -83,12 +83,12 @@ describe('SH-02.11 dependency readiness', () => {
     }
   });
 
-  it('preserves the staged rollout boundary instead of treating dependency readiness as activation', () => {
+  it('preserves the staged rollout boundary with only bounded safe retry newly activated', () => {
     const enabled = EXPECTED_ENABLED.map(getRemediationAction);
     const held = EXPECTED_HELD.map(getRemediationAction);
 
     expect(enabled.some(action => action.tier === 'SH-2' || action.tier === 'SH-3')).toBe(false);
-    expect(held.some(action => action.id === 'RETRY_SAFE_OPERATION')).toBe(true);
+    expect(enabled.some(action => action.id === 'RETRY_SAFE_OPERATION')).toBe(true);
     expect(held.some(action => action.id === 'QUARANTINE_WORK_ITEM')).toBe(true);
     expect(held.some(action => action.id === 'RUNTIME_PROCESS_RECYCLE')).toBe(true);
     expect(held.some(action => action.id === 'REDEPLOY_EXACT_SHA')).toBe(true);
