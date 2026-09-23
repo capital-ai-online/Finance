@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`
+**Baseline:** `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-22 — SH-02.9 post-merge convergence is terminal; SH-02.10 is the current dependency-ready P0 verification slice  
+**Reconciliation:** 2026-09-23 — SH-02.10 implementation is on current main, full repository validation and exact-SHA production identity are verified; independent QM/Security assurance remains the only gate before SH-02.11  
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -16,9 +16,9 @@ This file remains a temporary project execution projection until the separately 
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
-SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). Against `main@c3181b37987598511b3eb3e2d313102458fed415`, SH-02.10 — Fault Injection & Convergence Suite — is the current dependency-ready P0 slice. It is non-destructive: SH-02.8 remains HELD and is exercised only as negative-control capability evidence. Hosted exact-head validation and independent QM/Security assurance remain required before SH-02.10 terminal closure or SH-02.11 staged activation.
+SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). SH-02.10 is now implemented on `main@05892a28d179316962c19bd52843c2e0e3cfbc9d`: main CI #5836 completed successfully including the full suite and verified Render deployment, Container Security #2838 completed successfully, Post-Merge Production Correlation #242 completed successfully, and Render readback is live on the same exact SHA. SH-02.8 remains HELD and is exercised only as negative-control capability evidence. SH-02.10 is therefore `IMPLEMENTED_ON_MAIN / REPOSITORY_VALIDATED / PRODUCTION_IDENTITY_VERIFIED`, but it is not terminal because fresh independent QM and Security assurance for this generation is still required. SH-02.11 remains `BLOCKED_BY_INDEPENDENT_QM_SEC_ASSURANCE` and must not activate any tier before both owner-correct returns exist.
 
-Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.0.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
+Current Self-Healing semantics resolve through `/AGENTS.md@CURRENT_MAIN`, `CAPITAL-AI-ASH-01` and `self-healing-contract/1.2.0`. The predecessor SH-01 rule set is archived at `docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md` and has no execution authority.
 
 Detailed package: `work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md`.
 
