@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Independently verify the SH-02.11A RETRY_SAFE_OPERATION pre-activation Security boundary on the exact merged pre-activation generation without modifying OPS implementation.",
+  "workItemDE": "Die SH-02.11A-Pre-Activation-Sicherheitsgrenze für RETRY_SAFE_OPERATION auf der exakt gemergten Pre-Activation-Generation unabhängig verifizieren, ohne OPS-Implementierung zu verändern.",
+  "priority": "P0",
+  "priorityReason": "RETRY_SAFE_OPERATION must remain HELD until fresh independent Security and QM assurance are canonical for the same pre-activation generation.",
+  "projectId": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "projectStage": "cross-cutting Security verification / no productive PVC transfer",
+  "baseBranch": "main",
+  "baseSha": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
+  "branch": "agent/security-sh02-11a-retry-safe-independent-verification-20260923",
+  "assuranceTarget": {
+    "preactivationMergeGeneration": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
+    "preactivationPr": 1314,
+    "preactivationHead": "0be35d066c608d69ed9fb23294c64e15dc822065",
+    "actionId": "RETRY_SAFE_OPERATION",
+    "requiredState": "HELD",
+    "contractVersion": "self-healing-contract/1.2.0",
+    "dependencyResilienceVersion": "dependency-resilience/1.0.0"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION-20260923.json",
+    "docs/projects/security/evidence/SEC_SH02_11A_RETRY_SAFE_INDEPENDENT_VERIFICATION_2026-09-23.md",
+    "tests/unit/securitySh0211aRetrySafeIndependentAssurance.test.ts"
+  ],
+  "implementationBoundary": "Verification-only. No OPS runtime, provider, workflow, deployment, retry activation, rollback/restore or Self-Healing implementation mutation.",
+  "authorityBoundary": "Security verifies the repository safety boundary but grants no activation, accepted-risk, provider-capability, merge, release or deployment authority.",
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "previousPreparationBranch": "security/sh02-11a-retry-safe-independent-verification-20260923",
+  "branchConvergenceReason": "Canonical open-agent-draft-pr workflow accepts agent/* trusted work branches; previous security/* branch is evidence-only and is not used for PR creation."
+}
