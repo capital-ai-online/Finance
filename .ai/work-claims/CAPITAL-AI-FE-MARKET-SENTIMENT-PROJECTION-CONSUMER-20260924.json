@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-MARKET-SENTIMENT-PROJECTION-CONSUMER-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FE",
+  "projectFolder": "frontend",
+  "ownerScope": "Presentation-only consumption of the Human-merged FINTECH sentiment projection; FINTECH retains PVC-09..14 data, feature and scoring authority.",
+  "workItem": "Bind /api/news/sentiment-projection to the existing Market Sentiment projections interface with strict contract/authority validation and evidence-only fallback.",
+  "startedAt": "2026-09-24T00:02:00Z",
+  "baseBranch": "main",
+  "baseSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "branch": "frontend/market-sentiment-projection-consumer-20260924",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "Human-merged PR #1332 FIN-SENT-01",
+    "market-sentiment-projection/1.0.0",
+    "sentiment-feature-contract/1.0.0"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FE-MARKET-SENTIMENT-EVIDENCE-WIRING-20260923.json",
+    ".ai/work-claims/CAPITAL-AI-FE-MARKET-SENTIMENT-PROJECTION-CONSUMER-20260924.json",
+    "docs/projects/frontend/work-packages/FE_MARKET_SENTIMENT_PROJECTION_CONSUMER_2026-09-24.md",
+    "src/features/public/ui/runtime/MarketSentimentPresentation.tsx",
+    "tests/unit/marketSentimentEvidenceWiring.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No browser/local numeric scoring",
+    "No heuristic headline sentiment promotion",
+    "No neutral/default score",
+    "No frontend completion of missing FINTECH features",
+    "No scoreEligible/executionEligible promotion",
+    "No canonical score/rank/execution mutation"
+  ],
+  "overlapReadback": {
+    "currentMain": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+    "openPullRequests": [
+      1348,
+      1349,
+      1351
+    ],
+    "directChangedFileOverlap": false,
+    "note": "Open FE PR #1348 changes Header.tsx and unrelated tests/claim metadata only."
+  },
+  "exitGate": "Exact-head checks PASS; endpoint contract guards preserve fail-closed semantics; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
