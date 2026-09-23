@@ -126,7 +126,7 @@ describe('SH-02.11A independent Security assurance', () => {
         resilienceOwner: 'SUPERVISOR_SAFE_RETRY',
       },
       operation,
-      () => ({ status: 'PASS', probe: 'dependency-operation-readback' }),
+      () => ({ status: 'NOT_RUN', probe: 'dependency-operation-readback' }),
     );
 
     expect(result).toMatchObject({ status: 'BLOCKED', reason: 'ACTION_HELD' });
