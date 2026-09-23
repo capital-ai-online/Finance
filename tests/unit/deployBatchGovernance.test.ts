@@ -45,6 +45,8 @@ describe('application-wide merge cadence governance', () => {
     expect(agents).toContain('`package.json#version` as the single version authority');
     expect(agents).toContain('`package-lock.json#packages[""]#version`');
     expect(versionContract.version).toBe('1.1.0');
+    expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(false);
+    expect(versionContract.branchMaterialization.reactivationCondition).toContain('mergedPrCountSinceVersionAnchor == 9');
     expect(versionContract.automaticMaterializationPolicy).toMatchObject({
       mode: 'MERGED_PR_CADENCE_PATCH',
       retroactiveCounting: false,

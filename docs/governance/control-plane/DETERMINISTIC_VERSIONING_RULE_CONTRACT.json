@@ -111,7 +111,8 @@
     "ruleSetVersionChangeRequiresReevaluation": true
   },
   "branchMaterialization": {
-    "allowedAfterAuthorityEffective": true,
+    "allowedAfterAuthorityEffective": false,
+    "reactivationCondition": "OPS cadence-aware materializer verifies mergedPrCountSinceVersionAnchor == 9 against fresh CURRENT_MAIN and implements contract v1.1",
     "scope": "current-scoped-work-branch-only",
     "directMainMutation": "DENY",
     "automaticMerge": "DENY",

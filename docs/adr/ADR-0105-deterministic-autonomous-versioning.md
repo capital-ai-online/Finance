@@ -218,6 +218,8 @@ After this ADR becomes effective, Governance supplies deterministic semantic cla
 
 A separate OPS implementation slice must integrate this decision contract into the existing `src/platform/Release/**` version path. It must not create a second VersionManager, second registry or parallel Release architecture.
 
+Until that OPS slice is Human-merged and proves the 9→10 cadence check against fresh `CURRENT_MAIN`, Contract v1.1 deliberately sets legacy `branchMaterialization.allowedAfterAuthorityEffective=false`. This makes the v1.0 semantic materializer fail closed rather than permitting an obsolete between-cadence automatic version bump.
+
 ## 11. Security impact
 
 The change expands branch-local version materialization authority but not merge, production or provider authority. Primary risks are privilege confusion, duplicate bumps, ambiguous semantic classification and release-policy bypass.
