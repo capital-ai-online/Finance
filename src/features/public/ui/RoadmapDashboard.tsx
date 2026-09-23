@@ -45,7 +45,7 @@ const INTEGRATION_STYLE: Record<RoadmapIntegrationState, string> = {
   'repository-integrated': 'border-status-info/30 bg-status-info/10 text-status-info',
   'main-only': 'border-brand-accent/30 bg-brand-accent/10 text-brand-accent',
   'provider-gate': 'border-score-warning/30 bg-score-warning/10 text-score-warning',
-  'legacy-drift': 'border-semantic-danger/30 bg-semantic-danger/10 text-semantic-danger',
+  'legacy-drift': 'border-[#F87171]/30 bg-[#F87171]/10 text-[#F87171]',
 };
 
 const PHASES = [
