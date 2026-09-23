@@ -24,16 +24,22 @@
   "claimedPaths": [
     ".ai/work-claims/OPS-PR-SELF-HEALING-CHAIN-CONVERGENCE-20260923.json",
     ".github/workflows/pr-autofix-controller.yml",
-    ".github/workflows/pr-production-baseline-refresh.yml",
     ".github/workflows/pr-decision-reconciler.yml",
+    ".github/workflows/pr-production-baseline-post-merge-refresh.yml",
+    ".github/workflows/pr-production-baseline-refresh.yml",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "scripts/pr/prAutofixControllerWorkflow.test.mjs",
     "scripts/pr/productionBaselineBody.mjs",
     "scripts/pr/productionBaselineBody.test.mjs",
-    "scripts/pr/repairLegacyPrBodyStructure.mjs",
-    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
-    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
-    "scripts/pr/prAutofixControllerWorkflow.test.mjs"
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
+    "src/platform/Supervisor/faultInjectionConvergence.ts",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/faultInjectionConvergence.test.ts",
+    "tests/unit/selfHealingContract.test.ts"
   ],
   "rootCause": {
     "observedPr": 1298,
@@ -46,28 +52,31 @@
     "phases": [
       "STRUCTURE_REPAIR",
       "PRODUCTION_BASELINE",
+      "GOVERNANCE_METADATA",
       "DECISION_EVIDENCE",
       "ATOMIC_BODY_WRITE"
     ],
-    "controller": "PR Autofix Controller remains classifier/router only.",
-    "baselineRefresh": "PR Production Baseline Auto-Refresh loses direct PR-body write authority and delegates PR convergence to the leading chain.",
+    "controller": "PR Autofix Controller remains classifier/router only for PR-body drift; registered repository-file repairs stay outside PR-body authority.",
+    "baselineRefresh": "PR Production Baseline Auto-Refresh and Post-Merge Refresh are compatibility observers/relays with no PR-body write authority.",
     "invariants": [
-      "one per-PR writer lease",
+      "exactly one mutable PR-body writer: PR Decision Evidence Reconciler",
+      "one shared per-PR writer lease",
       "at most one PR body PATCH per convergence generation",
       "v1.8 never emits legacy ## 7 baseline section",
       "unsupported or ambiguous shapes remain fail-closed",
+      "superseded PR-governance metadata action remains HELD and is not an allowed action",
       "no required-check weakening and no merge authority"
     ]
   },
   "openWriterCorrelation": {
+    "currentMain": "28fb6cf98100fc9c8ee23c47f8398e4cd19ca365",
     "openPullRequests": [
       1299,
       1300,
-      1302,
-      1303,
       1304
     ],
-    "changedFileOverlap": "NONE"
+    "changedFileOverlap": "NONE",
+    "note": "#1299 owns Vocabulary files, #1300 owns consent/frontend files, #1304 owns Security assurance evidence. None overlaps this 18-path PR self-healing convergence slice."
   },
   "releaseCondition": "Human/CODEOWNER merge, close, supersession or abandonment."
 }
