@@ -12,8 +12,11 @@ interface LandingPageProps {
 /**
  * Canonical public landing page for /.
  *
- * Visual design authority is pinned to:
+ * Base presentation snapshot remains pinned to:
  * SvenKulessa/FRONTEND@cbc558019ae6785f44079fe6fca3403460774df3
+ *
+ * Owner-provided 2026-09-23 design deltas are applied only through Finance presentation adapters;
+ * productive FINTECH scoring/data authority is not copied from the uploaded archive.
  *
  * The current presentation components/data/types/assets are source-locked; host routing and branding remain explicit Finance adapters verified by
  * frontendReferenceDesignLock.test.ts. CAPITAL-AI routing and productive runtime authority remain
@@ -30,6 +33,7 @@ export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPa
       data-landing-section="frontend-reference-design-port"
       data-landing-design-repository="SvenKulessa/FRONTEND"
       data-landing-design-commit="cbc558019ae6785f44079fe6fca3403460774df3"
+      data-landing-design-overlay="owner-upload-2026-09-23-no-scoring"
       data-mobile-view="active"
       data-desktop-view="responsive-active"
       data-market-data-binding="verified-on-selection"

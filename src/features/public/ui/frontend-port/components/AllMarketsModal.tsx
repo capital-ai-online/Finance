@@ -3,6 +3,7 @@ import { X, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MARKET_ASSETS } from '../data/mockData';
 import { MarketAsset, MainCategory } from '../types';
+import { AssetLogo } from '../../runtime/AssetLogo';
 
 interface AllMarketsModalProps {
   isOpen: boolean;
@@ -151,16 +152,7 @@ export const AllMarketsModal: React.FC<AllMarketsModalProps> = ({
                   className="p-3 rounded-2xl bg-[#091129] border border-slate-800/90 hover:border-amber-500/40 cursor-pointer flex items-center justify-between transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs font-mono shrink-0 border"
-                      style={{
-                        backgroundColor: `${catColor}15`,
-                        borderColor: `${catColor}40`,
-                        color: catColor,
-                      }}
-                    >
-                      {asset.symbol.slice(0, 3)}
-                    </div>
+                    <AssetLogo asset={asset} size="sm" />
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
