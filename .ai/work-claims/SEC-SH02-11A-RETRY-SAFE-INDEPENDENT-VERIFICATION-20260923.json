@@ -17,7 +17,7 @@
   "projectStage": "cross-cutting Security verification / no productive PVC transfer",
   "baseBranch": "main",
   "baseSha": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
-  "branch": "security/sh02-11a-retry-safe-independent-verification-20260923",
+  "branch": "agent/security-sh02-11a-retry-safe-independent-verification-20260923",
   "assuranceTarget": {
     "preactivationMergeGeneration": "7bcc6aee2700d6fa3f926ff8615b04cde136750c",
     "preactivationPr": 1314,
@@ -34,5 +34,7 @@
   ],
   "implementationBoundary": "Verification-only. No OPS runtime, provider, workflow, deployment, retry activation, rollback/restore or Self-Healing implementation mutation.",
   "authorityBoundary": "Security verifies the repository safety boundary but grants no activation, accepted-risk, provider-capability, merge, release or deployment authority.",
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "previousPreparationBranch": "security/sh02-11a-retry-safe-independent-verification-20260923",
+  "branchConvergenceReason": "Canonical open-agent-draft-pr workflow accepts agent/* trusted work branches; previous security/* branch is evidence-only and is not used for PR creation."
 }
