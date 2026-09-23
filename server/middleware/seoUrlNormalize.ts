@@ -18,13 +18,14 @@ export const PUBLIC_SPA_PATHS = new Set([
 
 /**
  * Non-indexable application routes that still need the production SPA entry document on direct
- * navigation. Keep them separate from PUBLIC_SPA_PATHS so auth/private routes never leak into the
- * SEO prerender/public-route contract.
+ * navigation. Keep them separate from PUBLIC_SPA_PATHS so auth/private and operational UI routes
+ * never leak into the SEO prerender/public-route contract.
  */
 export const APPLICATION_SPA_PATHS = new Set([
   '/login',
   '/dashboard',
   '/media-studio',
+  '/roadmap',
   '/glossar',
   '/lexikon',
   '/market-vocabulary',
