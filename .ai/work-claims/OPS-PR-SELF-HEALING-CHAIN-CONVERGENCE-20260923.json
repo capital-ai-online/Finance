@@ -32,6 +32,7 @@
     "scripts/pr/prAutofixControllerWorkflow.test.mjs",
     "scripts/pr/productionBaselineBody.mjs",
     "scripts/pr/productionBaselineBody.test.mjs",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.mjs",
     "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
     "scripts/pr/repairLegacyPrBodyStructure.mjs",
