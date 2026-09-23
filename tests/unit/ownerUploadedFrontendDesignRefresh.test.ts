@@ -17,6 +17,9 @@ describe('owner-uploaded FRONTEND design refresh', () => {
 
   it('adopts recognizable asset logos without rendering source-fixture scoring', () => {
     const market = read('src/features/public/ui/frontend-port/components/MarketOverview.tsx');
+    const allMarkets = read('src/features/public/ui/frontend-port/components/AllMarketsModal.tsx');
+    const assetDetail = read('src/features/public/ui/frontend-port/components/AssetDetailModal.tsx');
+    const subclass = read('src/features/public/ui/frontend-port/components/SubclassDetailModal.tsx');
     const assetLogo = read('src/features/public/ui/runtime/AssetLogo.tsx');
 
     expect(market).toContain("import { AssetLogo } from '../../runtime/AssetLogo'");
@@ -24,6 +27,12 @@ describe('owner-uploaded FRONTEND design refresh', () => {
     expect(market).toContain('data-local-scoring="disabled"');
     expect(market).not.toContain('asset.aiScore');
     expect(market).not.toContain('asset.aiRating');
+    expect(allMarkets).toContain('<AssetLogo asset={asset} size="sm" />');
+    expect(assetDetail).toContain('<AssetLogo asset={asset} size="md"');
+    expect(assetDetail).toContain('data-scoring-authority="CAPITAL-AI-FINTECH"');
+    expect(assetDetail).not.toContain('asset.aiScore');
+    expect(assetDetail).not.toContain('asset.aiRating');
+    expect(subclass).toContain('<AssetLogo symbol={ticker} category={category} size="xs" />');
 
     for (const identity of ['BTC', 'ETH', 'SOL', 'AAPL', 'MSFT', 'NVDA', 'DAX', 'GSPC', 'NDX']) {
       expect(assetLogo).toContain(`cleanSymbol === '${identity}'`);
@@ -75,7 +84,14 @@ describe('owner-uploaded FRONTEND design refresh', () => {
     expect(sourceLock.ownerDesignOverlay?.authorityBoundary).toContain('CAPITAL-AI-FINTECH');
     expect(sourceLock.ownerDesignOverlay?.deferredIntegration).toContain('Altcoin Pattern Trooper');
 
-    const marketEntry = sourceLock.entries.find((entry) => entry.sourcePath === 'src/components/MarketOverview.tsx');
-    expect(marketEntry?.mode).toBe('FINANCE_PRESENTATION_ADAPTER');
+    for (const sourcePath of [
+      'src/components/MarketOverview.tsx',
+      'src/components/AllMarketsModal.tsx',
+      'src/components/AssetDetailModal.tsx',
+      'src/components/SubclassDetailModal.tsx',
+    ]) {
+      const entry = sourceLock.entries.find((candidate) => candidate.sourcePath === sourcePath);
+      expect(entry?.mode).toBe('FINANCE_PRESENTATION_ADAPTER');
+    }
   });
 });
