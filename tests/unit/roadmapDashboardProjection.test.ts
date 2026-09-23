@@ -9,14 +9,14 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 describe('Roadmap dashboard projection', () => {
   it('binds the projection to the freshly correlated main baseline without claiming runtime identity', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha).toBe(
-      '426a98d4703271e438cbc6df4b1442fb3a9b032d',
+      '8f5fff57613f183e0e1a2a8c8b41017338e63491',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha).toBe(
       ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha,
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'CURRENT_MAIN_DEPLOY_FAILED_AFTER_RECOVERY_MERGE',
+      'LIVE_HEALTHZ_REQUIRED_FOR_CURRENT_MAIN',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.previousFailedDeployId).toBe(
       'dep-daq378mk1f9s738adt70',
@@ -66,6 +66,27 @@ describe('Roadmap dashboard projection', () => {
     expect(documentary?.state).toBe('repository-integrated');
     expect(documentary?.stateLabel).toContain('KEINE AKTIVE');
     expect(documentary?.detail).toContain('kein ausführbares aktives Arbeitspaket');
+  });
+
+  it('centralizes SEC current state in the Live Roadmap and keeps superseded AAL2 out of active work', () => {
+    const sec = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
+      (item) => item.id === 'SEC-WEB-HARDENING-01',
+    );
+    expect(sec?.source).toBe('docs/architecture/ROADMAP.md');
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some(
+        (item) => item.id === 'SEC-AUTH-DIAG-AAL2-01',
+      ),
+    ).toBe(false);
+
+    const aal2 = ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.find(
+      (item) => item.id === 'SEC-AUTH-DIAG-AAL2-01',
+    );
+    expect(aal2?.stateLabel).toContain('SUPERSEDED');
+
+    for (const id of ['SEC-WEB-00', 'SEC-WEB-10', 'SEC-WEB-20', 'SEC-WEB-30', 'SEC-WEB-40', 'SEC-WEB-50']) {
+      expect(ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.some((item) => item.id === id)).toBe(true);
+    }
   });
 
   it('keeps canonical active packages traceable to owner roadmap sources', () => {

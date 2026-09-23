@@ -1,6 +1,8 @@
-# SEC-AUTH-DIAG-AAL2-01 — AAL2 Diagnostic Supersession
+> **Terminal correlation — 2026-09-23:** PR #1257 merged this diagnostic slice into main. The canonical work claim is `released / exclusive=false` and records that fresh Owner direction superseded the diagnostic client-auth path with the backend-first authentication rebuild. This file cannot reactivate that work. Current SEC state lives in `docs/architecture/ROADMAP.md` and `/roadmap`.
 
-**Status:** OWNER-DIRECTED / IMPLEMENTATION_IN_PROGRESS  
+# SEC-AUTH-DIAG-AAL2-01 — Superseded AAL2 Diagnostic Evidence
+
+**Status:** SUPERSEDED / HISTORICAL EVIDENCE — NOT ACTIVE  
 **Project:** `CAPITAL-AI-SEC`  
 **Relationship:** cross-cutting Security; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  

@@ -274,7 +274,7 @@ Correlation does not reopen closed or historically verified Security work withou
 ## 9. SEC-WEB-HARDENING-01 traceability
 
 **Materialization baseline:** main@e86955225887bb7f34036c175ad1da89b8aec14d  
-**Detailed package:** docs/projects/security/work-packages/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md  
+**Detailed package:** docs/projects/security/evidence/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md  
 **Status:** MATERIALIZED / IMPLEMENTATION_NOT_STARTED
 
 | Finding group | Threat/control | Primary target | Security role | Current state |

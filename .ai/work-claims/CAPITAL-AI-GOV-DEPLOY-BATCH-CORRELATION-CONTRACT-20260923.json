@@ -12,7 +12,7 @@
   "startedAt": "2026-09-23T22:45:00+02:00",
   "baseBranch": "main",
   "baseSha": "8f5fff57613f183e0e1a2a8c8b41017338e63491",
-  "lastSyncedMainSha": "8f5fff57613f183e0e1a2a8c8b41017338e63491",
+  "lastSyncedMainSha": "86fb86c69df1b65a69c006b4b08eee262c7db40c",
   "branch": "governance/deploy-batch-correlation-contract-20260923",
   "projectId": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
@@ -34,11 +34,11 @@
   "scopeBoundary": [
     "Governance/subject-matter authority contract only: no OPS workflow, Render/provider, runtime or FE dashboard mutation in this slice.",
     "Productive deployment/version materialization remains owner-correct with CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08 after Human/CODEOWNER merge; FE only consumes the resulting read-only projection.",
-    "Parallel SEC PR #1337 owns current RoadmapDashboard.tsx/roadmapSnapshot.ts writes; this branch does not create changed-file overlap.",
+    "Human-merged SEC PR #1337 is terminal on CURRENT_MAIN and owns the completed RoadmapDashboard.tsx/roadmapSnapshot.ts convergence; this GOV branch has no changed-file overlap and treats its result as current evidence.",
     "Historical evidence remains provenance-preserving and Human/CODEOWNER merge plus Security/Compliance gates remain unchanged."
   ],
   "dependencies": [
-    "/AGENTS.md@8f5fff57613f183e0e1a2a8c8b41017338e63491",
+    "/AGENTS.md@86fb86c69df1b65a69c006b4b08eee262c7db40c",
     "docs/projects/README.md@CURRENT_MAIN",
     "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
   ],
