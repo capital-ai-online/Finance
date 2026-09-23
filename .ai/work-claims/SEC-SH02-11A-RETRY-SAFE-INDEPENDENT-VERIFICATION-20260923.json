@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "SEC-SH02-11A-RETRY-SAFE-INDEPENDENT-VERIFICATION-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -36,5 +36,9 @@
   "authorityBoundary": "Security verifies the repository safety boundary but grants no activation, accepted-risk, provider-capability, merge, release or deployment authority.",
   "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "previousPreparationBranch": "security/sh02-11a-retry-safe-independent-verification-20260923",
-  "branchConvergenceReason": "Canonical open-agent-draft-pr workflow accepts agent/* trusted work branches; previous security/* branch is evidence-only and is not used for PR creation."
+  "branchConvergenceReason": "Canonical open-agent-draft-pr workflow accepts agent/* trusted work branches; previous security/* branch is evidence-only and is not used for PR creation.",
+  "releasedAt": "2026-09-23T15:23:51Z",
+  "releaseReason": "Associated independent Security assurance PR #1316 was Human/CODEOWNER-merged as 18c340bd1c946753c210f57f0b6104ead3bb6a64; the remaining SH-02.11A dependency is independent QM assurance.",
+  "terminalPullRequest": 1316,
+  "terminalMergeCommit": "18c340bd1c946753c210f57f0b6104ead3bb6a64"
 }
