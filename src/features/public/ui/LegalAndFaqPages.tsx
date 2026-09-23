@@ -35,9 +35,6 @@ import {
 } from '../../../privacy/privacyPolicy';
 import { openCookieConsentSettings } from '../../../services/cookieHubConsentBridge';
 import {
-  formatEuro,
-  STRIPE_PRICE_SNAPSHOT_DATE,
-  SUBSCRIPTION_PRICES_EUR,
   TERMS_EFFECTIVE_DATE,
   TERMS_VERSION,
 } from '../../billing/billingContract';
@@ -628,25 +625,22 @@ export function LegalAndFaqPages({ route }: LegalAndFaqPagesProps) {
               </section>
 
               <section className="space-y-3">
-                <h2 className="text-base font-bold text-white text-pink-300">§ 3 Entgeltliche Tarife, Preise und Zahlungsabwicklung</h2>
+                <h2 className="text-base font-bold text-white text-pink-300">§ 3 Archivierter Tarifkatalog und bestehende Vertragsverhältnisse</h2>
                 <p>
-                  Bei kostenpflichtigen Tarifen werden Preis, Abrechnungsintervall und Leistungsumfang vor
-                  Abgabe der zahlungspflichtigen Bestellung angezeigt. Die Zahlungsabwicklung erfolgt über
-                  Stripe. Der im Stripe-Checkout ausgewiesene Gesamtbetrag ist für die konkrete Bestellung maßgeblich.
+                  Der bisherige Starter-/Pro-/Enterprise-Katalog ist derzeit archiviert und wird nicht als
+                  neu bestellbares entgeltliches Angebot dargestellt. Bis zur Veröffentlichung eines neuen
+                  Angebots werden für diesen Katalog keine neuen zahlungspflichtigen Bestellungen angeboten.
                 </p>
-                <div className="overflow-x-auto rounded-2xl bg-black/40 border border-slate-800">
-                  <table className="w-full text-left text-xs">
-                    <thead className="border-b border-slate-800 text-pink-300">
-                      <tr><th className="px-3 py-1.5">Tarif</th><th className="px-3 py-1.5">Monatlich</th><th className="px-3 py-1.5">Jährlich</th></tr>
-                    </thead>
-                    <tbody className=" ">
-                      <tr><td className="px-3 py-1.5 font-bold text-white">Starter</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Starter.yearly)}</td></tr>
-                      <tr><td className="px-3 py-1.5 font-bold text-white">Pro</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Pro.yearly)}</td></tr>
-                      <tr><td className="px-3 py-1.5 font-bold text-white">Enterprise</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.monthly)}</td><td className="px-3 py-1.5">{formatEuro(SUBSCRIPTION_PRICES_EUR.Enterprise.yearly)}</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[11px] text-slate-500">Preisstand: produktiver Stripe-Katalog, read-only verifiziert am {STRIPE_PRICE_SNAPSHOT_DATE}.</p>
+                <p>
+                  Für bereits bestehende entgeltliche Vertragsverhältnisse bleiben die bei Vertragsschluss
+                  vereinbarten Preise, Leistungsbedingungen und gesetzlichen Rechte maßgeblich. Die Verwaltung
+                  bestehender Abonnements über das Stripe-Kundenportal sowie Kündigungs-, Widerrufs- und sonstige
+                  Verbraucherrechte bleiben unberührt.
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Der frühere Preiskatalog bleibt ausschließlich als historische Vertrags- und Nachweisevidence erhalten.
+                  Ein zukünftiges Pricing-Modell wird durch diese Fassung nicht vorweggenommen.
+                </p>
               </section>
 
               <section className="space-y-2">

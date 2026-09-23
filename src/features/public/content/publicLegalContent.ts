@@ -100,7 +100,7 @@ export const PUBLIC_FAQ_ITEMS: PublicFaqItem[] = [
     category: 'Konto & Abonnement',
     question: 'Wie werden kostenpflichtige Tarife bezahlt?',
     answer:
-      'Soweit kostenpflichtige Tarife angeboten werden, erfolgt die Zahlungsabwicklung über Stripe. Preis, Abrechnungsintervall und Leistungsumfang werden vor der zahlungspflichtigen Bestellung angezeigt; für die konkrete Bestellung ist der im Stripe-Checkout ausgewiesene Gesamtbetrag maßgeblich.',
+      'Der bisherige kostenpflichtige Tarifkatalog ist derzeit archiviert und nicht neu bestellbar. Für bereits bestehende entgeltliche Vertragsverhältnisse bleibt das Stripe-Kundenportal zur Verwaltung des Abonnements vorgesehen; bestehende Vertrags-, Kündigungs-, Widerrufs- und Verbraucherrechte bleiben unberührt. Ein zukünftiges Pricing-Modell ist noch nicht festgelegt.',
   },
   {
     id: 'billing-cancellation',
