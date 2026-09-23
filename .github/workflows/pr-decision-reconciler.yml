@@ -1,6 +1,13 @@
 name: PR Decision Evidence Reconciler
 run-name: Decision Evidence gegen Live-Repository-State korrelieren
 
+# Leading PR self-healing body chain.
+# This workflow is the only mutable owner of open same-repository PR bodies.
+# One per-PR writer lease converges, in order: structure -> production baseline ->
+# Decision/Evidence -> auto-merge declaration, then performs at most one body PATCH.
+# Other PR self-healing workflows may classify, observe or delegate, but must not
+# mutate PR bodies or maintain a competing template/baseline contract.
+
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PR Governance, Container Security]
@@ -224,7 +231,6 @@ jobs:
             core.setOutput('main_sha', normalizeSha(main.commit.sha));
 
       - name: Trusted Policy exakt an Live-CURRENT_MAIN binden
-        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
         working-directory: policy
         env:
           EXPECTED_MAIN_SHA: ${{ steps.bootstrap_snapshot.outputs.main_sha }}
@@ -237,7 +243,6 @@ jobs:
           fi
 
       - name: Kandidaten-Head nur als Datenquelle auschecken
-        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ steps.bootstrap_snapshot.outputs.head_sha }}
@@ -246,12 +251,19 @@ jobs:
           persist-credentials: false
 
       - name: Trusted CURRENT_MAIN in Kandidaten-Repository importieren
-        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
-      - name: Bootstrap-Produktionsbaseline aus Trusted Main erzeugen
-        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+      - name: PR-Scope mit trusted-main Klassifikator bestimmen
+        id: body_scope
+        working-directory: candidate
+        env:
+          EVENT_NAME: pull_request
+          PR_BASE_SHA: ${{ steps.bootstrap_snapshot.outputs.main_sha }}
+          PR_HEAD_SHA: ${{ steps.bootstrap_snapshot.outputs.head_sha }}
+        run: node ../policy/scripts/pr/classifyPrScope.mjs
+
+      - name: Produktionsbaseline aus Trusted Main für die führende PR-Convergence erzeugen
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -284,6 +296,8 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ matrix.pr_number }}
           PR_CANONICAL_BOOTSTRAP_BODY: ../candidate/artifacts/pr/decision-reconciler-bootstrap-body.md
+          PR_BASELINE_OUTPUT: ../candidate/artifacts/pr/decision-reconciler-bootstrap-baseline.json
+          PR_CHECK_CLASS: ${{ steps.body_scope.outputs.class }}
         run: node scripts/pr/reconcilePrDecisionEvidence.mjs
 
       - name: Main-Drift an kanonischen Branch-Sync delegieren

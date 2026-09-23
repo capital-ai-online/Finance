@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
+import { computeProductionBaselineId } from './lib.mjs';
 import {
   collectDecisionPolicy,
   decisionStateForCheck,
   evaluateProductionBaseline,
   findExactOverlap,
   gateForRequirements,
+  prepareLeadingPrBody,
   reconcileDecisionBody,
   reconcileDecisionBodyWithBootstrap,
   securityRequirements,
@@ -535,4 +537,88 @@ test('reconciler still fails closed when a malformed dashboard contains non-tabl
   assert.equal(result.eligible, false);
   assert.equal(result.changed, false);
   assert.equal(result.reason, 'live-dashboard-boundary-ambiguous');
+});
+function convergenceBaseline() {
+  const baseline = {
+    schemaVersion: '1.2.0',
+    generatedAt: '2026-09-23T11:40:00.000Z',
+    productionUrl: 'https://capital-ai.online/',
+    productionHealthUrl: 'https://capital-ai.online/healthz',
+    bootstrap: false,
+    production: {
+      status: 'ok', version: '0.6.0', commitSha: mainSha, branch: 'main',
+      repoSlug: 'capital-ai-online/Finance', provider: 'render',
+    },
+    main: { sha: mainSha },
+    head: { sha: headSha, version: '0.6.0' },
+    drift: { productionToMainCommits: 0, mainToHeadCommits: 1 },
+    checks: {
+      productionHealthy: true, immutableProductionIdentity: true, productionRepoMatches: true,
+      productionBranchIsMain: true, productionIsAncestorOfMain: true, branchContainsCurrentMain: true,
+      versionIsNotOlderThanProduction: true,
+    },
+  };
+  baseline.baselineId = computeProductionBaselineId(baseline);
+  return baseline;
+}
+
+test('leading PR body projection repairs the PR #1298 hybrid shape and binds one canonical baseline before Decision/Evidence', () => {
+  const baseline = convergenceBaseline();
+  const legacyBlock = [
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:stale`',
+    '- **Produktions-Commit:** `' + mainSha + '`',
+    '- **Produktions-Branch:** `main`',
+    '- **Aktueller main-Commit:** `' + mainSha + '`',
+    '- **PR-Head-Commit:** `' + headSha + '`',
+    '- **Abweichung Produktion → main:** `0` Commit(s)',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+  ].join('\n');
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Test',
+    '> 🧭 **Entscheidungsstatus: BLOCKED**',
+    '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Priorität:** P1 🟠 Hoch',
+    '- **Versionsimpact:** PATCH 🩹',
+    '- **Version-Manager-Check:** NOT_RUN — fixture.',
+    '- **PR-Klasse:** C',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    '</details>',
+    '## 7. Maschinenlesbare Baseline',
+    '',
+    legacyBlock,
+  ].join('\n');
+
+  const result = prepareLeadingPrBody(body, baseline, { prClass: 'C' });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.structureChanged, true);
+  assert.equal(result.baselineChanged, true);
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.ok(result.body.includes(baseline.baselineId));
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
 });

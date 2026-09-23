@@ -15,21 +15,22 @@
 **SH-02.3E Evidence Integrity merge:** PR #1150 → `f0e145cea02e2ddd72df5f35aee8ee8426c67f8d`  
 **SH-02.6 merge:** PR #1161 → `24850d31cc503b28b1ff786b377826733bf9671f`  
 **Auto-Merge Safety Contract merge:** PR #1164 → `6207e1cc094b1d5d599963dc7f1ed25c73bab928`  
-**Current implementation baseline:** `main@c3181b37987598511b3eb3e2d313102458fed415`  
+**Current implementation baseline:** `main@31643012f42368b6f85ce9953e19b991248a73d8`  
 **SH-02.7 merge:** PR #1187 → `4c454a67dc8a4f7dcd39ad7360cd6af32c114aac`  
 **SH-02.9A merge:** PR #1246 → `7fc9b8b6fbfa014ab29c8289dd74adb0ac28c564`  
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
 **SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
-**Current functional slice:** `SH-02.10` — deterministic non-destructive Fault Injection & Convergence on `agent/operations-sh02-10-fault-convergence-v2-20260922`  
-**Next functional slice:** `SH-02.11` — staged production activation only after SH-02.10 exact-head validation and independent QM/Security assurance  
+**Current functional slice:** `SH-02.11A` — `RETRY_SAFE_OPERATION` pre-activation verification; action remains HELD pending fresh independent Security/QM assurance  
+**Next functional slice:** `SH-02.11A` — first staged SH-1 activation candidate; pre-activation only, no HELD -> ENABLED mutation in this slice  
+**SH-02.10 terminal evidence:** Security PR #1311 + QM PR #1312 independently assure implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main/Production readback is `31643012f42368b6f85ce9953e19b991248a73d8`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
 ## Outcome
 
 **P0 priority invariant:** until SH-02.11 is terminal, the next dependency-ready SH-02 slice is the highest executable CAPITAL-AI-OPS work item. Other normal OPS backlog items are deferred while a SH-02 slice is executable. Real Security/Compliance/QM/domain dependencies remain blocking and are never bypassed.
 
-**Policy-homogeneity gate:** before advancing a functional slice, active repository-development projections must not contradict `/AGENTS.md@CURRENT_MAIN` or the action activation state in `self-healing-contract/1.0.0`. OPS-owned drift is corrected in this package; foreign-owner drift becomes a traceable handoff and does not silently transfer ownership.
+**Policy-homogeneity gate:** before advancing a functional slice, active repository-development projections must not contradict `/AGENTS.md@CURRENT_MAIN` or the action activation state in `self-healing-contract/1.2.0`. OPS-owned drift is corrected in this package; foreign-owner drift becomes a traceable handoff and does not silently transfer ownership.
 
 Deliver one bounded, evidence-driven recovery system that can detect failures, perform eligible reversible remediation, verify the resulting state and either converge or safely quarantine/escalate.
 
@@ -51,8 +52,9 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.8 | Protected rollback/restore capability contracts | OPS + SEC/COMP/QM | 02.7 + recovery evidence | rollback/restore remain disabled until exact pre/post conditions and independent verification exist | HELD |
 | SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN / POST_MERGE_CONVERGED via PR #1262 + #1271 |
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
-| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | IMPLEMENTED_BRANCH / HOSTED_VALIDATION_PENDING / INDEPENDENT_ASSURANCE_PENDING |
-| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | QUEUED |
+| SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE / PRODUCTION_READBACK_VERIFIED |
+| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | DEPENDENCY_READY / ACTIVATION_NOT_STARTED |
+| SH-02.11A | RETRY_SAFE_OPERATION pre-activation | OPS + SEC + QM / PVC-08,04,18 | SH-02.11 dependency-ready | exact READ_ONLY/IDEMPOTENT boundary, budget, kill switch, verification probe and fresh independent Security/QM assurance before activation | ACTIVE / ACTION_HELD / ASSURANCE_PENDING |
 
 ## SH-02.9 — Observability/SLO/incident convergence
 
@@ -72,7 +74,7 @@ PR #1262 was Human-merged as `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`. The own
 
 ### Deliverables
 - architecture concept;
-- canonical `self-healing-contract/1.0.0`;
+- canonical `self-healing-contract/1.2.0`;
 - archive and deactivate predecessor Self-Healing rule projections;
 - current-main work claim;
 - roadmap/work-package reconciliation;
@@ -159,7 +161,7 @@ No self-healing action may recursively authorize itself.
 
 ### Canonical supersession rule
 
-After Human/CODEOWNER merge of SH-02.3, `self-healing-contract/1.0.0` is the only executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
+After Human/CODEOWNER merge of SH-02.3 and the later bounded contract extensions through the #1305/#1306 generation, `self-healing-contract/1.2.0` is the current executable Self-Healing finding/action/eligibility/convergence contract. It does not supersede `/AGENTS.md@CURRENT_MAIN` or current Security/Compliance/QM/domain controls; it supersedes only older Self-Healing-specific execution rules and projections.
 
 The predecessor `OPS-08-B-SH-01`, legacy `SH-R*` labels and the narrow `AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md` control-plane projection are archived/non-authorizing. They cannot be used to activate, deny or classify remediation.
 
@@ -190,7 +192,7 @@ For each dependency:
 
 ### SH-02.4 branch implementation
 
-- `RETRY_SAFE_OPERATION` remains `HELD` in `self-healing-contract/1.0.0`; SH-02.4 implements and verifies the boundary without performing the staged SH-1 production activation reserved for SH-02.11.
+- `RETRY_SAFE_OPERATION` remains `HELD` in `self-healing-contract/1.2.0`; SH-02.4 implements and verifies the boundary without performing the staged SH-1 production activation reserved for SH-02.11.
 - `src/platform/Supervisor/dependencyResilience.ts` is the bounded executor/projection contract. Raw `SIDE_EFFECTING` and `PROTECTED` operations fail closed before execution; provider-native owners are never wrapped in another retry loop.
 - `executeSupervised()` now defaults unclassified work to `SIDE_EFFECTING` and suppresses automatic retries unless the caller explicitly declares `READ_ONLY` or `IDEMPOTENT`; safe retries use bounded exponential backoff plus jitter.
 - The contract-bound generic dependency executor carries the existing budget (timeout, max attempts, cooldown, kill switch and mandatory post-action verification) but returns fail-closed `ACTION_HELD` until staged activation.
@@ -301,6 +303,8 @@ At minimum simulate:
 - worker stall;
 - stale frontend chunk;
 - persistent React render failure;
+- optional frontend initialization Promise rejection;
+- stale CI expectation after an intentional runtime-contract change;
 - API 503/429;
 - deployment identity mismatch;
 - failed exact-SHA redeploy verification;
@@ -309,22 +313,56 @@ At minimum simulate:
 
 ### SH-02.10 branch implementation
 
-- `sh-02.10-fault-convergence/1.0.0` defines exactly thirteen deterministic scenarios and creates no second recovery authority.
+- `sh-02.10-fault-convergence/1.3.0` defines seventeen deterministic scenarios and creates no second recovery authority.
 - injections are limited to in-memory state, pure model input and mocked HTTP I/O; Production faults, provider mutation, runtime recycle, deployment, rollback and restore are prohibited.
 - fatal process state is injected through the existing process-health seam and must project unhealthy liveness while `RUNTIME_PROCESS_RECYCLE` stays `HELD`.
 - transient and persistent provider failures reuse `dependencyResilience`; provider-native retry/circuit/LKG ownership is preserved and no nested retry executor is created.
 - worker stall reuses the existing `WORKER_STALLED -> QUARANTINE_WORK_ITEM` contract while generic quarantine stays `HELD`.
 - frontend stale-chunk recovery proves exactly one automatic reload per fingerprint/session; persistent render failure remains observe-only.
+- optional frontend initialization rejection is classified as `FRONTEND_OPTIONAL_INIT_FAILURE -> OBSERVE_ONLY`; no generic retry or silent Promise suppression is granted by the Self-Healing registry.
+- stale CI expectations after an intentional runtime-contract change are classified as `REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`; repair is restricted to the existing one-attempt `repository.pr.autofix` specialist with exact-head CI/Governance readback.
+- the exact PR #1298 hybrid body shape (`v1.8` machine-baseline details with the canonical `NOT_RUN` sentinel plus a trailing legacy `## 7` baseline section) is covered as `PR_GOVERNANCE_V18_HYBRID_BASELINE_SECTION`; it converges through the one leading PR Decision Evidence Reconciler writer, never through a second baseline-body writer.
 - mocked 503/429 responses prove bounded safe-read retry and no automatic mutation-method replay.
 - deployment identity drift and failed exact-SHA readback prove escalation while `REDEPLOY_EXACT_SHA` stays `HELD`.
 - `CURRENT_STATE_PROJECTION_BASELINE_STALE` is a deterministic repository-projection drift scenario: it resolves to `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, reuses the single Current-State Baseline Autofix writer, permits at most one idempotent attempt and requires exact-head CI/Governance readback.
 - missing capability and exhausted budget are explicit fail-closed scenarios.
 - SH-02.8 protected rollback/restore remains `HELD`; its unavailable capability is a negative-control input, not an activation prerequisite for this non-destructive suite.
-- hosted exact-head validation plus independent QM and Security assurance remain required before SH-02.10 may be terminal and before SH-02.11 may activate production tiers.
+- SH-02.10 is terminal: Security PR #1311 and QM PR #1312 are Human/CODEOWNER-merged and independently bind implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main `31643012f42368b6f85ce9953e19b991248a73d8` completed main CI #5845, Container Security #2847 and Post-Merge Production Correlation #245 successfully, and Render deployment `dep-dapt6qjncjis73fkpjag` is live on that exact SHA. The enabled-tier readiness contract is recorded separately before SH-02.11 activation starts.
 
 Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md`.
 
+## SH-02.11A — RETRY_SAFE_OPERATION pre-activation
+
+**State:** `ACTIVE / ACTION_HELD / SECURITY_ASSURANCE_PENDING / QM_ASSURANCE_PENDING`
+
+This child slice prepares the first staged SH-1 activation candidate without changing the action activation state.
+
+Candidate invariants:
+- `RETRY_SAFE_OPERATION.activation = HELD`;
+- eligible idempotency classes are only `READ_ONLY` and `IDEMPOTENT`;
+- `SIDE_EFFECTING` and `PROTECTED` fail closed;
+- `DEPENDENCY_NATIVE` and `NO_AUTOMATIC_RETRY` owners never enter the generic retry executor;
+- kill switch remains `self-healing.safe-retry`;
+- verification probe remains `dependency-operation-readback`;
+- budget remains `maxAttempts=3 / cooldownMs=500 / timeoutMs=10000`;
+- exhaustion state remains `DEGRADED`;
+- no SH-2/SH-3 or `QUARANTINE_WORK_ITEM` activation is implied.
+
+Activation is prohibited until fresh independent Security and QM returns bind this exact pre-activation generation and their exact-head checks pass.
+
+Evidence: `docs/projects/operations/evidence/SH_02_11A_RETRY_SAFE_PREACTIVATION_2026-09-23.md`.
+
 ## SH-02.11 — Rollout
+
+**Readiness state:** `DEPENDENCY_READY / ACTIVATION_NOT_STARTED` on `main@31643012f42368b6f85ce9953e19b991248a73d8`.
+
+Readiness is bound by `docs/projects/operations/evidence/SH_02_11_DEPENDENCY_READINESS_2026-09-23.md` and `tests/unit/sh0211DependencyReadiness.test.ts`.
+
+The current readiness generation allows exactly these already-enabled actions to remain enabled:
+- SH-0: `OBSERVE_ONLY`, `VERIFY_ISSUE_PROJECT_DISPATCH`;
+- SH-1: `FRONTEND_RELOAD_ONCE`, `RECONCILE_REPOSITORY_PROJECTION`, `RECONCILE_PR_DECISION_EVIDENCE`.
+
+The readiness slice does **not** activate `RETRY_SAFE_OPERATION`, `QUARANTINE_WORK_ITEM`, `RECONCILE_PR_GOVERNANCE_METADATA`, `RUNTIME_PROCESS_RECYCLE`, `REDEPLOY_EXACT_SHA` or `PROTECTED_ROLLBACK_RESTORE`. Any future activation requires a fresh current-main slice and must preserve kill-switch, budget, verification/readback and independent-assurance gates.
 
 Activation order:
 1. SH-0 observation;

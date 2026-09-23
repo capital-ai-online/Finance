@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "QM-SH02-10-INDEPENDENT-ASSURANCE-V3-20260923",
+  "status": "released",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Independently assure SH-02.10 on the same implementation generation verified by Security while containing fresh CURRENT_MAIN after Security PR #1311.",
+  "workItemDE": "SH-02.10 unabhängig auf derselben von Security verifizierten Implementierungsgeneration absichern und zugleich den frischen CURRENT_MAIN nach Security-PR #1311 enthalten.",
+  "priority": "P0",
+  "priorityReason": "SH-02.11 remains dependency-held until same-generation independent Security and QM returns are canonical.",
+  "projectId": "CAPITAL-AI-QM",
+  "projectFolder": "docs/projects/quality-management/",
+  "projectStage": "cross-cutting Quality assurance / no productive PVC transfer",
+  "startedAt": "2026-09-23T13:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "2cedd1afa69b5ec28872acbda5335358e949ac7f",
+  "branch": "quality-management/sh02-10-independent-assurance-v3-20260923",
+  "assuranceTarget": {
+    "implementationGeneration": "bc7edc096450be6b368ea706b97479567cc6ee55",
+    "currentMainAtStart": "2cedd1afa69b5ec28872acbda5335358e949ac7f",
+    "mainDeltaSinceImplementationGeneration": [
+      ".ai/work-claims/SEC-SH02-10-INDEPENDENT-VERIFICATION-V2-20260923.json",
+      "docs/projects/security/evidence/SEC_SH02_10_INDEPENDENT_VERIFICATION_V2_2026-09-23.md",
+      "tests/unit/securitySh0210IndependentAssurance.test.ts"
+    ],
+    "implementationMutationInDelta": false,
+    "contractVersion": "self-healing-contract/1.2.0",
+    "faultSuiteVersion": "sh-02.10-fault-convergence/1.3.0",
+    "securityAssurancePr": 1311
+  },
+  "claimedPaths": [
+    ".ai/work-claims/QM-SH02-10-INDEPENDENT-ASSURANCE-V3-20260923.json",
+    "docs/projects/quality-management/evidence/QM_SH02_10_INDEPENDENT_ASSURANCE_V3_2026-09-23.md",
+    "tests/unit/qmSh0210IndependentAssurance.test.ts"
+  ],
+  "implementationBoundary": "Assurance-only. No OPS, Security, runtime, provider, workflow, deployment, rollback/restore or Self-Healing implementation mutation.",
+  "authorityBoundary": "QM evaluates completeness, determinism, boundedness, evidence truthfulness and regression behavior; it grants no merge, release, deployment or SH-02.11 activation authority.",
+  "supersedesClosedPr": 1303,
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T13:21:52Z",
+  "releaseReason": "Associated SH-02.10 QM assurance PR #1312 was Human/CODEOWNER-merged as 31643012f42368b6f85ce9953e19b991248a73d8; this stale exclusive coordination claim must not overlap the SH-02.11A QM successor.",
+  "terminalPullRequest": 1312,
+  "terminalMergeCommit": "31643012f42368b6f85ce9953e19b991248a73d8"
+}
