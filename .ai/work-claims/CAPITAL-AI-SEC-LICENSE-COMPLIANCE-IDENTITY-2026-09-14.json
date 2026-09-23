@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-SEC-LICENSE-COMPLIANCE-IDENTITY-2026-09-14",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok 4.6",
@@ -35,5 +35,8 @@
   ],
   "correlatedStaleClaims": [],
   "authorityGuard": "Bounded Security remediation of license identity, pointer-test drift and secret-scan fixtures. Do not invent an OSI license, do not mutate lockfile/dependencies, do not merge, and do not rotate live provider secrets.",
-  "releaseCondition": "Release on merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only."
+  "releaseCondition": "Release on merge, close, supersession or abandonment. Merge remains Human/CODEOWNER-only.",
+  "releasedAt": "2026-09-24T00:25:00+02:00",
+  "releaseReason": "PR #905 merged on 2026-09-14. The license-identity work is terminal on main; this stale coordination claim is released.",
+  "mergeCommitSha": "bbe18142b9860afd46d4a7340148e833cff262c6"
 }
