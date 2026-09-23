@@ -73,6 +73,9 @@ describe('Supabase URL Configuration control', () => {
     expect(workflow).toContain("github.event.comment.author_association == 'OWNER'");
     expect(workflow).toContain("github.event.comment.author_association == 'MEMBER'");
     expect(workflow).toContain("startsWith(github.event.comment.body, '/supabase-url-config')");
+    expect(workflow).toContain("github.event.comment.body == '/supabase-auth-registration-config'");
+    expect(workflow).toContain('node scripts/operations/supabaseAuthRegistrationControl.mjs');
+    expect(workflow).toContain('Supabase Auth Registration Configuration verifiziert');
     expect(workflow).toContain('permissions: {}');
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('issues: write');
