@@ -86,7 +86,10 @@ export async function reconcileAuthRegistrationConfig(accessToken) {
   return { changedKeys, verifiedKeys: Object.keys(desired) };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+const invokedDirectly = process.argv[1] === fileURLToPath(import.meta.url);
+const invokedAsRuntimePreload = process.env.CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL === 'true';
+
+if (invokedDirectly || invokedAsRuntimePreload) {
   const result = await reconcileAuthRegistrationConfig(process.env.SUPABASE_MANAGEMENT_ACCESS_TOKEN);
   console.log(JSON.stringify({
     status: 'verified',

@@ -85,7 +85,8 @@ COPY --from=builder --chown=root:root /app/supabase/templates ./supabase/templat
 
 # Activate runtime-only governance controls only after the preload artifact exists.
 ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
-    NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs \
+    CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL=true \
+    NODE_OPTIONS="--import=/app/server/runtime/runtimeArtifactGuard.mjs --import=/app/scripts/operations/supabaseAuthRegistrationControl.mjs" \
     HOME=/tmp/capitalai \
     TMPDIR=/tmp/capitalai
 
@@ -109,4 +110,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -q -O /dev/null "http://127.0.0.1:${PORT:-10000}/healthz" || exit 1
 
 # Run Node directly so the application is PID 1 and receives termination signals without an npm shim.
-CMD ["sh", "-c", "node scripts/operations/supabaseAuthRegistrationControl.mjs && exec node dist/server.cjs"]
+CMD ["node", "dist/server.cjs"]
