@@ -87,3 +87,40 @@ Those remain owner-correct assurance results.
 Until hosted exact-head validation and the required independent assurance are read
 back, SH-02.10 must not be represented as terminal PASS and SH-02.11 production
 activation remains blocked.
+
+
+## Observed PR #1294 consent/runtime regression
+
+PR #1294 (`FE-CONSENT-INCOGNITO-DORMANT-03`) produced two reproducible failure
+modes before its corrected exact head `37a27177df265691885d7674a95a94e36878c01f`
+completed CI, Governance, Container Security and the PR workflow successfully:
+
+1. **Optional frontend initialization rejection**
+   - observed symptom: a stylesheet readiness failure was logged and then escaped
+     as an unhandled rejected Promise;
+   - canonical classification:
+     `FRONTEND_OPTIONAL_INIT_FAILURE -> OBSERVE_ONLY`;
+   - boundary: the Self-Healing contract must not invent a generic retry or silently
+     suppress arbitrary async failures. The owning runtime contains the optional
+     failure fail-closed, keeps optional services disabled and preserves page
+     availability; persistent/repeated failure remains observable/escalated.
+
+2. **Stale CI expectation after an intentional runtime contract change**
+   - observed symptom: the dependency-free consent runtime suite still expected
+     eager `CookieConsent.run()` initialization although the new first-visit
+     contract deliberately keeps the vendor runtime dormant until explicit user
+     action;
+   - canonical classification:
+     `REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`;
+   - boundary: use the existing `repository.pr.autofix` specialist only for a
+     deterministic allowlisted expectation repair, at most once, followed by
+     exact-head CI/Governance readback.
+
+These cases are now first-class deterministic SH-02.10 scenarios:
+`FRONTEND_OPTIONAL_INIT_REJECTION` and
+`STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE`.
+
+This extension does not activate SH-2/SH-3, does not add a second frontend recovery
+loop, and does not authorize test weakening. The observed #1294 repair remains
+historical evidence; future occurrences must be re-observed and revalidated against
+their exact generation.

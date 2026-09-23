@@ -6,7 +6,7 @@ import {
   type TerminalRecoveryState,
 } from './selfHealingContract';
 
-export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.0.0' as const;
+export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.1.0' as const;
 
 export const REQUIRED_SH_02_10_SCENARIOS = [
   'PROCESS_FATAL',
@@ -15,6 +15,8 @@ export const REQUIRED_SH_02_10_SCENARIOS = [
   'WORKER_STALL',
   'FRONTEND_STALE_CHUNK',
   'FRONTEND_RENDER_FAILURE',
+  'FRONTEND_OPTIONAL_INIT_REJECTION',
+  'STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE',
   'API_503',
   'API_429',
   'DEPLOYMENT_IDENTITY_MISMATCH',
@@ -118,6 +120,22 @@ export const SH_02_10_FAULT_MATRIX: readonly FaultInjectionScenario[] = Object.f
     'FRONTEND_RENDER_FAILURE',
     'OBSERVE_ONLY',
     'ESCALATED',
+  ),
+  scenario(
+    'FRONTEND_OPTIONAL_INIT_REJECTION',
+    'Inject a rejected optional frontend initialization and require fail-closed containment without generic retry, page blocking or silent success.',
+    'FRONTEND_MODEL',
+    'FRONTEND_OPTIONAL_INIT_FAILURE',
+    'OBSERVE_ONLY',
+    'ESCALATED',
+  ),
+  scenario(
+    'STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE',
+    'Model a CI expectation pinned to obsolete runtime initialization semantics after an intentional contract change and route it to the bounded deterministic expectation-repair path.',
+    'REPOSITORY_MODEL',
+    'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
+    'RECONCILE_REPOSITORY_PROJECTION',
+    'CONVERGED',
   ),
   scenario(
     'API_503',
