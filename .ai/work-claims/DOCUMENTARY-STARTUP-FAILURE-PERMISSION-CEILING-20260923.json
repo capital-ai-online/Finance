@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Remove the reproducible Documentary Change Impact startup_failure by aligning the reusable-workflow permission ceiling with the called workflow and locking the interface with a regression test.",
+  "workItemDE": "Den reproduzierbaren Documentary-Change-Impact-startup_failure durch eine kompatible Reusable-Workflow-Permission-Ceiling beheben und die Schnittstelle per Regressionstest absichern.",
+  "priority": "P1",
+  "priorityReason": "The main-push Documentary Change Impact workflow currently fails before any job starts on every observed main generation.",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "startedAt": "2026-09-23T14:05:22.976Z",
+  "baseBranch": "main",
+  "baseSha": "e3f4ce2b5aaaefd62ec562860e0dc3cafa1c38b2",
+  "branch": "agent/documentary-startup-failure-permission-ceiling-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING-20260923.json",
+    ".ai/work-claims/DOCUMENTARY-WP06E-SELF-HEALING-CONTRACT-BOUND-20260920.json",
+    ".github/workflows/documentary-change-impact.yml",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs",
+    "scripts/pr/documentaryMaintenanceHandoffWorkflow.test.mjs"
+  ],
+  "observedFailure": {
+    "workflow": "Documentary Change Impact",
+    "runId": 35869195703,
+    "runNumber": 157,
+    "conclusion": "startup_failure",
+    "jobsStarted": 0,
+    "headSha": "db4ad93bb3bac7d4f31242b7f74f8f300d24e757",
+    "reproducedAcrossMainGenerations": true,
+    "rootCauseIntroducedBy": "8d8bdf17681c270ad8429396558f2265cc23a3c1",
+    "recorrelatedCurrentMain": "e3f4ce2b5aaaefd62ec562860e0dc3cafa1c38b2"
+  },
+  "exitEvidence": [
+    "node --test scripts/pr/documentaryConvergenceWorkflow.test.mjs passes on exact branch head",
+    "PR required checks pass on exact branch head",
+    "After Human/CODEOWNER merge, Documentary Change Impact starts at least one job on the resulting exact CURRENT_MAIN and no longer concludes startup_failure"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "recorrelatedAt": "2026-09-23T16:12:06Z"
+}

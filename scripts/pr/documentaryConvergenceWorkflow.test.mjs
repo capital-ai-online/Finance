@@ -42,3 +42,17 @@ test('Documentary freshness uses authenticated GitHub API readback and local bef
   assert.doesNotMatch(workflow, /git fetch --no-tags origin main/);
   assert.doesNotMatch(workflow, /git fetch --no-tags origin "\$base"/);
 });
+
+test('Documentary reusable Draft-PR handoff exposes the permission ceiling required by the called workflow', async () => {
+  const workflow = await fs.readFile('.github/workflows/documentary-change-impact.yml', 'utf8');
+  const calledWorkflow = await fs.readFile('.github/workflows/open-agent-draft-pr.yml', 'utf8');
+
+  assert.match(
+    calledWorkflow,
+    /converge-project-labels:[\s\S]*?permissions:[\s\S]*?issues:\s*write/,
+  );
+  assert.match(
+    workflow,
+    /autosync-draft-pr:[\s\S]*?permissions:\s*\n\s+contents:\s*read\s*\n\s+issues:\s*write\s*\n\s+pull-requests:\s*write[\s\S]*?uses:\s*\.\/\.github\/workflows\/open-agent-draft-pr\.yml/,
+  );
+});
