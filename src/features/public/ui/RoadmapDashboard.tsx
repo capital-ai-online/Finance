@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   ArrowLeft,
-  CheckCircle2,
   CircleDot,
   Clock3,
   ExternalLink,
