@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-08-B-SH-02-11-DEPENDENCY-READINESS-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Terminalize SH-02.10 after canonical Security/QM assurance and prove SH-02.11 dependency readiness without activating any currently HELD remediation action.",
+  "workItemDE": "SH-02.10 nach kanonischer Security-/QM-Assurance terminalisieren und SH-02.11-Dependency-Readiness beweisen, ohne eine derzeit HELD Remediation-Action zu aktivieren.",
+  "priority": "P0",
+  "priorityReason": "OPS-08-B-SH-02 remains the highest executable OPS package; independent assurance is now canonical and the next slice may become dependency-ready only with fail-closed enabled-tier evidence.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-18"
+  ],
+  "startedAt": "2026-09-23T13:28:00Z",
+  "baseBranch": "main",
+  "baseSha": "31643012f42368b6f85ce9953e19b991248a73d8",
+  "branch": "agent/operations-sh02-11-dependency-readiness-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-08-B-SH-02-11-DEPENDENCY-READINESS-20260923.json",
+    ".ai/work-claims/OPS-08-B-SH-02-10-FAULT-CONVERGENCE-20260922.json",
+    ".ai/work-claims/OPS-08-B-SH-02-10-PR-GOV-METADATA-20260923.json",
+    ".ai/work-claims/OPS-08-B-SH-02-10-POST1308-CORRELATION-20260923.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/WORK_PACKAGES.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md",
+    "docs/projects/operations/evidence/SH_02_11_DEPENDENCY_READINESS_2026-09-23.md",
+    "tests/unit/sh0211DependencyReadiness.test.ts"
+  ],
+  "sourceEvidence": {
+    "currentMain": "31643012f42368b6f85ce9953e19b991248a73d8",
+    "implementationGeneration": "bc7edc096450be6b368ea706b97479567cc6ee55",
+    "securityAssurance": {
+      "pr": 1311,
+      "mergeCommit": "2cedd1afa69b5ec28872acbda5335358e949ac7f",
+      "exactHead": "38883093f355a9023efe1e5e8cdfe019639390f7",
+      "canonical": true
+    },
+    "qmAssurance": {
+      "pr": 1312,
+      "mergeCommit": "31643012f42368b6f85ce9953e19b991248a73d8",
+      "exactHead": "70a84ab53f5f74af3cae2be510ed973396465316",
+      "canonical": true
+    },
+    "mainCi": {
+      "run": 5845,
+      "runId": 35866550609,
+      "status": "PASS"
+    },
+    "containerSecurity": {
+      "run": 2847,
+      "runId": 35866550693,
+      "status": "PASS"
+    },
+    "postMergeProductionCorrelation": {
+      "run": 245,
+      "runId": 35866550546,
+      "status": "PASS"
+    },
+    "render": {
+      "deployId": "dep-dapt6qjncjis73fkpjag",
+      "sha": "31643012f42368b6f85ce9953e19b991248a73d8",
+      "status": "live"
+    },
+    "contractVersion": "self-healing-contract/1.2.0",
+    "faultSuiteVersion": "sh-02.10-fault-convergence/1.3.0"
+  },
+  "readinessBoundary": {
+    "enabledActions": [
+      "OBSERVE_ONLY",
+      "FRONTEND_RELOAD_ONCE",
+      "RECONCILE_REPOSITORY_PROJECTION",
+      "RECONCILE_PR_DECISION_EVIDENCE",
+      "VERIFY_ISSUE_PROJECT_DISPATCH"
+    ],
+    "heldActions": [
+      "RETRY_SAFE_OPERATION",
+      "QUARANTINE_WORK_ITEM",
+      "RECONCILE_PR_GOVERNANCE_METADATA",
+      "RUNTIME_PROCESS_RECYCLE",
+      "REDEPLOY_EXACT_SHA",
+      "PROTECTED_ROLLBACK_RESTORE"
+    ],
+    "permittedTransition": "SH-02.10 TERMINAL -> SH-02.11 DEPENDENCY_READY / ACTIVATION_NOT_STARTED",
+    "prohibitedInThisSlice": [
+      "changing any HELD action to ENABLED",
+      "runtime recycle",
+      "exact-SHA redeploy activation",
+      "rollback/restore activation",
+      "provider capability grant",
+      "production fault injection"
+    ]
+  },
+  "foreignOwnerHandoffs": [
+    "CAPITAL-AI-SEC: merged #1311 satisfies its claim release condition; SEC-owned claim file remains owner-correct lifecycle follow-up.",
+    "CAPITAL-AI-QM: merged #1312 satisfies its claim release condition; QM-owned claim file remains owner-correct lifecycle follow-up."
+  ],
+  "operatorCommunicationPreference": {
+    "status": "NON_AUTHORIZING_PRESENTATION_PREFERENCE",
+    "instruction": "When reporting next steps in chat, render them as a fenced plain-text code block.",
+    "authorityImpact": "NONE"
+  },
+  "acceptanceCriteria": [
+    "SH-02.10 is represented as terminal only after canonical same-generation Security and QM assurance plus current-main production readback.",
+    "All currently ENABLED actions are exactly the expected SH-0/SH-1 set and remain bounded by kill switches, budgets and verification probes.",
+    "All currently HELD actions remain HELD; no SH-2/SH-3 capability is activated.",
+    "SH-02.11 is represented as DEPENDENCY_READY / ACTIVATION_NOT_STARTED, not as activated or terminal.",
+    "Merged OPS predecessor claims are released; foreign-owner claim lifecycle remains handoff-only."
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
