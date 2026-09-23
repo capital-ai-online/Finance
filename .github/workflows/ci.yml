@@ -58,6 +58,12 @@ jobs:
   build-and-test:
     name: build-and-test
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    outputs:
+      deploy_allowed: ${{ steps.deployment_cadence.outputs.deploy_allowed }}
+      cadence_active: ${{ steps.deployment_cadence.outputs.cadence_active }}
+      merge_ordinal: ${{ steps.deployment_cadence.outputs.merge_ordinal }}
+      deploy_progress: ${{ steps.deployment_cadence.outputs.deploy_progress }}
+      deploy_remaining: ${{ steps.deployment_cadence.outputs.deploy_remaining }}
     permissions:
       actions: read
       contents: read
@@ -271,6 +277,14 @@ jobs:
             echo "planner_available=false" >> "$GITHUB_OUTPUT"
             echo "Base-Snapshot enthält den Planner noch nicht; Bootstrap läuft fail-closed mit vollständiger Test-/Analyseentscheidung."
           fi
+          if git cat-file -e "$PR_BASE_SHA:scripts/operations/mergeCadence.mjs" 2>/dev/null; then
+            git show "$PR_BASE_SHA:scripts/operations/mergeCadence.mjs" > "$policy_dir/mergeCadence.mjs"
+            echo "cadence_available=true" >> "$GITHUB_OUTPUT"
+            echo "cadence_path=$policy_dir/mergeCadence.mjs" >> "$GITHUB_OUTPUT"
+          else
+            echo "cadence_available=false" >> "$GITHUB_OUTPUT"
+            echo "Base-Snapshot enthält noch keinen Merge-Cadence-Helper; Bootstrap bleibt vor Aktivierung ohne 10er-Mutationsgate."
+          fi
 
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
@@ -321,6 +335,42 @@ jobs:
               echo 'reason=bootstrap-base-without-trusted-planner'
             } >> "$GITHUB_OUTPUT"
           fi
+
+      - name: 10er-Merge-Version-Gate gegen trusted CURRENT_MAIN prüfen
+        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.trusted_policy.outputs.cadence_available == 'true'
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
+          TRUSTED_CADENCE_PATH: ${{ steps.trusted_policy.outputs.cadence_path }}
+        run: |
+          set -euo pipefail
+          cadence_json="$RUNNER_TEMP/merge-cadence-pr.json"
+          node "$TRUSTED_CADENCE_PATH" --repo-root=. --ref="$PR_BASE_SHA" > "$cadence_json"
+          node - "$cadence_json" <<'NODE'
+          const fs = require('node:fs');
+          const cadence = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (!cadence.active || !cadence.nextVersionDue) {
+            console.log('Merge cadence: kein 10er-PATCH für diesen Kandidaten.');
+            process.exit(0);
+          }
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const expected = cadence.nextPatchVersion;
+          const converged =
+            pkg.version === expected &&
+            lock.version === expected &&
+            lock?.packages?.['']?.version === expected;
+          if (!converged) {
+            console.error('ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1');
+            console.error(
+              'mergeOrdinal=' + cadence.mergeOrdinal +
+              '; expectedNextPatch=' + expected +
+              '; package.json/package-lock.json must be materialized atomically on the candidate branch before Human/CODEOWNER merge.',
+            );
+            process.exit(1);
+          }
+          console.log('10er-Merge-Version-Gate PASS: next merge ordinal=' + (cadence.mergeOrdinal + 1) + ', version=' + expected + '.');
+          NODE
 
       - name: Scope-Zusammenfassung
         if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
@@ -498,10 +548,43 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      - name: Production-Identität für 5er-Merge-Kadenz read-only erfassen
+        id: production_cadence
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            try {
+              const response = await fetch('https://capital-ai.online/healthz', {
+                headers: { Accept: 'application/json' },
+                signal: AbortSignal.timeout(10_000),
+              });
+              let payload = null;
+              try { payload = await response.json(); } catch {}
+              core.setOutput('sha', String(response.headers.get('x-capital-ai-commit') || '').toLowerCase());
+              core.setOutput('healthy', response.ok && payload?.status === 'ok' ? 'true' : 'false');
+            } catch (error) {
+              core.warning('Production identity readback unavailable before cadence decision: ' + String(error));
+              core.setOutput('sha', '');
+              core.setOutput('healthy', 'false');
+            }
+
+      - name: Bestehende oder 5er-Merge-Deployment-Regel bestimmen
+        id: deployment_cadence
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          PRODUCTION_SHA: ${{ steps.production_cadence.outputs.sha }}
+          PRODUCTION_HEALTHY: ${{ steps.production_cadence.outputs.healthy }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/operations/mergeCadence.mjs             --repo-root=.             --ref="${GITHUB_SHA}"             --production-sha="${PRODUCTION_SHA}"             --production-healthy="${PRODUCTION_HEALTHY}"
+
+
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
-    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.build-and-test.result == 'success' && needs.build-and-test.outputs.deploy_allowed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
     permissions:
       actions: read

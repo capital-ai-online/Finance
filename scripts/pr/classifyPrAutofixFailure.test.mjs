@@ -405,3 +405,43 @@ test('registry rejects duplicate signatures and foreign ownership', () => {
     withoutEvidenceBinding,
   ]), /evidenceBinding/);
 });
+
+
+test('routes the exact merge-cadence PATCH signature only through the registered OPS repairer', () => {
+  const registry = [
+    {
+      id: 'MERGE_CADENCE_PATCH_V1',
+      owner: 'CAPITAL-AI-OPS',
+      sourceWorkflow: '.github/workflows/ci.yml',
+      exactSignatures: ['MERGE_CADENCE_PATCH_V1'],
+      repairerPath: 'scripts/pr/repairers/mergeCadencePatchV1.mjs',
+      allowedPaths: ['package.json', 'package-lock.json'],
+      evidenceBinding: {
+        kind: 'EXACT_LOG_TOKENS_V1',
+        requiredTokens: [
+          'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1',
+          'mergeOrdinal=',
+          'expectedNextPatch=',
+          'package.json/package-lock.json',
+        ],
+      },
+    },
+  ];
+
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1',
+      'mergeOrdinal=9; expectedNextPatch=0.6.1; package.json/package-lock.json must be materialized atomically on the candidate branch before Human/CODEOWNER merge.',
+    ].join('\n'),
+  }, registry);
+
+  assert.equal(result.classification, 'DETERMINISTIC_TEST_EXPECTATION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR);
+  assert.equal(result.repairerId, 'MERGE_CADENCE_PATCH_V1');
+  assert.equal(result.repairerPath, 'scripts/pr/repairers/mergeCadencePatchV1.mjs');
+});
+
+test('default repair registry remains valid after adding merge cadence PATCH repair', () => {
+  assert.doesNotThrow(() => validatePrAutofixRepairRegistry());
+});

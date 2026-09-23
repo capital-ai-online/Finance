@@ -210,8 +210,8 @@
     "ruleSetVersionChangeRequiresReevaluation": true
   },
   "branchMaterialization": {
-    "allowedAfterAuthorityEffective": false,
-    "reactivationCondition": "OPS cadence-aware materializer verifies currentMergeOrdinal % 10 == 9 against fresh CURRENT_MAIN and implements contract v1.1",
+    "allowedAfterAuthorityEffective": true,
+    "reactivationCondition": "SATISFIED_BEFORE_AUTHORITY_EFFECTIVE_BY_HUMAN_MERGED_PR_1338_ON_72a22038c88d3cc170cbecac6d04547d7226853d; EACH_MATERIALIZATION_STILL_REQUIRES_FRESH_currentMergeOrdinal_%_10_==_9",
     "scope": "current-scoped-work-branch-only",
     "directMainMutation": "DENY",
     "automaticMerge": "DENY",

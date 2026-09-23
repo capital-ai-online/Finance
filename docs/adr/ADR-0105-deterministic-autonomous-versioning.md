@@ -216,9 +216,9 @@ No version materialization is allowed when:
 
 After this ADR becomes effective, Governance supplies deterministic semantic classification plus the ten-merge cadence contract. Productive Version Management and Release mutation remain owned by `CAPITAL-AI-OPS / PVC-06 / PVC-07`.
 
-A separate OPS implementation slice must integrate this decision contract into the existing `src/platform/Release/**` version path. It must not create a second VersionManager, second registry or parallel Release architecture.
+The owner-correct OPS implementation prerequisite is already Human-merged through PR #1338 on `CURRENT_MAIN@72a22038c88d3cc170cbecac6d04547d7226853d`. It reuses the existing CI, Post-Merge Production Correlation, Exact-SHA Recovery, Release Version Gate and registered PR Autofix writer; it does not create a second VersionManager, registry, deployment controller or Self-Healing architecture.
 
-Until that OPS slice is Human-merged and proves `currentMergeOrdinal % 10 == 9` against fresh `CURRENT_MAIN`, Contract v1.1 deliberately sets legacy `branchMaterialization.allowedAfterAuthorityEffective=false`. This makes the v1.0 semantic materializer fail closed rather than permitting an obsolete between-cadence automatic version bump.
+Because PR #1338 already implements the cadence-aware materializer and verifies the cadence candidate from fresh `CURRENT_MAIN`, Contract v1.1 may set `branchMaterialization.allowedAfterAuthorityEffective=true`. Eligibility still requires cadence mode plus fresh `currentMergeOrdinal % 10 == 9` evidence and the existing Release Version Gate. Ordinary semantic classification between cadence boundaries remains non-materializing and fail-closed.
 
 ## 11. Security impact
 
@@ -256,7 +256,7 @@ The Stage-1 Governance implementation supplies a deterministic decision engine a
 - automatic merge, release acceptance and deployment implications denied;
 - MAJOR classification remaining separately constrained by current Release/GA policy.
 
-Stage 1 does not mutate `package.json#version`. Productive branch materialization is a separately owned OPS implementation step after this ADR is effective on `main`.
+Stage 1 does not mutate `package.json#version`. Productive cadence-aware branch materialization is already implemented owner-correctly by Human-merged OPS PR #1338, but remains dormant until this v1.1 Governance authority becomes effective on `main`; every eligible mutation still runs through the existing Release Version Gate.
 
 ## 16. Supersession package summary
 

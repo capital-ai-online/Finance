@@ -45,8 +45,15 @@ describe('application-wide merge cadence governance', () => {
     expect(agents).toContain('`package.json#version` as the single version authority');
     expect(agents).toContain('`package-lock.json#packages[""]#version`');
     expect(versionContract.version).toBe('1.1.0');
-    expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(false);
-    expect(versionContract.branchMaterialization.reactivationCondition).toContain('currentMergeOrdinal % 10 == 9');
+    expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(true);
+    expect(versionContract.branchMaterialization.reactivationCondition).toContain('PR_1338');
+    expect(versionContract.branchMaterialization.reactivationCondition).toContain('currentMergeOrdinal_%_10_==_9');
+    const cadenceRuntime = read('scripts/operations/mergeCadence.mjs');
+    const cadenceRepairer = read('scripts/pr/repairers/mergeCadencePatchV1.mjs');
+    expect(cadenceRuntime).toContain("MERGED_PR_CADENCE_PATCH");
+    expect(cadenceRuntime).toContain("POSITIVE_MULTIPLES_OF_10");
+    expect(cadenceRepairer).toContain("cadence.mergeOrdinal % 10 !== 9");
+    expect(cadenceRepairer).toContain("MERGE_CADENCE_PATCH_V1");
     expect(versionContract.automaticMaterializationPolicy).toMatchObject({
       mode: 'MERGED_PR_CADENCE_PATCH',
       retroactiveCounting: false,

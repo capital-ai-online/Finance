@@ -11,14 +11,14 @@
   "workItem": "Define the application-wide non-retroactive merge cadence: normal Render deployment every 5 merged PRs, deterministic next-PATCH platform-version materialization on every 10th merged PR, while CI/tests/Self-Healing/dashboard follow latest CURRENT_MAIN and true Production drift remains fail-closed.",
   "startedAt": "2026-09-23T22:45:00+02:00",
   "baseBranch": "main",
-  "baseSha": "8f5fff57613f183e0e1a2a8c8b41017338e63491",
-  "lastSyncedMainSha": "86fb86c69df1b65a69c006b4b08eee262c7db40c",
+  "baseSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "lastSyncedMainSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
   "branch": "governance/deploy-batch-correlation-contract-20260923",
   "projectId": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
   "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
   "priority": "P1",
-  "priorityReason": "Current AGENTS.md mandates per-merge deployment and ADR-0105 v1.0 permits semantic-delta-driven automatic version materialization; both conflict with the fresh Human/Owner 5-merge deployment / 10-merge PATCH cadence direction.",
+  "priorityReason": "CURRENT_MAIN still carries AGENTS.md 4.8.0 / Versioning Rule Contract 1.0.0 legacy authority, while Human-merged OPS PR #1338 has already prepared the dual-mode cadence runtime. This Governance activation must now converge the authority contract onto that verified runtime without creating a second controller.",
   "claimedPaths": [
     "AGENTS.md",
     "docs/governance/control-catalog.json",
@@ -33,26 +33,29 @@
   ],
   "scopeBoundary": [
     "Governance/subject-matter authority contract only: no OPS workflow, Render/provider, runtime or FE dashboard mutation in this slice.",
-    "Productive deployment/version materialization remains owner-correct with CAPITAL-AI-OPS / PVC-06, PVC-07, PVC-08 after Human/CODEOWNER merge; FE only consumes the resulting read-only projection.",
+    "The owner-correct OPS cadence runtime is already Human-merged through PR #1338 on CURRENT_MAIN; this Governance slice only activates its 5/10 authority semantics after Human/CODEOWNER merge.",
     "Human-merged SEC PR #1337 is terminal on CURRENT_MAIN and owns the completed RoadmapDashboard.tsx/roadmapSnapshot.ts convergence; this GOV branch has no changed-file overlap and treats its result as current evidence.",
     "Historical evidence remains provenance-preserving and Human/CODEOWNER merge plus Security/Compliance gates remain unchanged."
   ],
   "dependencies": [
-    "/AGENTS.md@86fb86c69df1b65a69c006b4b08eee262c7db40c",
+    "/AGENTS.md@72a22038c88d3cc170cbecac6d04547d7226853d",
     "docs/projects/README.md@CURRENT_MAIN",
-    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "Human-merged OPS PR #1338 / CURRENT_MAIN@72a22038c88d3cc170cbecac6d04547d7226853d"
   ],
   "exitEvidence": [
     "AGENTS.md defines cadenceEpoch, 5 merged PR deployment threshold, 10 merged PR PATCH threshold and latest-CURRENT_MAIN test/Self-Healing/dashboard truth.",
     "Expected healthy Production lag below 5/5 is DEPLOYMENT_QUEUED and cannot trigger exact-SHA recovery; failed/due deploy remains true PRODUCTION_DRIFT.",
     "ADR-0105 v1.1 and Versioning Rule Contract v1.1 supersede ordinary between-cadence automatic semantic version materialization without creating a second version authority.",
+    "Human-merged OPS PR #1338 supplies the existing-controller cadence resolver and registered MERGE_CADENCE_PATCH_V1 repair path before Governance activation.",
     "Control/authority/ADR registries and regression tests converge on the same semantics."
   ],
   "acceptanceCriteria": [
     "One Trust Root, one deploy authority and package.json#version as one platform-version authority remain.",
     "Cadence counting is non-retroactive from the activating Human merge and counts only same-repository PRs actually merged to main.",
     "The tenth merge candidate receives strict next PATCH on branch before Human merge; package-lock root/package-root mirrors change atomically.",
-    "Productive OPS/FE implementation remains owner-correct and no second Self-Healing/deploy/version controller is introduced."
+    "Contract v1.1 permits branch materialization only under cadence mode with fresh currentMergeOrdinal % 10 == 9 evidence through the existing Release Version Gate; direct main mutation, auto-merge and automatic deployment remain denied.",
+    "Productive OPS runtime remains the Human-merged #1338 implementation; no second Self-Healing/deploy/version controller is introduced."
   ],
   "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
 }

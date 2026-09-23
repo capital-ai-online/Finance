@@ -21,6 +21,9 @@ describe('CI and Render deployment control plane', () => {
   it('keeps consolidated production deployment restricted to verified main pushes', () => {
     expect(ci).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
     expect(ci).toContain('needs: [build-and-test]');
+    expect(ci).toContain("needs.build-and-test.outputs.deploy_allowed == 'true'");
+    expect(ci).toContain('scripts/operations/mergeCadence.mjs');
+    expect(ci).toContain('10er-Merge-Version-Gate gegen trusted CURRENT_MAIN prüfen');
     expect(ci).toContain('verifySupplyChainProvenance.ts --require-ci');
     expect(ci).toContain('cosign sign-blob --yes');
     expect(ci).toContain('cosign verify-blob');
