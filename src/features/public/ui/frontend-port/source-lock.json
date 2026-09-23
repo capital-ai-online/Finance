@@ -27,7 +27,7 @@
     {
       "sourcePath": "src/App.tsx",
       "targetPath": "src/features/public/ui/frontend-port/ReferenceApp.tsx",
-      "blobSha": "6e1998c644fd9d2cd470b9460708d22e96bc3fdb",
+      "blobSha": "ed6dbdc7e609caeb6e65f54ec286a252d4b7a5ec",
       "mode": "FINANCE_COMPOSITION_ADAPTER"
     },
     {
@@ -165,7 +165,7 @@
   ],
   "styleAdapter": {
     "path": "src/features/public/ui/frontend-port/frontend-port.css",
-    "purpose": "Scope the source body/no-scrollbar/pulse presentation helpers without importing a second Tailwind runtime."
+    "purpose": "Scope source presentation helpers and enforce truthful fullscreen/desktop-site width behavior without importing a second Tailwind runtime."
   },
   "brandingAdapter": {
     "sourcePath": "src/components/BrandLogo.tsx",
@@ -267,5 +267,14 @@
     "policy": "PRESENTATION_ONLY_NO_LOCAL_SCORING",
     "authorityBoundary": "CAPITAL-AI-FINTECH remains the only productive scoring/data authority.",
     "deferredIntegration": "Altcoin Pattern Trooper stays outside the landing composition until a later owner-directed integration into the leading graphic."
+  },
+  "desktopViewportFix": {
+    "id": "FE-DESKTOP-FULLWIDTH-2026-09-23",
+    "ownerEvidence": "owner screenshot 2026-09-23",
+    "canonicalDesktopMinPx": 1024,
+    "desktopSiteCompatMinPx": 960,
+    "desktopSiteCompatMaxPx": 1023,
+    "invariant": "fullscreen mode must use the available page width and must not retain the mobile max-w-md ceiling",
+    "userAgentBranching": false
   }
 }
