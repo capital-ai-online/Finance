@@ -8,48 +8,55 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT via GitHub, Render and Supabase connectors"
   },
-  "workItem": "Recover Render startup by removing privileged Supabase Management API reconciliation from the mandatory public application runtime preload while retaining the existing explicit fail-closed operations controller.",
+  "workItem": "Complete the auth post-merge provider handoff by exposing the existing canonical Supabase Auth registration controller through the existing owner-only Supabase production-configuration control workflow.",
   "startedAt": "2026-09-23T22:24:00Z",
   "baseBranch": "main",
-  "baseSha": "fdc6c2f1ad831bbd7fe7f9078231b855a744adc7",
-  "lastSyncedMainSha": "fdc6c2f1ad831bbd7fe7f9078231b855a744adc7",
-  "branch": "operations/auth-management-runtime-boundary-20260924",
+  "baseSha": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+  "lastSyncedMainSha": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+  "branch": "operations/supabase-auth-config-control-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
   "projectStage": "PVC-02 Controlled Implementation / PVC-08 Production Operations",
   "primaryOwner": "CAPITAL-AI-OPS",
   "priority": "P0",
-  "priorityReason": "Current main builds successfully but every new Render instance exits before server startup because a privileged Supabase Management API controller is mandatory-preloaded without a usable runtime token.",
+  "priorityReason": "Render is now live on exact CURRENT_MAIN, but the pending Auth configuration cannot be attested until the canonical Management API controller has an explicit protected execution host.",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-20260923.json",
+    ".github/workflows/supabase-url-config-control.yml",
     "docs/projects/operations/work-packages/OPS_AUTH_RENDER_MANAGEMENT_TOKEN_RECOVERY_2026-09-23.md",
-    "Dockerfile",
-    "scripts/pr/supabaseAuthRegistrationControl.test.mjs"
+    "tests/unit/supabaseUrlConfigControl.test.ts"
   ],
   "observedBefore": {
-    "currentMain": "fdc6c2f1ad831bbd7fe7f9078231b855a744adc7",
+    "currentMain": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
     "previousRecoveryMergedPr": 1334,
     "failedManualDeploy": "dep-daq4tgvlk1mc73bpsorg",
     "failedHookDeploy": "dep-daq4u7flot8c73fc13e0",
     "renderStatus": "update_failed",
     "failure": "SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING",
     "productionStillLiveSha": "7c1d9293ee4c61e32791e447463fcaf263644c6d",
-    "originalObservedMain": "72a22038c88d3cc170cbecac6d04547d7226853d"
+    "originalObservedMain": "72a22038c88d3cc170cbecac6d04547d7226853d",
+    "currentRenderDeploy": "dep-daq5um6gekts73bnebvg",
+    "currentRenderStatus": "live",
+    "productionExactMain": true,
+    "authMigrationRemotePresent": false,
+    "authProviderControl": "PENDING_EXPLICIT_MANAGEMENT_API_EXECUTION"
   },
   "scopeBoundary": [
-    "No credential value is read into repository evidence or logs.",
-    "No Render environment variable or Supabase credential is mutated by this repository slice.",
-    "The public application runtime keeps only the established R-002 runtime artifact guard preload.",
-    "Supabase Management API reconciliation remains an explicit operations control and fails closed when directly invoked without a valid token.",
-    "No second deployment, Auth, credential-store or provider-control architecture is introduced."
+    "Reuse the existing issue #1192 owner-only Supabase production configuration workflow; no second control plane.",
+    "Reuse the existing GitHub secret name CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN; no credential value is stored or logged.",
+    "The new command is fixed to /supabase-auth-registration-config and accepts no caller-supplied Management API payload.",
+    "The canonical desired Auth state remains scripts/operations/supabaseAuthRegistrationControl.mjs.",
+    "The workflow performs post-mutation Management API readback and publishes only key names/counts, never secret values.",
+    "Database migration remains blocked until Auth configuration verification PASS."
   ],
   "acceptanceCriteria": [
-    "Production Dockerfile does not set CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL=true.",
-    "Production NODE_OPTIONS does not preload supabaseAuthRegistrationControl.mjs.",
-    "The runtime image does not copy the Management API controller or email templates solely for preload execution.",
-    "The explicit Management API controller still resolves canonical and established aliases and fails closed when no valid token exists.",
-    "Exact-head Governance, build/test and Security checks pass.",
-    "After Human/CODEOWNER merge, the then-current main Render deployment becomes live and exact-SHA health verification passes."
+    "Current production remains exact CURRENT_MAIN before provider mutation.",
+    "Existing owner/issue/association gates remain intact.",
+    "Auth command accepts no arbitrary configuration payload.",
+    "Missing GitHub Management API credential fails closed before mutation.",
+    "Canonical Auth controller executes and readback-verifies all desired keys.",
+    "Exact-head Governance, build/test and workflow security checks pass.",
+    "Human/CODEOWNER merge remains required before the protected provider command can execute."
   ],
-  "releaseCondition": "Human/CODEOWNER merge followed by exact-current-main Render deployment PASS and post-merge correlation."
+  "releaseCondition": "Human/CODEOWNER merge, owner-triggered verified Auth config PASS, pending Supabase migration applied/read back, and registration user-test handoff reached."
 }
