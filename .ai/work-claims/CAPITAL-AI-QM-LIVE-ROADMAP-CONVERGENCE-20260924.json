@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-QM-LIVE-ROADMAP-CONVERGENCE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge CAPITAL-AI-QM local roadmap/work-package status into the repository Live Roadmap after fresh CURRENT_MAIN reconciliation, terminalize already implemented QM evidence, and expose owner/folder/label/dependency/parallel-lane metadata without creating a second task authority.",
+  "startedAt": "2026-09-24T00:08:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "lastSyncedMainSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "branch": "quality-management/live-roadmap-convergence-20260924",
+  "projectId": "CAPITAL-AI-QM",
+  "projectFolder": "docs/projects/quality-management/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "priority": "P1",
+  "priorityReason": "QM still has a stale project-local executable queue and work-package status surfaces while the repository Live Roadmap is intended to become the single current-state line.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-QM-LIVE-ROADMAP-CONVERGENCE-20260924.json",
+    "docs/architecture/ROADMAP.md",
+    "docs/projects/quality-management/README.md",
+    "docs/projects/quality-management/ROADMAP.md",
+    "docs/projects/quality-management/work-packages/QM_OSS_CODE_QUALITY_01.md",
+    "docs/projects/quality-management/work-packages/QM_OSS_CODE_QUALITY_02_COST_CONVERGENCE.md"
+  ],
+  "scopeBoundary": [
+    "QM remains independent assurance and acquires no productive PVC.",
+    "No Frontend component or public UI mutation in this QM slice; filter/parallel-worker UI is an owner-correct CAPITAL-AI-FE successor.",
+    "No OPS workflow/provider mutation; PR_FAST and CI evidence are consumed read-only.",
+    "ADR-0103 remains proposed and is not activated by this status-source migration.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "72a22038c88d3cc170cbecac6d04547d7226853d",
+    "openWriters": "Only draft GOV PR #1336 is open; its changed files do not overlap this QM slice.",
+    "ossQuality02": "Issue #1274 is completed via merged OPS PR #1291. PR #1299/#1300 produced successful PR_FAST jobs; observed job wall times are about 29s and 43s versus the historical ~2:54-2:59 baseline.",
+    "exactSnapshot": "CURRENT_MAIN QualityCenterSnapshotStore requires a full sourceCommit and rejects mismatched expectedSourceCommit; PR_FAST bundles bind sourceSha/baseSha."
+  },
+  "acceptanceCriteria": [
+    "docs/architecture/ROADMAP.md becomes the current QM status source while remaining non-authorizing.",
+    "The project-local QM ROADMAP becomes a compatibility/detail pointer with no independent executable queue.",
+    "QM-OSS-CODE-QUALITY-01/02 are explicitly terminal evidence and no longer appear as open work.",
+    "Already-materialized exact-snapshot Quality evidence is not duplicated as new implementation work.",
+    "Remaining QM work is traceable by project owner, folder, label, dependency, execution group and parallel mode.",
+    "No foreign-owner implementation is performed."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
