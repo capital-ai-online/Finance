@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { UserUI } from '../../features';
+import { BillingUI, UserUI } from '../../features';
 import { secureStorage } from '../../lib/cryptoHelper';
 import { readAuthenticatedSubscriptionTier } from '../../lib/subscriptionReadback';
 import { CAPITAL_AI_VERSION } from '../../platform/Branding/runtimeBrand';
