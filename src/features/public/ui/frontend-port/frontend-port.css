@@ -23,6 +23,80 @@
   animation: capitalAiFrontendPortPulseSlow 6s ease-in-out infinite;
 }
 
+
+/*
+ * View-mode invariant: an explicitly selected fullscreen canvas must never
+ * inherit the mobile phone-width ceiling. This also makes the manual
+ * "Vollbreite" control truthful on intermediate viewport widths.
+ */
+.capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] {
+  width: 100%;
+  max-width: none !important;
+  min-height: 100vh;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+ * Android/Chromium "Desktopwebsite" commonly exposes a CSS viewport just
+ * below the canonical 1024px desktop breakpoint. Bridge only the narrow
+ * 960-1023px gap so that desktop-site rendering cannot fall back to the
+ * centered iPhone preview shown in the owner screenshot.
+ *
+ * The canonical >=1024px desktop website adapter below remains unchanged.
+ */
+@media (min-width: 960px) and (max-width: 1023px) {
+  .capital-ai-frontend-port > div {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .capital-ai-frontend-port > div > .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] {
+    width: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] > .hidden.sm\:block {
+    display: none !important;
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] > header,
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] > section,
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] > footer {
+    width: 100%;
+    max-width: none;
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] #market-sentiment-section > div > .grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] .snap-mandatory {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .capital-ai-frontend-port > div > main[data-landing-view-mode='fullscreen'] .snap-mandatory > * {
+    width: auto !important;
+    min-width: 0 !important;
+    scroll-snap-align: none !important;
+  }
+}
+
 /*
  * Finance-owned responsive adapter for the pinned FRONTEND presentation.
  *
