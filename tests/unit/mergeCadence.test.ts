@@ -1,6 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   computeMergeCadence,
+  isMergeCadenceCliEntry,
   isPullRequestMerge,
   nextPatchVersion,
 } from '../../scripts/operations/mergeCadence.mjs';
@@ -111,6 +114,19 @@ describe('merge cadence runtime', () => {
       productionHealthy: false,
       currentVersion: '0.6.0',
     }).recoveryEligible).toBe(true);
+  });
+
+  it('keeps the runtime-imported cadence helper safe for the CommonJS server bundle', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'scripts/operations/mergeCadence.mjs'),
+      'utf8',
+    );
+
+    expect(source).not.toContain('import.meta');
+    expect(source).not.toContain('fileURLToPath');
+    expect(isMergeCadenceCliEntry('/tmp/capital-ai-policy/mergeCadence.mjs')).toBe(true);
+    expect(isMergeCadenceCliEntry('mergeCadence.mjs')).toBe(true);
+    expect(isMergeCadenceCliEntry('/app/dist/server.cjs')).toBe(false);
   });
 
   it('counts only canonical PR merge commits and increments strict patch versions', () => {

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RUNTIME-CJS-CADENCE-RECOVERY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub/Render connectors"
+  },
+  "workItem": "OPS-RUNTIME-CJS-CADENCE-RECOVERY-01 — remove ESM-only import.meta/fileURLToPath direct-execution detection from the merge-cadence helper that is bundled into the production CommonJS server, preserving CLI/temp-copy execution without changing cadence semantics.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "b7aad7ccecfc7e52a6731f1c06f09350662864c7",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-RUNTIME-CJS-CADENCE-RECOVERY-20260924.json",
+    "scripts/operations/mergeCadence.mjs",
+    "tests/unit/mergeCadence.test.ts"
+  ],
+  "releaseCondition": "Release when the associated work is merged, closed, superseded or abandoned."
+}

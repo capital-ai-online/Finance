@@ -3,10 +3,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
 export const MERGE_CADENCE_CONTRACT_VERSION = 'merge-cadence-runtime/1.0.0';
 export const VERSION_CONTRACT_PATH = 'docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json';
+
+export function isMergeCadenceCliEntry(entryPath = process.argv[1] || '') {
+  const normalized = String(entryPath || '').replace(/\\/g, '/');
+  return normalized === 'mergeCadence.mjs' || normalized.endsWith('/mergeCadence.mjs');
+}
 
 function runGit(repoRoot, args, allowFailure = false) {
   const result = spawnSync('git', ['-C', repoRoot, ...args], { encoding: 'utf8' });
@@ -264,7 +268,7 @@ function writeGithubOutput(result) {
   fs.appendFileSync(target, Object.entries(values).map(([key, value]) => key + '=' + String(value) + '\n').join(''));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isMergeCadenceCliEntry()) {
   try {
     const result = resolveMergeCadence({
       repoRoot: arg('repo-root', process.cwd()),
