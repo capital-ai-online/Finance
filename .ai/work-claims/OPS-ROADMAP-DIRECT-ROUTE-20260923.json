@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-ROADMAP-DIRECT-ROUTE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -29,7 +29,10 @@
     "roadmapProductionRoute.test.ts passes on exact head",
     "ordinary required checks pass on exact head",
     "/roadmap is classified as APPLICATION_SPA_PATHS and serves the trusted root SPA entry document",
-    "/roadmap is not added to PUBLIC_SPA_PATHS, sitemap or prerender SEO contract"
+    "/roadmap is not added to PUBLIC_SPA_PATHS, sitemap or prerender SEO contract",
+    "Human/CODEOWNER merge PR #1315 -> main@d370b579d7c9576af63f6b3d495c1778d697a9c4"
   ],
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Satisfied by Human/CODEOWNER merge of PR #1315 on 2026-09-23.",
+  "releasedBy": "post-merge reconciliation",
+  "releasedMainSha": "d370b579d7c9576af63f6b3d495c1778d697a9c4"
 }
