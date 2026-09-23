@@ -8,7 +8,11 @@ import {
   detectPrTemplateVersion,
   fail,
   githubJson,
+  readJsonFile,
+  validateProductionBaselineForPr,
 } from './lib.mjs';
+import { replaceProductionBaselineBlock } from './productionBaselineBody.mjs';
+import { repairLegacyPrBodyStructure } from './repairLegacyPrBodyStructure.mjs';
 import {
   PR_DECISION_GATES,
   decisionEvidenceRows,
@@ -40,6 +44,55 @@ const LICENSE_CONTEXT = 'License compliance check';
 
 export function normalizeSha(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+export function prepareLeadingPrBody(bodyText, baseline, { prClass = 'N/A' } = {}) {
+  const original = String(bodyText || '');
+  const baselineErrors = validateProductionBaselineForPr(baseline);
+  if (baselineErrors.length > 0) {
+    return {
+      eligible: false,
+      changed: false,
+      reason: 'production-baseline-invalid',
+      body: original,
+      structureChanged: false,
+      baselineChanged: false,
+    };
+  }
+
+  const structural = repairLegacyPrBodyStructure(original, { prClass });
+  const structureAccepted =
+    structural.changed === true ||
+    structural.reason === 'already-canonical';
+
+  if (!structureAccepted) {
+    return {
+      eligible: false,
+      changed: false,
+      reason: structural.reason,
+      body: original,
+      structureChanged: false,
+      baselineChanged: false,
+    };
+  }
+
+  const structuredBody = structural.changed ? structural.body : original;
+  const baselineProjection = replaceProductionBaselineBlock(structuredBody, baseline);
+  return {
+    eligible: true,
+    changed: structural.changed || baselineProjection.changed,
+    reason:
+      structural.changed && baselineProjection.changed
+        ? 'structure-and-production-baseline-reconciled'
+        : structural.changed
+          ? structural.reason
+          : baselineProjection.changed
+            ? 'production-baseline-reconciled'
+            : 'already-canonical',
+    body: baselineProjection.body,
+    structureChanged: structural.changed === true,
+    baselineChanged: baselineProjection.changed === true,
+  };
 }
 
 function escapeRegex(value) {
@@ -740,7 +793,14 @@ async function mutateAutoMerge({ repository, token, pr, enabled }) {
   return observed;
 }
 
-async function reconcileOne({ repository, token, prNumber, canonicalBootstrapBody = '' }) {
+async function reconcileOne({
+  repository,
+  token,
+  prNumber,
+  canonicalBootstrapBody = '',
+  productionBaseline = null,
+  prClass = 'N/A',
+}) {
   let pr = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
   if (pr?.state !== 'open' || pr?.base?.ref !== 'main' || pr?.head?.repo?.full_name !== repository) {
     console.log('[PR-DECISION] PR #' + prNumber + ' outside mutable open/same-repo/main boundary; skipped.');
@@ -752,9 +812,15 @@ async function reconcileOne({ repository, token, prNumber, canonicalBootstrapBod
   const mainSha = normalizeSha(main?.commit?.sha);
   if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
 
-  const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr, mainSha });
+  const leadingProjection = productionBaseline
+    ? prepareLeadingPrBody(originalBody, productionBaseline, { prClass })
+    : { eligible: false, changed: false, reason: 'production-baseline-missing', body: originalBody };
+
+  const projectionSeedBody = leadingProjection.eligible ? leadingProjection.body : originalBody;
+  const snapshotPr = { ...pr, body: projectionSeedBody };
+  const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr: snapshotPr, mainSha });
   const rendered = reconcileDecisionBodyWithBootstrap(
-    originalBody,
+    projectionSeedBody,
     canonicalBootstrapBody,
     snapshot.gates,
     snapshot.gateDetails,
@@ -1046,7 +1112,20 @@ async function main() {
   const canonicalBootstrapBody = bootstrapPath && fs.existsSync(bootstrapPath)
     ? fs.readFileSync(bootstrapPath, 'utf8')
     : '';
-  const result = await reconcileOne({ repository, token, prNumber, canonicalBootstrapBody });
+  const baselinePath = String(process.env.PR_BASELINE_OUTPUT || '').trim();
+  if (!baselinePath || !fs.existsSync(baselinePath)) {
+    fail('PR_BASELINE_OUTPUT must point to one trusted production baseline artifact.');
+  }
+  const productionBaseline = readJsonFile(baselinePath);
+  const prClass = String(process.env.PR_CHECK_CLASS || 'N/A').trim() || 'N/A';
+  const result = await reconcileOne({
+    repository,
+    token,
+    prNumber,
+    canonicalBootstrapBody,
+    productionBaseline,
+    prClass,
+  });
   appendGithubOutput({
     changed: String(result.changed === true),
     skipped: String(result.skipped === true),

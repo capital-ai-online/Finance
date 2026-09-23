@@ -254,3 +254,67 @@ test('v1.7 collapsed machine-evidence block refreshes atomically without changin
   assert.ok(result.body.includes(next.baselineId));
   assert.doesNotMatch(result.body, new RegExp(previous.baselineId.replace(/[.*+?^$()|[\]\\]/g, '\\$&')));
 });
+test('v1.8 marker-free machine baseline is filled in-place and never emits legacy section 7', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Human Decision PR',
+    '',
+    '## 1. 🧭 Entscheidung',
+    'Decision',
+    '',
+    '## 2. ✅ Evidence',
+    'Evidence',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    'Traceability',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    '',
+    '</details>',
+  ].join('\n');
+
+  const result = replaceProductionBaselineBlock(body, baseline);
+
+  assert.equal(result.changed, true);
+  assert.equal(result.evidenceState, 'STALE');
+  assert.ok(result.body.includes(baseline.baselineId));
+  assert.doesNotMatch(result.body, /^## 7\. Maschinenlesbare Baseline$/m);
+  assert.deepEqual(result.body.match(/^## .+$/gm), [
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+  ]);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
+});
+
+test('v1.8 marker-free body without canonical machine-baseline details fails closed instead of appending legacy section 7', () => {
+  const baseline = validBaseline();
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Human Decision PR',
+    '',
+    '## 1. 🧭 Entscheidung',
+    'Decision',
+    '',
+    '## 2. ✅ Evidence',
+    'Evidence',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    'No machine baseline details',
+  ].join('\n');
+
+  assert.throws(
+    () => replaceProductionBaselineBlock(body, baseline),
+    /Legacy-##7-Fallback ist für v1\.8 verboten/,
+  );
+});

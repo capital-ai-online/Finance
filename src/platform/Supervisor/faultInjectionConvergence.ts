@@ -6,7 +6,7 @@ import {
   type TerminalRecoveryState,
 } from './selfHealingContract';
 
-export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.2.0' as const;
+export const SH_02_10_FAULT_SUITE_VERSION = 'sh-02.10-fault-convergence/1.3.0' as const;
 
 export const REQUIRED_SH_02_10_SCENARIOS = [
   'PROCESS_FATAL',
@@ -18,6 +18,7 @@ export const REQUIRED_SH_02_10_SCENARIOS = [
   'FRONTEND_OPTIONAL_INIT_REJECTION',
   'STALE_TEST_EXPECTATION_AFTER_RUNTIME_CONTRACT_CHANGE',
   'PR_GOVERNANCE_V18_METADATA_OMISSION',
+  'PR_GOVERNANCE_V18_HYBRID_BASELINE_SECTION',
   'API_503',
   'API_429',
   'DEPLOYMENT_IDENTITY_MISMATCH',
@@ -143,7 +144,15 @@ export const SH_02_10_FAULT_MATRIX: readonly FaultInjectionScenario[] = Object.f
     'Model a structurally canonical v1.8 PR body whose required Technical Evidence metadata is missing even though the canonical banner and branch claim evidence are sufficient for deterministic reconstruction.',
     'REPOSITORY_MODEL',
     'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
-    'RECONCILE_PR_GOVERNANCE_METADATA',
+    'RECONCILE_PR_DECISION_EVIDENCE',
+    'CONVERGED',
+  ),
+  scenario(
+    'PR_GOVERNANCE_V18_HYBRID_BASELINE_SECTION',
+    'Model the PR #1298 hybrid v1.8 body produced when a canonical machine-baseline details block still contains the NOT_RUN sentinel while a second legacy ## 7 baseline section is appended; converge it through the single PR-body writer without emitting another architecture.',
+    'REPOSITORY_MODEL',
+    'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+    'RECONCILE_PR_DECISION_EVIDENCE',
     'CONVERGED',
   ),
   scenario(

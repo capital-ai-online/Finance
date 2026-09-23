@@ -6,7 +6,7 @@
  * Execution remains with the existing Supervisor/provider/runtime paths.
  */
 
-export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.1.0' as const;
+export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.2.0' as const;
 
 export const FINDING_CLASSES = [
   'PROCESS_FATAL',
@@ -146,15 +146,15 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
   RECONCILE_PR_GOVERNANCE_METADATA: {
     id: 'RECONCILE_PR_GOVERNANCE_METADATA',
     tier: 'SH-1',
-    activation: 'ENABLED',
+    activation: 'HELD',
     idempotencyClass: 'IDEMPOTENT',
     blastRadius: 'WORK_ITEM',
-    requiredCapability: 'repository.pr.production-baseline-refresh',
-    killSwitch: 'self-healing.pr-governance-metadata',
-    verificationProbe: 'exact-pr-governance-metadata-readback',
+    requiredCapability: null,
+    killSwitch: 'self-healing.pr-governance-metadata-superseded',
+    verificationProbe: 'superseded-pr-body-action-held',
     budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
     exhaustionState: 'ESCALATED',
-    description: 'Delegate deterministic canonical v1.8 PR Governance metadata drift to the existing PR Production Baseline Auto-Refresh body writer; derive values only from trusted scope, canonical banner and durable claim evidence, then require exact-head/base Governance readback.',
+    description: 'Superseded compatibility action. Productive PR Governance metadata remediation is routed only through RECONCILE_PR_DECISION_EVIDENCE so no second PR-body writer remains.',
   },
   RECONCILE_PR_DECISION_EVIDENCE: {
     id: 'RECONCILE_PR_DECISION_EVIDENCE',
@@ -164,10 +164,10 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     blastRadius: 'WORK_ITEM',
     requiredCapability: 'repository.pr.decision-evidence-reconciler',
     killSwitch: 'self-healing.pr-decision-evidence-reconciler',
-    verificationProbe: 'exact-pr-decision-evidence-readback',
+    verificationProbe: 'exact-pr-body-convergence-readback',
     budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
     exhaustionState: 'ESCALATED',
-    description: 'Delegate canonical v1.7 Decision/Evidence projection drift to the existing PR Decision Evidence Reconciler; no second PR-body writer is created.',
+    description: 'Single leading PR-body remediation: converge allowlisted structure, production baseline, Governance metadata and Decision/Evidence under one per-PR writer lease and one atomic body write, then require exact-head/base readback.',
   },
   VERIFY_ISSUE_PROJECT_DISPATCH: {
     id: 'VERIFY_ISSUE_PROJECT_DISPATCH',
@@ -249,8 +249,8 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
   ),
   REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT: policy(
     'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
-    'RECONCILE_PR_GOVERNANCE_METADATA',
-    ['RECONCILE_PR_GOVERNANCE_METADATA', 'OBSERVE_ONLY'],
+    'RECONCILE_PR_DECISION_EVIDENCE',
+    ['RECONCILE_PR_DECISION_EVIDENCE', 'OBSERVE_ONLY'],
   ),
   REPOSITORY_PR_DECISION_EVIDENCE_DRIFT: policy(
     'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',

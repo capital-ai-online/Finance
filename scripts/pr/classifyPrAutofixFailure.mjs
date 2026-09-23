@@ -9,7 +9,7 @@ import {
 
 export const PR_AUTOFIX_DECISIONS = Object.freeze({
   DELEGATE_CURRENT_STATE_BASELINE: 'DELEGATE_CURRENT_STATE_BASELINE_AUTOFIX',
-  DELEGATE_PR_METADATA: 'DELEGATE_PR_PRODUCTION_BASELINE_REFRESH',
+  DELEGATE_PR_METADATA: 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER',
   DELEGATE_PR_DECISION_EVIDENCE: 'DELEGATE_PR_DECISION_EVIDENCE_RECONCILER',
   REGISTERED_TEST_REPAIR: 'REGISTERED_TEST_REPAIR',
   BLOCKED_SECURITY_COMPLIANCE: 'BLOCKED_SECURITY_COMPLIANCE',
@@ -183,7 +183,9 @@ export function classifyPrAutofixFailure(
       return result({
         classification: 'PR_PRODUCTION_BASELINE_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-        reason: 'stale-production-baseline-specialist-owned',
+        reason: 'single-pr-body-convergence-reconciler-owned',
+        findingClass: 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
       });
     }
 
@@ -192,7 +194,9 @@ export function classifyPrAutofixFailure(
         return result({
           classification: 'PR_TEMPLATE_METADATA_DRIFT',
           decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-          reason: 'current-v1.8-priority-token-repairable',
+          reason: 'current-v1.8-priority-convergence-reconciler-owned',
+          findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+          actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
         });
       }
       return result({
@@ -203,11 +207,22 @@ export function classifyPrAutofixFailure(
     }
 
     if (EXACT_V18_STRUCTURE_DRIFT.test(log)) {
+      if (metadataShape === 'CURRENT_V18_HYBRID_BASELINE_SECTION') {
+        return result({
+          classification: 'PR_TEMPLATE_METADATA_DRIFT',
+          decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE,
+          reason: 'current-v1.8-hybrid-baseline-convergence-reconciler-owned',
+          findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+          actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
+        });
+      }
       if (metadataShape === 'CURRENT_V18_LEGACY_BASELINE_SECTION') {
         return result({
           classification: 'PR_TEMPLATE_METADATA_DRIFT',
           decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-          reason: 'current-v1.8-legacy-baseline-section-repairable',
+          reason: 'current-v1.8-legacy-baseline-convergence-reconciler-owned',
+          findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+          actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
         });
       }
       if (metadataShape === 'CURRENT_V18_OTHER') {
@@ -339,7 +354,9 @@ export function classifyPrAutofixFailure(
       return result({
         classification: 'PR_TEMPLATE_METADATA_DRIFT',
         decision: PR_AUTOFIX_DECISIONS.DELEGATE_PR_METADATA,
-        reason: 'existing-pr-production-baseline-refresh-specialist-owns-write',
+        reason: 'single-pr-body-convergence-reconciler-owned',
+        findingClass: 'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
+        actionId: 'RECONCILE_PR_DECISION_EVIDENCE',
       });
     }
   }
