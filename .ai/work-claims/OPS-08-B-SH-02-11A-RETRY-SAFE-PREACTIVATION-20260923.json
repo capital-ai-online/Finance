@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-11A-RETRY-SAFE-PREACTIVATION-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -70,5 +70,9 @@
     "Kill switch and dependency-operation-readback remain mandatory.",
     "Independent Security and QM assurance is required before a later HELD->ENABLED mutation."
   ],
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-23T14:11:28Z",
+  "releaseReason": "Associated SH-02.11A pre-activation PR #1314 was Human/CODEOWNER-merged as 7bcc6aee2700d6fa3f926ff8615b04cde136750c; successor coordination moved to independent Security/QM assurance.",
+  "terminalPullRequest": 1314,
+  "terminalMergeCommit": "7bcc6aee2700d6fa3f926ff8615b04cde136750c"
 }
