@@ -248,7 +248,8 @@ export function buildAttestedMarketSentimentProjection(
     )
     .map(item => item.evidenceRef);
 
-  const ready = assessment?.status === 'READY' && assessment.score !== null;
+  const score = assessment?.status === 'READY' && assessment.score !== null ? assessment.score : null;
+  const ready = score !== null;
   const status: MarketSentimentProjectionStatus = normalizedEvidence.length === 0
     ? 'SOURCE_UNAVAILABLE'
     : ready
@@ -275,7 +276,7 @@ export function buildAttestedMarketSentimentProjection(
     contractVersion: SENTIMENT_FEATURE_CONTRACT_VERSION,
     category: 'KRYPTO' as const,
     status,
-    score: ready ? assessment.score : null,
+    score,
     label: ready ? 'Attestierter FINTECH Research-Score' : status === 'SOURCE_UNAVAILABLE' ? 'Evidence nicht verfügbar' : 'Evidence vorhanden · Score nicht berechenbar',
     summary,
     history30d: Object.freeze([]) as readonly [],
