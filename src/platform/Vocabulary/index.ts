@@ -9,6 +9,7 @@ export { VocabularyRegistry } from './Registry/VocabularyRegistry';
 export { seedConcepts } from './Registry/seedConcepts';
 export { securityVerificationConcepts } from './Registry/securityVerificationConcepts';
 export { frontendPresentationConcepts } from './Registry/frontendPresentationConcepts';
+export { documentationDerivedConcepts } from './Registry/documentationDerivedConcepts';
 export {
   pvcProjectConcepts,
   pvcStageThesaurus,
@@ -52,6 +53,7 @@ import { VocabularyRegistry } from './Registry/VocabularyRegistry';
 import { seedConcepts } from './Registry/seedConcepts';
 import { securityVerificationConcepts } from './Registry/securityVerificationConcepts';
 import { frontendPresentationConcepts } from './Registry/frontendPresentationConcepts';
+import { documentationDerivedConcepts } from './Registry/documentationDerivedConcepts';
 import { pvcProjectConcepts } from './Registry/pvcProjectConcepts';
 import { UiMessageCatalog } from './Messages/UiMessageCatalog';
 import { seedMessages } from './Messages/seedMessages';
@@ -59,7 +61,7 @@ import { migrationMessages } from './Messages/migrationMessages';
 
 export function createDefaultVocabularyRegistry(): VocabularyRegistry {
   const registry = new VocabularyRegistry();
-  registry.registerAll([...seedConcepts, ...securityVerificationConcepts, ...pvcProjectConcepts, ...frontendPresentationConcepts]);
+  registry.registerAll([...seedConcepts, ...securityVerificationConcepts, ...pvcProjectConcepts, ...frontendPresentationConcepts, ...documentationDerivedConcepts]);
   return registry;
 }
 

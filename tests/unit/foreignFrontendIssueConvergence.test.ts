@@ -14,10 +14,10 @@ describe('foreign FE issue convergence', () => {
     expect(boundary).toContain('return <UniversePortal />');
   });
 
-  it('exposes visible crawlable landing navigation for Universe and Learning Platform', () => {
+  it('keeps Universe routable but removes the Universe tab from visible landing navigation', () => {
     const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
-    expect(header).toContain('href="/universe"');
-    expect(header).toContain('data-public-navigation="universe"');
+    expect(header).not.toContain('href="/universe"');
+    expect(header).not.toContain('data-public-navigation="universe"');
     expect(header).toContain('href="/learning-platform"');
     expect(header).toContain('data-public-navigation="learning-platform"');
   });

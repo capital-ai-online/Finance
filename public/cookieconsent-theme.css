@@ -53,6 +53,124 @@
   font: inherit;
   cursor: pointer;
 }
+#capital-ai-cookie-settings[data-panel-open="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#capital-ai-cookie-panel {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 1200;
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 24px));
+  padding: 16px;
+  border: 1px solid var(--color-border, ButtonBorder);
+  border-radius: 12px;
+  background: var(--color-surface, Canvas);
+  color: var(--color-foreground, CanvasText);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 35%);
+  font: inherit;
+  pointer-events: auto;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__header strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__header p {
+  margin: 0;
+  color: var(--color-text-secondary, CanvasText);
+  line-height: 1.45;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border, ButtonBorder);
+  border-radius: 8px;
+  background: var(--color-background, Canvas);
+  cursor: pointer;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__choice:has(input:disabled) {
+  cursor: default;
+  opacity: 0.72;
+}
+
+#capital-ai-cookie-panel input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-brand-primary, Highlight);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#capital-ai-cookie-panel input[type="checkbox"]:disabled {
+  cursor: default;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__button {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-brand-primary, ButtonBorder);
+  border-radius: 8px;
+  background: var(--color-brand-primary, ButtonFace);
+  color: var(--color-background, ButtonText);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+#capital-ai-cookie-panel .capital-ai-cookie-panel__button--secondary {
+  border-color: var(--color-border, ButtonBorder);
+  background: var(--color-background, ButtonFace);
+  color: var(--color-foreground, ButtonText);
+}
+
+#capital-ai-cookie-panel input:focus-visible,
+#capital-ai-cookie-panel button:focus-visible {
+  outline: 3px solid var(--color-brand-primary, Highlight);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  #capital-ai-cookie-panel {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    width: auto;
+  }
+
+  #capital-ai-cookie-panel .capital-ai-cookie-panel__actions {
+    flex-direction: column-reverse;
+  }
+
+  #capital-ai-cookie-panel .capital-ai-cookie-panel__button {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #cc-main *, #cc-main *::before, #cc-main *::after {
     transition: none !important;

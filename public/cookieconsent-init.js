@@ -141,6 +141,118 @@
     return initializationPromise;
   }
 
+  function removeSettingsPanel() {
+    var panel = document.getElementById('capital-ai-cookie-panel');
+    if (panel && typeof panel.remove === 'function') panel.remove();
+    var trigger = document.getElementById('capital-ai-cookie-settings');
+    if (trigger) {
+      trigger.removeAttribute('aria-expanded');
+      trigger.removeAttribute('data-panel-open');
+    }
+  }
+
+  function appendText(parent, tagName, className, text) {
+    var element = document.createElement(tagName);
+    if (className) element.className = className;
+    element.textContent = text;
+    parent.appendChild(element);
+    return element;
+  }
+
+  function openNativeSettings() {
+    return initializeConsent()
+      .then(function () {
+        var existing = document.getElementById('capital-ai-cookie-panel');
+        if (existing) return;
+
+        var panel = document.createElement('section');
+        panel.id = 'capital-ai-cookie-panel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'false');
+        panel.setAttribute('aria-labelledby', 'capital-ai-cookie-panel-title');
+
+        var header = document.createElement('div');
+        header.className = 'capital-ai-cookie-panel__header';
+        var title = appendText(header, 'strong', '', 'Cookie-Einstellungen');
+        title.id = 'capital-ai-cookie-panel-title';
+        appendText(
+          header,
+          'p',
+          '',
+          'Notwendige Funktionen bleiben aktiv. Google Analytics wird nur nach deiner freiwilligen Zustimmung verwendet.'
+        );
+
+        var choices = document.createElement('div');
+        choices.className = 'capital-ai-cookie-panel__choices';
+
+        var necessaryLabel = document.createElement('label');
+        necessaryLabel.className = 'capital-ai-cookie-panel__choice';
+        var necessary = document.createElement('input');
+        necessary.type = 'checkbox';
+        necessary.checked = true;
+        necessary.disabled = true;
+        necessaryLabel.appendChild(necessary);
+        appendText(necessaryLabel, 'span', '', 'Notwendige Funktionen');
+
+        var analyticsLabel = document.createElement('label');
+        analyticsLabel.className = 'capital-ai-cookie-panel__choice';
+        var analytics = document.createElement('input');
+        analytics.id = 'capital-ai-cookie-analytics';
+        analytics.type = 'checkbox';
+        analytics.checked = Boolean(
+          typeof consent.validConsent === 'function'
+          && consent.validConsent() === true
+          && typeof consent.acceptedCategory === 'function'
+          && consent.acceptedCategory('analytics') === true
+        );
+        analyticsLabel.appendChild(analytics);
+        appendText(analyticsLabel, 'span', '', 'Google Analytics');
+
+        choices.appendChild(necessaryLabel);
+        choices.appendChild(analyticsLabel);
+
+        var actions = document.createElement('div');
+        actions.className = 'capital-ai-cookie-panel__actions';
+
+        var closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'capital-ai-cookie-panel__button capital-ai-cookie-panel__button--secondary';
+        closeButton.textContent = 'Schließen';
+        closeButton.addEventListener('click', removeSettingsPanel);
+
+        var saveButton = document.createElement('button');
+        saveButton.id = 'capital-ai-cookie-save';
+        saveButton.type = 'button';
+        saveButton.className = 'capital-ai-cookie-panel__button';
+        saveButton.textContent = 'Auswahl speichern';
+        saveButton.addEventListener('click', function () {
+          consent.acceptCategory(analytics.checked ? 'all' : []);
+          removeSettingsPanel();
+        });
+
+        actions.appendChild(closeButton);
+        actions.appendChild(saveButton);
+        panel.appendChild(header);
+        panel.appendChild(choices);
+        panel.appendChild(actions);
+        document.body.appendChild(panel);
+
+        var trigger = document.getElementById('capital-ai-cookie-settings');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'true');
+          trigger.setAttribute('data-panel-open', 'true');
+        }
+        if (typeof analytics.focus === 'function') analytics.focus();
+      })
+      .catch(function () {
+        // Initialization already logged the error; optional services stay disabled.
+      });
+  }
+
+  window.CapitalAIConsent = {
+    openSettings: function () { void openNativeSettings(); },
+  };
+
   // Available on every SPA route, independently of React/authentication.
   function installSettingsButton() {
     if (document.getElementById('capital-ai-cookie-settings')) return;
@@ -148,12 +260,14 @@
     button.id = 'capital-ai-cookie-settings';
     button.type = 'button';
     button.textContent = 'Cookie-Einstellungen';
+    button.setAttribute('aria-controls', 'capital-ai-cookie-panel');
+    button.setAttribute('aria-expanded', 'false');
     button.addEventListener('click', function () {
-      initializeConsent()
-        .then(function () { consent.showPreferences(); })
-        .catch(function () {
-          // Initialization already logged the error; optional services stay disabled.
-        });
+      if (document.getElementById('capital-ai-cookie-panel')) {
+        removeSettingsPanel();
+        return;
+      }
+      void openNativeSettings();
     });
     document.body.appendChild(button);
   }
