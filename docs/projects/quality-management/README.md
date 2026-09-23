@@ -5,7 +5,14 @@
 **Role:** `CROSS_CUTTING_QUALITY_ASSURANCE`  
 **Lifecycle:** `PROPOSED — ACTIVATES AFTER ADR-0103 ACCEPTANCE / HUMAN MERGE`  
 **Canonical project contract:** [`PROJECT_CONTRACT_V2.md`](./PROJECT_CONTRACT_V2.md)  
-**Canonical assurance roadmap:** [`ROADMAP.md`](./ROADMAP.md)
+**Current status source:** [`docs/architecture/ROADMAP.md`](../../architecture/ROADMAP.md)  
+**Local roadmap:** [`ROADMAP.md`](./ROADMAP.md) — compatibility/detail pointer only
+
+## Live-roadmap status boundary
+
+Current QM work state, dependencies, execution grouping and parallel-worker eligibility are maintained in the repository Live Roadmap. Project-local roadmap/work-package files do not maintain a competing active queue. Quality contracts and evidence remain local to this folder.
+
+**Routing metadata:** Owner `CAPITAL-AI-QM` · Folder `docs/projects/quality-management/` · Label `project:CAPITAL-AI-QM` · productive PVC ownership `none`.
 
 ## Purpose
 
@@ -93,7 +100,8 @@ QM may identify, specify and prioritize required remediation, but `remediation_e
 ## Navigation
 
 - [`PROJECT_CONTRACT_V2.md`](./PROJECT_CONTRACT_V2.md) — V2.1 ownership, handoff and PR contract.
-- [`ROADMAP.md`](./ROADMAP.md) — eight canonical assurance workstreams.
+- [`../../architecture/ROADMAP.md`](../../architecture/ROADMAP.md) — current Live Roadmap status for QM and other migrated projects.
+- [`ROADMAP.md`](./ROADMAP.md) — compatibility/detail pointer; no independent executable queue.
 - [`TAKEOVER_INDEX.md`](./TAKEOVER_INDEX.md) — source/referral mapping and Primary Owner routing.
 - [`QUALITY_BASELINE.md`](./QUALITY_BASELINE.md) — repository/authority baseline.
 - [`METRICS_AND_EVIDENCE.md`](./METRICS_AND_EVIDENCE.md) — evidence and finding schema.
