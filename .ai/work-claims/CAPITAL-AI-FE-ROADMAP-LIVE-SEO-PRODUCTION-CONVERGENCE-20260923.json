@@ -29,21 +29,21 @@
   "scopeBoundary": [
     "Read-only derived Roadmap presentation only; canonical execution authority remains in /AGENTS.md and owner project Roadmaps/work packages.",
     "No SEO provider mutation, no Render/Supabase secret mutation, no scoring/data authority and no production deployment action.",
-    "Open OPS PR #1334 remains owner-correct and is projected as provider evidence only.",
+    "Merged OPS recovery #1334 remains owner-correct evidence only; FE does not mutate Render/Supabase credential configuration.",
     "The removed /universe client route is not restored; stale SEO/server publication is recorded as retirement drift for owner-correct follow-up.",
     "Human/CODEOWNER merge authority is preserved."
   ],
   "evidence": {
     "currentMain": "426a98d4703271e438cbc6df4b1442fb3a9b032d",
-    "production": "Render live deploy dep-daq2vqou01pc73fjldv0 @ 7c1d9293ee4c61e32791e447463fcaf263644c6d; prior exact-main deploy dep-daq378mk1f9s738adt70 failed at runtime startup; bounded recovery PR #1334 is merged on main@426a98d4 and its new Production deploy/readback is pending.",
+    "production": "Render production remains live at dep-daq2vqou01pc73fjldv0 / 7c1d9293ee4c61e32791e447463fcaf263644c6d. After recovery #1334 merged as main@426a98d4703271e438cbc6df4b1442fb3a9b032d, exact-main deploy dep-daq3dkmgekts73be39i0 triggered within the post-merge SLA; checkout/build/release-manifest/Quality passed, but runtime startup again failed with SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING. None of the accepted server-only management-token environment keys resolved a usable credential. No secret value was read or recorded.",
     "seo": "SEO issues #1233/#1252/#1254/#1258/#1263 are terminal; no open project:CAPITAL-AI-SEO issue lane; GSC/GA4/GenAI current provider reads remain evidence gates.",
     "legacyDrift": "/universe is absent from current client routing but remains in route SEO metadata, sitemap, prerender and public server route/fallback surfaces.",
-    "openWriterOverlap": "No foreign open PR after #1334 merged; only this FE draft PR #1335 remains open at the re-correlation boundary.",
+    "openWriterOverlap": "Fresh provider readback after #1334 merge returns no foreign open Pull Request; only this review-ready FE PR #1335 remains open.",
     "documentary": "CAPITAL-AI-DOC resolves to PVC-03. Canonical ROADMAP has no executable active item: WP-DOC-14/15/16 are terminal; WP-DOC-17 is historical NOT_APPLICABLE; WP-06A..E are terminal through #1131; AUTO-01 is terminal through #1154; startup_failure remediation is terminal through #1310. Residual active claim/package markers are stale coordination evidence and are not projected as live work."
   },
   "acceptanceCriteria": [
     "Roadmap projection is bound to the exact correlated main SHA and reads live Production identity separately through /healthz.",
-    "Terminal/stale provider writers are removed; currently open PR #1334 is visible as provider evidence while open.",
+    "Terminal/stale provider writers are removed; merged #1334 remains non-active Production evidence only.",
     "Implemented production-covered, repository-integrated, main-only/deploy-blocked, provider-gate and legacy-drift states are distinguishable.",
     "SEO provider gates are not converted into synthetic PASS and /universe is not reactivated.",
     "Focused Roadmap projection tests plus ordinary required FE/governance/build/security checks pass on the exact PR head.",
