@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.2.0",
   "claimId": "CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -30,7 +30,12 @@
     "dune": "server-side TypeScript read-only saved-query evidence with semantic DUNE_QUERY_* IDs, derived allowlist, bounded rows/schema and FREE_TIER or timestamp-bounded TRIAL_14D entitlement modes",
     "gemini": "reuse existing ADR-0090 Free-Tier Research Shadow; no second same-project key for quota because Gemini limits are project-scoped"
   },
-  "excludedProviders": ["newsapi", "coinglass", "lunarcrush", "messari"],
+  "excludedProviders": [
+    "newsapi",
+    "coinglass",
+    "lunarcrush",
+    "messari"
+  ],
   "protectedExistingAuthorities": [
     "CryptoEvidenceIdentityRegistry for high-impact external provider identities",
     "DuneSavedQueryRegistry for semantic Dune query/schema contracts and derived allowlist",
@@ -98,7 +103,10 @@
     "defillamaProEnabled": false
   },
   "duneBoundary": {
-    "accessModes": ["FREE_TIER", "TRIAL_14D"],
+    "accessModes": [
+      "FREE_TIER",
+      "TRIAL_14D"
+    ],
     "ownerReportedTrialDurationDays": 14,
     "publicDocumentationTrialTermIndependentlyVerified": false,
     "trialRequiresAttestation": true,
@@ -120,7 +128,12 @@
   },
   "transportConsolidation": {
     "sharedTransport": "ResearchEvidenceProviderHttp",
-    "reuses": ["ProviderMatrix", "RateLimitBudget", "CircuitBreaker", "Supervisor providerHealth"],
+    "reuses": [
+      "ProviderMatrix",
+      "RateLimitBudget",
+      "CircuitBreaker",
+      "Supervisor providerHealth"
+    ],
     "perProviderHttpInfrastructureCreated": false
   },
   "correlationRules": [
@@ -133,5 +146,7 @@
     "GDELT news metadata and deterministic headline heuristics have no direct scoring authority.",
     "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS.",
     "package.json and package-lock.json are authorized under this claim solely for the atomic Dune SDK (@duneanalytics/client-sdk@0.4.3) declaration + lockfile regeneration and the removal of unused kraken-api; no other dependency surface changes are authorized."
-  ]
+  ],
+  "releasedAt": "2026-09-23T18:59:00Z",
+  "releaseReason": "Associated PR #488 is Human-merged; stale coordination lock released before new FINTECH sentiment projection work touches newsRoutes.ts."
 }
