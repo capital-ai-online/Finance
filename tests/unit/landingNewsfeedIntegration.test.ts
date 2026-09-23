@@ -31,10 +31,12 @@ describe('LANDING-FIRST news integration gate', () => {
     expect(routes).not.toContain('LandingRealtimeAiNewsfeed');
   });
 
-  it('preserves authenticated news through backend session authority', () => {
+  it('preserves one backend news boundary while allowing public read-only visibility', () => {
     expect(realtimeNewsfeed).toContain('VerifiedNewsFeed');
     expect(authenticatedTransport).toContain('authFetch(path, init)');
     expect(authenticatedTransport).not.toContain('supabase.auth.getSession');
+    expect(entitlement).toContain("isFeaturePubliclyVisible('realtime_ai_newsfeed')");
+    expect(entitlement).toContain("(req.method ?? 'GET').toUpperCase() === 'GET'");
     expect(entitlement).toContain('resolveVerifiedIdentity');
     expect(entitlement).toContain("canUseFeature('registered', tier, 'realtime_ai_newsfeed')");
   });
