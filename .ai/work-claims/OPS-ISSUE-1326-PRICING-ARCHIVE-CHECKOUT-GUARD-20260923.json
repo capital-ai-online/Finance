@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-ISSUE-1326-PRICING-ARCHIVE-CHECKOUT-GUARD-20260923",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Disable creation of new Stripe checkout sessions while the former pricing catalogue is archived, without mutating Stripe provider state or existing-customer lifecycle paths.",
+  "workItemDE": "Neue Stripe-Checkout-Sessions bei archiviertem Pricing serverseitig sperren, ohne Stripe-Providerzustand oder bestehende Kunden-Lifecycle-Pfade zu verändern.",
+  "priority": "P0",
+  "priorityReason": "The public pricing lifecycle is archived while the server still accepts new paid checkout creation.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "primaryPvc": "PVC-08",
+  "sourceIssue": 1326,
+  "baseBranch": "main",
+  "baseSha": "f65753961359d74cdf19de996bace459a98725b9",
+  "branch": "operations/pricing-archive-server-checkout-guard-20260923",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-ISSUE-1326-PRICING-ARCHIVE-CHECKOUT-GUARD-20260923.json",
+    "docs/projects/operations/work-packages/OPS_ISSUE_1326_PRICING_ARCHIVE_CHECKOUT_GUARD_2026-09-23.md",
+    "server/stripe.ts",
+    "tests/unit/pricingArchiveServerLifecycle.test.ts"
+  ],
+  "dependencies": [
+    "Human Owner pricing-archive direction",
+    "/AGENTS.md@CURRENT_MAIN",
+    "ADR-0034",
+    "ADR-0045"
+  ],
+  "guardrails": [
+    "No Stripe provider mutation.",
+    "Preserve customer portal, cancellation/subscription readback, webhook evidence and historical billing contracts.",
+    "Block all new checkout-session creation, including legacy PDF-credit purchase checkout.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "New create-checkout-session requests fail closed with PRICING_ARCHIVED_PENDING_REPLACEMENT before identity or Stripe access.",
+    "Existing portal, subscription readback, PDF-credit read/consume and webhook lifecycle routes remain present.",
+    "Exact-head CI, Governance and Security checks pass."
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
