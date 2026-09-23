@@ -43,7 +43,7 @@ describe('application-wide merge cadence governance', () => {
     expect(agents).toContain('current ordinal is `9 mod 10`');
     expect(agents).toContain('Example: `0.6.0 → 0.6.1`');
     expect(versionContract.automaticMaterializationPolicy.singleVersionAuthority).toBe('package.json#version');
-    expect(agents).toContain('`package-lock.json#packages[""]#version`');
+    expect(versionContract.automaticMaterializationPolicy.governedMirrors).toContain('package-lock.json#packages[""]#version');
     expect(versionContract.version).toBe('1.1.0');
     expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(true);
     expect(versionContract.branchMaterialization.reactivationCondition).toContain('PR_1338');
