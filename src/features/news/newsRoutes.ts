@@ -9,6 +9,11 @@ import type { AssetCatalogEntry } from '../../services/assetCatalogIntegrity';
 import { FreeCryptoNewsEvidenceProvider } from '../../platform/MarketData/providers/FreeCryptoNewsEvidenceProvider';
 import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 import { getVerifiedAssetDisplay } from '../../services/verifiedAssetDisplay';
+import {
+  buildAttestedMarketSentimentProjection,
+  SENTIMENT_FEATURE_CONTRACT_VERSION,
+  type SentimentProviderEvidence,
+} from '../../platform/Scoring/SentimentEvidenceProjection';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
 export type NewsSentimentBasis = 'heuristic';
@@ -208,6 +213,26 @@ function mergeNewsItems(items: readonly ProjectedNewsItem[]): readonly Projected
   );
 }
 
+function toSentimentProviderEvidence(item: ProjectedNewsItem): SentimentProviderEvidence {
+  return Object.freeze({
+    evidenceRef: item.evidenceRef,
+    provider: item.provider,
+    source: item.source,
+    publishedAt: item.publishedAt,
+    headline: item.headline,
+    sentimentLabel: item.sentiment,
+    sentimentBasis: item.sentimentBasis,
+    // Current GDELT/cryptocurrency.cv article metadata does not attest the full FINTECH
+    // scoring vector. The deterministic headline label remains presentation-only.
+    scoreCandidate: false,
+  });
+}
+
+function buildCryptoSentimentGdeltQuery(symbol: string | null): string {
+  if (symbol) return buildGdeltQuery(symbol);
+  return '(cryptocurrency OR crypto OR bitcoin OR ethereum) (market OR finance OR trading OR investment)';
+}
+
 export const newsRouter = express.Router();
 
 newsRouter.get('/', async (req, res) => {
@@ -300,6 +325,71 @@ newsRouter.get('/', async (req, res) => {
   res.setHeader('x-capital-ai-news-cache', 'miss');
   res.setHeader('x-capital-ai-news-provider', providerHeader);
   return res.json(items.slice(0, limit));
+});
+
+/**
+ * FINTECH-owned sentiment projection boundary.
+ *
+ * This endpoint intentionally reuses the existing news providers while refusing to promote
+ * their headline heuristic to scoring evidence. The response carries the complete feature
+ * attestation contract and can become READY only after a governed upstream adapter supplies
+ * every required feature with evidence references and a derivation method.
+ */
+newsRouter.get('/sentiment-projection', async (req, res) => {
+  const rawAsset = req.query.asset ?? req.query.symbol;
+  const symbol = normalizedSymbol(rawAsset);
+  if (rawAsset !== undefined && !symbol) {
+    return res.status(400).json({ status: 'INVALID_REQUEST', reason: 'Ungültiges Asset-Symbol.' });
+  }
+
+  const asset = getAssetMeta(symbol);
+  if (symbol && !asset) {
+    return res.status(400).json({
+      status: 'INVALID_REQUEST',
+      reason: 'Asset ist nicht im kanonischen Enterprise-Asset-Katalog registriert.',
+    });
+  }
+  if (asset && asset.type !== 'crypto') {
+    return res.status(422).json({
+      status: 'NOT_COMPUTABLE',
+      category: 'KRYPTO',
+      score: null,
+      reason: 'Der aktuell attestierte FINTECH-Sentiment-Contract ist auf Crypto-Evidence begrenzt.',
+    });
+  }
+
+  const limit = normalizedLimit(req.query.limit);
+  const providerLimit = Math.min(PROVIDER_FETCH_LIMIT, Math.max(20, limit * 4));
+  const gdelt = new GdeltNewsEvidenceProvider();
+  const fcn = new FreeCryptoNewsEvidenceProvider();
+
+  const tasks: Array<Promise<readonly ProjectedNewsItem[]>> = [
+    gdelt.searchArticles(buildCryptoSentimentGdeltQuery(symbol), providerLimit, '1d').then(result => {
+      if (result.status !== 'VERIFIED') return Object.freeze([]);
+      return Object.freeze(result.articles.map(article => projectGdeltArticle(article, symbol)));
+    }).catch(() => Object.freeze([])),
+    fcn.searchArticles({
+      query: symbol ?? undefined,
+      limit: providerLimit,
+    }).then(result => {
+      if (result.status !== 'VERIFIED') return Object.freeze([]);
+      return Object.freeze(result.articles.map(article => projectFreeCryptoArticle(article, symbol)));
+    }).catch(() => Object.freeze([])),
+  ];
+
+  let items = mergeNewsItems((await Promise.all(tasks)).flat());
+  if (!symbol) {
+    items = Object.freeze(items.filter(item =>
+      item.provider === 'free-crypto-news' || item.assetClasses.includes('crypto'),
+    ));
+  }
+
+  const projection = buildAttestedMarketSentimentProjection(
+    items.slice(0, limit).map(toSentimentProviderEvidence),
+  );
+  res.setHeader('x-capital-ai-sentiment-contract', SENTIMENT_FEATURE_CONTRACT_VERSION);
+  res.setHeader('x-capital-ai-news-provider', items.length > 0 ? 'multi-provider' : 'unavailable');
+  return res.status(200).json(projection);
 });
 
 /** Sources are aggregated from the active provider set for the filter UI. */
