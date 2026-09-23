@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FE-MARKET-SENTIMENT-EVIDENCE-WIRING-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FE",
+  "projectFolder": "frontend",
+  "ownerScope": "Presentation-only consumer wiring; FINTECH retains PVC-09..14 data/scoring authority.",
+  "workItem": "Wire the current Market Sentiment website presentation to existing governed news evidence while preserving fail-closed FINTECH sentiment scoring semantics.",
+  "startedAt": "2026-09-23T16:50:00Z",
+  "baseBranch": "main",
+  "baseSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "branch": "frontend/market-sentiment-evidence-wiring-20260923",
+  "upstreamAuthority": [
+    "CAPITAL-AI-FINTECH / PVC-09..14",
+    "crypto-sentiment-research/0.1.0",
+    "subscription-entitlements/1.0.0"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FE-MARKET-SENTIMENT-EVIDENCE-WIRING-20260923.json",
+    "docs/projects/frontend/work-packages/FE_MARKET_SENTIMENT_EVIDENCE_WIRING_2026-09-23.md",
+    "src/features/public/ui/runtime/MarketSentimentPresentation.tsx",
+    "tests/unit/marketSentimentEvidenceWiring.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No browser/local numeric scoring",
+    "No heuristic headline sentiment promotion to scoring authority",
+    "No neutral 50 fallback",
+    "No provider or entitlement bypass",
+    "No canonical score/rank/execution mutation"
+  ],
+  "overlapReadback": {
+    "currentMain": "84137c8d24507523c59cf22d6b888a24329a56e5",
+    "openPullRequests": [
+      1310,
+      1319,
+      1322
+    ],
+    "directChangedFileOverlap": false,
+    "note": "PR #1322 changes ReferenceApp/layout but not MarketSentimentPresentation; this slice deliberately avoids ReferenceApp to prevent file overlap."
+  },
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "dependencies": [
+    "OPS-PUBLIC-VISIBILITY-MODE-20260923 / PR #1324 must merge first for public read-only evidence visibility"
+  ]
+}
