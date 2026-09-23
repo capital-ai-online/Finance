@@ -26,9 +26,13 @@ describe('desktop landing responsive adapter', () => {
         .map((entry) => entry.sourcePath),
     ).toEqual([
       'src/App.tsx',
+      'src/components/AllMarketsModal.tsx',
+      'src/components/AssetDetailModal.tsx',
       'src/components/BrandLogo.tsx',
       'src/components/Header.tsx',
+      'src/components/MarketOverview.tsx',
       'src/components/MarketVocabularyModal.tsx',
+      'src/components/SubclassDetailModal.tsx',
       'src/data/mockData.ts',
     ]);
 
