@@ -4,6 +4,21 @@ import { fileURLToPath } from 'node:url';
 export const SUPABASE_PROJECT_REF = 'ryzywoktpmyhwzxmstyu';
 export const CANONICAL_SITE_URL = 'https://capital-ai.online';
 const MANAGEMENT_API_BASE = 'https://api.supabase.com';
+const MANAGEMENT_ACCESS_TOKEN_ENV_KEYS = Object.freeze([
+  'SUPABASE_MANAGEMENT_ACCESS_TOKEN',
+  'CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN',
+  'SUPABASE_ACCESS_TOKEN',
+]);
+
+export function resolveManagementAccessToken(env = process.env) {
+  for (const key of MANAGEMENT_ACCESS_TOKEN_ENV_KEYS) {
+    const candidate = env?.[key];
+    if (typeof candidate !== 'string') continue;
+    const accessToken = candidate.trim();
+    if (accessToken.length >= 20) return { accessToken, source: key };
+  }
+  throw new Error('SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING');
+}
 
 const confirmationTemplatePath = fileURLToPath(
   new URL('../../supabase/templates/confirmation.html', import.meta.url),
@@ -90,10 +105,12 @@ const invokedDirectly = process.argv[1] === fileURLToPath(import.meta.url);
 const invokedAsRuntimePreload = process.env.CAPITAL_AI_SUPABASE_AUTH_CONFIG_CONTROL === 'true';
 
 if (invokedDirectly || invokedAsRuntimePreload) {
-  const result = await reconcileAuthRegistrationConfig(process.env.SUPABASE_MANAGEMENT_ACCESS_TOKEN);
+  const credential = resolveManagementAccessToken(process.env);
+  const result = await reconcileAuthRegistrationConfig(credential.accessToken);
   console.log(JSON.stringify({
     status: 'verified',
     projectRef: SUPABASE_PROJECT_REF,
+    credentialSource: credential.source,
     changedKeys: result.changedKeys,
     verifiedKeyCount: result.verifiedKeys.length,
   }));
