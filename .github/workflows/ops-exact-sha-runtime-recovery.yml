@@ -34,7 +34,54 @@ jobs:
       contents: read
 
     steps:
+      - name: CURRENT_MAIN für Recovery-Cadence read-only auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Production-Identität vor Recovery read-only erfassen
+        id: production
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            try {
+              const response = await fetch('https://capital-ai.online/healthz', {
+                headers: { Accept: 'application/json' },
+                signal: AbortSignal.timeout(10_000),
+              });
+              let payload = null;
+              try { payload = await response.json(); } catch {}
+              core.setOutput('sha', String(response.headers.get('x-capital-ai-commit') || '').toLowerCase());
+              core.setOutput('healthy', response.ok && payload?.status === 'ok' ? 'true' : 'false');
+            } catch (error) {
+              core.warning('Production identity unavailable before Recovery cadence: ' + String(error));
+              core.setOutput('sha', '');
+              core.setOutput('healthy', 'false');
+            }
+
+      - name: Queued Lag von echter Recovery-Berechtigung trennen
+        id: cadence
+        env:
+          PRODUCTION_SHA: ${{ steps.production.outputs.sha }}
+          PRODUCTION_HEALTHY: ${{ steps.production.outputs.healthy }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/operations/mergeCadence.mjs             --repo-root=.             --ref=main             --production-sha="$PRODUCTION_SHA"             --production-healthy="$PRODUCTION_HEALTHY"
+
+      - name: Erwarteten Queue-Lag ohne Redeploy bestätigen
+        if: steps.cadence.outputs.recovery_eligible != 'true'
+        env:
+          MERGE_ORDINAL: ${{ steps.cadence.outputs.merge_ordinal }}
+          DEPLOY_PROGRESS: ${{ steps.cadence.outputs.deploy_progress }}
+          DEPLOY_REMAINING: ${{ steps.cadence.outputs.deploy_remaining }}
+        run: |
+          echo "DEPLOYMENT_QUEUED: mergeOrdinal=$MERGE_ORDINAL progress=$DEPLOY_PROGRESS/5 remaining=$DEPLOY_REMAINING; Exact-SHA Recovery bleibt ohne Mutation."
+
       - name: Re-drive exact verified deploy job once
+        if: steps.cadence.outputs.recovery_eligible == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz

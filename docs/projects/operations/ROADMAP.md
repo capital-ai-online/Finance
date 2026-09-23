@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b`
+**Baseline:** `main@86fb86c69df1b65a69c006b4b08eee262c7db40c`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — SH-02.11 activation is implemented from exact Production-aligned `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b` after Human-merged Security #1316 and QM #1318 assurance; `RETRY_SAFE_OPERATION` is the only newly enabled action in this branch, while SH-2/SH-3 remain HELD.
+**Reconciliation:** 2026-09-23 — fresh Human/Owner direction activates `OPS-MERGE-CADENCE-01` from current main `86fb86c69df1b65a69c006b4b08eee262c7db40c` after Human-merged PR #1337. The slice prepares the existing deploy/version/Self-Healing chain for GOV PR #1336 without activating SH-02.12 or any held SH-2/SH-3 action.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -13,6 +13,23 @@
 `historical/non-terminal != active`
 
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, prior branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+
+## Current execution priority — Human-directed Merge Cadence 2026-09-23
+
+### OPS-MERGE-CADENCE-01 — Dual-Mode 5-Merge Deploy / 10-Merge Version Runtime
+
+**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED  
+**Baseline:** main@86fb86c69df1b65a69c006b4b08eee262c7db40c  
+**Owner/PVC:** CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08  
+**Dependency:** Human-merged PR #1337; GOV PR #1336 remains Draft and must activate last.
+
+Fresh Owner direction requires the productive chain to be prepared before the Governance activation merge. This slice therefore makes the existing CI/Post-Merge/Exact-SHA-Recovery/Release-Gate paths dual-mode rather than creating replacements. Pre-v1.1 authority preserves per-main-merge deployment; after the fixed cadence contract becomes CURRENT_MAIN, normal deployment occurs at 5/10/15/... PR-merge ordinals and the next PR at ordinal 9 mod 10 receives the strict next PATCH through the existing registered PR Autofix writer and Release Version Gate.
+
+CI, PR synchronization, Self-Healing continuation and the read-only live cadence projection remain bound to latest CURRENT_MAIN. Healthy expected Production lag below a due 5-merge boundary is DEPLOYMENT_QUEUED and cannot trigger Exact-SHA Recovery. Real due/failed/unhealthy/diverged Production remains fail-closed drift.
+
+Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
+
+**Exit:** dual-mode implementation is Human-merged and verified before GOV #1336 activation; no second controller/registry exists; FE can consume the read-only /api/roadmap/cadence projection in an owner-correct successor.
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 

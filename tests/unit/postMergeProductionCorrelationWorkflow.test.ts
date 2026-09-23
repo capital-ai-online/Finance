@@ -5,51 +5,55 @@ const workflowPath = new URL('../../.github/workflows/post-merge-production-corr
 const workflow = readFileSync(workflowPath, 'utf8');
 
 describe('post-merge production correlation workflow', () => {
-  it('runs on main pushes and keeps a low-frequency drift watch', () => {
+  it('runs on main pushes and keeps the bounded low-frequency correlation watch', () => {
     expect(workflow).toContain('push:');
     expect(workflow).toContain('branches: [main]');
     expect(workflow).toContain("cron: '7 * * * *'");
-    expect(workflow).toContain('timeout-minutes: 7');
+    expect(workflow).toContain('timeout-minutes: 12');
   });
 
-  it('uses least-privilege permissions and pinned github-script', () => {
-    expect(workflow).toContain('contents: read');
-    expect(workflow).toContain('actions: read');
-    expect(workflow).toContain('issues: write');
-    expect(workflow).toContain('actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3');
-    expect(workflow).not.toContain('actions/checkout@');
-    expect(workflow).not.toContain('npm ci');
+  it('binds correlation to exact CURRENT_MAIN and the shared merge-cadence helper', () => {
+    expect(workflow).toContain('Exakten CURRENT_MAIN binden');
+    expect(workflow).toContain('fetch-depth: 0');
+    expect(workflow).toContain('scripts/operations/mergeCadence.mjs');
+    expect(workflow).toContain('CADENCE_ACTIVE:');
+    expect(workflow).toContain('MERGE_ORDINAL:');
+    expect(workflow).toContain('DEPLOY_PROGRESS:');
+    expect(workflow).toContain('DEPLOY_REMAINING:');
   });
 
-  it('binds the five-minute SLA to the exact CI deploy-hook step and production identity', () => {
+  it('preserves the legacy five-minute exact-main contract before cadence activation', () => {
     expect(workflow).toContain("SLA_MILLISECONDS: '300000'");
-    expect(workflow).toContain("CONVERGENCE_MILLISECONDS: '600000'");
     expect(workflow).toContain("workflow_id: 'ci.yml'");
     expect(workflow).toContain("candidate.name === 'Deployment verifiziert / Render-Produktion'");
     expect(workflow).toContain("candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen'");
-    expect(workflow).toContain("response.headers.get('x-capital-ai-commit')");
-    expect(workflow).toContain("response.headers.get('x-capital-ai-branch')");
-    expect(workflow).toContain("response.headers.get('x-capital-ai-repo')");
+    expect(workflow).toContain('Legacy deploy hook exceeded five-minute SLA.');
+    expect(workflow).toContain('Legacy Production SHA does not equal CURRENT_MAIN');
   });
 
-  it('reads historical deploy evidence before polling so runner queue delay cannot create false drift', () => {
-    const evidenceInit = "let ciEvidence = context.eventName === 'push'\n              ? await inspectCiDeployTrigger()";
-    const pollingLoop = "while (Date.now() <= convergenceDeadlineMs)";
-    expect(workflow).toContain(evidenceInit);
-    expect(workflow.indexOf(evidenceInit)).toBeLessThan(workflow.indexOf(pollingLoop));
-    expect(workflow).toContain('const triggerStarted = Boolean(ciEvidence.step?.started_at)');
-    expect(workflow).toContain('const triggerDeltaMs = triggerStartedAt ? Date.parse(triggerStartedAt) - commitTimeMs : null');
-    expect(workflow).toContain('triggerDeltaMs >= 0 && triggerDeltaMs <= slaMs');
-    expect(workflow).toContain('const convergenceDeadlineMs = commitTimeMs + convergenceMs');
-    expect(workflow).toContain('const remaining = convergenceDeadlineMs - Date.now()');
+  it('treats healthy ancestor lag below a five-merge boundary as queued rather than drift', () => {
+    expect(workflow).toContain("['CURRENT_MAIN', 'ANCESTOR', 'PRE_EPOCH'].includes(productionRelation)");
+    expect(workflow).toContain("'DEPLOYMENT_QUEUED'");
+    expect(workflow).toContain('DEPLOYMENT_DUE');
+    expect(workflow).toContain('5-merge deployment boundary is due');
+    expect(workflow).toContain('Expected cadence lag is not Production drift.');
   });
 
-  it('deduplicates production-drift issues and closes them after recovery', () => {
+  it('deduplicates real production-drift issues and closes them after queued or converged recovery', () => {
     expect(workflow).toContain("DRIFT_ISSUE_TITLE: '[AUTO] Production drift — Render/Main correlation'");
     expect(workflow).toContain('CAPITAL_AI_PRODUCTION_DRIFT_AUTO');
     expect(workflow).toContain('github.rest.issues.create(');
     expect(workflow).toContain('github.rest.issues.update(');
     expect(workflow).toContain("state: 'closed'");
-    expect(workflow).toContain('does not authorize production mutation');
+    expect(workflow).toContain('does not authorize Production mutation');
+  });
+
+  it('uses least privilege and immutable pinned actions', () => {
+    expect(workflow).toContain('contents: read');
+    expect(workflow).toContain('actions: read');
+    expect(workflow).toContain('issues: write');
+    expect(workflow).toContain('actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8');
+    expect(workflow).toContain('actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3');
+    expect(workflow).not.toContain('contents: write');
   });
 });

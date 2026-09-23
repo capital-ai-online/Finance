@@ -29,11 +29,13 @@ describe('P2B production CI runner consolidation', () => {
     expect(jobBlock(yaml, 'deploy-production')).not.toContain('workflow_dispatch');
   });
 
-  it('keeps exactly two hosted runners in the CI workflow', () => {
+  it('keeps exactly two hosted runners in the CI workflow while computing cadence inside build-and-test', () => {
     const yaml = workflow();
     expect((yaml.match(/runs-on: ubuntu-latest/g) ?? []).length).toBe(2);
     expect(yaml).toContain('  build-and-test:');
     expect(yaml).toContain('  deploy-production:');
+    expect(yaml).not.toContain('\n  deployment-cadence:');
+    expect(jobBlock(yaml, 'build-and-test')).toContain('Bestehende oder 5er-Merge-Deployment-Regel bestimmen');
     expect(yaml).not.toContain('\n  supply-chain-attestation:');
     expect(yaml).not.toContain('\n  verify-deployment-identity:');
   });
@@ -66,6 +68,7 @@ describe('P2B production CI runner consolidation', () => {
   it('keeps the production environment job minimal, exact-SHA-bound, and on Node 24 actions', () => {
     const deploy = jobBlock(workflow(), 'deploy-production');
     expect(deploy).toContain('needs: [build-and-test]');
+    expect(deploy).toContain("needs.build-and-test.outputs.deploy_allowed == 'true'");
     expect(deploy).toContain('environment: production');
     expect(deploy).toContain('actions: read');
     expect(deploy).not.toContain('contents: write');
