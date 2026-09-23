@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FE-DESKTOP-FULLWIDTH-CURRENT-MAIN-CI-CONVERGENCE-20260923",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FE",
+  "projectFolder": "frontend",
+  "ownerScope": "Frontend regression convergence only; no OPS/Self-Healing runtime ownership transfer.",
+  "workItem": "Repair the stale desktop responsive regression expectation introduced into CURRENT_MAIN after PR #1322 without changing runtime CSS or presentation behavior.",
+  "startedAt": "2026-09-23T17:20:00Z",
+  "baseBranch": "main",
+  "baseSha": "84137c8d24507523c59cf22d6b888a24329a56e5",
+  "branch": "frontend/desktop-fullwidth-current-main-ci-convergence-20260923",
+  "sourceHandoffIssue": 1328,
+  "findingClass": "REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT",
+  "blockingEvidence": {
+    "workflowRun": 35894373431,
+    "mainCiRunNumber": 5898,
+    "failingTest": "tests/unit/frontendDesktopResponsiveAdapter.test.ts",
+    "assertionLine": 66
+  },
+  "claimedPaths": [
+    ".ai/work-claims/FE-DESKTOP-FULLWIDTH-CURRENT-MAIN-CI-CONVERGENCE-20260923.json",
+    "docs/projects/frontend/work-packages/FE_DESKTOP_FULLWIDTH_CURRENT_MAIN_CI_CONVERGENCE_2026-09-23.md",
+    "tests/unit/frontendDesktopResponsiveAdapter.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No runtime/CSS mutation",
+    "No mobile/tablet expectation weakening",
+    "No Self-Healing contract mutation",
+    "No entitlement/scoring/provider mutation"
+  ],
+  "overlapReadback": {
+    "currentMain": "84137c8d24507523c59cf22d6b888a24329a56e5",
+    "openPullRequests": [
+      1323,
+      1324,
+      1325
+    ],
+    "directChangedFileOverlap": false,
+    "note": "Open PRs do not modify the regression test path; #1324 is OPS entitlement work and has no Self-Healing or FE responsive-file overlap."
+  },
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

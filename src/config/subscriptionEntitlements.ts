@@ -10,6 +10,19 @@ export type FeatureKey =
   | 'buffett_value_check'
   | 'pdf_compliance_export';
 
+/**
+ * Temporary product direction: pricing/tier differences must not hide product components.
+ *
+ * This contract governs presentation/read-only visibility only. It does not grant execution,
+ * quota, billing, IAM or mutation authority. Protected execution continues through canUseFeature()
+ * and the server-side guards that consume it.
+ */
+export const PRODUCT_VISIBILITY_MODE = 'PUBLIC_ALL_COMPONENTS' as const;
+
+export function isFeaturePubliclyVisible(_feature: FeatureKey): boolean {
+  return PRODUCT_VISIBILITY_MODE === 'PUBLIC_ALL_COMPONENTS';
+}
+
 export interface WindowedLimit {
   limit: number;
   windowDays: number;

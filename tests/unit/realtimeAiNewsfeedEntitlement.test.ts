@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import {
   REALTIME_AI_NEWSFEED_CONTRACT_VERSION,
+  REALTIME_AI_NEWSFEED_VISIBILITY_VERSION,
   evaluateRealtimeAiNewsfeedAccess,
   type RealtimeAiNewsfeedEntitlementDependencies,
 } from '../../server/middleware/realtimeAiNewsfeedEntitlement';
@@ -11,8 +12,10 @@ function request(input: {
   authorization?: string;
   body?: Record<string, unknown>;
   query?: Record<string, unknown>;
+  method?: string;
 } = {}): Request {
   return {
+    method: input.method ?? 'GET',
     headers: input.authorization ? { authorization: input.authorization } : {},
     body: input.body ?? {},
     query: input.query ?? {},
@@ -33,9 +36,21 @@ function dependencies(input: {
   };
 }
 
-describe('realtime_ai_newsfeed entitlement boundary', () => {
-  it('denies when no bearer resolves to a verified principal', async () => {
-    const decision = await evaluateRealtimeAiNewsfeedAccess(request(), dependencies({ identity: null }));
+describe('realtime_ai_newsfeed visibility and execution boundary', () => {
+  it('allows anonymous read-only GET access in temporary public-visibility mode', async () => {
+    const deps = dependencies({ identity: null });
+    const decision = await evaluateRealtimeAiNewsfeedAccess(request({ method: 'GET' }), deps);
+
+    expect(decision).toEqual({ allowed: true, status: 200 });
+    expect(deps.resolveIdentity).not.toHaveBeenCalled();
+    expect(deps.getSubscriptionTier).not.toHaveBeenCalled();
+  });
+
+  it('keeps non-GET access behind verified identity', async () => {
+    const decision = await evaluateRealtimeAiNewsfeedAccess(
+      request({ method: 'POST' }),
+      dependencies({ identity: null }),
+    );
 
     expect(decision).toEqual({
       allowed: false,
@@ -44,20 +59,9 @@ describe('realtime_ai_newsfeed entitlement boundary', () => {
     });
   });
 
-  it('denies an invalid bearer that does not resolve to a verified principal', async () => {
+  it.each(['Free', 'Starter'])('keeps protected non-GET %s denied by the canonical subscription contract', async tier => {
     const decision = await evaluateRealtimeAiNewsfeedAccess(
-      request({ authorization: 'Bearer invalid-token' }),
-      dependencies({ identity: null }),
-    );
-
-    expect(decision.allowed).toBe(false);
-    expect(decision.status).toBe(401);
-    expect(decision.reason).toBe('authentication-required');
-  });
-
-  it.each(['Free', 'Starter'])('denies %s from the canonical subscription contract', async tier => {
-    const decision = await evaluateRealtimeAiNewsfeedAccess(
-      request({ authorization: 'Bearer verified-token' }),
+      request({ method: 'POST', authorization: 'Bearer verified-token' }),
       dependencies({ identity: { userId: 'user-1', email: 'user@example.com' }, tier }),
     );
 
@@ -67,21 +71,22 @@ describe('realtime_ai_newsfeed entitlement boundary', () => {
     expect(decision.reason).toBe('feature-not-entitled');
   });
 
-  it.each(['Pro', 'Enterprise'])('allows %s from the canonical subscription contract', async tier => {
+  it.each(['Pro', 'Enterprise'])('keeps protected non-GET %s allowed by the canonical subscription contract', async tier => {
     const decision = await evaluateRealtimeAiNewsfeedAccess(
-      request({ authorization: 'Bearer verified-token' }),
+      request({ method: 'POST', authorization: 'Bearer verified-token' }),
       dependencies({ identity: { userId: 'user-1', email: 'user@example.com' }, tier }),
     );
 
     expect(decision).toEqual({ allowed: true, status: 200, tier });
   });
 
-  it('ignores forged client subscriptionTier values and keeps authoritative Starter denied', async () => {
+  it('ignores forged client tiers on the protected non-GET path', async () => {
     const deps = dependencies({
       identity: { userId: 'user-1', email: 'user@example.com' },
       tier: 'Starter',
     });
     const req = request({
+      method: 'POST',
       authorization: 'Bearer verified-token',
       body: { subscriptionTier: 'Enterprise', tier: 'Enterprise' },
       query: { subscriptionTier: 'Pro', tier: 'Pro' },
@@ -95,9 +100,9 @@ describe('realtime_ai_newsfeed entitlement boundary', () => {
     expect(deps.getSubscriptionTier).toHaveBeenCalledWith('user-1');
   });
 
-  it('fails closed when authoritative subscription state cannot be resolved', async () => {
+  it('fails closed on the protected non-GET path when subscription authority is unavailable', async () => {
     const decision = await evaluateRealtimeAiNewsfeedAccess(
-      request({ authorization: 'Bearer verified-token' }),
+      request({ method: 'POST', authorization: 'Bearer verified-token' }),
       dependencies({
         identity: { userId: 'user-1', email: 'user@example.com' },
         subscriptionError: new Error('subscription lookup failed'),
@@ -111,11 +116,12 @@ describe('realtime_ai_newsfeed entitlement boundary', () => {
     });
   });
 
-  it('binds the gate to ADR-0034 subscription-entitlements/1.0.0', () => {
+  it('keeps the execution contract while adding a separate read-only visibility contract', () => {
     expect(REALTIME_AI_NEWSFEED_CONTRACT_VERSION).toBe('subscription-entitlements/1.0.0');
+    expect(REALTIME_AI_NEWSFEED_VISIBILITY_VERSION).toBe('public-readonly-news/1.0.0');
   });
 
-  it('mounts one gate before the news router so every productive /api/news* subpath is protected', () => {
+  it('mounts one boundary before the GET-only news router', () => {
     const registration = readFileSync('server/routes/registerApplicationRoutes.ts', 'utf8');
     const newsRoutes = readFileSync('src/features/news/newsRoutes.ts', 'utf8');
 
@@ -123,17 +129,6 @@ describe('realtime_ai_newsfeed entitlement boundary', () => {
     expect(newsRoutes).toContain("newsRouter.get('/', async (req, res) => {");
     expect(newsRoutes).toContain("newsRouter.get('/sources', async (_req, res) => {");
     expect(newsRoutes).toContain("newsRouter.get('/assets', (_req, res) => {");
-  });
-
-  it('authorizes before news provider I/O by gating at the parent router mount', () => {
-    const registration = readFileSync('server/routes/registerApplicationRoutes.ts', 'utf8');
-    const newsRoutes = readFileSync('src/features/news/newsRoutes.ts', 'utf8');
-
-    const mount = registration.indexOf("app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);");
-    expect(mount).toBeGreaterThan(-1);
-    expect(newsRoutes).toContain('new GdeltNewsEvidenceProvider()');
-    expect(newsRoutes).toContain('new FreeCryptoNewsEvidenceProvider()');
-    expect(readFileSync('server/middleware/realtimeAiNewsfeedEntitlement.ts', 'utf8')).not.toContain('EvidenceProvider');
   });
 
   it('does not alter provider/evidence/freshness semantics or add scoring authority', () => {

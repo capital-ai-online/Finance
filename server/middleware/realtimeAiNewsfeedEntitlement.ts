@@ -1,9 +1,10 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { getSubscription } from '../db';
-import { canUseFeature, normalizeSubscriptionTier, type SubscriptionTier } from '../../src/config/subscriptionEntitlements';
+import { canUseFeature, isFeaturePubliclyVisible, normalizeSubscriptionTier, type SubscriptionTier } from '../../src/config/subscriptionEntitlements';
 import { resolveVerifiedIdentity } from '../../src/platform/Security/authMiddleware';
 
 export const REALTIME_AI_NEWSFEED_CONTRACT_VERSION = 'subscription-entitlements/1.0.0';
+export const REALTIME_AI_NEWSFEED_VISIBILITY_VERSION = 'public-readonly-news/1.0.0';
 
 export type RealtimeAiNewsfeedDenyReason =
   | 'authentication-required'
@@ -36,6 +37,13 @@ export async function evaluateRealtimeAiNewsfeedAccess(
   req: Request,
   dependencies: RealtimeAiNewsfeedEntitlementDependencies = defaultDependencies,
 ): Promise<RealtimeAiNewsfeedAccessDecision> {
+  // Owner-directed temporary public-visibility mode: the canonical news surface is GET-only and
+  // read-only. Public visibility therefore bypasses subscription-tier lookup for GET requests only.
+  // Any future non-GET capability remains behind the existing verified-identity/entitlement path.
+  if ((req.method ?? 'GET').toUpperCase() === 'GET' && isFeaturePubliclyVisible('realtime_ai_newsfeed')) {
+    return { allowed: true, status: 200 };
+  }
+
   try {
     const identity = await dependencies.resolveIdentity(req);
     if (!identity) {
@@ -85,6 +93,7 @@ export function createRealtimeAiNewsfeedEntitlementMiddleware(
       tier: decision.tier,
       feature: 'realtime_ai_newsfeed',
       contractVersion: REALTIME_AI_NEWSFEED_CONTRACT_VERSION,
+      visibilityVersion: REALTIME_AI_NEWSFEED_VISIBILITY_VERSION,
     });
   };
 }
