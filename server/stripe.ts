@@ -90,9 +90,23 @@ function trialCouponResponse(coupon: Stripe.Coupon, code: string) {
   };
 }
 
+export const PRICING_CHECKOUT_LIFECYCLE = 'ARCHIVED_DISABLED' as const;
+export const PRICING_ARCHIVE_CHECKOUT_CODE = 'PRICING_ARCHIVED_PENDING_REPLACEMENT' as const;
+
+function isArchivedPricingCheckout(): boolean {
+  return PRICING_CHECKOUT_LIFECYCLE === 'ARCHIVED_DISABLED';
+}
+
 // 1. Stripe Checkout Session Creation
 stripeRouter.post('/create-checkout-session', async (req, res) => {
   try {
+    if (isArchivedPricingCheckout()) {
+      return res.status(409).json({
+        code: PRICING_ARCHIVE_CHECKOUT_CODE,
+        lifecycle: PRICING_CHECKOUT_LIFECYCLE,
+        error: 'Das bisherige Pricing ist archiviert. Neue Käufe sind bis zur Einführung eines neuen Angebots deaktiviert.',
+      });
+    }
     const { planId, billingPeriod, successUrl, cancelUrl, couponId } = req.body;
     let { email } = req.body;
 
