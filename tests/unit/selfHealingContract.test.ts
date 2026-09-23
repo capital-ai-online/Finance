@@ -285,14 +285,14 @@ describe('self-healing contract', () => {
 
   it('fails closed for held, killed, unverified and unsafe remediation', () => {
     const held = evaluateRemediationEligibility({
-      findingClass: 'DEPENDENCY_TRANSIENT',
-      actionId: 'RETRY_SAFE_OPERATION',
+      findingClass: 'WORKER_STALLED',
+      actionId: 'QUARANTINE_WORK_ITEM',
       attemptsUsed: 0,
       nowMs: 1_000,
       killSwitchActive: false,
       capabilityAuthorized: false,
       verificationAvailable: true,
-      operationIdempotency: 'READ_ONLY',
+      operationIdempotency: 'IDEMPOTENT',
     });
     expect(held).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_HELD' });
 
@@ -337,8 +337,8 @@ describe('self-healing contract', () => {
     const action = getRemediationAction('RETRY_SAFE_OPERATION');
     expect(action.budget.cooldownMs).toBeGreaterThan(0);
 
-    // Temporarily held actions are tested at the contract level; once activated, cooldown
-    // evaluation remains deterministic because callers supply both timestamps.
+    // The activated safe-retry action still applies its finite cooldown deterministically
+    // because callers supply both timestamps.
     const result = evaluateRemediationEligibility({
       findingClass: 'DEPENDENCY_TRANSIENT',
       actionId: 'RETRY_SAFE_OPERATION',
@@ -350,7 +350,7 @@ describe('self-healing contract', () => {
       verificationAvailable: true,
       operationIdempotency: 'READ_ONLY',
     });
-    expect(result).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_HELD' });
+    expect(result).toMatchObject({ state: 'BLOCKED', reason: 'COOLDOWN_ACTIVE' });
   });
 
   it('permits only the declared recovery state machine transitions', () => {
