@@ -18,12 +18,12 @@ Archive/superseded copies and historical non-terminal markers are evidence only.
 
 This FE projection is re-correlated to `main@98c8889ac5f34c8123470b9b5ac57648ccd38877`.
 
-- Provider readback returned **no open Pull Requests** at the correlation boundary; stale PR #1299, #1300 and #1315 entries are therefore removed from the active Work Graph.
+- Fresh provider readback currently returns exactly one open writer, OPS PR #1334 (`Render Auth-Management-Token Recovery`, exact head `45d10c365eb035c69e6036eb6c533da38567fb7b`). It is the owner-correct Production-drift recovery for #1331 and has no changed-file overlap with this four-file FE slice. Historical PR #1299, #1300 and #1315 entries remain terminal and are removed from the active Work Graph.
 - The old UI snapshot baseline `7bcc6aee2700d6fa3f926ff8615b04cde136750c` is 185 commits behind this CURRENT_MAIN correlation and is evidence only.
 - Render Production remains live on `7c1d9293ee4c61e32791e447463fcaf263644c6d` / deploy `dep-daq2vqou01pc73fjldv0` while #1331 Auth/Profile is already merged on main. The attempted exact-main deploy `dep-daq378mk1f9s738adt70` built successfully but failed at Runtime start because `supabaseAuthRegistrationControl.mjs` did not receive a usable `SUPABASE_MANAGEMENT_ACCESS_TOKEN`. This is an owner-correct OPS deployment/configuration blocker; no secret value is recorded. The UI continues to read `/healthz` at runtime and does not infer Production from merge state.
 - SEO issues #1233, #1252, #1254, #1258 and #1263 are terminal; no open `project:CAPITAL-AI-SEO` issue was returned in the fresh provider readback.
 - A new current-state drift is explicit rather than silently repaired: `AppRoutes.tsx` no longer renders `/universe`, while `routeSeo.ts`, `sitemap.xml`, prerender and the server public-route allowlist still publish it. FE does **not** restore the removed client route; retirement of the stale projections remains owner-correct across FE/SEO/OPS.
-- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile as main-only, and the failed exact-main Render promotion as an explicit OPS blocker.
+- Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile as main-only, the failed exact-main Render promotion as an explicit OPS blocker, and the active owner-correct recovery PR #1334.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 
