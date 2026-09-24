@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FIN-SENT-01-ATTESTED-MARKET-SENTIMENT-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FINTECH",
   "projectFolder": "fintech",
   "ownerScope": "PVC-09..14 provider evidence, Data Quality, feature/scoring contract and read-only sentiment projection.",
@@ -53,5 +53,7 @@
     "directOpenPrFileOverlap": false
   },
   "exitGate": "Exact-head required checks PASS; projection contract fail-closes incomplete evidence; Human/CODEOWNER merge.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T02:45:00Z",
+  "releaseReason": "Associated FIN-SENT-01 implementation PR #1332 is Human-merged; stale FINTECH coordination lock released before FIN-SENT-02 touches the same sentiment projection paths."
 }

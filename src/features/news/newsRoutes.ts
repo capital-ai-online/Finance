@@ -14,6 +14,10 @@ import {
   SENTIMENT_FEATURE_CONTRACT_VERSION,
   type SentimentProviderEvidence,
 } from '../../platform/Scoring/SentimentEvidenceProjection';
+import {
+  buildNewsDerivedSentimentFeatureAttestations,
+  type SentimentNewsFeatureAttestations,
+} from '../../platform/Scoring/SentimentNewsFeatureEvidenceAdapter';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
 export type NewsSentimentBasis = 'heuristic';
@@ -213,7 +217,10 @@ function mergeNewsItems(items: readonly ProjectedNewsItem[]): readonly Projected
   );
 }
 
-function toSentimentProviderEvidence(item: ProjectedNewsItem): SentimentProviderEvidence {
+function toSentimentProviderEvidence(
+  item: ProjectedNewsItem,
+  attestedFeatures: SentimentNewsFeatureAttestations | undefined,
+): SentimentProviderEvidence {
   return Object.freeze({
     evidenceRef: item.evidenceRef,
     provider: item.provider,
@@ -222,8 +229,10 @@ function toSentimentProviderEvidence(item: ProjectedNewsItem): SentimentProvider
     headline: item.headline,
     sentimentLabel: item.sentiment,
     sentimentBasis: item.sentimentBasis,
-    // Current GDELT/cryptocurrency.cv article metadata does not attest the full FINTECH
-    // scoring vector. The deterministic headline label remains presentation-only.
+    attestedFeatures,
+    // Existing news metadata can now attest bounded novelty and 24h mention activity, but it
+    // still cannot attest polarity/intensity, credibility/source trust, bot probability or
+    // regime compatibility. A partial vector therefore remains ineligible for scoring.
     scoreCandidate: false,
   });
 }
@@ -358,8 +367,9 @@ newsRouter.get('/sentiment-projection', async (req, res) => {
     });
   }
 
-  const limit = normalizedLimit(req.query.limit);
-  const providerLimit = Math.min(PROVIDER_FETCH_LIMIT, Math.max(20, limit * 4));
+  // Financial feature evidence must not depend on a browser-controlled presentation limit.
+  // The sentiment projection always evaluates the fixed server-side provider window.
+  const providerLimit = PROVIDER_FETCH_LIMIT;
   const gdelt = new GdeltNewsEvidenceProvider();
   const fcn = new FreeCryptoNewsEvidenceProvider();
 
@@ -384,8 +394,11 @@ newsRouter.get('/sentiment-projection', async (req, res) => {
     ));
   }
 
+  const nowMs = Date.now();
+  const derivedFeatures = buildNewsDerivedSentimentFeatureAttestations(items, nowMs);
   const projection = buildAttestedMarketSentimentProjection(
-    items.slice(0, limit).map(toSentimentProviderEvidence),
+    items.map(item => toSentimentProviderEvidence(item, derivedFeatures.get(item.evidenceRef))),
+    nowMs,
   );
   res.setHeader('x-capital-ai-sentiment-contract', SENTIMENT_FEATURE_CONTRACT_VERSION);
   res.setHeader('x-capital-ai-news-provider', items.length > 0 ? 'multi-provider' : 'unavailable');
