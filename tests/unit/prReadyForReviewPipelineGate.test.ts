@@ -29,9 +29,12 @@ describe('PR Draft -> Ready pipeline gate', () => {
     );
   });
 
-  it('runs governance only for non-draft pull requests including ready_for_review', () => {
+  it('runs governance for code-snapshot lifecycle events without body-only edited retriggers', () => {
     const yaml = read('.github/workflows/pr-governance.yml');
-    expect(yaml).toContain('types: [opened, reopened, synchronize, ready_for_review, edited]');
+    expect(yaml).toContain('types: [opened, reopened, synchronize, ready_for_review]');
+    expect(yaml).not.toMatch(/types: \[[^\]]*\bedited\b[^\]]*\]/);
+    expect(yaml).toContain("format('pr-governance-pr-{0}-{1}-{2}'");
+    expect(yaml).not.toContain('github.event.action)');
     expect(jobBlock(yaml, 'governance')).toContain(
       "if: github.event_name == 'pull_request' && github.event.pull_request.draft == false",
     );
