@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-LIVE-STATE-CONSUMER-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "FE-ROADMAP-LIVE-STATE-01 — make /api/roadmap/state the primary current-work truth for the public Roadmap dashboard with explicit stale/unavailable fail-closed UX.",
+  "workItemDE": "FE-ROADMAP-LIVE-STATE-01 — /api/roadmap/state als primäre aktuelle Work-State-Quelle der öffentlichen Roadmap verwenden und stale/unavailable sichtbar fail-closed behandeln.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "startedAt": "2026-09-24T08:05:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c19f4ed64ecf815c8226e49cc1ad2e48a35eeeac",
+  "branch": "agent/frontend-roadmap-live-state-consumer-v2-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LIVE-STATE-CONSUMER-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LIVE-POST-MERGE-CONVERGENCE-20260924.json",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "src/features/public/ui/roadmapLiveState.ts",
+    "tests/unit/roadmapLiveStateConsumer.test.ts"
+  ],
+  "dependencies": [
+    "Human/CODEOWNER-merged PR #1382",
+    "Existing read-only /api/roadmap/state endpoint on CURRENT_MAIN",
+    "Existing /healthz production identity endpoint"
+  ],
+  "scopeBoundary": [
+    "Frontend read-only consumption only; no server, GitHub, Render, Supabase, IAM, scoring or productive PVC mutation.",
+    "ROADMAP_DASHBOARD_SNAPSHOT remains only for static phase/integration presentation in this slice and is no longer primary current-work truth.",
+    "Missing live API evidence never falls back to static active/queue data as if current.",
+    "Backend stale=true remains visible as STALE and is never presented as exact CURRENT_MAIN."
+  ],
+  "acceptanceCriteria": [
+    "RoadmapDashboard fetches /api/roadmap/state with no-store and validates roadmap-live-state/1.0.0.",
+    "Active work, queue, CURRENT_MAIN correlation and worker lanes derive from the live projection rather than roadmapSnapshot.ts.",
+    "stale=true is visibly marked STALE with last confirmed generation; unavailable live state hides active/queue/worker truth fail-closed.",
+    "/healthz remains a separate Production identity source and is compared only to a non-stale live repository generation.",
+    "Static integration ledger remains clearly derived/non-authorizing for this bounded slice.",
+    "Focused tests and ordinary exact-head Governance/CI/Security gates pass."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation.",
+  "recorrelatedAt": "2026-09-24T06:15:00Z",
+  "recorrelationNote": "CURRENT_MAIN advanced from 5c1b6727... to c19f4ed6... via merged SEC PR #1385. Changed-file correlation shows no overlap with this FE slice; the change set is rebuilt losslessly from fresh CURRENT_MAIN."
+}
