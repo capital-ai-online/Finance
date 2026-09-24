@@ -4,6 +4,18 @@ run-name: PR #${{ github.event.pull_request.number }} - OSS Quality Fast Assuran
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'server.ts'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'knip.json'
+      - '.jscpd.json'
+      - '.github/workflows/oss-quality-assurance.yml'
+      - '.github/workflows/oss-quality-deep-assurance.yml'
 
 permissions: {}
 
@@ -12,51 +24,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  scope:
-    name: OSS quality PR scope
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      contents: read
-    outputs:
-      relevant: ${{ steps.scope.outputs.relevant }}
-    steps:
-      - name: Checkout exact PR head for bounded path classification
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Classify PR_FAST applicability from exact base/head diff
-        id: scope
-        shell: bash
-        env:
-          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          git cat-file -e "$BASE_SHA^{commit}"
-          relevant=false
-          while IFS= read -r file; do
-            case "$file" in
-              src/*|server/*|server.ts|scripts/*|tests/*|package.json|package-lock.json|knip.json|.jscpd.json|.github/workflows/oss-quality-assurance.yml|.github/workflows/oss-quality-deep-assurance.yml)
-                relevant=true
-                break
-                ;;
-            esac
-          done < <(git diff --name-only "$BASE_SHA...$SOURCE_SHA")
-          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
-          printf 'PR_FAST applicable=%s base=%s head=%s\n' "$relevant" "$BASE_SHA" "$SOURCE_SHA"
-
   quality-assurance:
     name: OSS quality PR fast evidence
-    needs: scope
     if: >-
       github.event.pull_request.draft == false &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      needs.scope.outputs.relevant == 'true'
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
