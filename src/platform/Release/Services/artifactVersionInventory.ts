@@ -579,6 +579,7 @@ function buildConsumerGraph(
   for (const consumer of entries) {
     const text = textByPath.get(consumer.path);
     if (!text) continue;
+    const versionBindingText = text.replaceAll('\\.', '.');
 
     for (const specifier of importedSpecifiers(text)) {
       const producer = resolveTrackedReference(consumer.path, specifier, tracked);
@@ -601,7 +602,7 @@ function buildConsumerGraph(
       const { signal } = group[0];
       const aliases = [signal.name, 'CAPITAL_AI_' + signal.name];
       const alias = aliases.find((candidate) => text.includes(candidate));
-      if (!alias || !text.includes(signal.value)) continue;
+      if (!alias || !versionBindingText.includes(signal.value)) continue;
 
       const uniqueProducerPaths = [...new Set(group.map(({ entry }) => entry.path))].sort();
       const binding = 'version:' + alias + '=' + signal.value;
