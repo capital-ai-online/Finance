@@ -1,28 +1,37 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { BillingUI, UserUI } from '../../features';
+import type { UserProfile } from '../../features/users/ui';
 import { readAuthenticatedSubscriptionTier } from '../../lib/subscriptionReadback';
 import { CAPITAL_AI_VERSION } from '../../platform/Branding/runtimeBrand';
 import type { UserSession } from '../types/UserSession';
 import { DashboardFooter } from './DashboardFooter';
-import {
-  DashboardHome,
-  type DashboardPushNotificationInput,
-} from './DashboardHome';
+import type { DashboardPushNotificationInput } from './DashboardHome';
 import { DashboardHeader } from './DashboardHeader';
 import {
   DashboardNotificationStack,
   type DashboardPushNotification,
 } from './DashboardNotificationStack';
-import { DashboardViewRouter, type DashboardAdminTab } from './DashboardViewRouter';
-import { MyWorkspaceView } from './MyWorkspaceView';
+import type { DashboardAdminTab } from './DashboardViewRouter';
 import type { DashboardView } from './dashboardViews';
 import {
   buildDashboardViewUrl,
   mergeDashboardHistoryState,
   readDashboardView,
 } from '../routing/dashboardHistory';
+
+const DashboardHome = lazy(() =>
+  import('./DashboardHome').then((module) => ({ default: module.DashboardHome })),
+);
+const MyWorkspaceView = lazy(() =>
+  import('./MyWorkspaceView').then((module) => ({ default: module.MyWorkspaceView })),
+);
+const DashboardViewRouter = lazy(() =>
+  import('./DashboardViewRouter').then((module) => ({ default: module.DashboardViewRouter })),
+);
+const GuestCliffhangerModal = lazy(() =>
+  import('../../features/billing/ui').then((module) => ({ default: module.GuestCliffhangerModal })),
+);
 
 export interface DashboardProps {
   userSession: UserSession;
@@ -53,6 +62,17 @@ const DASHBOARD_VIEW_LABELS: Partial<Record<DashboardView, string>> = {
   'sentiment-dashboard': 'AI Markt-Sentiment Cockpit & Sandbox',
   login: 'System-Anmeldung (Capital-AI Login)',
 };
+
+function DashboardSectionLoading({ label }: { label: string }) {
+  return (
+    <div
+      className="flex min-h-40 items-center justify-center rounded-2xl border border-white/10 bg-black/25 px-6 py-10 text-center"
+      data-dashboard-section-loading={label}
+    >
+      <p className="text-xs font-mono uppercase tracking-widest text-white/45">{label} wird geladen…</p>
+    </div>
+  );
+}
 
 /**
  * Canonical authenticated dashboard composition for BB-2G.
@@ -91,7 +111,7 @@ export function Dashboard({
   });
 
   const [pushNotifications, setPushNotifications] = useState<DashboardPushNotification[]>([]);
-  const [profile, setProfile] = useState<UserUI.UserProfile>({
+  const [profile, setProfile] = useState<UserProfile>({
     name: userSession.name,
     email: userSession.email,
     avatarId: userSession.avatarId || '1',
@@ -217,7 +237,7 @@ export function Dashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdateProfile = (newProfile: UserUI.UserProfile) => {
+  const handleUpdateProfile = (newProfile: UserProfile) => {
     setProfile(newProfile);
   };
 
@@ -362,54 +382,62 @@ export function Dashboard({
             className="space-y-8"
           >
             {activeView === 'dashboard' && (
-              <DashboardHome
-                userSession={userSession}
-                platformVersion={CAPITAL_AI_VERSION}
-                capital={profile.capital}
-                preferredAssetClass={profile.preferredAssetClass}
-                selectedSymbol={selectedSymbol}
-                timeframe={timeframe}
-                watchlist={watchlist}
-                onSelectSymbol={setSelectedSymbol}
-                onChangeTimeframe={setTimeframe}
-                onNavigate={navigateTo}
-                onTriggerPushNotification={triggerPushNotification}
-                triggerAttempt={triggerAttempt}
-              />
+              <Suspense fallback={<DashboardSectionLoading label="Dashboard" />}>
+                <DashboardHome
+                  userSession={userSession}
+                  platformVersion={CAPITAL_AI_VERSION}
+                  capital={profile.capital}
+                  preferredAssetClass={profile.preferredAssetClass}
+                  selectedSymbol={selectedSymbol}
+                  timeframe={timeframe}
+                  watchlist={watchlist}
+                  onSelectSymbol={setSelectedSymbol}
+                  onChangeTimeframe={setTimeframe}
+                  onNavigate={navigateTo}
+                  onTriggerPushNotification={triggerPushNotification}
+                  triggerAttempt={triggerAttempt}
+                />
+              </Suspense>
             )}
 
             {activeView === 'myworkspace' && (
-              <MyWorkspaceView
-                watchlist={watchlist}
-                selectedSymbol={selectedSymbol}
-                onRemoveWatchlistSymbol={(symbol) => setWatchlist((previous) => previous.filter((item) => item !== symbol))}
-                onAddWatchlistSymbol={(symbol) => {
-                  setWatchlist((previous) => previous.includes(symbol) ? previous : [...previous, symbol]);
-                }}
-                onSelectSymbol={setSelectedSymbol}
-                onNavigate={navigateTo}
-                onSimulateScoreEvent={handleTriggerTestScoreEvent}
-              />
+              <Suspense fallback={<DashboardSectionLoading label="Myworkspace" />}>
+                <MyWorkspaceView
+                  watchlist={watchlist}
+                  selectedSymbol={selectedSymbol}
+                  onRemoveWatchlistSymbol={(symbol) => setWatchlist((previous) => previous.filter((item) => item !== symbol))}
+                  onAddWatchlistSymbol={(symbol) => {
+                    setWatchlist((previous) => previous.includes(symbol) ? previous : [...previous, symbol]);
+                  }}
+                  onSelectSymbol={setSelectedSymbol}
+                  onNavigate={navigateTo}
+                  onSimulateScoreEvent={handleTriggerTestScoreEvent}
+                />
+              </Suspense>
             )}
 
-            <DashboardViewRouter
-              activeView={activeView}
-              selectedSymbol={selectedSymbol}
-              onSelectSymbol={setSelectedSymbol}
-              onNavigate={navigateTo}
-              userSession={userSession}
-              profile={profile}
-              onUpdateProfile={handleUpdateProfile}
-              adminTab={adminTab}
-              onChangeAdminTab={setAdminTab}
-              triggerAttempt={triggerAttempt}
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-              categoryFilter={categoryFilter}
-              onCategoryFilterChange={setCategoryFilter}
-              onLoginEmail={onLoginEmail}
-              onRegisterEmail={onRegisterEmail}
-            />
+            {activeView !== 'dashboard' && activeView !== 'myworkspace' && (
+              <Suspense fallback={<DashboardSectionLoading label="Dashboard-Ansicht" />}>
+                <DashboardViewRouter
+                  activeView={activeView}
+                  selectedSymbol={selectedSymbol}
+                  onSelectSymbol={setSelectedSymbol}
+                  onNavigate={navigateTo}
+                  userSession={userSession}
+                  profile={profile}
+                  onUpdateProfile={handleUpdateProfile}
+                  adminTab={adminTab}
+                  onChangeAdminTab={setAdminTab}
+                  triggerAttempt={triggerAttempt}
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  categoryFilter={categoryFilter}
+                  onCategoryFilterChange={setCategoryFilter}
+                  onLoginEmail={onLoginEmail}
+                  onRegisterEmail={onRegisterEmail}
+                />
+              </Suspense>
+            )}
           </motion.div>
         </AnimatePresence>
 
@@ -418,12 +446,14 @@ export function Dashboard({
 
       <AnimatePresence>
         {cliffhangerModalOpen && (
-          <BillingUI.GuestCliffhangerModal
-            isOpen={cliffhangerModalOpen}
-            onClose={() => setCliffhangerModalOpen(false)}
-            onRegister={onRegister}
-            actionName={failedActionName}
-          />
+          <Suspense fallback={null}>
+            <GuestCliffhangerModal
+              isOpen={cliffhangerModalOpen}
+              onClose={() => setCliffhangerModalOpen(false)}
+              onRegister={onRegister}
+              actionName={failedActionName}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 
