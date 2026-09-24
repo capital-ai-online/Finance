@@ -14,8 +14,7 @@ import {
   SlidersHorizontal,
   UsersRound,
 } from 'lucide-react';
-import { CapitalAiLogo } from '../../../shared/branding/CapitalAiLogo';
-import { Card } from '../../../shared/ui/Card';
+import { LandingPageTemplate, LandingPanel } from './LandingPageTemplate';
 import {
   ROADMAP_DASHBOARD_SNAPSHOT,
   type RoadmapIntegrationItem,
@@ -144,7 +143,7 @@ function statusIcon(state: RoadmapWorkState) {
 
 function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
   return (
-    <Card className="flex h-full flex-col gap-3 border-white/8 bg-surface/65 p-4">
+    <LandingPanel className="flex h-full flex-col gap-3 border-white/8 bg-surface/65 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
@@ -169,13 +168,13 @@ function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
       <p className="mt-auto break-all border-t border-white/8 pt-3 font-mono text-[10px] leading-5 text-white/35">
         {item.source}
       </p>
-    </Card>
+    </LandingPanel>
   );
 }
 
 function WorkPackageCard({ item }: { item: RoadmapWorkPackage }) {
   return (
-    <Card elevated className="flex h-full flex-col gap-4 border-white/8 bg-surface/75 p-5">
+    <LandingPanel elevated className="flex h-full flex-col gap-4 border-white/8 bg-surface/75 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
@@ -212,7 +211,7 @@ function WorkPackageCard({ item }: { item: RoadmapWorkPackage }) {
           </a>
         ) : null}
       </div>
-    </Card>
+    </LandingPanel>
   );
 }
 
@@ -308,46 +307,31 @@ export function RoadmapDashboard() {
     production.commitSha === ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha;
 
   return (
-    <main className="app-shell-frame min-h-screen text-foreground">
-      <div className="mx-auto w-full max-w-[1680px] space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <header className="ui-panel ui-panel--elevated overflow-hidden p-0">
-          <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[auto_1fr_auto] lg:items-center">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,color-mix(in_srgb,var(--color-brand-primary)_13%,transparent),transparent_34rem)]" />
-            <div className="relative">
-              <CapitalAiLogo size={82} showText={false} />
-            </div>
-            <div className="relative">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1 font-mono text-[10px] font-black uppercase tracking-[0.18em] text-brand-primary">
-                  Roadmap Live Dashboard
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
-                  Derived · Non-authorizing
-                </span>
-              </div>
-              <h1 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-                CAPITAL-AI Roadmap
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary sm:text-base">
-                Aktive Arbeitspakete, Owner-Grenzen und Runtime-Evidence auf Basis des korrelierten
-                CURRENT_MAIN-Snapshots. Produktivstatus wird separat über <code>/healthz</code> gelesen.
-              </p>
-            </div>
-            <div className="relative flex flex-wrap gap-2 lg:justify-end">
-              <a href="/" className="ui-button-secondary inline-flex items-center gap-2 px-4 py-2 text-xs font-bold">
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                Landingpage
-              </a>
-              <a href="/vocabulary" className="ui-button-secondary inline-flex items-center gap-2 px-4 py-2 text-xs font-bold">
-                <Layers3 className="h-4 w-4" aria-hidden="true" />
-                Vocabulary
-              </a>
-            </div>
-          </div>
-        </header>
-
+    <LandingPageTemplate
+      eyebrow="Roadmap Live Dashboard"
+      statusLabel="Derived · Non-authorizing"
+      title="CAPITAL-AI Roadmap"
+      description={
+        <>
+          Aktive Arbeitspakete, Owner-Grenzen und Runtime-Evidence auf Basis des korrelierten
+          CURRENT_MAIN-Snapshots. Produktivstatus wird separat über <code>/healthz</code> gelesen.
+        </>
+      }
+      actions={
+        <>
+          <a href="/" className="landing-page-button-secondary inline-flex items-center gap-2 px-4 py-2 text-xs font-bold">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Landingpage
+          </a>
+          <a href="/vocabulary" className="landing-page-button-secondary inline-flex items-center gap-2 px-4 py-2 text-xs font-bold">
+            <Layers3 className="h-4 w-4" aria-hidden="true" />
+            Vocabulary
+          </a>
+        </>
+      }
+    >
         <section aria-label="Roadmap-Live-Signale" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-white/8 bg-surface/70 p-4">
+          <LandingPanel className="border-white/8 bg-surface/70 p-4">
             <div className="flex items-center gap-3">
               <Activity className="h-5 w-5 text-brand-success" aria-hidden="true" />
               <div>
@@ -355,8 +339,8 @@ export function RoadmapDashboard() {
                 <p className="mt-1 text-2xl font-black text-white">{metrics.active}</p>
               </div>
             </div>
-          </Card>
-          <Card className="border-white/8 bg-surface/70 p-4">
+          </LandingPanel>
+          <LandingPanel className="border-white/8 bg-surface/70 p-4">
             <div className="flex items-center gap-3">
               <GitPullRequest className="h-5 w-5 text-status-info" aria-hidden="true" />
               <div>
@@ -364,8 +348,8 @@ export function RoadmapDashboard() {
                 <p className="mt-1 text-2xl font-black text-white">{metrics.prBacked}</p>
               </div>
             </div>
-          </Card>
-          <Card className="border-white/8 bg-surface/70 p-4">
+          </LandingPanel>
+          <LandingPanel className="border-white/8 bg-surface/70 p-4">
             <div className="flex items-center gap-3">
               <GitBranch className="h-5 w-5 text-brand-primary" aria-hidden="true" />
               <div>
@@ -375,8 +359,8 @@ export function RoadmapDashboard() {
                 </p>
               </div>
             </div>
-          </Card>
-          <Card className="border-white/8 bg-surface/70 p-4">
+          </LandingPanel>
+          <LandingPanel className="border-white/8 bg-surface/70 p-4">
             <div className="flex items-center gap-3">
               <Radio
                 className={`h-5 w-5 ${
@@ -405,10 +389,10 @@ export function RoadmapDashboard() {
                 ) : null}
               </div>
             </div>
-          </Card>
+          </LandingPanel>
         </section>
 
-        <section aria-labelledby="roadmap-filters-title" className="ui-panel ui-panel--elevated">
+        <section aria-labelledby="roadmap-filters-title" className="landing-page-panel landing-page-panel--elevated">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -427,7 +411,7 @@ export function RoadmapDashboard() {
             </div>
             <button
               type="button"
-              className="ui-button-secondary px-3 py-2 text-xs font-bold"
+              className="landing-page-button-secondary px-3 py-2 text-xs font-bold"
               onClick={() => setProjectFilters(EMPTY_FILTERS)}
             >
               Filter zurücksetzen
@@ -491,7 +475,7 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="parallel-work-title" className="ui-panel">
+        <section aria-labelledby="parallel-work-title" className="landing-page-panel">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex gap-3">
               <UsersRound className="mt-0.5 h-5 w-5 text-brand-primary" aria-hidden="true" />
@@ -541,7 +525,7 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="roadmap-phases-title" className="ui-panel ui-panel--elevated">
+        <section aria-labelledby="roadmap-phases-title" className="landing-page-panel landing-page-panel--elevated">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-brand-primary">
@@ -594,7 +578,7 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="integration-ledger-title" className="ui-panel ui-panel--elevated">
+        <section aria-labelledby="integration-ledger-title" className="landing-page-panel landing-page-panel--elevated">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-brand-primary">
@@ -617,7 +601,7 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="queue-title" className="ui-panel">
+        <section aria-labelledby="queue-title" className="landing-page-panel">
           <div className="flex items-center gap-3">
             <Clock3 className="h-5 w-5 text-brand-primary" aria-hidden="true" />
             <div>
@@ -653,13 +637,12 @@ export function RoadmapDashboard() {
         </section>
 
         <footer className="flex flex-col gap-3 border-t border-white/8 py-4 text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
-          <p>Branding: brandmark.json · design-tokens.json · CapitalAiLogo · ui-panel/Card contracts.</p>
+          <p>Branding: brandmark.json · design-tokens.json · CapitalAiLogo · landing-page-panel/Card contracts.</p>
           <p className="font-mono">
             Korrelation {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha)} · Production bleibt separate Live-Evidence.
           </p>
         </footer>
-      </div>
-    </main>
+    </LandingPageTemplate>
   );
 }
 
