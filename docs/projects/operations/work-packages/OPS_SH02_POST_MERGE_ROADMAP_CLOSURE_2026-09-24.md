@@ -5,7 +5,7 @@
 **PVC:** `PVC-02 / PVC-04 / PVC-18`  
 **Parent:** `OPS-08-B-SH-02`  
 **Slice:** `SH-02.13`  
-**Baseline:** `main@b1d78a51cd7e833a0cc7b1d3ae288593e70eb6cd`  
+**Baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`  
 **State:** `PLANNED / OWNER-DIRECTED / IMPLEMENTATION_NOT_STARTED`
 
 ## Outcome
@@ -74,6 +74,15 @@ Implementation must preferentially extend the existing paths rather than add pee
 - exact-`CURRENT_MAIN` live Roadmap state projection;
 - canonical Project/Owner/PVC resolution;
 - existing work-claim and overlap semantics.
+- canonical PR Decision Evidence Reconciler and its Production-Baseline specialist for PR-body projection drift.
+
+When required-check evidence disagrees, SH-02.13 must classify the failing
+surface before remediation. A successful exact-head build/test does not justify
+rewriting a failed Governance gate as PASS. Deterministic PR-body projection
+drift is handed to `CAPITAL-AI-GOV / PVC-05` and, once corrected, the affected
+PR is re-correlated against fresh CURRENT_MAIN and fresh exact-head Governance
+evidence. The observed #1403/#1405 marker-free v1.8 baseline bootstrap is the
+reference regression case.
 
 No new generic scheduler, queue, workflow family, Roadmap registry or merge authority is permitted.
 
@@ -101,6 +110,9 @@ SH-02.13 is complete only when tests prove all of the following:
 - persistent repository changes remain branch-only and Human/CODEOWNER-merged;
 - the live Roadmap projection can reflect verified completion without direct-main mutation;
 - no second Roadmap/Self-Healing/control plane is introduced.
+- build/test PASS plus Governance FAIL is preserved as two distinct evidence states rather than collapsed into one result;
+- the #1403 marker-free v1.8 Production-Baseline regression routes to the existing GOV single-writer repair and cannot create an OPS-side PR-body writer;
+- after the GOV repair is Human-merged, #1403 is re-correlated on fresh CURRENT_MAIN/exact-head evidence before its work-package state can advance.
 
 ## Human boundary
 
