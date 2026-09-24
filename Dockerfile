@@ -3,8 +3,19 @@
 FROM node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS builder
 WORKDIR /app
 
-# Never execute dependency lifecycle scripts as root. The official Node image already
-# provides the unprivileged `node` identity; keep the complete build under that user.
+# Materialize the pinned Google Analytics MCP provider in the existing builder stage.
+# This preserves the canonical three-stage Docker contract; the final runtime receives
+# only the completed venv and does not resolve Python packages at request time.
+RUN apk add --no-cache python3 py3-pip \
+  && python3 -m venv /opt/ga4-mcp \
+  && /opt/ga4-mcp/bin/pip install --no-cache-dir analytics-mcp==0.7.0 \
+  && test -x /opt/ga4-mcp/bin/analytics-mcp \
+  && /opt/ga4-mcp/bin/python -c "import analytics_mcp; import google.analytics.admin_v1beta; import google.analytics.data_v1beta" \
+  && rm -rf /root/.cache \
+  && rm -f /opt/ga4-mcp/bin/pip /opt/ga4-mcp/bin/pip3 /opt/ga4-mcp/bin/pip3.*
+
+# Never execute Node dependency lifecycle scripts as root. The official Node image already
+# provides the unprivileged `node` identity; keep the complete application build under that user.
 RUN chown node:node /app
 USER node
 
@@ -64,6 +75,7 @@ WORKDIR /app
 # resulting image identity and final package inventory are captured by CI as image ID + SBOM.
 # npm/yarn/corepack are package-management tooling, not runtime requirements; remove them too.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
+  && apk add --no-cache python3 libstdc++ \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm /usr/local/bin/pnpx
@@ -80,6 +92,7 @@ COPY --chown=root:root package*.json ./
 COPY --from=prod-deps --chown=root:root /app/node_modules ./node_modules
 COPY --from=builder --chown=root:root /app/dist ./dist
 COPY --from=builder --chown=root:root /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
+COPY --from=builder --chown=root:root /opt/ga4-mcp /opt/ga4-mcp
 
 # Keep the application runtime limited to runtime-owned guards. Supabase Management API
 # reconciliation is a privileged control-plane operation and remains an explicit operations
@@ -96,6 +109,7 @@ ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
 # roots. Only uploads and the dedicated temp/home directory remain writable.
 RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
   && chmod a-w /app/package*.json \
+  && chmod -R a-w /opt/ga4-mcp \
   && chmod 0555 /app/docs \
   && chown capitalai:capitalai /app/uploads /tmp/capitalai \
   && chmod 0750 /app/uploads \
