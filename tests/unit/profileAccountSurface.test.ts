@@ -18,7 +18,8 @@ describe('authenticated profile account surface', () => {
     expect(header).toContain("onNavigate?.('/profile')");
     expect(header).toContain('Profil &amp; Sicherheit');
     expect(header).not.toContain("onNavigate?.('/dashboard')");
-    expect(header).not.toContain('SubscriptionStatusBadge');
+    expect(header).toContain('SubscriptionStatusBadge');
+    expect(header).toContain('tier={authenticatedProfile.subscriptionTier} compact');
   });
 
   it('keeps profile persistence and private avatar actions on the backend boundary', () => {

@@ -150,8 +150,9 @@ describe('FRONTEND reference design lock', () => {
     expect(app).toContain('<ModuleDetailModal');
     expect(app).toContain('<AllMarketsModal');
     expect(app).toContain('<SubclassDetailModal');
-    expect(app).toContain("window.location.assign('/login')");
-    expect(app).toContain("window.location.assign('/vocabulary')");
+    expect(app).toContain("onNavigateLogin={() => navigate('/login')}");
+    expect(app).toContain("onOpenVocabulary={() => navigate('/vocabulary')}");
+    expect(app).toContain('window.location.assign(path)');
     expect(fs.existsSync(path.join(root, 'src/features/public/ui/frontend-port/FrontendLandingExperience.tsx'))).toBe(false);
   });
 
