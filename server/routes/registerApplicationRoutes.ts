@@ -36,7 +36,7 @@ import { verifiedAssetDisplayRouter } from './verifiedAssetDisplayRoutes';
 import { cryptoEvidenceRouter } from './cryptoEvidenceRoutes';
 import { createMarketSentimentRouter } from './marketSentimentRoutes';
 import { createPortfolioReviewRouter } from './portfolioReviewRoutes';
-import { createMtaStsRouter } from './mtaStsRoutes';
+import { createMtaStsHostGuard, createMtaStsRouter } from './mtaStsRoutes';
 import { createBusinessReadinessRouter } from './businessReadinessRoutes';
 import { createHealthRouter } from './health';
 import { passwordSecurityRouter } from './passwordSecurityRoutes';
@@ -71,6 +71,10 @@ export function registerApplicationRoutes(
   providers: ApplicationRouteProviders,
 ): void {
   const { ai, anthropic, openai } = providers;
+
+  // The dedicated MTA-STS hostname shares this Render service but must not expose
+  // the user-facing application, consent UI or unrelated runtime routes.
+  app.use(createMtaStsHostGuard());
 
   registerTrailingSlashNormalize(app);
 
