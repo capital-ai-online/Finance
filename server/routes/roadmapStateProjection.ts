@@ -417,13 +417,19 @@ function parseProjectMarkdown(
   for (let index = 0; index < lines.length; index += 1) {
     if (context[index].historical) continue;
     const line = stripMarkdown(lines[index]);
-    const proseIds = extractIds(line);
+    let proseIds = extractIds(line);
     if (proseIds.length === 0) continue;
 
     let stateLabel: string | null = null;
-    if (/current dependency-ready/i.test(line)) stateLabel = 'READY / CURRENT DEPENDENCY-READY';
-    else if (/fresh owner direction activates/i.test(line)) stateLabel = 'ACTIVE / FRESH OWNER DIRECTION';
-    else if (/remains dependency-held/i.test(line)) stateLabel = 'HELD / DEPENDENCY_HELD';
+    if (/current dependency-ready/i.test(line)) {
+      stateLabel = 'READY / CURRENT DEPENDENCY-READY';
+    } else if (/fresh owner direction activates/i.test(line)) {
+      stateLabel = 'ACTIVE / FRESH OWNER DIRECTION';
+      const activationOffset = line.toLowerCase().indexOf('fresh owner direction activates');
+      proseIds = extractIds(line.slice(activationOffset));
+    } else if (/remains dependency-held/i.test(line)) {
+      stateLabel = 'HELD / DEPENDENCY_HELD';
+    }
 
     if (!stateLabel) continue;
     for (const id of proseIds) {
