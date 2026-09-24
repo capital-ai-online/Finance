@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDeploymentIdentity, type DeploymentIdentity } from '../deploymentIdentity';
+import { loadRoadmapStateProjection } from './roadmapStateProjection';
 import {
   computeMergeCadence,
   isCadenceContractActive,
@@ -68,6 +69,37 @@ async function json(fetchImpl: FetchLike, url: string, headers: Record<string, s
   return response.json();
 }
 
+async function repositoryJsonAtRef(
+  fetchImpl: FetchLike,
+  path: string,
+  ref: string,
+): Promise<any> {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const url =
+    'https://api.github.com/repos/' +
+    REPOSITORY +
+    '/contents/' +
+    encodedPath +
+    '?ref=' +
+    encodeURIComponent(ref);
+  const payload = await json(fetchImpl, url, githubHeaders());
+  if (payload?.encoding !== 'base64' || typeof payload?.content !== 'string') {
+    throw new Error('GitHub Contents response is not base64 text for ' + path + '@' + ref);
+  }
+  const text = Buffer.from(payload.content.replace(/\n/g, ''), 'base64').toString('utf8');
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(
+      path +
+        '@' +
+        ref +
+        ' is not valid JSON: ' +
+        (error instanceof Error ? error.message : String(error)),
+    );
+  }
+}
+
 function subject(commit: any): string {
   return String(commit?.commit?.message || '').split(/\r?\n/)[0];
 }
@@ -114,17 +146,18 @@ export async function buildRoadmapCadenceProjection(
   fetchImpl: FetchLike = fetch,
   production: DeploymentIdentity = getDeploymentIdentity(),
 ): Promise<RoadmapCadenceProjection> {
-  const [history, contract, pkg] = await Promise.all([
-    loadMainHistory(fetchImpl),
-    json(
-      fetchImpl,
-      'https://raw.githubusercontent.com/' + REPOSITORY + '/main/docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json',
-    ),
-    json(fetchImpl, 'https://raw.githubusercontent.com/' + REPOSITORY + '/main/package.json'),
-  ]);
-
+  const history = await loadMainHistory(fetchImpl);
   const currentMainSha = String(history.commits[0]?.sha || '').toLowerCase();
   if (!/^[0-9a-f]{40}$/.test(currentMainSha)) throw new Error('Live GitHub CURRENT_MAIN is unavailable.');
+
+  const [contract, pkg] = await Promise.all([
+    repositoryJsonAtRef(
+      fetchImpl,
+      'docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json',
+      currentMainSha,
+    ),
+    repositoryJsonAtRef(fetchImpl, 'package.json', currentMainSha),
+  ]);
   const packageVersion = String(pkg?.version || '');
   const active = isCadenceContractActive(contract);
   const activationCommit = history.epochIndex >= 0 ? history.commits[history.epochIndex] : null;
@@ -275,6 +308,20 @@ roadmapCadenceRouter.get('/cadence', async (_req, res) => {
   } catch (error) {
     res.status(503).json({
       schemaVersion: 'roadmap-cadence-projection/1.0.0',
+      role: 'NON_AUTHORIZING_LIVE_PROJECTION',
+      state: 'EVIDENCE_UNAVAILABLE',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+roadmapCadenceRouter.get('/state', async (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=90');
+    res.json(await loadRoadmapStateProjection());
+  } catch (error) {
+    res.status(503).json({
+      schemaVersion: 'roadmap-live-state/1.0.0',
       role: 'NON_AUTHORIZING_LIVE_PROJECTION',
       state: 'EVIDENCE_UNAVAILABLE',
       message: error instanceof Error ? error.message : String(error),

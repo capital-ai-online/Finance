@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the existing /api/roadmap read-only runtime projection so capital-ai.online/roadmap can consume complete latest-CURRENT_MAIN project-roadmap state even when Production intentionally lags under the 5-merge deployment cadence.",
+  "startedAt": "2026-09-24T00:20:00Z",
+  "baseBranch": "main",
+  "baseSha": "a9f1be965ccb31e173019d507f78320f5fdad933",
+  "lastSyncedMainSha": "a9f1be965ccb31e173019d507f78320f5fdad933",
+  "branch": "operations/live-roadmap-current-main-state-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation / PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P1",
+  "priorityReason": "The current public /roadmap bundles task state at deploy time, but AGENTS requires the live/current-state dashboard to follow latest CURRENT_MAIN while cadence intentionally permits Production lag.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-20260924.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_LIVE_ROADMAP_CURRENT_MAIN_STATE_2026-09-24.md",
+    "server/routes/roadmapCadenceRoutes.ts",
+    "server/routes/roadmapStateProjection.ts",
+    "tests/unit/roadmapCadenceRoutes.test.ts",
+    "tests/unit/roadmapStateProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse the existing /api/roadmap runtime and GitHub current-main read path; no second Roadmap API, registry, lifecycle, deployment controller or task authority.",
+    "Read-only GitHub repository access only. No Issues, Pull Requests, branches, provider settings or secrets are mutated by the runtime endpoint.",
+    "Canonical task truth remains docs/architecture/ROADMAP.md for migrated projects and docs/projects/<project>/ROADMAP.md for other current project owners.",
+    "Historical/terminal/superseded sections are excluded fail-closed; ambiguous current-state rows surface as projection warnings rather than synthetic PASS.",
+    "FE consumption remains a separate owner-correct successor after this OPS endpoint is Human/CODEOWNER-merged."
+  ],
+  "acceptanceCriteria": [
+    "GET /api/roadmap/state resolves one exact GitHub CURRENT_MAIN SHA and reads every canonical project Roadmap against that exact SHA.",
+    "SEC/QM migrated state is consumed from docs/architecture/ROADMAP.md without reviving compatibility pointers as independent task sources.",
+    "Current heading/table identities including CLIENT, GOV, OPS, FINTECH, COMP, SEO, SOCIAL, SEC and QM are projected with owner/folder/label/state/dependency metadata.",
+    "Historical, DONE_MAIN, TERMINAL, SUPERSEDED, NOT_APPLICABLE and retired status is excluded from active/ready/held projection.",
+    "Current-state markers that cannot be mapped to a canonical identity fail closed into explicit projection warnings.",
+    "The cadence endpoint reads private-repository current-main files through the same authenticated GitHub Contents path instead of unauthenticated raw.githubusercontent.com assumptions.",
+    "Focused unit tests pass, followed by ordinary exact-head Governance/build/test/Security checks.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
