@@ -81,17 +81,20 @@ function sanitizeProviderReason(payload) {
 
 function buildProviderDiagnostics(response, payload) {
   const remaining = parseHeaderInteger(response.headers.get('x-ratelimit-remaining'));
+  const ssoRequired = response.headers.has('x-github-sso');
   return Object.freeze({
-    classification: response.status === 403 && remaining === 0
-      ? 'RATE_LIMITED'
-      : response.status === 403
-        ? 'FORBIDDEN'
-        : response.status === 404
-          ? 'NOT_FOUND_OR_HIDDEN'
-          : 'HTTP_ERROR',
+    classification: ssoRequired
+      ? 'SSO_AUTHORIZATION_REQUIRED'
+      : response.status === 403 && remaining === 0
+        ? 'RATE_LIMITED'
+        : response.status === 403
+          ? 'FORBIDDEN'
+          : response.status === 404
+            ? 'NOT_FOUND_OR_HIDDEN'
+            : 'HTTP_ERROR',
     oauthScopes: parseScopeHeader(response.headers.get('x-oauth-scopes')),
     acceptedOauthScopes: parseScopeHeader(response.headers.get('x-accepted-oauth-scopes')),
-    ssoRequired: response.headers.has('x-github-sso'),
+    ssoRequired,
     rateLimit: Object.freeze({
       limit: parseHeaderInteger(response.headers.get('x-ratelimit-limit')),
       remaining,
