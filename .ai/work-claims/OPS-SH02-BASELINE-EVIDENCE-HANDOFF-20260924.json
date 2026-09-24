@@ -15,7 +15,7 @@
   "priority": "P1",
   "branchName": "operations/sh02-baseline-evidence-handoff-20260924",
   "baseBranch": "main",
-  "baseSha": "46a3339c3447470cfe2ee741960023643997505e",
+  "baseSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
   "workItem": "Harden the existing SH-02 Current-State Baseline Autofix failure-evidence handoff for Issue #1357 without creating a second writer or controller.",
   "approvedScope": "Use stable completed-run step metadata plus trusted repository freshness reproduction; preserve exact docs/projects current-state path allowlist, bounded mutation, exact-head revalidation and Human/CODEOWNER merge authority.",
   "claimedPaths": [
@@ -38,7 +38,7 @@
     "Issue #1357 READY_FOR_PROJECT_EXECUTION",
     "Existing RECONCILE_REPOSITORY_PROJECTION SH-1 action",
     "Existing Current-State Baseline Autofix writer",
-    "CURRENT_MAIN 46a3339c3447470cfe2ee741960023643997505e after PR #1356 merge"
+    "CURRENT_MAIN 9b049c52041a48827e11bdaa58c2eb8154811799 after cadence-aware Production Baseline merge #1358"
   ],
   "exitEvidence": [
     "Repository-evidence detector regression suite passes.",
