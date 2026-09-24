@@ -52,19 +52,18 @@ function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AuthRouteResolution() {
+function AuthRouteResolution({ onRetry }: { onRetry: () => Promise<void> }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-white">
-      <div className="max-w-md text-center">
-        <p className="text-xs font-mono uppercase tracking-widest text-white/55">
-          Sichere Sitzung wird synchronisiert
-        </p>
-        <a
-          href="/"
-          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-        >
-          Zur öffentlichen Landingpage
-        </a>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#02050e] p-6 text-white">
+      <div aria-hidden="true" className="absolute h-80 w-80 rounded-full bg-[#8D26FF]/15 blur-3xl" />
+      <div className="relative max-w-md rounded-3xl border border-amber-400/25 bg-[#070b19]/90 p-8 text-center shadow-2xl backdrop-blur-xl">
+        <span className="mx-auto block h-9 w-9 animate-spin rounded-full border-2 border-amber-300/25 border-t-amber-300" aria-hidden="true" />
+        <p className="mt-5 text-xs font-mono font-black uppercase tracking-[0.2em] text-amber-300">CAPITAL-AI / Konto</p>
+        <h1 className="mt-2 text-xl font-black">Sichere Sitzung wird synchronisiert</h1>
+        <p className="mt-2 text-sm text-white/50">Die Anfrage wird nach zehn Sekunden beendet, damit diese Ansicht nie dauerhaft hängen bleibt.</p>
+        <button type="button" onClick={() => void onRetry()} className="mt-5 min-h-11 rounded-xl border border-white/10 bg-white/5 px-5 py-2 text-xs font-bold text-white transition hover:bg-white/10">
+          Sitzung erneut prüfen
+        </button>
       </div>
     </div>
   );
@@ -134,7 +133,7 @@ export function AppRoutes({
 
   const renderAuthenticatedProfile = () => {
     if (!userSession) {
-      if (authBootstrapPending) return <AuthRouteResolution />;
+      if (authBootstrapPending) return <AuthRouteResolution onRetry={refreshSession} />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
@@ -166,6 +165,9 @@ export function AppRoutes({
                 id: userSession.id,
                 name: userSession.name,
                 email: userSession.email,
+                username: userSession.username || '',
+                phoneNumber: userSession.phoneNumber || '',
+                phoneVerified: userSession.phoneVerified === true,
                 avatarId: userSession.avatarId || '1',
                 avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
                 preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
@@ -173,6 +175,12 @@ export function AppRoutes({
                 capital: userSession.capital || 0,
                 subscriptionTier: userSession.subscriptionTier,
                 customAvatarUrl: userSession.customAvatarUrl,
+                favoriteCryptocurrencies: userSession.favoriteCryptocurrencies || [],
+                favoriteStocks: userSession.favoriteStocks || [],
+                portfolioAssets: userSession.portfolioAssets || [],
+                investmentHorizon: userSession.investmentHorizon || 'Langfristig',
+                experienceLevel: userSession.experienceLevel || 'Einsteiger',
+                preferredCurrency: userSession.preferredCurrency || 'EUR',
               }}
               onUpdateProfile={() => {
                 void refreshSession();
@@ -291,7 +299,7 @@ export function AppRoutes({
 
   if (currentPath === '/media-studio') {
     if (!userSession) {
-      if (authBootstrapPending) return <AuthRouteResolution />;
+      if (authBootstrapPending) return <AuthRouteResolution onRetry={refreshSession} />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
@@ -322,7 +330,7 @@ export function AppRoutes({
   }
 
   if (authBootstrapPending) {
-    return <AuthRouteResolution />;
+    return <AuthRouteResolution onRetry={refreshSession} />;
   }
 
   return <RouteRedirect to="/" label="Zur Landingpage" />;

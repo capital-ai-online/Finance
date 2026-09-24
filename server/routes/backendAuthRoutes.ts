@@ -1,6 +1,6 @@
 import express, { Router, type NextFunction, type Request, type Response } from 'express';
-import type { EmailOtpType } from '@supabase/supabase-js';
-import { getSubscription } from '../db';
+import type { EmailOtpType, User } from '@supabase/supabase-js';
+import { getPrivilegedServerSupabase, getSubscription } from '../db';
 import { readAccountProfile } from './accountSecurityRoutes';
 import { createLogger } from '../logger';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -17,6 +17,7 @@ import {
   normalizePostAuthPath,
   persistBackendAuthSession,
   resolveApplicationOrigin,
+  resolvePendingBackendAuth,
   resolveVerifiedBackendAuth,
   revokeBackendAuthSession,
   sessionFingerprint,
@@ -47,9 +48,16 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMAIL_MAX_LENGTH = 320;
 const PASSWORD_MAX_LENGTH = 1_024;
 const DISPLAY_NAME_MAX_LENGTH = 120;
+const USERNAME_MAX_LENGTH = 32;
 const TOKEN_HASH_MAX_LENGTH = 1_024;
 const TERMS_VERSION = '2026-08-14';
 const PRIVACY_VERSION = '2026-08-14';
+const USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{2,31}$/;
+const E164_PHONE_PATTERN = /^\+[1-9]\d{7,14}$/;
+
+function isPhoneAuthEnabled(): boolean {
+  return process.env.CAPITAL_AI_PHONE_AUTH_ENABLED === 'true';
+}
 
 const TIERS = new Set(['Free', 'Starter', 'Pro', 'Enterprise']);
 
@@ -85,6 +93,99 @@ function normalizeDisplayName(value: unknown): string | undefined {
   const clean = value.trim().replace(/\s+/g, ' ');
   if (!clean) return undefined;
   return clean.slice(0, DISPLAY_NAME_MAX_LENGTH);
+}
+
+function normalizeUsername(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const username = value.trim().toLowerCase();
+  if (!username || username.length > USERNAME_MAX_LENGTH || !USERNAME_PATTERN.test(username)) {
+    return null;
+  }
+  return username;
+}
+
+function normalizePhone(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const phone = value.replace(/[\s()-]/g, '');
+  return E164_PHONE_PATTERN.test(phone) ? phone : null;
+}
+
+async function resolvePasswordLoginEmail(identifierValue: unknown): Promise<string | null> {
+  const email = normalizeEmail(identifierValue);
+  if (email) return email;
+
+  const username = normalizeUsername(identifierValue);
+  if (!username) return null;
+
+  const supabase = getPrivilegedServerSupabase();
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .maybeSingle();
+  if (error || typeof profile?.id !== 'string') return null;
+
+  const { data, error: userError } = await supabase.auth.admin.getUserById(profile.id);
+  if (userError) return null;
+  return normalizeEmail(data.user?.email);
+}
+
+async function ensureAccountProfile(user: User): Promise<void> {
+  const metadata = user.user_metadata || {};
+  const requestedUsername = normalizeUsername(metadata.username);
+  const fallbackUsername = `user_${user.id.replace(/-/g, '').slice(0, 12)}`;
+  const phoneNumber = normalizePhone(metadata.phone_number) || normalizePhone(user.phone);
+  const fullName = normalizeDisplayName(metadata.full_name)
+    || normalizeDisplayName(metadata.name)
+    || user.email?.split('@')[0]
+    || 'User';
+  const supabase = getPrivilegedServerSupabase();
+  const row = {
+    id: user.id,
+    full_name: fullName,
+    role: 'free',
+    username: requestedUsername || fallbackUsername,
+    phone_number: phoneNumber,
+    phone_verified: Boolean(user.phone_confirmed_at),
+  };
+  const { error } = await supabase.from('profiles').upsert(row, {
+    onConflict: 'id',
+    ignoreDuplicates: true,
+  });
+  if (error?.code === '23505' && requestedUsername) {
+    const { error: fallbackError } = await supabase.from('profiles').upsert(
+      { ...row, username: fallbackUsername },
+      { onConflict: 'id', ignoreDuplicates: true },
+    );
+    if (fallbackError) throw fallbackError;
+    return;
+  }
+  if (error) throw error;
+}
+
+async function requiredTotpFactor(client: ReturnType<typeof createBackendEmailAuthClient>): Promise<string | null> {
+  const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError) throw assuranceError;
+  if (assurance.currentLevel === 'aal2' || assurance.nextLevel !== 'aal2') return null;
+  const { data: factors, error: factorError } = await client.auth.mfa.listFactors();
+  if (factorError) throw factorError;
+  return factors.totp.find((factor) => factor.status === 'verified')?.id || null;
+}
+
+async function respondWithSessionOrMfa(
+  req: Request,
+  res: Response,
+  client: ReturnType<typeof createBackendEmailAuthClient>,
+  session: Parameters<typeof persistBackendAuthSession>[2],
+): Promise<boolean> {
+  const factorId = await requiredTotpFactor(client);
+  if (!factorId) {
+    persistBackendAuthSession(req, res, session);
+    return false;
+  }
+  persistBackendAuthSession(req, res, session, { mfaPending: true });
+  res.status(202).json({ authenticated: false, mfaRequired: true });
+  return true;
 }
 
 function providerStatus(error: unknown): number | null {
@@ -206,13 +307,14 @@ async function handleOAuthCallback(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    persistBackendAuthSession(req, res, data.session);
+    const factorId = await requiredTotpFactor(supabase);
+    persistBackendAuthSession(req, res, data.session, { mfaPending: Boolean(factorId) });
     authLogger.info('Backend OAuth session established', {
       requestId: req.requestId,
       userId: data.user.id,
       sessionFingerprint: sessionFingerprint(data.session.access_token),
     });
-    res.redirect(303, new URL(next, origin).toString());
+    res.redirect(303, new URL(factorId ? '/login?mfa_required=1' : next, origin).toString());
   } catch (error) {
     authLogger.error('OAuth callback failed', {
       requestId: req.requestId,
@@ -307,7 +409,7 @@ backendAuthRouter.post('/login/passkey/verify', AUTH_CREDENTIAL_RATE_LIMIT, asyn
       return;
     }
 
-    persistBackendAuthSession(req, res, data.session);
+    if (await respondWithSessionOrMfa(req, res, supabase, data.session)) return;
     authLogger.info('Backend passkey session established', {
       requestId: req.requestId,
       userId: data.user.id,
@@ -330,12 +432,18 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
   const email = normalizeEmail(req.body?.email);
   const password = normalizePassword(req.body?.password);
   const fullName = normalizeDisplayName(req.body?.name);
+  const username = normalizeUsername(req.body?.username);
+  const phoneNumber = req.body?.phoneNumber ? normalizePhone(req.body.phoneNumber) : null;
   const termsAccepted = req.body?.termsAccepted === true;
   const privacyAcknowledged = req.body?.privacyAcknowledged === true;
   const marketingConsent = req.body?.marketingConsent === true;
 
-  if (!email || !password || !fullName) {
-    res.status(400).json({ error: 'Bitte Name, gültige E-Mail-Adresse und Passwort vollständig angeben.' });
+  if (!email || !password || !fullName || !username) {
+    res.status(400).json({ error: 'Bitte Name, Benutzername, gültige E-Mail-Adresse und Passwort vollständig angeben.' });
+    return;
+  }
+  if (req.body?.phoneNumber && !phoneNumber) {
+    res.status(400).json({ error: 'Bitte die Telefonnummer im internationalen Format angeben, zum Beispiel +491701234567.' });
     return;
   }
   if (!termsAccepted || !privacyAcknowledged) {
@@ -358,6 +466,18 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
 
   try {
     const origin = resolveApplicationOrigin(req);
+    const privileged = getPrivilegedServerSupabase();
+    const { data: existingUsername, error: usernameLookupError } = await privileged
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle();
+    if (usernameLookupError) throw usernameLookupError;
+    if (existingUsername) {
+      res.status(409).json({ error: 'Dieser Benutzername ist nicht verfügbar.' });
+      return;
+    }
+
     const supabase = createBackendEmailAuthClient();
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -366,6 +486,8 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
         emailRedirectTo: new URL('/api/auth/email/confirm', origin).toString(),
         data: {
           full_name: fullName,
+          username,
+          phone_number: phoneNumber,
           terms_accepted: true,
           terms_version: TERMS_VERSION,
           privacy_acknowledged: true,
@@ -429,15 +551,16 @@ backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res)
 backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
-  const email = normalizeEmail(req.body?.email);
+  const identifier = req.body?.identifier ?? req.body?.email;
   const password = normalizePassword(req.body?.password);
-  if (!email || !password) {
-    res.status(400).json({ error: 'Bitte eine gültige E-Mail-Adresse und ein Passwort angeben.' });
+  if ((typeof identifier !== 'string' || !identifier.trim()) || !password) {
+    res.status(400).json({ error: 'Bitte E-Mail-Adresse oder Benutzername und ein Passwort angeben.' });
     return;
   }
 
 
   try {
+    const email = await resolvePasswordLoginEmail(identifier) || 'unresolved-login@invalid.local';
     const supabase = createBackendEmailAuthClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.session || !data.user || data.user.is_anonymous) {
@@ -461,8 +584,8 @@ backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, r
       return;
     }
 
-    persistBackendAuthSession(req, res, data.session);
-    authLogger.info('Backend email/password session established', {
+    if (await respondWithSessionOrMfa(req, res, supabase, data.session)) return;
+    authLogger.info('Backend identifier/password session established', {
       requestId: req.requestId,
       userId: data.user.id,
       sessionFingerprint: sessionFingerprint(data.session.access_token),
@@ -474,6 +597,50 @@ backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, r
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(503).json({ error: 'Anmeldung ist derzeit nicht verfügbar.' });
+  }
+});
+
+backendAuthRouter.post('/login/totp/verify', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+  if (!/^\d{6}$/.test(code)) {
+    res.status(400).json({ error: 'Bitte den sechsstelligen Authenticator-Code eingeben.' });
+    return;
+  }
+  try {
+    const pending = await resolvePendingBackendAuth(req, res);
+    if (!pending) {
+      clearBackendAuthCookies(req, res);
+      res.status(401).json({ error: 'Die MFA-Anmeldung ist abgelaufen. Bitte erneut anmelden.' });
+      return;
+    }
+    const client = createBackendEmailAuthClient();
+    const { error: sessionError } = await client.auth.setSession({
+      access_token: pending.accessToken,
+      refresh_token: pending.refreshToken,
+    });
+    if (sessionError) throw sessionError;
+    const factorId = await requiredTotpFactor(client);
+    if (!factorId) throw new Error('VERIFIED_TOTP_FACTOR_MISSING');
+    const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId });
+    if (challengeError || !challenge?.id) throw challengeError || new Error('TOTP_CHALLENGE_FAILED');
+    const { data, error } = await client.auth.mfa.verify({ factorId, challengeId: challenge.id, code });
+    if (error || !data) {
+      res.status(422).json({ error: 'Der Authenticator-Code ist ungültig oder abgelaufen.' });
+      return;
+    }
+    const { data: verifiedSession, error: verifiedSessionError } = await client.auth.getSession();
+    if (verifiedSessionError || !verifiedSession.session) {
+      throw verifiedSessionError || new Error('TOTP_VERIFIED_SESSION_MISSING');
+    }
+    persistBackendAuthSession(req, res, verifiedSession.session);
+    res.status(200).json({ authenticated: true });
+  } catch (error) {
+    authLogger.error('TOTP primary login verification failed', {
+      requestId: req.requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'MFA-Anmeldung konnte derzeit nicht abgeschlossen werden.' });
   }
 });
 
@@ -568,6 +735,93 @@ backendAuthRouter.post('/password/forgot', AUTH_MAIL_RATE_LIMIT, async (req, res
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(503).json({ error: 'Passwort-Reset-Mail konnte derzeit nicht angefordert werden.' });
+  }
+});
+
+backendAuthRouter.post('/password/phone/start', AUTH_MAIL_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!isPhoneAuthEnabled()) {
+    res.status(503).json({
+      error: 'Telefon-Recovery wird nach Freigabe des SMS-Providers verfügbar.',
+      code: 'PHONE_AUTH_PROVIDER_PENDING',
+    });
+    return;
+  }
+  const phone = normalizePhone(req.body?.phone);
+  if (!phone) {
+    res.status(400).json({ error: 'Bitte eine gültige Telefonnummer im internationalen Format angeben.' });
+    return;
+  }
+
+  try {
+    const supabase = createBackendEmailAuthClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      const status = providerStatus(error);
+      authLogger.warn('Phone recovery OTP request was not accepted', {
+        requestId: req.requestId,
+        status,
+        error: error.message,
+      });
+      if (status === 429) {
+        res.status(429).json({ error: 'Zu viele SMS-Anfragen. Bitte später erneut versuchen.' });
+        return;
+      }
+      if (status !== null && status >= 500) {
+        res.status(503).json({ error: 'Telefon-Recovery ist derzeit nicht verfügbar.' });
+        return;
+      }
+    }
+
+    emailActionAccepted(
+      res,
+      'Wenn eine bestätigte Telefonnummer hinterlegt ist, wurde ein einmaliger SMS-Code angefordert.',
+    );
+  } catch (error) {
+    authLogger.error('Phone recovery OTP request failed', {
+      requestId: req.requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Telefon-Recovery ist derzeit nicht verfügbar.' });
+  }
+});
+
+backendAuthRouter.post('/password/phone/verify', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!isPhoneAuthEnabled()) {
+    res.status(503).json({
+      error: 'Telefon-Recovery wird nach Freigabe des SMS-Providers verfügbar.',
+      code: 'PHONE_AUTH_PROVIDER_PENDING',
+    });
+    return;
+  }
+  const phone = normalizePhone(req.body?.phone);
+  const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  if (!phone || !/^\d{6}$/.test(token)) {
+    res.status(400).json({ error: 'Bitte Telefonnummer und sechsstelligen SMS-Code vollständig angeben.' });
+    return;
+  }
+
+  try {
+    const supabase = createBackendEmailAuthClient();
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+    if (error || !data.session || !data.user || data.user.is_anonymous) {
+      clearBackendAuthCookies(req, res);
+      res.status(401).json({ error: 'Der SMS-Code ist ungültig oder abgelaufen.' });
+      return;
+    }
+    persistBackendAuthSession(req, res, data.session);
+    res.status(200).json({ authenticated: true, next: '/account/update-password' });
+  } catch (error) {
+    authLogger.error('Phone recovery OTP verification failed', {
+      requestId: req.requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    clearBackendAuthCookies(req, res);
+    res.status(503).json({ error: 'Telefon-Recovery ist derzeit nicht verfügbar.' });
   }
 });
 
@@ -743,6 +997,11 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
   try {
+    const pending = await resolvePendingBackendAuth(req, res);
+    if (pending) {
+      res.status(200).json({ authenticated: false, mfaRequired: true });
+      return;
+    }
     const verified = await resolveVerifiedBackendAuth(req, res);
     if (!verified) {
       clearBackendAuthCookies(req, res);
@@ -753,6 +1012,7 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
     const user = verified.user;
     const tier = normalizeTier(await getSubscription(user.id));
     const metadata = user.user_metadata || {};
+    await ensureAccountProfile(user);
     const profile = await readAccountProfile(user.id);
     const name =
       (typeof profile.name === 'string' && profile.name.trim()) ||
@@ -766,6 +1026,9 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
         id: user.id,
         email: user.email ?? '',
         name,
+        username: profile.username,
+        phoneNumber: profile.phoneNumber,
+        phoneVerified: profile.phoneVerified,
         subscriptionTier: tier,
         avatarId: profile.avatarId,
         avatarColor: profile.avatarColor,
@@ -773,6 +1036,12 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
         riskProfile: profile.riskProfile,
         capital: profile.capital,
         customAvatarUrl: profile.customAvatarUrl,
+        favoriteCryptocurrencies: profile.favoriteCryptocurrencies,
+        favoriteStocks: profile.favoriteStocks,
+        portfolioAssets: profile.portfolioAssets,
+        investmentHorizon: profile.investmentHorizon,
+        experienceLevel: profile.experienceLevel,
+        preferredCurrency: profile.preferredCurrency,
       },
     });
   } catch (error) {

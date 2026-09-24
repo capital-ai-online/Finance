@@ -94,6 +94,9 @@ export function Dashboard({
   const [profile, setProfile] = useState<UserUI.UserProfile>({
     name: userSession.name,
     email: userSession.email,
+    username: userSession.username || '',
+    phoneNumber: userSession.phoneNumber || '',
+    phoneVerified: userSession.phoneVerified === true,
     avatarId: userSession.avatarId || '1',
     avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
     preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
@@ -101,6 +104,12 @@ export function Dashboard({
     capital: userSession.capital || 0,
     subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
     customAvatarUrl: userSession.customAvatarUrl,
+    favoriteCryptocurrencies: userSession.favoriteCryptocurrencies || [],
+    favoriteStocks: userSession.favoriteStocks || [],
+    portfolioAssets: userSession.portfolioAssets || [],
+    investmentHorizon: userSession.investmentHorizon || 'Langfristig',
+    experienceLevel: userSession.experienceLevel || 'Einsteiger',
+    preferredCurrency: userSession.preferredCurrency || 'EUR',
     id: userSession.id,
   });
 
@@ -178,6 +187,9 @@ export function Dashboard({
     setProfile({
       name: userSession.name,
       email: userSession.email,
+      username: userSession.username || '',
+      phoneNumber: userSession.phoneNumber || '',
+      phoneVerified: userSession.phoneVerified === true,
       avatarId: userSession.avatarId || '1',
       avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
       preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
@@ -185,6 +197,12 @@ export function Dashboard({
       capital: userSession.capital || 0,
       subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
       customAvatarUrl: userSession.customAvatarUrl,
+      favoriteCryptocurrencies: userSession.favoriteCryptocurrencies || [],
+      favoriteStocks: userSession.favoriteStocks || [],
+      portfolioAssets: userSession.portfolioAssets || [],
+      investmentHorizon: userSession.investmentHorizon || 'Langfristig',
+      experienceLevel: userSession.experienceLevel || 'Einsteiger',
+      preferredCurrency: userSession.preferredCurrency || 'EUR',
       id: userSession.id,
     });
   }, [userSession]);

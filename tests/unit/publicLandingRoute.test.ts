@@ -182,7 +182,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(routes).toContain("if (currentPath === '/dashboard')");
     expect(routes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
     expect(routes).toContain("if (currentPath === '/media-studio')");
-    expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
+    expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution onRetry={refreshSession} />;');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
     expect(routes).toContain('<RouteRedirect to="/" label="Zur Landingpage" />');
   });
