@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PROVIDER-COST-WATCH-RENDER-STRIPE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the canonical GitHub Cost Watch with read-only Render service/pipeline/workflow pricing context and active Stripe subscription recurring-charge projection.",
+  "workItemDE": "Kanonischen GitHub Cost Watch um read-only Render-Service-/Pipeline-/Workflow-Kostenkontext und aktive Stripe-Abonnement-Projektion erweitern.",
+  "priority": "P1",
+  "priorityReason": "Fresh Human Owner direction requests one consolidated cost view while keeping provider reads bounded and cost/revenue semantics separate.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-08",
+  "startedAt": "2026-09-24T13:22:00Z",
+  "baseBranch": "main",
+  "baseSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+  "branch": "operations/provider-cost-watch-render-stripe-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PROVIDER-COST-WATCH-RENDER-STRIPE-20260924.json",
+    "docs/projects/operations/work-packages/OPS_PROVIDER_COST_WATCH_RENDER_STRIPE_2026-09-24.md",
+    ".github/workflows/github-cost-watch.yml",
+    "scripts/operations/providerCostWatchRead.mjs",
+    "scripts/operations/runGitHubCostWatch.mjs",
+    "server/billing/githubBillingAlertMailer.ts",
+    "tests/unit/providerCostWatchRead.test.ts",
+    "tests/unit/githubBillingAlertMailer.test.ts",
+    "tests/unit/githubCostWatchWorkflow.test.ts"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no provider write or self-merge authority.",
+  "currentMainCorrelation": {
+    "sha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-24T13:28:00Z"
+  }
+}

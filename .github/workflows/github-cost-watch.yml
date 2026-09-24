@@ -67,6 +67,10 @@ jobs:
           CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
           CAPITAL_AI_GITHUB_USERNAME: SvenKulessa
           CAPITAL_AI_GITHUB_USER_BILLING_READ_TOKEN: ${{ secrets.CAPITAL_AI_GITHUB_USER_BILLING_READ_TOKEN }}
+          CAPITAL_AI_RENDER_API_KEY: ${{ secrets.CAPITAL_AI_RENDER_API_KEY }}
+          CAPITAL_AI_RENDER_WORKSPACE_ID: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_ID }}
+          CAPITAL_AI_RENDER_WORKSPACE_PLAN: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_PLAN }}
+          CAPITAL_AI_STRIPE_BILLING_READ_KEY: ${{ secrets.CAPITAL_AI_STRIPE_BILLING_READ_KEY }}
           CAPITAL_AI_GITHUB_COST_WATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'monitor' }}
           CAPITAL_AI_GITHUB_COST_WATCH_START_AT: '2026-10-01T00:00:00.000Z'
         run: node scripts/operations/runGitHubCostWatch.mjs

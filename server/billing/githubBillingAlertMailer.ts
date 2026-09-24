@@ -28,6 +28,62 @@ function minutes(value: unknown): string {
     : '0';
 }
 
+function majorMoney(value: unknown, currency: string): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  try {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${currency.toUpperCase()}`;
+  }
+}
+
+function minorMoney(value: unknown, currency: unknown): string {
+  const code = typeof currency === 'string' && currency.trim() ? currency.trim() : 'eur';
+  return typeof value === 'number' && Number.isFinite(value)
+    ? majorMoney(value / 100, code)
+    : '—';
+}
+
+function renderServiceRows(items: JsonRecord[]): string {
+  if (items.length === 0) {
+    return '<tr><td colspan="5">Keine aktiven Render-Services beobachtet oder Provider-Read nicht konfiguriert.</td></tr>';
+  }
+  return items.map((item) => `<tr>
+    <td>${escapeHtml(text(item.name))}</td>
+    <td>${escapeHtml(text(item.type))}</td>
+    <td>${escapeHtml(text(item.plan))}</td>
+    <td style="text-align:right">${escapeHtml(minutes(item.instances))}</td>
+    <td style="text-align:right"><strong>${escapeHtml(majorMoney(item.monthlyListPriceUsd, 'USD'))}</strong></td>
+  </tr>`).join('');
+}
+
+function stripeSubscriptionRows(items: JsonRecord[]): string {
+  if (items.length === 0) {
+    return '<tr><td colspan="6">Keine aktiven Stripe-Abonnementpositionen beobachtet oder Provider-Read nicht konfiguriert.</td></tr>';
+  }
+  return items.map((item) => `<tr>
+    <td>${escapeHtml(text(item.planLabel))}</td>
+    <td>${escapeHtml(text(item.status))}</td>
+    <td style="text-align:right">${escapeHtml(minorMoney(item.amountMinor, item.currency))}</td>
+    <td>${escapeHtml(`${minutes(item.intervalCount)} × ${text(item.interval)}`)}</td>
+    <td style="text-align:right"><strong>${escapeHtml(minorMoney(item.monthlyEquivalentMinor, item.currency))}</strong></td>
+    <td>${item.cancelAtPeriodEnd === true ? 'ja' : 'nein'}</td>
+  </tr>`).join('');
+}
+
+function monthlyEquivalentRows(totals: JsonRecord): string {
+  const entries = Object.entries(totals)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value));
+  if (entries.length === 0) return '—';
+  return entries
+    .map(([currency, value]) => minorMoney(value, currency))
+    .join(' · ');
+}
+
 
 function tableRows(items: JsonRecord[]): string {
   if (items.length === 0) {
@@ -85,6 +141,17 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
   const detailRows = rows(report.detailRows);
   const alertDetailRows = rows(report.alertDetailRows);
   const surfaces = rows(report.potentialCostSurfaces);
+  const providers = record(report.providers);
+  const renderProvider = record(providers.render);
+  const renderCoverage = record(renderProvider.coverage);
+  const renderPipeline = record(renderProvider.pipeline);
+  const renderWorkflows = record(renderProvider.workflows);
+  const renderWorkflowPricing = record(renderWorkflows.pricing);
+  const renderServices = rows(renderProvider.activeServices);
+  const stripeProvider = record(providers.stripeSubscriptions);
+  const stripeCoverage = record(stripeProvider.coverage);
+  const stripeItems = rows(stripeProvider.recurringItems);
+  const stripeMonthlyEquivalent = record(stripeProvider.monthlyEquivalentByCurrency);
 
   const actionsMinuteState = text(actionsMinutes.state, 'BELOW_WARNING');
   const subject = mode === 'test'
@@ -100,7 +167,7 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
   const html = `<!doctype html>
 <html lang="de">
   <body style="font-family:Arial,sans-serif;color:#111;line-height:1.45">
-    <h2>CAPITAL-AI · GitHub Billing Cost Watch</h2>
+    <h2>CAPITAL-AI · Cost Watch</h2>
     <p><strong>Modus:</strong> ${escapeHtml(mode)} · <strong>Status:</strong> ${escapeHtml(status)} · <strong>Zeit:</strong> ${escapeHtml(text(report.generatedAt))}</p>
 
     <h3>GitHub Actions Minuten-Schutz</h3>
@@ -154,6 +221,53 @@ export function buildGitHubBillingCostWatchEmail(reportInput: unknown): { subjec
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
       <thead><tr><th>Quelle</th><th>Produkt</th><th>SKU</th><th>Einheit</th><th>Brutto</th><th>Rabatt</th><th>Netto</th></tr></thead>
       <tbody>${tableRows(alertRows)}</tbody>
+    </table>
+
+    <h3>Render · laufende Infrastrukturkosten</h3>
+    <ul>
+      <li>Provider-Read: <strong>${escapeHtml(text(renderCoverage.status, 'NOT_CONFIGURED'))}</strong></li>
+      ${renderCoverage.reason ? `<li>Hinweis: ${escapeHtml(text(renderCoverage.reason))}</li>` : ''}
+      <li>Aktive Services: <strong>${escapeHtml(minutes(renderServices.length))}</strong></li>
+      <li>Öffentliche Full-Month-Listenpreis-Basis: <strong>${escapeHtml(majorMoney(renderProvider.monthlyListPriceBaselineUsd, 'USD'))}</strong></li>
+      <li>Nicht bepreiste aktive Services: <strong>${escapeHtml(minutes(renderProvider.unpricedActiveServiceCount))}</strong></li>
+    </ul>
+    <p><small>Die Render-Summe ist eine öffentliche Listenpreis-Basis für aktuell beobachtete Services, keine Provider-Rechnung. Tatsächliche Compute-Kosten können zeitanteilig oder durch weitere Nutzungsflächen abweichen.</small></p>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+      <thead><tr><th>Service</th><th>Typ</th><th>Compute-Plan</th><th>Instanzen</th><th>Listenpreis/Monat</th></tr></thead>
+      <tbody>${renderServiceRows(renderServices)}</tbody>
+    </table>
+
+    <h4>Render Build Pipeline</h4>
+    <ul>
+      <li>Beobachteter Pipeline-Tier: <strong>${escapeHtml(text(renderPipeline.observedTier))}</strong></li>
+      <li>Workspace-Plan: <strong>${escapeHtml(text(renderPipeline.workspacePlan, 'nicht konfiguriert'))}</strong></li>
+      <li>Inklusive Starter-Pipeline-Minuten: <strong>${renderPipeline.includedMinutes == null ? 'nicht aufgelöst' : escapeHtml(minutes(renderPipeline.includedMinutes))}</strong></li>
+      <li>Aktueller Monatsverbrauch: <strong>nicht über die verwendete öffentliche Render-API belegbar</strong></li>
+      <li>Kontingent laut aktuellem Render-Modell: Hobby 500 · Pro 1.000 · Scale 5.000 Minuten/Monat.</li>
+    </ul>
+
+    <h4>Render Workflows</h4>
+    <ul>
+      <li>Beobachtete Workflows: <strong>${renderWorkflows.count == null ? 'nicht aufgelöst' : escapeHtml(minutes(renderWorkflows.count))}</strong></li>
+      <li>Default-Plan: <strong>${escapeHtml(text(renderWorkflowPricing.plan, 'flex'))}</strong></li>
+      <li>Flex CPU: <strong>${escapeHtml(majorMoney(renderWorkflowPricing.cpuUsdPerActiveHour, 'USD'))} / aktive CPU-Stunde</strong></li>
+      <li>Flex RAM: <strong>${escapeHtml(majorMoney(renderWorkflowPricing.ramUsdPerActiveGbHour, 'USD'))} / aktive GB-Stunde</strong></li>
+      <li>Maximal bei voller Flex-Auslastung: <strong>${escapeHtml(majorMoney(renderWorkflowPricing.maxUsdPerHourAtFullUsage, 'USD'))} / Stunde</strong></li>
+      <li>Task-State-Retention: <strong>${escapeHtml(majorMoney(renderWorkflowPricing.taskStateRetentionUsdPerGbMonth, 'USD'))} / GB-Monat</strong></li>
+    </ul>
+    <p><small>Workflow-Compute ist eine eigene nutzungsabhängige Kostenfläche und keine Nutzung der inkludierten Build-Pipeline-Minuten.</small></p>
+
+    <h3>Stripe · aktive Kundenabonnements</h3>
+    <ul>
+      <li>Provider-Read: <strong>${escapeHtml(text(stripeCoverage.status, 'NOT_CONFIGURED'))}</strong></li>
+      ${stripeCoverage.reason ? `<li>Hinweis: ${escapeHtml(text(stripeCoverage.reason))}</li>` : ''}
+      <li>Aktive Abonnements: <strong>${stripeProvider.activeSubscriptionCount == null ? 'nicht aufgelöst' : escapeHtml(minutes(stripeProvider.activeSubscriptionCount))}</strong></li>
+      <li>Monatliches Vertragswert-Äquivalent: <strong>${escapeHtml(monthlyEquivalentRows(stripeMonthlyEquivalent))}</strong></li>
+    </ul>
+    <p><small>Diese Stripe-Werte sind laufende Kundenentgelte/Umsatzprojektion und ausdrücklich keine Betriebskosten des CAPITAL-AI-Stripe-Kontos. Sie werden nicht zu GitHub- oder Render-Kosten addiert. Kundenname, E-Mail, Adresse und Zahlungsdaten werden nicht in den Report übernommen.</small></p>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+      <thead><tr><th>Plan</th><th>Status</th><th>Periodischer Betrag</th><th>Intervall</th><th>Monatsäquivalent</th><th>Kündigung vorgemerkt</th></tr></thead>
+      <tbody>${stripeSubscriptionRows(stripeItems)}</tbody>
     </table>
 
     <h3>Überwachte mögliche Kostenflächen</h3>
