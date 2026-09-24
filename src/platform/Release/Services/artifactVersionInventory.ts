@@ -267,6 +267,7 @@ function detectSignals(repoPath: string, text: string | null): ArtifactVersionSi
   detectYamlSignals(repoPath, text, signals);
 
   const generatedHeaderWindow = text.split(/\r?\n/).slice(0, 8).join('\n');
+  if (GENERATED_HEADER.test(generatedHeaderWindow)) {
     pushSignal(signals, 'GENERATED_MARKER', 'generated', 'true');
   }
 
