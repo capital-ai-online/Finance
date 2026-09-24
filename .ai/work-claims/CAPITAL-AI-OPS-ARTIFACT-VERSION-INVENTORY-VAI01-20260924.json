@@ -12,8 +12,8 @@
   "workItemDE": "VAI-01 — read-only Repository-Artifact-Version-Inventar fuer alle git-getrackten Dateien aufbauen.",
   "startedAt": "2026-09-24T19:10:00Z",
   "baseBranch": "main",
-  "baseSha": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
-  "lastSyncedMainSha": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+  "baseSha": "90522e3241c650aeec73096e1871373bb83643cc",
+  "lastSyncedMainSha": "90522e3241c650aeec73096e1871373bb83643cc",
   "branch": "operations/artifact-version-inventory-vai01-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -35,7 +35,7 @@
     "Human/CODEOWNER merge remains required."
   ],
   "evidence": {
-    "currentMain": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+    "currentMain": "90522e3241c650aeec73096e1871373bb83643cc",
     "handover": "GOV-TO-OPS-ARTIFACT-VERSION-INVENTORY-20260924",
     "sourceIssue": "#1429",
     "dependencyMergedPr": "#1428",
