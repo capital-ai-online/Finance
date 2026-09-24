@@ -88,6 +88,141 @@ export function projectSelfHostedRunnerSettings(raw) {
   });
 }
 
+function collectionItems(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object' && Array.isArray(raw.items)) return raw.items;
+  return [];
+}
+
+export function projectOrganizationSettings(raw) {
+  const organization = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({
+    login: typeof organization.login === 'string' ? organization.login : null,
+    defaultRepositoryPermission: typeof organization.default_repository_permission === 'string'
+      ? organization.default_repository_permission
+      : null,
+    membersCanCreateRepositories: organization.members_can_create_repositories === true,
+    membersCanCreatePublicRepositories: organization.members_can_create_public_repositories === true,
+    membersCanCreatePrivateRepositories: organization.members_can_create_private_repositories === true,
+    membersCanCreateInternalRepositories: organization.members_can_create_internal_repositories === true,
+    membersCanForkPrivateRepositories: organization.members_can_fork_private_repositories === true,
+    membersCanCreatePages: organization.members_can_create_pages === true,
+    webCommitSignoffRequired: organization.web_commit_signoff_required === true,
+    twoFactorRequirementEnabled: organization.two_factor_requirement_enabled === true,
+    emailRedacted: true,
+    billingEmailRedacted: true,
+  });
+}
+
+export function projectSelectedAccountInventory(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    totalCount: Number.isInteger(raw?.total_count) ? raw.total_count : rows.length,
+    observedCount: rows.length,
+    identitiesRedacted: true,
+  });
+}
+
+export function projectRunnerInventory(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    totalCount: Number.isInteger(raw?.total_count) ? raw.total_count : rows.length,
+    observedCount: rows.length,
+    statuses: sortedUnique(rows.map((runner) => runner?.status)),
+    busyCount: rows.filter((runner) => runner?.busy === true).length,
+    offlineCount: rows.filter((runner) => runner?.status === 'offline').length,
+    namesRedacted: true,
+    labelsRedacted: true,
+    identitiesRedacted: true,
+  });
+}
+
+export function projectRunnerGroupInventory(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    totalCount: Number.isInteger(raw?.total_count) ? raw.total_count : rows.length,
+    observedCount: rows.length,
+    visibilities: sortedUnique(rows.map((group) => group?.visibility)),
+    allowsPublicRepositories: rows.some((group) => group?.allows_public_repositories === true),
+    namesRedacted: true,
+    selectedRepositoryIdentitiesRedacted: true,
+    selectedWorkflowIdentitiesRedacted: true,
+  });
+}
+
+export function projectCodeSecurityConfigurationCatalog(raw) {
+  const rows = collectionItems(raw);
+  const featureValues = (name) => sortedUnique(
+    rows.map((configuration) => configuration?.[name]),
+  );
+  return Object.freeze({
+    totalCount: Number.isInteger(raw?.total_count) ? raw.total_count : rows.length,
+    observedCount: rows.length,
+    targetTypes: featureValues('target_type'),
+    enforcementStates: featureValues('enforcement'),
+    advancedSecurityStates: featureValues('advanced_security'),
+    codeScanningDefaultSetupStates: featureValues('code_scanning_default_setup'),
+    secretScanningStates: featureValues('secret_scanning'),
+    secretScanningPushProtectionStates: featureValues('secret_scanning_push_protection'),
+    configurationIdentitiesRedacted: true,
+  });
+}
+
+export function projectCustomPropertySchema(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    propertyCount: rows.length,
+    propertyNames: sortedUnique(rows.map((row) => row?.property_name)),
+    valueTypes: sortedUnique(rows.map((row) => row?.value_type)),
+    requiredCount: rows.filter((row) => row?.required === true).length,
+    allowedValuesRedacted: true,
+    defaultValuesRedacted: true,
+  });
+}
+
+export function projectUserProfile(raw) {
+  const user = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({
+    login: typeof user.login === 'string' ? user.login : null,
+    accountType: typeof user.type === 'string' ? user.type : null,
+    siteAdmin: user.site_admin === true,
+    twoFactorAuthentication: typeof user.two_factor_authentication === 'boolean'
+      ? user.two_factor_authentication
+      : null,
+    planName: typeof user?.plan?.name === 'string' ? user.plan.name : null,
+    privateRepos: Number.isInteger(user.total_private_repos) ? user.total_private_repos : null,
+    ownedPrivateRepos: Number.isInteger(user.owned_private_repos) ? user.owned_private_repos : null,
+    emailRedacted: true,
+    nameRedacted: true,
+    companyRedacted: true,
+    locationRedacted: true,
+  });
+}
+
+export function projectUserEmailInventory(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    totalCount: rows.length,
+    primaryCount: rows.filter((row) => row?.primary === true).length,
+    verifiedCount: rows.filter((row) => row?.verified === true).length,
+    visibilities: sortedUnique(rows.map((row) => row?.visibility)),
+    addressesRedacted: true,
+  });
+}
+
+export function projectUserKeyInventory(raw) {
+  const rows = collectionItems(raw);
+  return Object.freeze({
+    totalCount: rows.length,
+    expiredCount: rows.filter((row) => row?.expired === true).length,
+    signingCapableCount: rows.filter((row) => row?.can_sign === true).length,
+    keyMaterialRedacted: true,
+    titlesRedacted: true,
+    emailsRedacted: true,
+    identitiesRedacted: true,
+  });
+}
+
 export function projectCustomPropertyInventory(raw) {
   const rows = Array.isArray(raw) ? raw : [];
   return Object.freeze({
@@ -98,7 +233,7 @@ export function projectCustomPropertyInventory(raw) {
 }
 
 export function projectRulesetInventory(raw) {
-  const rows = Array.isArray(raw) ? raw : [];
+  const rows = collectionItems(raw);
   return Object.freeze({
     rulesetCount: rows.length,
     targets: sortedUnique(rows.map((row) => row?.target)),

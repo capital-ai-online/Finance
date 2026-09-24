@@ -4,6 +4,7 @@ import {
 } from './githubAppInstallationAuthTransport.mjs';
 
 const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_PAGES = 100;
 
 export const GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'enterprise.actions.permissions.get': Object.freeze({
@@ -17,6 +18,26 @@ export const GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'enterprise.actions.workflow_permissions.get': Object.freeze({
     requiredPermission: 'Enterprise administration: read (classic PAT admin:enterprise)',
     path: ({ enterprise }) => `/enterprises/${enterprise}/actions/permissions/workflow`,
+  }),
+  'enterprise.actions.selected_organizations.list': Object.freeze({
+    requiredPermission: 'Enterprise administration: read (classic PAT admin:enterprise)',
+    path: ({ enterprise }) => `/enterprises/${enterprise}/actions/permissions/organizations`,
+    pagination: Object.freeze({ kind: 'object', field: 'organizations' }),
+  }),
+  'enterprise.code_security.configurations.list': Object.freeze({
+    requiredPermission: 'Enterprise administration: read (classic PAT read:enterprise)',
+    path: ({ enterprise }) => `/enterprises/${enterprise}/code-security/configurations`,
+    pagination: Object.freeze({ kind: 'array' }),
+  }),
+  'enterprise.actions.runner_groups.list': Object.freeze({
+    requiredPermission: 'Enterprise runners: read (classic PAT manage_runners:enterprise)',
+    path: ({ enterprise }) => `/enterprises/${enterprise}/actions/runner-groups`,
+    pagination: Object.freeze({ kind: 'object', field: 'groups' }),
+  }),
+  'enterprise.actions.self_hosted_runners.list': Object.freeze({
+    requiredPermission: 'Enterprise runners: read (classic PAT manage_runners:enterprise)',
+    path: ({ enterprise }) => `/enterprises/${enterprise}/actions/runners`,
+    pagination: Object.freeze({ kind: 'object', field: 'runners' }),
   }),
 });
 
@@ -175,6 +196,31 @@ export function createGitHubEnterpriseSettingsReadClient({
     return payload;
   }
 
+  async function readPaginated(path, pagination) {
+    const rows = [];
+    let totalCount = 0;
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      const joiner = path.includes('?') ? '&' : '?';
+      const payload = await authenticatedGet(`${path}${joiner}per_page=100&page=${page}`);
+      const pageRows = pagination.kind === 'array'
+        ? payload
+        : payload?.[pagination.field];
+      if (!Array.isArray(pageRows)) {
+        fail(`paginated Enterprise response must contain an array for ${pagination.field || 'root'}`);
+      }
+      if (page === 1 && Number.isInteger(payload?.total_count)) totalCount = payload.total_count;
+      rows.push(...pageRows);
+      if (pageRows.length < 100) {
+        return Object.freeze({
+          total_count: totalCount || rows.length,
+          items: Object.freeze(rows),
+        });
+      }
+      if (page === MAX_PAGES) fail('Enterprise settings pagination exceeded safety limit');
+    }
+    return Object.freeze({ total_count: rows.length, items: Object.freeze(rows) });
+  }
+
   return Object.freeze({
     describeBoundary() {
       return Object.freeze({
@@ -190,7 +236,10 @@ export function createGitHubEnterpriseSettingsReadClient({
     async read(capability) {
       const descriptor = GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES[capability];
       if (!descriptor) fail(`unsupported capability: ${capability}`);
-      return authenticatedGet(descriptor.path({ enterprise }));
+      const path = descriptor.path({ enterprise });
+      return descriptor.pagination
+        ? readPaginated(path, descriptor.pagination)
+        : authenticatedGet(path);
     },
   });
 }

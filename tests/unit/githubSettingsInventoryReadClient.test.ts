@@ -47,6 +47,39 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}`) {
+        return jsonResponse({
+          login: ORGANIZATION,
+          default_repository_permission: 'read',
+          members_can_create_repositories: false,
+          two_factor_requirement_enabled: true,
+        });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/repositories`) {
+        return jsonResponse({ total_count: 1, repositories: [{ id: 1, full_name: REPOSITORY }] });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/runners`) {
+        return jsonResponse({ total_count: 1, runners: [{ id: 1, name: 'runner', status: 'online', busy: false }] });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/runner-groups`) {
+        return jsonResponse({ total_count: 1, groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/rulesets`) {
+        return jsonResponse([{ id: 2, target: 'branch', enforcement: 'active' }]);
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/properties/schema`) {
+        return jsonResponse([{ property_name: 'environment', value_type: 'single_select', required: true }]);
+      }
+
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/code-security/configurations`) {
+        return jsonResponse([{ id: 3, target_type: 'organization', enforcement: 'enforced' }]);
+      }
+
       if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions`) {
         return jsonResponse({
           enabled_repositories: 'all',
@@ -184,6 +217,10 @@ describe('GitHub settings inventory read client', () => {
         && parsed.pathname === `/repos/${REPOSITORY}/actions/cache/storage-limit`
       ) {
         return jsonResponse({ max_cache_size_gb: 10 });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/runners`) {
+        return jsonResponse({ total_count: 1, runners: [{ id: 4, name: 'repo-runner', status: 'offline', busy: false }] });
       }
 
       if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/artifacts`) {
