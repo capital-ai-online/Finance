@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — Roadmap Live Dashboard re-correlated to fresh CURRENT_MAIN with SEO/Production integration ledger; terminal provider writers removed; no productive domain ownership changes  
-**Baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
+**Reconciliation:** 2026-09-24 — Owner-directed Roadmap presentation migration from the historical dashboard shell to the current productive Landingpage profile; no productive domain ownership changes  
+**Baseline:** `main@0d63fb5b92934753440d77bcf04057adb2dd6734`
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -25,6 +25,27 @@ This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9
 - A new current-state drift is explicit rather than silently repaired: `AppRoutes.tsx` no longer renders `/universe`, while `routeSeo.ts`, `sitemap.xml`, prerender and the server public-route allowlist still publish it. FE does **not** restore the removed client route; retirement of the stale projections remains owner-correct across FE/SEO/OPS.
 - Documentary correlation resolves `CAPITAL-AI-DOC / PVC-03` with **zero executable active work items** on this generation: `WP-DOC-14..16` are terminal, `WP-DOC-17` is historical `NOT_APPLICABLE_FOR_IMPLEMENTATION`, WP-06A..E is terminal through #1131, repository-structure AUTO-01 is terminal through #1154, and Documentary Change Impact startup-failure remediation is terminal through #1310. Residual `status: active` claim/package markers are stale coordination evidence under `/AGENTS.md` and are shown only as a non-active integration ledger entry; they do not reactivate DOC work.
 - Current integrated deltas now projected separately include SH-02.11 `RETRY_SAFE_OPERATION`, the pricing/public-visibility archive chain, FIN-SENT-01, the production `/roadmap` direct route, consent-gated GA4 wiring, #1331 Auth/Profile plus merged recovery #1334 as main-only/deploy-blocked, and both failed exact-main Render promotions as Production-drift evidence.
+
+## FE-LANDING-TEMPLATE-01 — Landingpage design as public auxiliary-page template
+
+**Canonical identity:** `FE-LANDING-TEMPLATE-01`  
+**Resolved Owner:** `CAPITAL-AI-FE`  
+**Scope:** Frontend presentation + canonical Branding Kit only; no productive PVC ownership  
+**Status:** `IN_PROGRESS / OWNER_DIRECTED`  
+**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`
+
+Fresh Owner direction replaces the historical dashboard-style template used by `/roadmap` with one reusable public-site template derived from the current productive Landingpage.
+
+Implementation boundary:
+
+- `LandingPageTemplate.tsx` provides the shared public-site frame/header/panel composition;
+- `design-tokens.json#color.landingPage`, `font.landingPage` and `patterns.landingPage` extend the existing Branding Kit rather than creating a second design authority;
+- Roadmap continues to be a read-only, non-authorizing projection;
+- current `BrandLogo` / canonical `brandmark.json` geometry is reused;
+- semantic asset/score/status colors and PDF/Social core roles are not redefined;
+- open PR #1367 is an independent Dashboard runtime/performance writer and has no changed-file overlap with this slice.
+
+**Exit:** Roadmap consumes `LandingPageTemplate` / `LandingPanel`, the old shared-`Card`/dashboard shell is absent from the Roadmap renderer, Branding Kit + CSS projection expose the productive Landingpage profile, exact-head validation passes, and Human/CODEOWNER merge remains the final gate.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 

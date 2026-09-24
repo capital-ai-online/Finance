@@ -156,8 +156,11 @@ describe('Roadmap dashboard projection', () => {
   it('uses only canonical branding and shared presentation contracts', () => {
     const dashboard = read('src/features/public/ui/RoadmapDashboard.tsx');
 
-    expect(dashboard).toContain("../../../shared/branding/CapitalAiLogo");
-    expect(dashboard).toContain("../../../shared/ui/Card");
+    expect(dashboard).toContain("./LandingPageTemplate");
+    expect(dashboard).toContain("LandingPanel");
+    expect(dashboard).not.toContain("../../../shared/ui/Card");
+    expect(dashboard).not.toContain("app-shell-frame");
+    expect(dashboard).not.toContain("ui-panel");
     expect(dashboard).toContain('text-brand-primary');
     expect(dashboard).toContain('text-roadmap-foundation');
     expect(dashboard).toContain('text-roadmap-automation');
@@ -169,6 +172,42 @@ describe('Roadmap dashboard projection', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.designTokens).toBe(
       'docs/frontend/design-tokens.json',
     );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.pageTemplate).toBe(
+      'src/features/public/ui/LandingPageTemplate.tsx',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.logoProjection).toBe(
+      'src/features/public/ui/frontend-port/components/BrandLogo.tsx',
+    );
+
+    const template = read('src/features/public/ui/LandingPageTemplate.tsx');
+    const css = read('src/index.css');
+    const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as {
+      color: {
+        background: { value: string };
+        brand: { primary: { value: string } };
+        landingPage: Record<string, { value: string }>;
+      };
+      font: { landingPage: { value: string } };
+      patterns: { landingPage: { template: string } };
+    };
+
+    expect(template).toContain("frontend-port/components/BrandLogo");
+    expect(tokens.color.landingPage.canvas.value).toBe('#02050E');
+    expect(tokens.color.landingPage.surface.value).toBe('#090D1C');
+    expect(tokens.color.landingPage.gold.value).toBe('#F9BF21');
+    expect(tokens.color.landingPage.magenta.value).toBe('#FF2E93');
+    expect(tokens.color.landingPage.purple.value).toBe('#8D26FF');
+    expect(tokens.font.landingPage.value).toContain('Plus Jakarta Sans');
+    expect(tokens.patterns.landingPage.template).toBe(
+      'src/features/public/ui/LandingPageTemplate.tsx',
+    );
+    expect(css).toContain('--color-landing-canvas: #02050E');
+    expect(css).toContain('--color-landing-magenta: #FF2E93');
+    expect(css).toContain('.landing-page-panel');
+
+    // Cross-media core roles stay stable; this FE slice does not restyle PDF/Social consumers.
+    expect(tokens.color.background.value).toBe('#18181B');
+    expect(tokens.color.brand.primary.value).toBe('#F5C453');
   });
 
   it('keeps live production identity separate from the repository correlation baseline', () => {

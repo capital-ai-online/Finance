@@ -1,8 +1,8 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.8.0-roadmap-brand-system",
-  "description": "Canonical CAPITAL-AI design-token registry. The Owner-approved 16.08 appearance language restores the charcoal/Capital-Gold visual hierarchy while current asset, score, status and evidence semantics remain unchanged. Historical design material is provenance input only; this file remains runtime token authority.",
+  "version": "0.9.0-landing-page-profile",
+  "description": "Canonical CAPITAL-AI design-token registry. Cross-media core roles remain stable; the current productive Landingpage presentation is captured as the canonical landingPage profile for public website surfaces such as /roadmap.",
   "provenance": {
     "brandManifestVersion": "6.2",
     "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendments",
@@ -11,7 +11,9 @@
     "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only. 2026-09-16: GOV-CHAT-079 Owner direction restores the 16.08 appearance language (charcoal canvas, historical Capital Gold hierarchy, Montserrat display typography, glass surfaces and restrained cyan/purple decoration) without changing current semantic asset/score/status roles.",
     "ingestedAt": "2026-08-26",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
-    "webProjection": "src/index.css @theme"
+    "webProjection": "src/index.css @theme",
+    "landingPageProfileAddedAt": "2026-09-24",
+    "landingPageProfileSource": "current productive Landingpage presentation / owner-directed public-site alignment"
   },
   "color": {
     "background": { "value": "#18181B", "type": "color", "css": "--color-background", "note": "Owner-approved 16.08 primary charcoal canvas" },
@@ -92,6 +94,16 @@
       "glass": { "value": "rgba(10, 10, 10, 0.40)", "type": "color", "note": "Owner-approved 16.08 glass panel surface" },
       "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary dark elevated surface; semantic roles remain unchanged" }
     },
+    "landingPage": {
+      "canvas": { "value": "#02050E", "type": "color", "css": "--color-landing-canvas", "note": "Current productive Landingpage canvas" },
+      "surface": { "value": "#090D1C", "type": "color", "css": "--color-landing-surface", "note": "Current productive Landingpage elevated/nav surface" },
+      "glass": { "value": "rgba(6, 12, 29, 0.72)", "type": "color", "css": "--color-landing-glass", "note": "Current productive Landingpage glass panel surface" },
+      "textPrimary": { "value": "#F8FAFC", "type": "color", "css": "--color-landing-text-primary" },
+      "textSecondary": { "value": "#94A3B8", "type": "color", "css": "--color-landing-text-secondary" },
+      "gold": { "value": "#F9BF21", "type": "color", "css": "--color-landing-gold", "note": "AIF Gold primary/focus role on current Landingpage" },
+      "magenta": { "value": "#FF2E93", "type": "color", "css": "--color-landing-magenta", "note": "Marketing/CTA atmosphere only; not a financial status semantic" },
+      "purple": { "value": "#8D26FF", "type": "color", "css": "--color-landing-purple", "note": "AI/intelligence accent on current Landingpage" }
+    },
     "print": {
       "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
       "textSecondary": { "value": "#64748B", "type": "color", "note": "Secondary metadata on light PDF surfaces" },
@@ -103,7 +115,8 @@
   "font": {
     "sans": { "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body", "note": "Branding Manifest v6.2 body typography; preserved while Montserrat remains the display/heading family." },
     "display": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
-    "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" }
+    "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" },
+    "landingPage": { "value": "\"Plus Jakarta Sans\", ui-sans-serif, system-ui, sans-serif", "css": "--font-landing-page", "role": "public-site-ui", "note": "Current productive Landingpage UI/display typography" }
   },
   "fontSize": {
     "xs": { "value": "0.75rem" },
@@ -170,6 +183,16 @@
     "reducedMotion": { "value": "respect prefers-reduced-motion" }
   },
   "patterns": {
+    "landingPage": {
+      "frameClass": "landing-page-frame",
+      "headerClass": "landing-page-header",
+      "panelClass": "landing-page-panel",
+      "elevatedPanelClass": "landing-page-panel--elevated",
+      "secondaryButtonClass": "landing-page-button-secondary",
+      "tokenRefs": ["color.landingPage.canvas", "color.landingPage.surface", "color.landingPage.glass", "color.landingPage.textPrimary", "color.landingPage.textSecondary", "color.landingPage.gold", "color.landingPage.magenta", "color.landingPage.purple", "font.landingPage"],
+      "source": "src/features/public/ui/frontend-port/frontend-port.css",
+      "template": "src/features/public/ui/LandingPageTemplate.tsx"
+    },
     "glassCard": {
       "class": "ui-panel"
     },

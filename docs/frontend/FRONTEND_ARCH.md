@@ -224,6 +224,22 @@ Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/fronten
 - Dekorative Neural-Geometrie wird zentral über `shared/visuals` konsolidiert.
 - Motion muss `prefers-reduced-motion` respektieren.
 
+
+### 7.1 Productive public-site / Landingpage profile
+
+Public website surfaces that are intended to visually match the productive Landingpage consume the `landingPage` profile from `docs/frontend/design-tokens.json` rather than redefining local hex values.
+
+- Canvas: `#02050E`.
+- Elevated/nav surface: `#090D1C`; glass surface: `rgba(6, 12, 29, 0.72)`.
+- AIF Gold `#F9BF21`: primary/focus role.
+- Magenta `#FF2E93`: marketing/CTA atmosphere only; never a financial status semantic.
+- Purple `#8D26FF`: AI/intelligence accent.
+- Primary/secondary text: `#F8FAFC` / `#94A3B8`.
+- UI/display typography: **Plus Jakarta Sans**; technical/data typography remains **JetBrains Mono**.
+- Reusable composition: `src/features/public/ui/LandingPageTemplate.tsx` with the `landing-page-*` CSS projection.
+
+This profile is scoped to public-site presentation. Existing PDF/Social core-token consumers remain owner-correct and are not silently restyled by a Frontend-only website change.
+
 ## 8. Accessibility
 
 - Interaktive Ziele mindestens 44×44 px, soweit durch Komponententyp sinnvoll.

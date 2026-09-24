@@ -62,8 +62,9 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
   branding: {
     brandmark: 'docs/frontend/brandmark.json',
     designTokens: 'docs/frontend/design-tokens.json',
-    logoProjection: 'src/shared/branding/CapitalAiLogo.tsx',
-    panelPrimitive: 'src/shared/ui/Card.tsx',
+    logoProjection: 'src/features/public/ui/frontend-port/components/BrandLogo.tsx',
+    pageTemplate: 'src/features/public/ui/LandingPageTemplate.tsx',
+    landingAdapter: 'src/features/public/ui/frontend-port/frontend-port.css',
     tokenProjection: 'src/index.css',
   },
   activeWorkPackages: [

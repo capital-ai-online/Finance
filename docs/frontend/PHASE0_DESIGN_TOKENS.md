@@ -153,3 +153,25 @@ Damit werden Legacy-Anbindungen strangler-basiert abgelöst, ohne Parallelarchit
 - [x] Fokus- und generische Brand-Glow-Rollen verwenden AIF Gold.
 - [ ] verbleibende `brand-cyan`-Consumer auf fachlich passende semantische Rollen migrieren.
 - [ ] Compatibility-Aliase und Legacy-Pfade nach Inbound-Import-Zahl 0 löschen.
+
+
+## 2026-09-24 — Productive Landingpage profile
+
+Fresh Human/Owner direction promotes the **current productive Landingpage presentation** into the existing Branding Kit as the canonical public-site profile. This remains one design-token authority; no second palette or renderer registry is created.
+
+| Landingpage role | Canonical value |
+|---|---|
+| Canvas | `#02050E` |
+| Elevated/nav surface | `#090D1C` |
+| Glass surface | `rgba(6, 12, 29, 0.72)` |
+| Primary text | `#F8FAFC` |
+| Secondary text | `#94A3B8` |
+| Primary/focus Gold | `#F9BF21` |
+| Marketing/CTA Magenta | `#FF2E93` |
+| AI/intelligence Purple | `#8D26FF` |
+| UI/display typography | `Plus Jakarta Sans` |
+| Technical/data typography | `JetBrains Mono` |
+
+The machine-readable profile is `design-tokens.json#color.landingPage` + `font.landingPage` + `patterns.landingPage`. Its web projection is `src/index.css` and its reusable public-site composition is `src/features/public/ui/LandingPageTemplate.tsx`.
+
+Existing cross-media core roles used by PDF/Social remain unchanged unless their owner-correct contracts are separately changed. The Roadmap now consumes this Landingpage profile instead of the historical `app-shell-frame` / `ui-panel` dashboard presentation.
