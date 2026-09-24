@@ -680,6 +680,36 @@ test('leading PR body projection repairs the PR #1298 hybrid shape and binds one
   ]);
 });
 
+test('auto-merge projected v1.8 body refreshes Production baseline without duplicating the Human/CODEOWNER gate', () => {
+  const baseline = convergenceBaseline();
+  const autoMergeBody = canonicalBody()
+    .replace(
+      '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+      '| Owner-Aktion | Keine manuelle Merge-Aktion; GitHub Auto-Merge nach Exact-Head-Revalidierung |',
+    )
+    .replace(
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+    );
+
+  const result = prepareLeadingPrBody(autoMergeBody, baseline, { prClass: 'C' });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.baselineChanged, true);
+  assert.equal(
+    (result.body.match(/^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\*/gm) || []).length,
+    1,
+  );
+  assert.match(
+    result.body,
+    /^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Nein — GitHub Auto-Merge Safety Contract$/m,
+  );
+  assert.doesNotMatch(
+    result.body,
+    /^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Ja$/m,
+  );
+});
+
 test('PR #1364 treats later Production movement as a new baseline generation and converges idempotently', () => {
   const firstProductionSha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
   const firstBaseline = convergenceBaseline();
