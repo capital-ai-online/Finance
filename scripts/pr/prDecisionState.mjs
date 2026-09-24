@@ -16,7 +16,7 @@ export const PR_DECISION_GATES = Object.freeze([
   Object.freeze({ key: 'overlap', label: 'Overlap' }),
   Object.freeze({ key: 'checks', label: 'Required Checks' }),
   Object.freeze({ key: 'security', label: 'Security / Compliance' }),
-  Object.freeze({ key: 'baseline', label: 'Production Baseline' }),
+  Object.freeze({ key: 'baseline', label: 'Production / Deploy Cadence', aliases: Object.freeze(['Production Baseline']) }),
 ]);
 
 const GATE_PRESENTATION = Object.freeze({
@@ -97,9 +97,9 @@ const GATE_DETAIL_PRESENTATION = Object.freeze({
     BLOCKED: Object.freeze({ reason: 'Mindestens ein erforderlicher Security-/Compliance-Check ist nicht erfolgreich.', nextStep: 'Security-/Compliance-Fund beheben; kein Bypass oder Downgrade.' }),
   }),
   baseline: Object.freeze({
-    PASS: Object.freeze({ reason: 'Production-, CURRENT_MAIN- und PR-Head-Baseline sind atomar korreliert.', nextStep: 'Keine Gate-Aktion erforderlich.' }),
-    PENDING: Object.freeze({ reason: 'Produktions-Baseline ist noch nicht vollständig auswertbar.', nextStep: 'Kanonischen Baseline-Reconciler ausführen und Exact-Head/Main-Evidence neu lesen.' }),
-    BLOCKED: Object.freeze({ reason: 'Produktions-Baseline stimmt nicht mit CURRENT_MAIN/PR-Head oder Production-Drift 0 überein.', nextStep: 'Baseline ausschließlich über den kanonischen Baseline-Reconciler aktualisieren.' }),
+    PASS: Object.freeze({ reason: 'Production-Identität, CURRENT_MAIN und PR-Head sind atomar korreliert; erwarteter 5er-Cadence-Lag ist kein Production-Drift.', nextStep: 'Keine Gate-Aktion erforderlich.' }),
+    PENDING: Object.freeze({ reason: 'Production-/Deploy-Cadence-Evidence ist noch nicht vollständig auswertbar.', nextStep: 'Kanonischen Baseline-/Decision-Reconciler ausführen und Exact-Head/Main-Evidence neu lesen.' }),
+    BLOCKED: Object.freeze({ reason: 'Production-Identität, CURRENT_MAIN oder PR-Head sind nicht sicher korreliert; erwarteter DEPLOYMENT_QUEUED-Lag allein blockiert nicht.', nextStep: 'Baseline ausschließlich über den kanonischen Baseline-/Decision-Reconciler aktualisieren.' }),
   }),
 });
 
@@ -158,6 +158,29 @@ export function decisionImpactLabel(prClass, securityGate = 'PENDING') {
   return security === 'BLOCKED' ? base + ' · Security/Compliance BLOCKED' : base;
 }
 
+export function deriveProductionCadenceState({
+  active,
+  deployDue,
+  productionRelation,
+  productionHealthy,
+  productionSha,
+  mainSha,
+} = {}) {
+  if (active !== true) return 'LEGACY_PER_MERGE';
+  if (productionHealthy !== true) return 'PRODUCTION_DRIFT';
+
+  const relation = String(productionRelation || '').trim().toUpperCase();
+  if (!['CURRENT_MAIN', 'ANCESTOR', 'PRE_EPOCH'].includes(relation)) return 'PRODUCTION_DRIFT';
+  if (deployDue === true) return 'DEPLOYMENT_DUE';
+
+  const production = String(productionSha || '').trim().toLowerCase();
+  const currentMain = String(mainSha || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(production) || !/^[0-9a-f]{40}$/.test(currentMain)) {
+    return 'PRODUCTION_DRIFT';
+  }
+  return production === currentMain ? 'CONVERGED' : 'DEPLOYMENT_QUEUED';
+}
+
 export function extractDecisionStatus(bodyText) {
   return String(bodyText || '').match(
     /^> 🧭 \*\*Entscheidungsstatus: (READY_FOR_HUMAN_DECISION|EVIDENCE_PENDING|BLOCKED)\*\*\s*$/m,
@@ -167,10 +190,16 @@ export function extractDecisionStatus(bodyText) {
 export function extractDecisionGates(bodyText) {
   const body = String(bodyText || '');
   const gates = {};
-  for (const { key, label } of PR_DECISION_GATES) {
-    const escaped = label.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
-    const match = body.match(new RegExp('^\\|\\s*' + escaped + '\\s*\\|\\s*(?:🟢|🟡|🔴)?\\s*(PASS|PENDING|BLOCKED)\\s*\\|[^\\n]*$', 'm'));
-    gates[key] = match?.[1] || null;
+  for (const { key, label, aliases = [] } of PR_DECISION_GATES) {
+    gates[key] = null;
+    for (const candidate of [label, ...aliases]) {
+      const escaped = candidate.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+      const match = body.match(new RegExp('^\\|\\s*' + escaped + '\\s*\\|\\s*(?:🟢|🟡|🔴)?\\s*(PASS|PENDING|BLOCKED)\\s*\\|[^\\n]*$', 'm'));
+      if (match?.[1]) {
+        gates[key] = match[1];
+        break;
+      }
+    }
   }
   return gates;
 }

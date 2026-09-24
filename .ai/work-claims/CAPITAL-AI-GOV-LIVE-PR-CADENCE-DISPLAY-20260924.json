@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-LIVE-PR-CADENCE-DISPLAY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Adapt the live Pull Request template and renderer to project the active 5-merge deployment / 10-merge PATCH cadence separately from repository truth, without introducing a new Actions workflow or cadence authority.",
+  "workItemDE": "Live-PR-Template und Renderer an die aktive 5/10-Deploy-/Versionierungsanzeige anpassen",
+  "startedAt": "2026-09-24T02:59:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
+  "lastSyncedMainSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
+  "branch": "agent/governance-live-pr-cadence-display-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "priorityReason": "Die aktuelle Live-PR-Anzeige trennt CURRENT_MAIN, Production-Lag, Deploy-Cadence und Versions-Cadence nicht sichtbar, obwohl AGENTS.md diese getrennte Projektion verlangt.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-LIVE-PR-CADENCE-DISPLAY-20260924.json",
+    ".github/pull_request_template.md",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/pr/prDecisionState.mjs",
+    "scripts/pr/prDecisionState.test.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-GOV / PVC-05 PR presentation and decision-state projection only.",
+    "No new GitHub Actions workflow is created and no existing workflow file is changed.",
+    "scripts/operations/mergeCadence.mjs remains the single cadence resolver; the renderer consumes it read-only.",
+    "No Production, Render, version-file, package.json, IAM, billing or direct-main mutation."
+  ],
+  "dependencies": [
+    "/AGENTS.md@db5c673502c6ae62547371d7bd6c58d42460be25",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "scripts/operations/mergeCadence.mjs@CURRENT_MAIN",
+    "PR #1358 Human/CODEOWNER-merged; cadence-aware Production Baseline is authoritative on CURRENT_MAIN."
+  ],
+  "exitEvidence": [
+    "New PR bodies show CURRENT_MAIN and live Production version/SHA separately.",
+    "Deploy state/progress x/5/remaining/latest-main target are visible.",
+    "Current package version, version progress x/10, remaining merges and deterministic next PATCH are visible.",
+    "No second cadence controller or Actions workflow is introduced.",
+    "Decision reconciler regression tests expect the new `Production / Deploy Cadence` output while legacy `Production Baseline` input fixtures remain parseable."
+  ],
+  "acceptanceCriteria": [
+    "Changed files do not overlap PR #1358 reconciler/workflow files.",
+    "Template remains v1.8.0 for compatibility.",
+    "All template placeholders are rendered by the existing PR renderer.",
+    "Hosted exact-head checks run after PR creation.",
+    "Human/CODEOWNER merge remains the protected final boundary."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
