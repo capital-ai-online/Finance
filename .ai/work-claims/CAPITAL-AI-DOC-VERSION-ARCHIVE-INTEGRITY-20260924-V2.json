@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-DOC-VERSION-ARCHIVE-INTEGRITY-20260924-V2",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -53,5 +53,10 @@
     "No second archive mutation controller or workflow.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T00:42:54Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1353 satisfied the claim release condition; post-merge Documentary status convergence confirms the work is terminal on CURRENT_MAIN 8050206f6ae58238e88e859b98db62cf04459ff2.",
+  "terminalPullRequest": 1353,
+  "terminalMergeSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "terminalizedOnMainSha": "b2eb210a7310da170db75f3065513522a224337e"
 }

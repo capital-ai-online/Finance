@@ -2,8 +2,8 @@
 
 **Project:** CAPITAL-AI-DOC  
 **Owner/PVC:** CAPITAL-AI-DOC / PVC-03  
-**Baseline:** main@23be3c2d257020647884f46267e0c864ff003a68  
-**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED
+**Baseline:** main@b2eb210a7310da170db75f3065513522a224337e  
+**State:** DONE_MAIN / TERMINAL
 
 ## Objective
 
@@ -30,3 +30,12 @@ Keep Documentary component-version projections exact without a second version au
 - Complete archive index verifies all covered current archive files.
 - Historical byte-preserved source evidence is verified on the current-main workflow with full Git history.
 - No second workflow/controller or automatic archive deletion exists.
+
+
+## Terminal merge evidence
+
+- Human/CODEOWNER-merged PR: `#1353`
+- Merge commit: `db5c673502c6ae62547371d7bd6c58d42460be25`
+- Merged at: `2026-09-24T00:42:54Z`
+- Post-merge correlation baseline: `main@b2eb210a7310da170db75f3065513522a224337e`
+- The implementation is terminal evidence and MUST NOT be reactivated from the former branch/claim state.

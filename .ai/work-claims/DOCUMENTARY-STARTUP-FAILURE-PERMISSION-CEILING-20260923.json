@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -43,5 +43,10 @@
     "After Human/CODEOWNER merge, Documentary Change Impact starts at least one job on the resulting exact CURRENT_MAIN and no longer concludes startup_failure"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "recorrelatedAt": "2026-09-23T16:12:06Z"
+  "recorrelatedAt": "2026-09-23T16:12:06Z",
+  "releasedAt": "2026-09-23T16:57:24Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1310 satisfied the claim release condition; post-merge Documentary status convergence confirms the work is terminal on CURRENT_MAIN 8050206f6ae58238e88e859b98db62cf04459ff2.",
+  "terminalPullRequest": 1310,
+  "terminalMergeSha": "928431741d23ad5c4ea712f6898ca392cf9852da",
+  "terminalizedOnMainSha": "b2eb210a7310da170db75f3065513522a224337e"
 }
