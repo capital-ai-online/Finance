@@ -4,6 +4,8 @@ const DELTA_FIELDS = [
   'price',
   'bid',
   'ask',
+  'vwap',
+  'eventKind',
   'sourceTimestamp',
   'receivedAt',
   'freshnessMs',
