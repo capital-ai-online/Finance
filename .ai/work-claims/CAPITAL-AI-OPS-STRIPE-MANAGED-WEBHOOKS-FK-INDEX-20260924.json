@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-STRIPE-MANAGED-WEBHOOKS-FK-INDEX-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "OPS-STRIPE-MANAGED-WEBHOOKS-FK-INDEX-01 — add the missing covering index for the Stripe Sync managed-webhook account foreign key.",
+  "workItemDE": "OPS-STRIPE-MANAGED-WEBHOOKS-FK-INDEX-01 — fehlenden Covering-Index für den Account-FK des Stripe-Sync-Webhooks ergänzen.",
+  "startedAt": "2026-09-24T17:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "6c11bdfce02430846466540a311d9f46a7f3818c",
+  "lastSyncedMainSha": "29cd7b339be0aca587549f3a27a3658ea16fa59c",
+  "branch": "operations/stripe-managed-webhooks-fk-index-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 controlled implementation; supporting PVC-08 production operations",
+  "priority": "P2",
+  "priorityReason": "Supabase Performance Advisor reports one exact unindexed Stripe foreign key; the table is tiny today but the FK path should be covered before growth.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-STRIPE-MANAGED-WEBHOOKS-FK-INDEX-20260924.json",
+    "docs/projects/operations/work-packages/OPS_STRIPE_MANAGED_WEBHOOKS_FK_INDEX_2026-09-24.md",
+    "supabase/migrations/20260924171500_index_stripe_managed_webhooks_account_fk.sql",
+    "tests/unit/stripeManagedWebhooksFkIndex.test.ts",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json"
+  ],
+  "scopeBoundary": [
+    "PR #1416 dependency is satisfied by merge 29cd7b339be0aca587549f3a27a3658ea16fa59c; this PR must remain synchronized to CURRENT_MAIN through exact-head validation.",
+    "No direct main or Supabase DDL mutation before the repository migration ledger is reconciled.",
+    "No Stripe endpoint, Edge Function, webhook, secret, row, constraint or existing index mutation.",
+    "Unused-index INFO findings are not removed without workload evidence.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "29cd7b339be0aca587549f3a27a3658ea16fa59c",
+    "advisorFinding": "stripe._managed_webhooks.fk_managed_webhooks_account lacks a covering index",
+    "constraint": "FOREIGN KEY (account_id) REFERENCES stripe.accounts(id)",
+    "existingIndexes": "(id), (url, account_id), (status), (enabled)",
+    "edgeWorker": "23 HTTP 200 invocations in the latest 24-hour log window; last successful full sync closed 2026-09-17T19:38:02.476299Z",
+    "pr1416Dependency": "SATISFIED — PR #1416 merged as 29cd7b339be0aca587549f3a27a3658ea16fa59c",
+    "migrationLedger": "61 local migrations / 10 local-only after adding 20260924171500_index_stripe_managed_webhooks_account_fk; remote provider snapshot remains 78."
+  },
+  "acceptanceCriteria": [
+    "PR #1416 is merged as 29cd7b339be0aca587549f3a27a3658ea16fa59c and this branch contains that CURRENT_MAIN.",
+    "Migration adds only idx_managed_webhooks_account_id on stripe._managed_webhooks(account_id).",
+    "Focused regression test passes.",
+    "Post-merge migration readback shows the index and Performance Advisor reports no unindexed foreign key.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release after exact-head checks PASS and Human/CODEOWNER merge; then apply/read back through the canonical Supabase migration workflow."
+}
