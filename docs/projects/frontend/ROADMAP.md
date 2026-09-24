@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-24 — FE Roadmap/Landingpage presentation is merged and live; stale FE self-writer/Production-blocked projections are converged against exact CURRENT_MAIN without changing foreign-owner task state
-**Baseline:** `main@884d9198914c60fb74a308daba8fc91cb9aa63bd`
+**Baseline:** `main@e80c7872d27221b01316a407990194e03caa7a28`
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
