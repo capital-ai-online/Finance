@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI01-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "VAI-01 — build a read-only repository artifact version inventory for all git-tracked files.",
+  "workItemDE": "VAI-01 — read-only Repository-Artifact-Version-Inventar fuer alle git-getrackten Dateien aufbauen.",
+  "startedAt": "2026-09-24T19:10:00Z",
+  "baseBranch": "main",
+  "baseSha": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+  "lastSyncedMainSha": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+  "branch": "operations/artifact-version-inventory-vai01-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-06 Version Management; supporting PVC-04 Supervisor and PVC-07 Release Management",
+  "priority": "P1",
+  "priorityReason": "Same-version structural drift in PR-template consumers is not represented by the current platform-version authority alone.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI01-20260924.json",
+    "docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI01_2026-09-24.md",
+    "src/platform/Release/Services/artifactVersionInventory.ts",
+    "tests/unit/artifactVersionInventory.test.ts"
+  ],
+  "scopeBoundary": [
+    "package.json#version remains the sole platform-version authority.",
+    "No platform SemVer is assigned to every repository file.",
+    "No VersionManager control plane is created or revived.",
+    "No Self-Healing controller, merge authority, provider mutation or direct-main mutation is added.",
+    "VAI-01 is read-only classification and fingerprint evidence only; consumer-graph and Self-Healing integration remain separate follow-up slices.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+    "handover": "GOV-TO-OPS-ARTIFACT-VERSION-INVENTORY-20260924",
+    "sourceIssue": "#1429",
+    "dependencyMergedPr": "#1428",
+    "canonicalPlatformAuthority": "package.json#version"
+  },
+  "acceptanceCriteria": [
+    "Every git index stage-0 tracked path is classified into exactly one approved artifact domain.",
+    "The inventory is deterministic for an unchanged Git index and changes when a tracked blob changes.",
+    "A PR-template body structure change with the same 1.8.0 declaration changes blob and inventory identity.",
+    "package.json remains the only PLATFORM_VERSION_AUTHORITY path.",
+    "Inventory generation performs no repository content rewrite.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+}
