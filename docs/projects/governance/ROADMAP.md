@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`
+**Baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
