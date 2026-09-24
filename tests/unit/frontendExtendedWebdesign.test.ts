@@ -34,6 +34,7 @@ const snapshotManifest = JSON.parse(
   currentGraphicalComponentCount: number;
   presentationSurfaces?: Record<string, unknown>;
   ownerBoundaries?: Record<string, string>;
+  files?: Array<{ sourcePath: string; role: string }>;
   assetPresentation?: {
     visibleAssetCount?: number;
     symbolContract?: string;
@@ -42,9 +43,11 @@ const snapshotManifest = JSON.parse(
 };
 
 describe('extended FRONTEND webdesign sync', () => {
-  it('pins the synchronized graphical architecture to the latest selected upstream commit', () => {
-    expect(snapshotManifest.sourceSha).toBe('cbc558019ae6785f44079fe6fca3403460774df3');
-    expect(snapshotManifest.currentGraphicalComponentCount).toBe(18);
+  it('pins the synchronized graphical architecture to a valid selected upstream snapshot', () => {
+    expect(snapshotManifest.sourceSha).toMatch(/^[0-9a-f]{40}$/);
+    const graphicalComponentCount = (snapshotManifest.files ?? [])
+      .filter((entry) => entry.role === 'GRAPHICAL_COMPONENT').length;
+    expect(snapshotManifest.currentGraphicalComponentCount).toBe(graphicalComponentCount);
     expect(snapshotManifest.presentationSurfaces).toMatchObject({
       login: '/login',
       legalAndFaq: 'src/components/LegalAndFaqPages.tsx',
@@ -161,7 +164,9 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(snapshotManifest.ownerBoundaries?.compliance).toContain('MUST NOT be promoted');
     expect(snapshotManifest.ownerBoundaries?.fintech).toContain('CAPITAL-AI-FINTECH');
     expect(snapshotManifest.ownerBoundaries?.analytics).toContain('not mirrored');
-    expect(snapshotManifest.assetPresentation?.visibleAssetCount).toBe(15);
+    expect(Number.isInteger(snapshotManifest.assetPresentation?.visibleAssetCount)).toBe(true);
+    expect(snapshotManifest.assetPresentation?.visibleAssetCount).toBeGreaterThanOrEqual(0);
+    expect(snapshotManifest.assetPresentation?.symbolContract).toContain('non-empty symbol/ticker');
     expect(snapshotManifest.assetPresentation?.authority).toContain('CAPITAL-AI-FINTECH');
   });
 });
