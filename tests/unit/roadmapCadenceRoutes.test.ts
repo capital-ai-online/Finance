@@ -26,7 +26,7 @@ describe('roadmap cadence live projection', () => {
       commit: { message: 'Merge pull request #' + String(pr) + ' from capital-ai-online/test' },
     });
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes('/commits?sha=main')) {
         return response([
@@ -51,7 +51,8 @@ describe('roadmap cadence live projection', () => {
       }
       if (url.includes('/compare/')) return response({ status: 'ahead' });
       throw new Error('Unexpected URL ' + url);
-    }) as typeof fetch;
+    });
+    const fetchMock = fetchSpy as typeof fetch;
 
     const projection = await buildRoadmapCadenceProjection(fetchMock, {
       version: '0.6.0',
@@ -64,10 +65,10 @@ describe('roadmap cadence live projection', () => {
 
     expect(projection.repository.currentMainSha).toBe(currentMain);
     expect(projection.production.commitSha).toBe(productionSha);
-    expect(fetchMock.mock.calls.some(([url]) =>
+    expect(fetchSpy.mock.calls.some(([url]) =>
       String(url).includes('/contents/package.json?ref=' + currentMain),
     )).toBe(true);
-    expect(fetchMock.mock.calls.some(([url]) =>
+    expect(fetchSpy.mock.calls.some(([url]) =>
       String(url).includes('/contents/docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json?ref=' + currentMain),
     )).toBe(true);
     expect(projection.cadence).toMatchObject({
