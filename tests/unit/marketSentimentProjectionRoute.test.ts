@@ -3,13 +3,17 @@ import { describe, expect, it } from 'vitest';
 
 const routes = readFileSync('src/features/news/newsRoutes.ts', 'utf8');
 const contract = readFileSync('src/platform/Scoring/SentimentEvidenceProjection.ts', 'utf8');
+const newsFeatureAdapter = readFileSync('src/platform/Scoring/SentimentNewsFeatureEvidenceAdapter.ts', 'utf8');
 
 describe('Market sentiment projection route boundary', () => {
   it('exposes one FINTECH projection endpoint through the existing news router', () => {
     expect(routes).toContain("newsRouter.get('/sentiment-projection'");
     expect(routes).toContain('buildAttestedMarketSentimentProjection');
     expect(routes).toContain('SENTIMENT_FEATURE_CONTRACT_VERSION');
+    expect(routes).toContain('buildNewsDerivedSentimentFeatureAttestations');
+    expect(routes).toContain('attestedFeatures,');
     expect(routes).toContain("scoreCandidate: false");
+    expect(routes).toContain('const providerLimit = PROVIDER_FETCH_LIMIT;');
   });
 
   it('does not promote headline heuristic metadata into FINTECH scoring', () => {
@@ -18,6 +22,13 @@ describe('Market sentiment projection route boundary', () => {
     expect(contract).toContain("scoreCandidates.length === 0");
     expect(contract).toContain("status === 'SOURCE_UNAVAILABLE'");
     expect(contract).toContain('evaluateSentimentResearch(researchItems)');
+  });
+
+  it('keeps partial existing-evidence attestations below the score-candidate gate', () => {
+    expect(newsFeatureAdapter).toContain("'news-exact-headline-novelty/1.0.0'");
+    expect(newsFeatureAdapter).toContain("'news-evidence-count-24h/1.0.0'");
+    expect(newsFeatureAdapter).toContain('It does not infer polarity/intensity, source trust/credibility, bot probability or market');
+    expect(routes).toContain('A partial vector therefore remains ineligible for scoring.');
   });
 
   it('requires the complete governed feature vector before READY', () => {
