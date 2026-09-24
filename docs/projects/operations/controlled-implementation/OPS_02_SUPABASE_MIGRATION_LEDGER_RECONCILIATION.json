@@ -603,9 +603,9 @@
       "local_path": "supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"
     },
     {
-      "local_version": "20260923193000",
+      "local_version": "20260924011545",
       "local_name": "auth_registration_profile_convergence",
-      "local_path": "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql"
+      "local_path": "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
     }
   ],
   "provider_readback": {
