@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 export const ARTIFACT_VERSION_INVENTORY_VERSION = 'artifact-version-inventory/1.0.0' as const;
@@ -70,7 +71,7 @@ interface GitIndexEntry {
 
 const MAX_SIGNAL_BYTES = 1024 * 1024;
 const GENERATED_PATH = /(^|\/)(?:dist|coverage|generated|artifacts?|snapshots?)(?:\/|$)/i;
-const GENERATED_HEADER = /^\\s*(?:(?:\\/\\/|#|<!--|\\*)\\s*)?(?:@generated\\b|this file is (?:auto[- ]?)?generated\\b|generated file\\b|do not edit\\b)/im;
+const GENERATED_HEADER = /^\s*(?:(?:\/\/|#|<!--|\*)\s*)?(?:@generated\b|this file is (?:auto[- ]?)?generated\b|generated file\b|do not edit\b)/im;
 const STRONG_SEMANTIC_PATH = /(^|\/)(?:docs\/(?:adr|governance|contracts?)|\.ai\/skills|src\/platform\/Release)(?:\/|$)/i;
 const TEST_OR_FIXTURE_PATH = /(^|\/)(?:tests?|__tests__|fixtures?)(?:\/|$)/i;
 
@@ -265,7 +266,7 @@ function detectSignals(repoPath: string, text: string | null): ArtifactVersionSi
   detectMarkdownSignals(repoPath, text, signals);
   detectYamlSignals(repoPath, text, signals);
 
-  const generatedHeaderWindow = text.split(/\\r?\\n/).slice(0, 8).join('\\n');\n  if (GENERATED_HEADER.test(generatedHeaderWindow)) {
+  const generatedHeaderWindow = text.split(/\r?\n/).slice(0, 8).join('\n');
     pushSignal(signals, 'GENERATED_MARKER', 'generated', 'true');
   }
 
