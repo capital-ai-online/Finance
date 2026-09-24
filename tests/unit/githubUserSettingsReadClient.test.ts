@@ -80,7 +80,7 @@ describe('GitHub user settings read client', () => {
     expect(caught).toMatchObject({
       status: 403,
       providerDiagnostics: {
-        classification: 'FORBIDDEN',
+        classification: 'SSO_AUTHORIZATION_REQUIRED',
         oauthScopes: ['read:user', 'user:email'],
         acceptedOauthScopes: ['user:email'],
         ssoRequired: true,
