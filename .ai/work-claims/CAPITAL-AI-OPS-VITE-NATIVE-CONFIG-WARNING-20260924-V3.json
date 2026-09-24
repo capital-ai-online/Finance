@@ -15,12 +15,13 @@
   "projectFolder": "docs/projects/operations/",
   "projectStage": "PVC-02",
   "baseBranch": "main",
-  "baseSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
-  "lastSyncedMainSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+  "baseSha": "b1d78a51cd7e833a0cc7b1d3ae288593e70eb6cd",
+  "lastSyncedMainSha": "b1d78a51cd7e833a0cc7b1d3ae288593e70eb6cd",
   "branch": "agent/operations-vite-native-config-warning-20260924-v3",
   "claimedPaths": [
     "vite.config.ts",
     "tests/unit/viteNativeConfigWarningHygiene.test.ts",
+    "tests/unit/pdfBrandGovernance.test.ts",
     ".ai/work-claims/CAPITAL-AI-OPS-VITE-NATIVE-CONFIG-WARNING-20260924-V3.json"
   ],
   "scopeBoundary": [
@@ -45,7 +46,10 @@
     "previousWorkflowRun": 36004225901,
     "previousFailure": "stale branch head rejected by productionPreflight",
     "agentLaneAtRebind": "FREE",
-    "cjsImportMetaStatus": "DONE_MAIN"
+    "cjsImportMetaStatus": "DONE_MAIN",
+    "governanceRun36007010492": "stale PR production baseline in run; PR body later converged to expected baseline e58238f387080baac2a4d61238aabbdf843c1682158f08a910bbede05597ec93",
+    "ciRun36007010612": "pdfBrandGovernance.test.ts still asserted __dirname after Vite migrated to import.meta.dirname",
+    "currentMain": "b1d78a51cd7e833a0cc7b1d3ae288593e70eb6cd"
   },
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "startedAt": "2026-09-24T13:23:45Z"
