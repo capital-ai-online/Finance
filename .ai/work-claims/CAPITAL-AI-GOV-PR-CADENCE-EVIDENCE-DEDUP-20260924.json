@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-CADENCE-EVIDENCE-DEDUP-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Keep Version & Deploy Cadence as the single live PR cadence evidence projection and remove duplicate merge-count version/deployment presentation from the PR template and existing v1.8 bodies.",
+  "workItemDE": "Version-&-Deployment-Evidence als einzige Live-Cadence-Anzeige behalten und alle doppelten merge-basierten Version-/Deployment-Statusanzeigen aus PR-Template und bestehenden v1.8-PR-Bodies entfernen.",
+  "startedAt": "2026-09-24T05:53:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "b0b6985a4786961f3a3125619566fa02003552d4",
+  "lastSyncedMainSha": "b0b6985a4786961f3a3125619566fa02003552d4",
+  "branch": "agent/governance-pr-cadence-evidence-dedup-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "priorityReason": "The PR surface currently repeats the same 5/10 cadence in three places; one live evidence block is sufficient and reduces stale/conflicting presentation risk.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-CADENCE-EVIDENCE-DEDUP-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-EVIDENCE-VERSION-CADENCE-20260924.json",
+    ".github/pull_request_template.md",
+    "scripts/pr/reconcilePrDecisionEvidence.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
+    "scripts/pr/versionCadenceEvidence.test.mjs"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-GOV / PVC-05 PR presentation and evidence projection only.",
+    "Keep the existing Version & Deploy Cadence evidence block and its live canonical mergeCadence source.",
+    "Remove duplicate header and Decision-section merge-count cadence presentation; retain the Production / Deploy Cadence decision gate.",
+    "No new GitHub Actions workflow, cadence controller, version registry or deployment authority.",
+    "No package.json, Render, Production, IAM, billing, secret or direct-main mutation."
+  ],
+  "dependencies": [
+    "/AGENTS.md@b0b6985a4786961f3a3125619566fa02003552d4",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "scripts/operations/mergeCadence.mjs@CURRENT_MAIN",
+    "merged PR #1372"
+  ],
+  "exitEvidence": [
+    "PR template contains exactly one Version & Deploy Cadence evidence block.",
+    "Top package/Render/Auto-Deploy merge-count summary is absent.",
+    "Decision-section Production & Cadence duplicate table is absent.",
+    "Decision Evidence Reconciler removes the bounded duplicate presentation from existing v1.8 bodies and refreshes the evidence block from canonical cadence state.",
+    "Production / Deploy Cadence remains a decision gate without duplicating merge-count status.",
+    "Focused regression tests and hosted exact-head checks pass."
+  ],
+  "acceptanceCriteria": [
+    "Current version, x/2 deploy cycle, x/10 merge progress and next PATCH remain live in Evidence.",
+    "No duplicate cadence merge-count status remains elsewhere in the PR template.",
+    "Existing v1.8 bodies converge idempotently and fail closed on ambiguous duplicate-section boundaries.",
+    "No changed-file overlap with the currently open PR #1376; merged PR #1375 is terminal evidence only.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "recorrelatedAt": "2026-09-24T06:03:00+02:00",
+  "recorrelationNote": "CURRENT_MAIN advanced through Human-merged PR #1375. Its Documentary-only changed paths have no overlap with this Governance PR-template/evidence slice; branch was rebuilt from the new exact main before PR creation. Open PR #1376 remains FE-only and has no claimed-path overlap."
+}
