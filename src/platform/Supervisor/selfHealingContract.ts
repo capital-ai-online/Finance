@@ -400,10 +400,20 @@ function blocked(action: RemediationAction, reason: RemediationBlockReason): Rem
   return { state: 'BLOCKED', action: cloneAction(action), reason };
 }
 
-export const SELF_HEALING_EVIDENCE_CONTRACT_VERSION = 'self-healing-evidence/1.0.0' as const;
+export const SELF_HEALING_EVIDENCE_CONTRACT_VERSION = 'self-healing-evidence/1.1.0' as const;
 
 export type IndependentAssuranceDomain = 'QM' | 'SECURITY';
 export type IndependentAssuranceState = 'NOT_REQUIRED' | 'VERIFIED' | 'PENDING' | 'BLOCKED' | 'FAILED';
+
+export interface ArtifactVersionGenerationChange {
+  path: string;
+  domainBefore: string | null;
+  domainAfter: string | null;
+  semanticVersionBefore: string | null;
+  semanticVersionAfter: string | null;
+  identityBefore: string | null;
+  identityAfter: string | null;
+}
 
 export type EvidenceGenerationIdentity =
   | {
@@ -413,7 +423,13 @@ export type EvidenceGenerationIdentity =
       headSha: string;
       baseSha: string;
       currentMainSha: string;
+      productionSha: string;
       controlPlaneVersion: string;
+      controlPlaneGeneration: string;
+      prTemplateVersion: string;
+      platformVersionCadenceGeneration: string;
+      artifactVersionInventoryHash: string;
+      changedArtifactDomainVersions: readonly ArtifactVersionGenerationChange[];
       generationDigest: string;
     }
   | {
@@ -510,6 +526,40 @@ function validGeneration(generation: EvidenceGenerationIdentity, issues: string[
     if (!Number.isInteger(generation.prNumber) || generation.prNumber < 1) issues.push('PR_NUMBER_INVALID');
     if (!SHA40.test(generation.headSha)) issues.push('PR_HEAD_SHA_INVALID');
     if (!SHA40.test(generation.baseSha)) issues.push('PR_BASE_SHA_INVALID');
+    if (!SHA40.test(generation.productionSha)) issues.push('PRODUCTION_SHA_INVALID');
+    if (!nonEmpty(generation.controlPlaneGeneration)) issues.push('CONTROL_PLANE_GENERATION_REQUIRED');
+    if (!nonEmpty(generation.prTemplateVersion)) issues.push('PR_TEMPLATE_VERSION_REQUIRED');
+    if (!nonEmpty(generation.platformVersionCadenceGeneration)) {
+      issues.push('PLATFORM_VERSION_CADENCE_GENERATION_REQUIRED');
+    }
+    if (!SHA256.test(generation.artifactVersionInventoryHash)) {
+      issues.push('ARTIFACT_VERSION_INVENTORY_HASH_INVALID');
+    }
+
+    let previousPath = '';
+    for (const change of generation.changedArtifactDomainVersions) {
+      if (!nonEmpty(change.path)) issues.push('CHANGED_ARTIFACT_PATH_REQUIRED');
+      if (previousPath && change.path.localeCompare(previousPath) <= 0) {
+        issues.push('CHANGED_ARTIFACT_DOMAIN_VERSIONS_NOT_STRICTLY_SORTED');
+      }
+      previousPath = change.path;
+
+      if (!nonEmpty(change.domainBefore ?? undefined) && !nonEmpty(change.domainAfter ?? undefined)) {
+        issues.push('CHANGED_ARTIFACT_DOMAIN_REQUIRED');
+      }
+      if (change.identityBefore !== null && !SHA256.test(change.identityBefore)) {
+        issues.push('CHANGED_ARTIFACT_IDENTITY_BEFORE_INVALID');
+      }
+      if (change.identityAfter !== null && !SHA256.test(change.identityAfter)) {
+        issues.push('CHANGED_ARTIFACT_IDENTITY_AFTER_INVALID');
+      }
+      if (change.identityBefore === null && change.identityAfter === null) {
+        issues.push('CHANGED_ARTIFACT_IDENTITY_REQUIRED');
+      }
+      if (change.identityBefore !== null && change.identityBefore === change.identityAfter) {
+        issues.push('CHANGED_ARTIFACT_IDENTITY_UNCHANGED');
+      }
+    }
   } else if (generation.kind === 'RUNTIME') {
     if (!SHA40.test(generation.deployedSha)) issues.push('DEPLOYED_SHA_INVALID');
   } else {
