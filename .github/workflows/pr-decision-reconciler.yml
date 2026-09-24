@@ -228,10 +228,53 @@ jobs:
               expected.every((heading, index) => headings[index] === heading) &&
               occurrenceCount(technicalDetailsSummary) === 1 &&
               occurrenceCount(machineBaselineSummary) === 1;
-            core.setOutput('bootstrap_required', currentV18 && !canonical ? 'true' : 'false');
+            const bootstrapRequired = currentV18 && !canonical;
+
+            let projectId = '';
+            let primaryOwner = '';
+            let affectedPvc = '';
+            if (bootstrapRequired) {
+              const projectMatch = body.match(/^- \\*\\*Projekt:\\*\\*\\s*.*?(CAPITAL-AI-[A-Z0-9-]+).*$/m);
+              const ownerPvcMatch = body.match(
+                /^- \\*\\*Owner \\/ PVC:\\*\\*\\s*(CAPITAL-AI-[A-Z0-9-]+)\\s*·\\s*([^\\r\\n]+)\\s*$/m,
+              );
+              const titleProject = String(pr.title || '').match(/^\\[(CAPITAL-AI-[A-Z0-9-]+)\\]/)?.[1] || '';
+              const projectLabels = (pr.labels || [])
+                .map((label) => typeof label === 'string' ? label : String(label?.name || ''))
+                .filter((name) => /^project:CAPITAL-AI-[A-Z0-9-]+$/.test(name));
+
+              if (!projectMatch || !ownerPvcMatch) {
+                core.setFailed('Claimless v1.8 bootstrap requires existing Projekt and Owner / PVC evidence.');
+                return;
+              }
+
+              projectId = ownerPvcMatch[1];
+              primaryOwner = ownerPvcMatch[1];
+              affectedPvc = ownerPvcMatch[2].replace(/\\s+/g, ' ').trim();
+
+              if (projectMatch[1] !== projectId || titleProject !== projectId) {
+                core.setFailed(
+                  `Claimless v1.8 bootstrap project identity mismatch: body=${projectMatch[1]} owner=${projectId} title=${titleProject || 'missing'}.`,
+                );
+                return;
+              }
+              if (!projectLabels.includes(`project:${projectId}`)) {
+                core.setFailed(`Claimless v1.8 bootstrap requires canonical project label project:${projectId}.`);
+                return;
+              }
+              if (!/^PVC-\\d{2}(?:\\s*\\/\\s*PVC-\\d{2})*$/.test(affectedPvc)) {
+                core.setFailed(`Claimless v1.8 bootstrap PVC evidence is not canonical: ${affectedPvc || 'missing'}.`);
+                return;
+              }
+            }
+
+            core.setOutput('bootstrap_required', bootstrapRequired ? 'true' : 'false');
             core.setOutput('head_sha', normalizeSha(pr.head.sha));
             core.setOutput('head_ref', String(pr.head.ref || ''));
             core.setOutput('main_sha', normalizeSha(main.commit.sha));
+            core.setOutput('project_id', projectId);
+            core.setOutput('primary_owner', primaryOwner);
+            core.setOutput('affected_pvc', affectedPvc);
 
       - name: Trusted Policy exakt an Live-CURRENT_MAIN binden
         working-directory: policy
@@ -328,6 +371,9 @@ jobs:
           PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md
           PR_PROJECT_MAPPING_PATH: ../policy/docs/projects/README.md
           PR_BODY_OUTPUT: artifacts/pr/decision-reconciler-bootstrap-body.md
+          PR_PROJECT_ID: ${{ steps.bootstrap_snapshot.outputs.project_id }}
+          PR_PRIMARY_OWNER: ${{ steps.bootstrap_snapshot.outputs.primary_owner }}
+          PR_AFFECTED_PVC: ${{ steps.bootstrap_snapshot.outputs.affected_pvc }}
           # Existing PRs may predate work-claim enforcement. This flag is scoped to
           # trusted-main body reconciliation only; new Agent PR creation remains
           # claim-required in open-agent-draft-pr.yml.
