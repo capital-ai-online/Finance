@@ -17,24 +17,26 @@
   "priority": "P1",
   "branchName": "operations/auth-migration-version-alignment-20260924",
   "baseBranch": "main",
-  "baseSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
+  "baseSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
   "workItem": "Align the canonical auth-registration migration filename with the verified Supabase remote migration history version created by the authorized production application.",
-  "approvedScope": "Rename only the already-applied idempotent migration from 20260923193000 to the observed remote version 20260924011545 and preserve byte-identical SQL; add this bounded work claim.",
+  "approvedScope": "Rename only the already-applied idempotent migration from 20260923193000 to the observed remote version 20260924011545, preserve byte-identical SQL, and update the two canonical test path references.",
   "claimedPaths": [
     ".ai/work-claims/OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924.json",
     "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql",
-    "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
+    "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql",
+    "tests/unit/authRegistrationProfileConvergence.test.ts"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
     "Human Owner direction in current interaction",
     "Supabase migration history readback version 20260924011545",
-    "CURRENT_MAIN 9b049c52041a48827e11bdaa58c2eb8154811799"
+    "CURRENT_MAIN 8a173021a03d6776fa7323523c1e2acd713c3c5b after PR #1360"
   ],
   "exitEvidence": [
     "New migration path exists with byte-identical SQL.",
     "Old migration path is removed.",
     "Repository migration version matches remote schema_migrations history.",
+    "Auth-registration convergence tests resolve the aligned migration path and pass.",
     "Exact-head CI/Governance/Security checks complete truthfully.",
     "Human/CODEOWNER merge remains required."
   ],
