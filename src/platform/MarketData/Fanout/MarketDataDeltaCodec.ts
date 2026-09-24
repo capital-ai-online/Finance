@@ -38,6 +38,34 @@ function cloneTick(tick: MarketDataFanoutTick): MarketDataFanoutTick {
   return { ...tick };
 }
 
+function encodeDeltaValue(field: DeltaField, value: MarketDataFanoutTick[DeltaField]): unknown {
+  if ((field === 'sourceTimestamp' || field === 'receivedAt') && typeof value === 'string') {
+    return Date.parse(value);
+  }
+  if (field === 'qualityState') {
+    if (value === 'LIVE') return 0;
+    if (value === 'DELAYED') return 1;
+    if (value === 'STALE') return 2;
+  }
+  return value;
+}
+
+function decodeDeltaValue(field: DeltaField, value: unknown): unknown {
+  if (field === 'sourceTimestamp' || field === 'receivedAt') {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      throw new Error('MARKET_DATA_DELTA_INVALID_TIMESTAMP');
+    }
+    return new Date(value).toISOString();
+  }
+  if (field === 'qualityState') {
+    if (value === 0) return 'LIVE';
+    if (value === 1) return 'DELAYED';
+    if (value === 2) return 'STALE';
+    throw new Error('MARKET_DATA_DELTA_INVALID_QUALITY_STATE');
+  }
+  return value;
+}
+
 export class MarketDataDeltaCodec {
   private readonly previousByRoom = new Map<number, { sequence: number; tick: MarketDataFanoutTick }>();
 
@@ -67,7 +95,7 @@ export class MarketDataDeltaCodec {
       const field = DELTA_FIELDS[index];
       if (previous.tick[field] !== tick[field]) {
         mask |= (1 << index);
-        changed.push(tick[field]);
+        changed.push(encodeDeltaValue(field, tick[field]));
       }
     }
 
@@ -109,7 +137,7 @@ export function decodeMarketDataFrame(
   for (let index = 0; index < DELTA_FIELDS.length; index += 1) {
     if ((mask & (1 << index)) === 0) continue;
     const field: DeltaField = DELTA_FIELDS[index];
-    next[field] = values[cursor];
+    next[field] = decodeDeltaValue(field, values[cursor]);
     cursor += 1;
   }
   if (cursor !== values.length) throw new Error('MARKET_DATA_DELTA_FIELD_COUNT_MISMATCH');
