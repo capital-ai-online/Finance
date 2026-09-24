@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDeploymentIdentity, type DeploymentIdentity } from '../deploymentIdentity';
+import { loadRoadmapStateProjection } from './roadmapStateProjection';
 import {
   computeMergeCadence,
   isCadenceContractActive,
@@ -275,6 +276,20 @@ roadmapCadenceRouter.get('/cadence', async (_req, res) => {
   } catch (error) {
     res.status(503).json({
       schemaVersion: 'roadmap-cadence-projection/1.0.0',
+      role: 'NON_AUTHORIZING_LIVE_PROJECTION',
+      state: 'EVIDENCE_UNAVAILABLE',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+roadmapCadenceRouter.get('/state', async (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=90');
+    res.json(await loadRoadmapStateProjection());
+  } catch (error) {
+    res.status(503).json({
+      schemaVersion: 'roadmap-live-state/1.0.0',
       role: 'NON_AUTHORIZING_LIVE_PROJECTION',
       state: 'EVIDENCE_UNAVAILABLE',
       message: error instanceof Error ? error.message : String(error),
