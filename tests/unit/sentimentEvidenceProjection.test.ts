@@ -48,6 +48,40 @@ describe('Sentiment evidence feature contract', () => {
     expect(projection.summary).toContain('Headline-Heuristik bleibt Präsentationsmetadatum');
   });
 
+  it('records partial real feature attestations without opening the score-candidate gate', () => {
+    const projection = buildAttestedMarketSentimentProjection([
+      {
+        evidenceRef: 'gdelt:doc:partial',
+        provider: 'gdelt',
+        source: 'example.com',
+        publishedAt: '2026-09-23T17:00:00Z',
+        headline: 'Partial governed evidence',
+        scoreCandidate: false,
+        attestedFeatures: {
+          novelty: {
+            value: 1,
+            evidenceRefs: ['gdelt:doc:partial'],
+            method: 'news-exact-headline-novelty/1.0.0',
+          },
+          mentionIntensity: {
+            value: 0.1,
+            evidenceRefs: ['gdelt:doc:partial', 'free-crypto-news:other'],
+            method: 'news-evidence-count-24h/1.0.0',
+          },
+        },
+      },
+    ], NOW);
+
+    const item = projection.attestation.items[0];
+    expect(item.features.novelty.status).toBe('ATTESTED');
+    expect(item.features.mentionIntensity.status).toBe('ATTESTED');
+    expect(item.features.polarity.status).toBe('UNAVAILABLE');
+    expect(item.features.botProbability.status).toBe('UNAVAILABLE');
+    expect(projection.attestation.scoreCandidateCount).toBe(0);
+    expect(projection.status).toBe('NOT_COMPUTABLE');
+    expect(projection.score).toBeNull();
+  });
+
   it('returns SOURCE_UNAVAILABLE without verified evidence instead of a neutral score', () => {
     const projection = buildAttestedMarketSentimentProjection([], NOW);
     expect(projection.status).toBe('SOURCE_UNAVAILABLE');
