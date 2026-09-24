@@ -17,8 +17,8 @@
   "projectStage": "PVC-02/PVC-08/PVC-18",
   "startedAt": "2026-09-24T15:00:00Z",
   "baseBranch": "main",
-  "baseSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
-  "lastSyncedMainSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "baseSha": "24c78d49cc35aafbd5b3e8dc07b7e5a13ebb9553",
+  "lastSyncedMainSha": "24c78d49cc35aafbd5b3e8dc07b7e5a13ebb9553",
   "branch": "agent/operations-render-management-hardening-20260924-v2",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-RENDER-MANAGEMENT-HARDENING-20260924.json",
@@ -44,5 +44,10 @@
     "No unresolved writer/file/semantic overlap before the next merge decision.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "currentMainCorrelation": {
+    "sha": "24c78d49cc35aafbd5b3e8dc07b7e5a13ebb9553",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-24T16:20:00Z"
+  }
 }
