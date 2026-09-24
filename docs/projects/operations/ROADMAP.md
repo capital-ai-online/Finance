@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@7c8f572e7112c96ee31264ec8a7775b971678a4d`
+**Baseline:** `main@58ac24731bf597e9356788d0293d6c733337b364`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -13,6 +13,31 @@
 `historical/non-terminal != active`
 
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, prior branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+
+## Current execution priority — Owner-directed GitHub management inventory 2026-09-24
+
+### OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-01
+
+**State:** `IMPLEMENTATION_ON_BRANCH / READ_ONLY`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08, PVC-18`  
+**Source package:** `work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md`
+
+Extend the existing settings inventory into one four-scope management adapter:
+Enterprise → Organization → Repository → User. Existing readers remain canonical
+scope transports. Missing API/auth coverage is explicit `NOT_OBSERVABLE`; no
+provider mutation is introduced.
+
+### OPS-CI-VALIDATION-CLASSIFICATION-V2
+
+**State:** `READY_AFTER_SETTINGS_INVENTORY / INDEPENDENT`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07`  
+**Source package:** `work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md`
+
+Reduce PR runner work through finer deterministic classification under the existing
+`none/focused/full` planner. Main pushes and protected/high-risk/global-trigger
+changes remain FULL. Persistent Render self-hosted runner deployment is not selected
+as the initial optimization because it adds paid compute plus a larger persistent
+trust boundary; ephemeral/JIT feasibility remains measurement-gated.
 
 ## Current execution priority — Owner-directed Enterprise Actions hardening 2026-09-24
 
