@@ -25,6 +25,7 @@ import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
 import { ownerAuthorizationRouter } from '../ownerAuthorization/router';
 import { githubBillingAlertRouter } from './githubBillingAlertRoutes';
 import { githubEnterpriseActionsPolicyRouter } from './githubEnterpriseActionsPolicyRoutes';
+import { googleAnalyticsReadRouter } from './googleAnalyticsReadRoutes';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { stripeReturnUrlGuard } from '../middleware/stripeReturnUrlGuard';
 import { realtimeAiNewsfeedEntitlement } from '../middleware/realtimeAiNewsfeedEntitlement';
@@ -140,6 +141,7 @@ export function registerApplicationRoutes(
   app.use('/api/admin/diagnostics', adminDiagnosticsRouter);
   app.use('/api/admin/quality-center', qualityCenterRouter);
   app.use('/api/admin/github-enterprise', githubEnterpriseActionsPolicyRouter);
+  app.use('/api/admin/google-analytics', googleAnalyticsReadRouter);
   app.use('/api/alerts', alertsRouter);
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
