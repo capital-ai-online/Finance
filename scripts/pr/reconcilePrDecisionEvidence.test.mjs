@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 import { computeMergeCadence } from '../operations/mergeCadence.mjs';
 import { computeProductionBaselineId } from './lib.mjs';
+import { replaceProductionBaselineBlock } from './productionBaselineBody.mjs';
 import {
   collectDecisionPolicy,
   decisionStateForCheck,
@@ -157,8 +158,8 @@ test('cadence-aware production baseline accepts queued ancestor lag and blocks t
   baseline.drift = { ...baseline.drift, productionToMainCommits: 3 };
   baseline.baselineId = computeProductionBaselineId(baseline);
 
-  const projected = prepareLeadingPrBody(canonicalBody(), baseline, { prClass: 'C' });
-  assert.equal(projected.eligible, true);
+  const projected = replaceProductionBaselineBlock(canonicalBody(), baseline);
+  assert.equal(projected.changed, true);
 
   const cadence = (overrides = {}) => ({
     ref: mainSha,
@@ -190,8 +191,8 @@ test('cadence-aware production baseline accepts queued ancestor lag and blocks t
   const wrongRepository = structuredClone(baseline);
   wrongRepository.production.repoSlug = 'other/repository';
   wrongRepository.baselineId = computeProductionBaselineId(wrongRepository);
-  const wrongRepositoryProjection = prepareLeadingPrBody(canonicalBody(), wrongRepository, { prClass: 'C' });
-  assert.equal(wrongRepositoryProjection.eligible, true);
+  const wrongRepositoryProjection = replaceProductionBaselineBlock(canonicalBody(), wrongRepository);
+  assert.equal(wrongRepositoryProjection.changed, true);
   assert.equal(
     evaluateProductionBaseline(wrongRepositoryProjection.body, mainSha, headSha, {
       productionBaseline: wrongRepository,
