@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-PR-PREFLIGHT-BRANCH-SYNC-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Route stale PR heads through the existing canonical branch-sync before productionPreflight so the leading PR Decision Evidence Reconciler can reach a fresh evidence generation.",
+  "workItemDE": "Stale PR-Heads vor productionPreflight über den bestehenden kanonischen Branch-Sync führen, damit der führende PR Decision Evidence Reconciler eine frische Evidence-Generation erreichen kann.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "6bfc2af36b9fc6804709582dd9d9f60eee5ae136",
+  "lastSyncedMainSha": "6bfc2af36b9fc6804709582dd9d9f60eee5ae136",
+  "branch": "agent/operations-pr-preflight-branch-sync-guard-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-04 / PVC-08 / PVC-18",
+  "priority": "P0",
+  "priorityReason": "Post-merge validation of PR #1381 proved that productionPreflight fails on a stale head before the existing branch-sync delegation is reachable.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-SH02-PR-PREFLIGHT-BRANCH-SYNC-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
+    "docs/projects/operations/work-packages/OPS_SH02_PR_PREFLIGHT_BRANCH_SYNC_01_2026-09-24.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "existing PR Decision Evidence Reconciler single-writer chain",
+    "existing sync-agent-pr-branches.yml canonical branch-sync",
+    "PR #1381 post-merge run 35959396070 / job 107504542284"
+  ],
+  "scopeBoundary": [
+    "No second branch-sync writer, PR-body writer, controller or workflow architecture.",
+    "The existing sync-agent-pr-branches.yml remains the sole delegated branch synchronization path.",
+    "productionPreflight remains fail-closed and unchanged; stale generations are filtered before invoking it.",
+    "Candidate code remains data-only; ancestry classification uses git merge-base against trusted CURRENT_MAIN.",
+    "No direct main mutation and no autonomous merge."
+  ],
+  "exitEvidence": [
+    "A stale PR head is classified before productionPreflight.",
+    "The existing canonical branch-sync is dispatched for stale generations.",
+    "Scope classification, productionPreflight and PR body reconciliation are skipped for the stale generation.",
+    "After branch sync creates a fresh head generation, normal exact-head checks and evidence reconciliation resume.",
+    "Workflow security, Governance and exact-head CI pass."
+  ],
+  "acceptanceCriteria": [
+    "PR #1381-style main drift no longer fails the leading reconciler at productionPreflight before branch-sync delegation.",
+    "A head that already contains CURRENT_MAIN follows the unchanged productionPreflight and evidence-reconciliation path.",
+    "Dynamic drift discovered later by reconcilePrDecisionEvidence continues to use the existing post-reconcile branch-sync delegation.",
+    "No stale generation writes PR Decision/Evidence."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

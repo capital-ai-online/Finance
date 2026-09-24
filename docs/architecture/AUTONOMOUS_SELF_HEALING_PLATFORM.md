@@ -7,7 +7,7 @@
 **Frontend role:** presentation/recovery consumer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
-**Correlation baseline:** `main@39aeb4473ae3f0b26a174cf5654bb78b3a288c29`  
+**Correlation baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`  
 **Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.2.0`
 
 ## 1. Goal
@@ -216,6 +216,32 @@ commitSha
 ```
 
 Operational telemetry and durable Security/Compliance evidence remain separate according to their existing authorities.
+
+### 9.1 Repository/PR convergence generations
+
+Repository and Pull Request evidence uses one generation-aware convergence model; this is an evidence-binding rule, not a new control plane.
+
+A repository/PR convergence generation is identified by the correlated tuple:
+
+`(CURRENT_MAIN, PR_HEAD, PR_BASE, PRODUCTION_SHA, CONTROL_PLANE_GENERATION, PR_TEMPLATE_VERSION, PLATFORM_VERSION/CADENCE_GENERATION)`.
+
+A material change to any member invalidates evidence derived from the earlier generation. This permits one newly correlated execution of an already-registered bounded action. Repeating the same action against the unchanged generation remains fail-closed.
+
+The current architecture reuses only existing repair ownership:
+
+- `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` for reproducible canonical project `ROADMAP.md` / `TASK_REGISTER.md` baseline drift;
+- `REPOSITORY_PR_DECISION_EVIDENCE_DRIFT -> RECONCILE_PR_DECISION_EVIDENCE` for canonical PR structure, Production baseline and Decision/Evidence projection drift;
+- the registered `MERGE_CADENCE_PATCH_V1` repairer through the existing Release Version Gate for fixed 10-merge PATCH materialization.
+
+Observed PR #1371/#1373/#1374/#1375/#1376/#1380 evidence proves that these existing repairers can form a dependency chain across changing generations. A successful repository mutation that creates a new PR head must therefore cause fresh CURRENT_MAIN/generation readback, exact-head validation, any owner-specific current-state projection repair, and finally PR-body evidence rebind to the stable final head. A mutation result alone is never convergence.
+
+The visible PR Decision projection is also generation-bound. If the latest exact-head Required Checks become terminal after an earlier body rendered `BLOCKED` or `EVIDENCE_PENDING`, the body must be reconciled from the latest exact-head evidence before that projection is treated as current merge-readiness evidence.
+
+PR terminal state is also a hard generation boundary. PR #1380 demonstrated the safe race: the single Decision Evidence Reconciler was scheduled while the PR was open, Human/CODEOWNER merge completed before the writer bound its bootstrap snapshot, and the writer then rejected the closed PR without mutation. A post-terminal body write is forbidden; this no-write outcome is safe convergence, not a recovery failure requiring another repair.
+
+This rule creates no new remediation action, finding namespace, writer, scheduler or workflow. It does not activate SH-02.12. Project/PVC ownership, protected provider boundaries, Security/Compliance/QM independence and the current merge-authority contract remain unchanged.
+
+Implementation planning and observed evidence are captured in `docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md`. PRs #1377/#1378/#1380 are terminal merged evidence and no longer active writers. Closed/unmerged #1379 remains historical evidence only.
 
 ## 10. Rollout
 
