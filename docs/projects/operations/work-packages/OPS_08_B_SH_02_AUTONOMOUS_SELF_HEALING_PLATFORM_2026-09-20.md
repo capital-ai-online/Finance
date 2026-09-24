@@ -21,8 +21,8 @@
 **SH-02.9A post-merge convergence:** PR #1259 → `720e4a80904a881e5ef732b66e1303f51a769d8e`  
 **SH-02.9 merge:** PR #1262 → `75ae1ff92e80ef68a77803d2c41ee272bc003b3b`  
 **SH-02.9 post-merge convergence:** PR #1271 → `886486e057fea2fe833104b23f7a36d05d0b9b58`  
-**Current functional slice:** `SH-02.11A` — `RETRY_SAFE_OPERATION` pre-activation verification; action remains HELD pending fresh independent Security/QM assurance  
-**Next functional slice:** `SH-02.11A` — first staged SH-1 activation candidate; pre-activation only, no HELD -> ENABLED mutation in this slice  
+**Current functional slice:** `SH-02.12B` — routed Issue repair eligibility contract; read-only, no executor  
+**Next functional slice:** `SH-02.12B` — exact-head validation and Human/CODEOWNER merge of the read-only eligibility contract; no Issue-derived mutation activation  
 **SH-02.10 terminal evidence:** Security PR #1311 + QM PR #1312 independently assure implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`; current main/Production readback is `31643012f42368b6f85ce9953e19b991248a73d8`  
 **Architecture:** `docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md`
 
@@ -53,8 +53,10 @@ The work package must reuse the existing Supervisor, process lifecycle, Telemetr
 | SH-02.9 | Observability/SLO/incident convergence | OPS / PVC-18,08 | 02.3 | remediation evidence correlates finding -> action -> readback -> convergence without secret/PII leakage | IMPLEMENTED_ON_MAIN / POST_MERGE_CONVERGED via PR #1262 + #1271 |
 | SH-02.9A | Issue Intake & Project Dispatch | OPS / PVC-18,08 | 02.3 + GOV router evidence | existing contract recognizes routing drift; bounded read-only verification binds unchanged routing generation + open Issue + exact project-label provider readback; Issue text grants no authority | IMPLEMENTED_ON_MAIN via PR #1246 / HUMAN-MERGED |
 | SH-02.10 | Fault injection and convergence suite | OPS + QM + SEC | 02.4..02.7 + 02.9; SH-02.8 HELD state is a negative-control scenario and is not activated | deterministic failure matrix proves bounded recovery and safe exhaustion | TERMINAL / INDEPENDENT_ASSURANCE_COMPLETE / PRODUCTION_READBACK_VERIFIED |
-| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | DEPENDENCY_READY / ACTIVATION_NOT_STARTED |
-| SH-02.11A | RETRY_SAFE_OPERATION pre-activation | OPS + SEC + QM / PVC-08,04,18 | SH-02.11 dependency-ready | exact READ_ONLY/IDEMPOTENT boundary, budget, kill switch, verification probe and fresh independent Security/QM assurance before activation | ACTIVE / ACTION_HELD / ASSURANCE_PENDING |
+| SH-02.11 | Staged production activation | OPS / PVC-08 | all enabled tiers verified | kill switch, budgets, production readback, independent verification, no unbounded loop | IMPLEMENTED_ON_MAIN / RETRY_SAFE_OPERATION_ENABLED / SH-2+SH-3 HELD |
+| SH-02.11A | RETRY_SAFE_OPERATION pre-activation | OPS + SEC + QM / PVC-08,04,18 | SH-02.11 dependency-ready | exact READ_ONLY/IDEMPOTENT boundary, budget, kill switch, verification probe and fresh independent Security/QM assurance before activation | TERMINAL / ASSURANCE_COMPLETE / ACTIVATION_MERGED |
+| SH-02.12A | TypeScript literal-union intake | OPS / PVC-02,04,08,18 | SH-02.11 active + Issue #1355 evidence | deterministic TS2322 family is classified without generic source-rewrite authority | DONE_MAIN / TERMINAL / OBSERVE_ONLY via PR #1380 |
+| SH-02.12B | Routed Issue repair eligibility | OPS / PVC-02,04,08,18 | SH-02.9A + registered PR Autofix repairers + SH-02.12A | read-only correlation proves route/main/owner/evidence/path/overlap/protected boundaries and grants no mutation authority | IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING / NO_EXECUTOR |
 
 ## SH-02.9 — Observability/SLO/incident convergence
 
@@ -436,7 +438,17 @@ PR #1380 is Human/CODEOWNER-merged as `67f9be45e41d78ca5d5c58f9be860d1887e4afad`
 
 The repository already has safe Issue routing/dispatch plus SH-0 verification and a one-attempt `repository.pr.autofix` specialist for allowlisted repository-projection drift. It does **not** yet have a generic Issue-derived code-remediation executor. This is intentionally not inferred from `READY_FOR_PROJECT_EXECUTION`.
 
-A future implementation may introduce a distinct bounded action only after it proves Issue text remains untrusted, root cause is reproducible from authoritative evidence, Project/Owner/PVC and writer overlap are freshly resolved, path scope is allowlisted, protected provider mutation is excluded, exact-head gates pass, and Human/CODEOWNER merge remains final authority.
+#### SH-02.12B — routed Issue repair eligibility
+
+**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING / NO_EXECUTOR`
+
+This slice adds one pure/read-only contract over the existing router and repair registry. It requires the exact route generation to match fresh CURRENT_MAIN, Owner to remain owner-correct, failure evidence to resolve to an already registered exact repairer, authoritative scope paths to remain inside that repairer's allowlist, writer overlap to be empty, protected mutation to be false and prior attempts to be zero.
+
+The result `ELIGIBLE_FOR_OWNER_WORK_PACKAGE` is intentionally non-authorizing: it sets `mutationAuthorized=false`, `executionAuthority=false` and only permits derivation of a bounded canonical owner work package. Unknown/incomplete repair evidence remains `OBSERVE_ONLY`; stale generation, owner mismatch, path expansion, overlap, protected mutation or repeats are `BLOCKED`.
+
+Issue body, comments, attachments and links never participate in eligibility semantics. No `repository.issue.autofix` capability, repairer, branch writer, PR creator or provider mutation is added.
+
+A later execution capability may be considered only after this contract is Human/CODEOWNER-merged and re-correlated against fresh CURRENT_MAIN. It must still prove Issue text remains untrusted, root cause is reproducible from authoritative evidence, Project/Owner/PVC and writer overlap are freshly resolved, path scope is allowlisted, protected provider mutation is excluded, exact-head gates pass, and Human/CODEOWNER merge remains final authority.
 
 ### PR-body evidence generation drift — PR #1364 regression (2026-09-24)
 

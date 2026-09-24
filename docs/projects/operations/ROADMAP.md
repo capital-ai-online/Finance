@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`
+**Baseline:** `main@b33fe5bb4782a3bd8d1d5c9da64f9182b85c62b7`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -58,19 +58,23 @@ failures stay blocked. PR #1380 is Human/CODEOWNER-merged as `67f9be45e41d78ca5d
 
 ### SH-02.12 — Routed Issue Auto-Fix
 
-**State:** `HELD / FOUNDATION_PARTIAL / DESIGN_GAP_IDENTIFIED`.
+**State:** `HELD / SH-02.12B IMPLEMENTED_ON_BRANCH / NO_EXECUTOR`.
 
-Already present:
+Already present on CURRENT_MAIN:
 - Governance issue router and `READY_FOR_PROJECT_EXECUTION` dispatch;
 - SH-0 `VERIFY_ISSUE_PROJECT_DISPATCH`;
-- SH-1 `RECONCILE_REPOSITORY_PROJECTION` via existing `repository.pr.autofix` for narrowly allowlisted reproducible repository-projection/expectation drift.
+- SH-1 `RECONCILE_REPOSITORY_PROJECTION` via existing `repository.pr.autofix` for narrowly allowlisted reproducible repository-projection/expectation drift;
+- SH-02.12A TypeScript literal-union intake is terminal/observe-only through PR #1380.
 
-Not present and therefore not claimed as active:
+SH-02.12B on this branch adds only a read-only `self-healing-issue-repair-eligibility/1.0.0` contract. It correlates canonical route generation, fresh CURRENT_MAIN, Project/Owner/PVC, exact registered repair evidence, path allowlist, writer overlap and protected-mutation boundaries. An eligible result may only derive an owner-correct bounded work package; `mutationAuthorized=false` and `executionAuthority=false` remain mandatory.
+
+Still not present and therefore not claimed as active:
 - no generic `Issue -> code remediation -> branch -> PR` executor;
 - no `repository.issue.autofix` capability;
-- no permission to execute free-form Issue body/comment instructions.
+- no permission to execute free-form Issue body/comment/attachment/link instructions;
+- no new repairer, writer or protected provider capability.
 
-Any later SH-02.12 activation must derive executable scope from fresh CURRENT_MAIN + canonical Owner/PVC + reproducible repository evidence, keep Issue text untrusted, use bounded branch-only remediation and exact-head verification, prohibit protected provider mutations, and preserve Human/CODEOWNER merge authority.
+Any later SH-02.12 execution capability still requires fresh CURRENT_MAIN + canonical Owner/PVC + reproducible repository evidence, bounded branch-only remediation, exact-head verification, protected-mutation exclusion and Human/CODEOWNER merge authority.
 
 ### OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01 — Supabase Auth control recovery
 

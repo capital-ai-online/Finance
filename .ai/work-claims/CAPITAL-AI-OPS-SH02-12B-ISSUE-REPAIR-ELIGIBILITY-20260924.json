@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SH02-12B-ISSUE-REPAIR-ELIGIBILITY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.12B as a read-only routed-Issue repair eligibility contract over the existing canonical Issue router and registered PR Autofix repair registry; no Issue-derived code executor.",
+  "startedAt": "2026-09-24T08:50:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c19f4ed64ecf815c8226e49cc1ad2e48a35eeeac",
+  "lastSyncedMainSha": "b33fe5bb4782a3bd8d1d5c9da64f9182b85c62b7",
+  "branch": "operations/sh02-12b-routed-issue-repair-eligibility-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-04 / PVC-08 / PVC-18",
+  "priority": "P1",
+  "priorityReason": "Fresh Human/Owner direction continues Self-Healing after all routed Issue defects are terminal; SH-02.12 has an explicit design gap between Issue dispatch and deterministic repair evidence.",
+  "claimedPaths": [
+    "scripts/pr/issueRepairEligibility.mjs",
+    "scripts/pr/issueRepairEligibility.test.mjs",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/work-packages/OPS_SH02_12B_ROUTED_ISSUE_REPAIR_ELIGIBILITY_2026-09-24.md",
+    ".ai/work-claims/CAPITAL-AI-OPS-SH02-12B-ISSUE-REPAIR-ELIGIBILITY-20260924.json"
+  ],
+  "scopeBoundary": [
+    "Read-only eligibility only; no branch/patch/PR executor.",
+    "Issue body/comments/attachments/links remain untrusted and non-executable.",
+    "No new repair registry or writer; consume existing Issue router and PR Autofix repair registry.",
+    "No protected provider/Production/IAM/Secret/Billing/database mutation.",
+    "No SH-2/SH-3 activation and no generic repository.issue.autofix capability.",
+    "Human/CODEOWNER merge authority unchanged."
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Human-merged SH-02.9A Issue Intake & Project Dispatch",
+    "Human-merged repository.pr.autofix repair registry",
+    "SH-02.12A terminal via PR #1380"
+  ],
+  "exitEvidence": [
+    "Exact routed Issue generation and registered repair evidence can be correlated deterministically.",
+    "Foreign owner, stale generation, unsafe scope, writer overlap, protected mutation and repeat attempts fail closed.",
+    "Unknown repair evidence remains OBSERVE_ONLY.",
+    "Eligibility never grants mutation or merge authority."
+  ],
+  "acceptanceCriteria": [
+    "No Issue content becomes executable authority.",
+    "No duplicate router/repair registry/writer is introduced.",
+    "Regression tests pass on exact head.",
+    "No changed-file overlap with current open PRs.",
+    "Human/CODEOWNER merge remains required if repository policy classifies the Self-Healing contract change as protected."
+  ],
+  "releaseCondition": "Release claim on Human/CODEOWNER merge, close, supersession or abandonment."
+}
