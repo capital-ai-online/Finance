@@ -298,6 +298,7 @@ jobs:
           PR_CANONICAL_BOOTSTRAP_BODY: ../candidate/artifacts/pr/decision-reconciler-bootstrap-body.md
           PR_BASELINE_OUTPUT: ../candidate/artifacts/pr/decision-reconciler-bootstrap-baseline.json
           PR_CHECK_CLASS: ${{ steps.body_scope.outputs.class }}
+          PR_CADENCE_REPO_ROOT: ../candidate
         run: node scripts/pr/reconcilePrDecisionEvidence.mjs
 
       - name: Main-Drift an kanonischen Branch-Sync delegieren
