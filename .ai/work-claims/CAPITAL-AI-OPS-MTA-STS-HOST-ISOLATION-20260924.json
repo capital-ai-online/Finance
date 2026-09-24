@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-MTA-STS-HOST-ISOLATION-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Isolate the dedicated MTA-STS hostname from the Finance SPA so only the RFC 8461 policy path reaches application routing.",
+  "workItemDE": "Den dedizierten MTA-STS-Host von der Finance-SPA isolieren, sodass nur der RFC-8461-Policy-Pfad in das Anwendungsrouting gelangt.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-24T14:44:00Z",
+  "baseBranch": "main",
+  "baseSha": "be33bde31d9e96d8cb306086428f90036350d8ea",
+  "lastSyncedMainSha": "be33bde31d9e96d8cb306086428f90036350d8ea",
+  "branch": "agent/operations-mta-sts-host-isolation-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-MTA-STS-HOST-ISOLATION-20260924.json",
+    "docs/projects/operations/work-packages/OPS_MTA_STS_HOST_ISOLATION_2026-09-24.md",
+    "server/routes/mtaStsRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "tests/unit/mtaStsPolicy.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse the existing Finance Render service and canonical MTA-STS policy router; do not create a second service or mail-security architecture.",
+    "No DNS, Render, credential, IAM, billing or production mutation in this branch.",
+    "Do not change the CookieConsent/GA4 contract; prevent that UI from being reachable on the dedicated MTA-STS hostname.",
+    "Preserve the normal capital-ai.online application routing.",
+    "Human/CODEOWNER merge remains required because this changes production runtime routing and a mail-security surface."
+  ],
+  "exitEvidence": [
+    "mta-sts.capital-ai.online root and unrelated paths fail closed as plaintext 404 before SPA/static routing.",
+    "GET/HEAD /.well-known/mta-sts.txt remains reachable with the existing STSv1 testing policy.",
+    "Non-GET/HEAD policy requests fail closed with 405 and Allow: GET, HEAD.",
+    "capital-ai.online normal root routing remains unaffected.",
+    "Focused tests and required exact-head Governance/build/security checks pass before merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
