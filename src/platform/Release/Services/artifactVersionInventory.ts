@@ -29,6 +29,7 @@ export type ArtifactVersionSignalKind =
   | 'CONTRACT_VERSION_MARKER'
   | 'YAML_SCHEMA_VERSION'
   | 'YAML_VERSION_FIELD'
+  | 'WORKFLOW_CONTRACT_VERSION_LITERAL'
   | 'GENERATED_MARKER';
 
 export interface ArtifactVersionSignal {
@@ -257,6 +258,18 @@ function detectYamlSignals(repoPath: string, text: string, signals: ArtifactVers
   }
 }
 
+function detectWorkflowContractSignals(repoPath: string, text: string, signals: ArtifactVersionSignal[]): void {
+  if (!/^\.github\/workflows\/.+\.ya?ml$/i.test(repoPath)) return;
+
+  const normalized = text
+    .replaceAll('\\s*', '')
+    .replaceAll('\\.', '.');
+  const marker = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/g;
+  for (const match of normalized.matchAll(marker)) {
+    pushSignal(signals, 'WORKFLOW_CONTRACT_VERSION_LITERAL', 'CAPITAL_AI_PR_TEMPLATE_VERSION', match[1]);
+  }
+}
+
 function detectSignals(repoPath: string, text: string | null): ArtifactVersionSignal[] {
   const signals: ArtifactVersionSignal[] = [];
   if (text === null) return signals;
@@ -265,6 +278,7 @@ function detectSignals(repoPath: string, text: string | null): ArtifactVersionSi
   detectSourceSignals(repoPath, text, signals);
   detectMarkdownSignals(repoPath, text, signals);
   detectYamlSignals(repoPath, text, signals);
+  detectWorkflowContractSignals(repoPath, text, signals);
 
   const generatedHeaderWindow = text.split(/\r?\n/).slice(0, 8).join('\n');
   if (GENERATED_HEADER.test(generatedHeaderWindow)) {
