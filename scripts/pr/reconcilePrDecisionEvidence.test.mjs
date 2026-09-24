@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
+import { computeMergeCadence } from '../operations/mergeCadence.mjs';
 import { computeProductionBaselineId } from './lib.mjs';
 import {
   collectDecisionPolicy,
@@ -147,6 +148,58 @@ test('production baseline is bound to exact current main and head', () => {
     'BLOCKED',
   );
   assert.equal(evaluateProductionBaseline('no baseline', mainSha, headSha), 'PENDING');
+});
+
+test('cadence-aware production baseline accepts queued ancestor lag and blocks true drift', () => {
+  const productionSha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const baseline = convergenceBaseline();
+  baseline.production = { ...baseline.production, commitSha: productionSha };
+  baseline.drift = { ...baseline.drift, productionToMainCommits: 3 };
+  baseline.baselineId = computeProductionBaselineId(baseline);
+
+  const projected = prepareLeadingPrBody(canonicalBody(), baseline);
+  assert.equal(projected.eligible, true);
+
+  const cadence = (overrides = {}) => ({
+    ref: mainSha,
+    ...computeMergeCadence({
+      active: true,
+      mergeOrdinal: 13,
+      productionOrdinal: 10,
+      productionRelation: 'ANCESTOR',
+      productionHealthy: true,
+      currentVersion: '0.6.1',
+      ...overrides,
+    }),
+  });
+  const evaluate = (trustedBaseline, cadenceState = cadence(), repository = 'capital-ai-online/Finance') =>
+    evaluateProductionBaseline(projected.body, mainSha, headSha, {
+      productionBaseline: trustedBaseline,
+      cadence: cadenceState,
+      repository,
+    });
+
+  assert.equal(evaluate(baseline), 'PASS');
+  assert.equal(evaluate(baseline, cadence({ mergeOrdinal: 15 })), 'BLOCKED');
+  assert.equal(
+    evaluate(baseline, cadence({ productionOrdinal: 0, productionRelation: 'DIVERGED' })),
+    'BLOCKED',
+  );
+  assert.equal(evaluate(baseline, cadence({ productionHealthy: false })), 'BLOCKED');
+
+  const wrongRepository = structuredClone(baseline);
+  wrongRepository.production.repoSlug = 'other/repository';
+  wrongRepository.baselineId = computeProductionBaselineId(wrongRepository);
+  const wrongRepositoryProjection = prepareLeadingPrBody(canonicalBody(), wrongRepository);
+  assert.equal(wrongRepositoryProjection.eligible, true);
+  assert.equal(
+    evaluateProductionBaseline(wrongRepositoryProjection.body, mainSha, headSha, {
+      productionBaseline: wrongRepository,
+      cadence: cadence(),
+      repository: 'capital-ai-online/Finance',
+    }),
+    'BLOCKED',
+  );
 });
 
 test('exact changed-file overlap is deterministic and owner-neutral', () => {
@@ -445,6 +498,7 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /createWorkflowDispatch/);
   assert.match(workflow, /auto_merge_state/);
   assert.match(workflow, /PR-v1\.8-Struktur und exakten Bootstrap-Snapshot binden/);
+  assert.match(workflow, /PR_CADENCE_REPO_ROOT: \.\.\/candidate/);
   assert.match(workflow, /bootstrap_required/);
   assert.match(workflow, /technicalDetailsSummary = '<summary>Technische Details & Traceability<\/summary>'/);
   assert.match(workflow, /machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>'/);
