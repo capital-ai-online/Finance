@@ -1,11 +1,12 @@
 # CAPITAL-AI — Supabase Free-Tier Leaked Password Protection Exception
 
 - **Record ID:** `SEC-EXC-SUPABASE-AUTH-2026-08-02`
-- **Record Version:** `1.0.0`
+- **Record Version:** `1.1.0`
 - **Date:** `2026-08-02`
 - **Environment:** Production
-- **Platform Version:** `0.6.0`
-- **Status:** **ACCEPTED — PLAN CONSTRAINT**
+- **Platform Version:** `0.6.4`
+- **Amended:** 2026-09-24
+- **Status:** **ACCEPTED — NATIVE PROVIDER CONTROL / APPLICATION CONTROL REMEDIATED**
 - **Owner:** CAPITAL-AI Security / Platform Governance
 - **Related ADR:** `ADR-0031-supabase-free-tier-auth-security-compensating-controls.md`
 - **Advisor Finding:** `auth_leaked_password_protection`
@@ -30,14 +31,14 @@ Therefore this finding is not currently actionable within the active tariff.
 | Security warning | Yes |
 | Exploit automatically present | No |
 | Native remediation available on Free Tier | No |
-| Requires application-breaking workaround | No workaround authorized |
-| Risk accepted permanently | No |
-| Risk accepted while Free Tier remains active | Yes |
+| Application-level breached-password screening | Active in the production backend |
+| Native provider warning accepted permanently | No |
+| Native provider warning accepted while Free Tier remains active | Yes |
 | Mandatory remediation after Pro upgrade | Yes |
 
 Classification:
 
-`PLAN-CONSTRAINED / TEMPORARILY ACCEPTED`
+`NATIVE PLAN-CONSTRAINED / APPLICATION CONTROL ACTIVE`
 
 ## 3. Current production advisor state
 
@@ -67,9 +68,12 @@ While the plan constraint remains active, CAPITAL-AI relies on layered controls 
 - fail-closed RLS;
 - server-only privileged keys;
 - append-only security/audit evidence where defined;
-- password policy hardening where configurable on Free Tier.
+- password policy hardening where configurable on Free Tier;
+- first-party, rate-limited backend screening through HIBP Pwned Passwords before application-owned password registration or password change;
+- k-anonymity range lookup with only a five-character SHA-1 prefix, response padding, no plaintext/full digest transmission and no password persistence;
+- fail-closed handling for upstream errors and timeouts.
 
-These controls reduce exposure but are **not represented as equivalent** to native leaked-password screening.
+The application control materially addresses breached-password acceptance on CAPITAL-AI-owned password mutation paths. It is **not represented as equivalent** to enabling Supabase's native provider control and therefore does not clear the Advisor warning.
 
 ## 5. Prohibited responses to this finding
 
@@ -79,10 +83,23 @@ The following must not be done merely to silence the warning:
 - disabling the Security Advisor;
 - claiming a client-side password-strength meter performs leaked-password screening;
 - storing a copied breach-password corpus in the production database without a separately reviewed architecture;
+- sending plaintext passwords or complete password hashes to a third party;
 - routing plaintext passwords through custom application logging or observability;
 - adding unrelated RLS policies to remove informational advisor findings.
 
-## 6. Mandatory remediation trigger
+## 6. Application-control evidence
+
+The production commit `fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74` and current `main` contain the same verified control:
+
+- `server/security/passwordSecurity.ts` performs the padded HIBP range lookup and fails closed;
+- `server/routes/passwordSecurityRoutes.ts` exposes only the first-party rate-limited boundary;
+- backend registration and password-update paths call `assertServerPasswordSafe` before the Supabase Auth mutation;
+- `tests/unit/serverPasswordSecurity.test.ts` covers prefix-only transmission, positive breach rejection and upstream failure;
+- `scripts/security/verifyPasswordSecurityBoundary.ts` makes the adapter a build/deployment invariant.
+
+HIBP Pwned Passwords range queries are free and do not require an API key. No new long-lived backend secret is required.
+
+## 7. Mandatory native-control remediation trigger
 
 This exception expires immediately when any of the following becomes true:
 
@@ -100,11 +117,11 @@ On expiry, the next production release is blocked until:
 5. this record is superseded or updated to `REMEDIATED`;
 6. the release acceptance record references the remediation evidence.
 
-## 7. Acceptance statement
+## 8. Acceptance statement
 
-The current Free-Tier production state is accepted because all security findings that are actionable through the available database/security controls have been remediated, while the remaining WARN requires a higher Supabase plan according to Supabase documentation.
+The current Free-Tier production state is accepted because the remaining WARN requires a higher Supabase plan, while CAPITAL-AI-owned password mutation paths are already protected by a verified application-level HIBP adapter.
 
-This acceptance does **not** downgrade the warning to PASS. It records why remediation is currently unavailable and defines the exact trigger that ends the exception.
+This acceptance does **not** downgrade the provider warning to PASS and does not claim native Supabase equivalence. It records the narrower provider residual, the active application control and the exact trigger that ends the exception.
 
 **Current security lifecycle status:**
 
