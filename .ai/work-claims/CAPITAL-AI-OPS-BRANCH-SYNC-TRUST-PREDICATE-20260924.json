@@ -16,7 +16,7 @@
   "projectStage": "PVC-04 Supervisor",
   "baseBranch": "main",
   "baseSha": "ba77d1899d4b739dc495621aa2e86c07a44a19e4",
-  "lastSyncedMainSha": "ba77d1899d4b739dc495621aa2e86c07a44a19e4",
+  "lastSyncedMainSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
   "branch": "agent/operations-issue-1434-branch-sync-trust-20260924",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-BRANCH-SYNC-TRUST-PREDICATE-20260924.json",
@@ -53,6 +53,12 @@
       "failedJob": 107816865294,
       "symptom": "two stale structural assertions expected gh pr view after canonical snapshot helper migration",
       "repair": "assert canonical pr_snapshot helper and REST backing read"
+    },
+    "prBodyStaticContractIncident": {
+      "rootCauseId": "PR_BODY_STATIC_CONTRACT_INCOMPLETE",
+      "supersededPr": 1436,
+      "symptom": "structurally canonical v1.8 body omitted mandatory static priority/version-manager metadata",
+      "repair": "close malformed PR; recreate same exact branch/head with complete v1.8 static contract while preserving PR Decision Evidence Reconciler as sole mutable open-body writer"
     }
   }
 }

@@ -9,6 +9,7 @@ import {
   createMtaStsHostGuard,
   createMtaStsRouter,
 } from '../../server/routes/mtaStsRoutes';
+import { createHealthRouter } from '../../server/routes/health';
 
 const servers: Array<ReturnType<ReturnType<typeof express>['listen']>> = [];
 
@@ -87,8 +88,9 @@ describe('MTA-STS policy', () => {
     expect(await response.text()).toBe(MTA_STS_POLICY);
   });
 
-  it('isolates the MTA-STS hostname from the SPA and consent assets', async () => {
+  it('serves Render liveness on the MTA-STS hostname while isolating the SPA', async () => {
     const app = express();
+    app.use(createHealthRouter());
     app.use(createMtaStsHostGuard());
     app.use(createMtaStsRouter());
     app.use((_req, res) => {
@@ -101,10 +103,19 @@ describe('MTA-STS policy', () => {
 
     const { port } = server.address() as AddressInfo;
     const root = await requestWithHost(port, '/', MTA_STS_HOST);
+    const health = await requestWithHost(port, '/healthz', MTA_STS_HOST);
+    const healthHead = await requestWithHost(port, '/healthz', MTA_STS_HOST, 'HEAD');
+    const readiness = await requestWithHost(port, '/healthz/readiness', MTA_STS_HOST);
     const consentAsset = await requestWithHost(port, '/cookieconsent-init.js', MTA_STS_HOST);
     const policy = await requestWithHost(port, MTA_STS_POLICY_PATH, MTA_STS_HOST);
     const wrongMethod = await requestWithHost(port, MTA_STS_POLICY_PATH, MTA_STS_HOST, 'POST');
     const primaryHost = await requestWithHost(port, '/', 'capital-ai.online');
+
+    expect(health.status).toBe(200);
+    expect(health.contentType).toContain('application/json');
+    expect(JSON.parse(health.body)).toMatchObject({ status: 'ok', healthy: true });
+    expect(healthHead.status).toBe(200);
+    expect(readiness.status).toBe(404);
 
     expect(root.status).toBe(404);
     expect(root.contentType).toContain('text/plain');

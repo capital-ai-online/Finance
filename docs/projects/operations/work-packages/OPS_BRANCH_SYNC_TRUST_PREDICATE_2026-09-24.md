@@ -5,7 +5,7 @@
 - **Project:** `CAPITAL-AI-OPS`
 - **Owner / PVC:** `CAPITAL-AI-OPS / PVC-04`
 - **Priority:** P1
-- **CURRENT_MAIN baseline:** `ba77d1899d4b739dc495621aa2e86c07a44a19e4`
+- **CURRENT_MAIN baseline:** `ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc`
 
 ## Root cause
 
@@ -49,3 +49,10 @@ Immediately before `update-branch`, the workflow re-reads the full trust snapsho
 - **Cause:** existing pipeline tests asserted the superseded command implementation rather than the invariant that exact event/dispatch PR numbers are resolved through one canonical live PR snapshot.
 - **Repair:** keep the existing test file and update only those assertions to require `pr_snapshot "$EVENT_PR_NUMBER"`, `pr_snapshot "$DISPATCH_PR_NUMBER"`, and its `gh api "repos/$REPO/pulls/$number"` backing read.
 - **Autofix classification:** deterministic stale test-contract repair; no runtime/workflow behavior rollback.
+
+## PR static-contract incident
+
+- **Root-Cause-ID:** `PR_BODY_STATIC_CONTRACT_INCOMPLETE`
+- **Observed:** superseded PR #1436 passed code/security checks but Governance rejected its structurally canonical v1.8 body because mandatory static metadata was missing.
+- **Cause:** the creation body omitted the canonical `Priorität`, complete version metadata and related static traceability fields. The Decision Evidence Reconciler intentionally owns later body mutations and does not rerender a body whose high-level v1.8 structure is already canonical.
+- **Repair:** PR #1436 was closed without merge. The same tested branch is recreated from a complete v1.8 static contract; no competing open-body PATCH writer is introduced.
