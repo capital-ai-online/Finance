@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-SH02-TS-LITERAL-UNION-INTAKE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
   "owner": "CAPITAL-AI-OPS",
@@ -35,6 +35,8 @@
     "Unknown TypeScript failures remain UNKNOWN_FAILURE / BLOCKED_UNKNOWN.",
     "No repairer/controller/writer added."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "lastSyncedMainSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5"
+  "releaseCondition": "Satisfied by Human/CODEOWNER merge of PR #1380 on 2026-09-24.",
+  "lastSyncedMainSha": "67f9be45e41d78ca5d5c58f9be860d1887e4afad",
+  "releasedBy": "post-merge reconciliation",
+  "releasedMainSha": "67f9be45e41d78ca5d5c58f9be860d1887e4afad"
 }
