@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SH-TERMINAL-WORK-CLAIM-RELEASE-LEARNING-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Persist the post-merge terminal work-claim release pattern as a reusable bounded Self-Healing learning process with promotion gated behind at least three positive validations.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04"
+  ],
+  "baseBranch": "main",
+  "baseSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "branch": "agent/operations-self-healing-terminal-claim-learning-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SH-TERMINAL-WORK-CLAIM-RELEASE-LEARNING-20260924.json",
+    "src/platform/Supervisor/selfHealingLearning.ts",
+    "tests/unit/selfHealingLearning.test.ts"
+  ],
+  "learningPattern": {
+    "id": "POST_MERGE_WORK_CLAIM_RELEASE_V1",
+    "minimumPositiveValidations": 3,
+    "currentPositiveValidations": 1,
+    "promotionState": "LEARNING",
+    "targetActionActivation": "HELD",
+    "firstValidation": {
+      "sourcePullRequest": 1437,
+      "terminalMergeSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+      "evidencePullRequest": 1439,
+      "evidenceHeadSha": "62bb702b78e19deb2e574812fd40bc2059ceffc9",
+      "requiredChecks": "PASS",
+      "observedOutcome": "Terminal merged work claim is deterministically identifiable and a bounded status=released/exclusive=false mutation can be prepared from exact post-merge evidence."
+    }
+  },
+  "invariants": [
+    "The productive self-healing remediation contract remains self-healing-contract/1.2.0 while this learning process has fewer than three distinct positive validations.",
+    "No autonomous work-claim mutation while the target remediation action is HELD.",
+    "Promotion requires at least three distinct positive validations.",
+    "Promotion eligibility never self-enables the action; an explicit Human/CODEOWNER-merged contract change remains required.",
+    "Release is bounded to status=released and exclusive=false for claims whose associated work is terminal and evidence-correlated.",
+    "Ambiguous terminal identity, stale evidence, failed checks, unresolved production identity, ownership conflict or contradiction fails closed."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd",
+  "rootCauseFix": {
+    "observedFailureClass": "SELF_HEALING_CONTRACT_CONSUMER_VERSION_DRIFT",
+    "repair": "Separate learning evidence from the productive remediation contract until the 3/3 promotion gate is satisfied.",
+    "governanceFailureClass": "PR_V18_PRIORITY_METADATA_MISSING",
+    "governanceRepair": "Delegate deterministic metadata repair to the existing single PR-body reconciler; do not create a second writer."
+  }
+}
