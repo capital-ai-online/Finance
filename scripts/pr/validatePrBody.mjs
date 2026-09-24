@@ -34,15 +34,23 @@ const prNumber = Number(process.env.PR_NUMBER || 0);
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
+const validationMode = String(process.env.PR_BODY_VALIDATION_MODE || 'full').trim().toLowerCase();
+const allowedValidationModes = new Set(['full', 'static-contract']);
+if (!allowedValidationModes.has(validationMode)) {
+  fail(`Unbekannter PR_BODY_VALIDATION_MODE: ${validationMode}`);
+}
+const validateDynamicEvidence = validationMode === 'full';
 
 if (!repository) fail('GITHUB_REPOSITORY fehlt.');
 if (!token) fail('GITHUB_TOKEN/GH_TOKEN fehlt.');
 if (!prNumber) fail('PR_NUMBER ist für die PR-Vorlagenprüfung erforderlich.');
-if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline fehlt: ${baselinePath}`);
+if (validateDynamicEvidence && !fs.existsSync(baselinePath)) {
+  fail(`Produktions-Baseline fehlt: ${baselinePath}`);
+}
 
 const pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
 const body = String(pr.body || '');
-const baseline = readJsonFile(baselinePath);
+const baseline = validateDynamicEvidence ? readJsonFile(baselinePath) : null;
 
 function bodyHasEvidenceToken(bodyText, token) {
   const value = String(token || '').trim();
@@ -77,39 +85,41 @@ if (missingSections.length > 0) {
 }
 
 if (templateVersion === PR_TEMPLATE_VERSION) {
-  const decisionStatus = extractDecisionStatus(body);
-  const decisionGates = extractDecisionGates(body);
-  const missingDecisionGates = PR_DECISION_GATES
-    .filter(({ key }) => !decisionGates[key])
-    .map(({ label }) => label);
-  if (!decisionStatus) {
-    fail(`PR #${prNumber} enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v${PR_TEMPLATE_VERSION}.`);
-  }
-  if (missingDecisionGates.length > 0) {
-    fail(`PR #${prNumber} fehlt kanonische Decision-Evidence: ${missingDecisionGates.join(', ')}.`);
-  }
+  if (validateDynamicEvidence) {
+    const decisionStatus = extractDecisionStatus(body);
+    const decisionGates = extractDecisionGates(body);
+    const missingDecisionGates = PR_DECISION_GATES
+      .filter(({ key }) => !decisionGates[key])
+      .map(({ label }) => label);
+    if (!decisionStatus) {
+      fail(`PR #${prNumber} enthält keinen gültigen automatisch ableitbaren Entscheidungsstatus der Vorlage v${PR_TEMPLATE_VERSION}.`);
+    }
+    if (missingDecisionGates.length > 0) {
+      fail(`PR #${prNumber} fehlt kanonische Decision-Evidence: ${missingDecisionGates.join(', ')}.`);
+    }
 
-  const derivedDecisionStatus = deriveDecisionStatus(decisionGates);
-  if (decisionStatus !== derivedDecisionStatus) {
-    fail(
-      `PR #${prNumber} behauptet Decision Status ${decisionStatus}, aber die sichtbaren Gate-Zustände ergeben ${derivedDecisionStatus}. ` +
-        'Decision Status darf nicht manuell von der Evidence abweichen.',
-    );
-  }
+    const derivedDecisionStatus = deriveDecisionStatus(decisionGates);
+    if (decisionStatus !== derivedDecisionStatus) {
+      fail(
+        `PR #${prNumber} behauptet Decision Status ${decisionStatus}, aber die sichtbaren Gate-Zustände ergeben ${derivedDecisionStatus}. ` +
+          'Decision Status darf nicht manuell von der Evidence abweichen.',
+      );
+    }
 
-  const dashboardStatus = body.match(/^\|\s*Status\s*\|\s*([^|\n]+?)\s*\|$/m)?.[1]?.trim() || null;
-  const dashboardSync = body.match(/^\|\s*Synchronität\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
-  const dashboardNext = body.match(/^\|\s*Nächster Schritt\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
-  const expectedDashboardSync = summarizeLiveDecisionSync(decisionGates);
-  const expectedDashboardNext = nextVerifiableDecisionStep(decisionGates);
-  if (!body.includes('### 📡 Live Dashboard') || !dashboardStatus || !dashboardSync || !dashboardNext) {
-    fail(`PR #${prNumber} enthält kein vollständiges proaktives Live Dashboard der Vorlage v${PR_TEMPLATE_VERSION}.`);
-  }
-  if (dashboardStatus !== decisionStatus || dashboardSync !== expectedDashboardSync || dashboardNext !== expectedDashboardNext) {
-    fail(
-      `PR #${prNumber} enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard. ` +
-        'Dashboard-Projektionen dürfen ausschließlich vom Evidence → Decision Reconciler abgeleitet werden.',
-    );
+    const dashboardStatus = body.match(/^\|\s*Status\s*\|\s*([^|\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+    const dashboardSync = body.match(/^\|\s*Synchronität\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+    const dashboardNext = body.match(/^\|\s*Nächster Schritt\s*\|\s*([^\n]+?)\s*\|$/m)?.[1]?.trim() || null;
+    const expectedDashboardSync = summarizeLiveDecisionSync(decisionGates);
+    const expectedDashboardNext = nextVerifiableDecisionStep(decisionGates);
+    if (!body.includes('### 📡 Live Dashboard') || !dashboardStatus || !dashboardSync || !dashboardNext) {
+      fail(`PR #${prNumber} enthält kein vollständiges proaktives Live Dashboard der Vorlage v${PR_TEMPLATE_VERSION}.`);
+    }
+    if (dashboardStatus !== decisionStatus || dashboardSync !== expectedDashboardSync || dashboardNext !== expectedDashboardNext) {
+      fail(
+        `PR #${prNumber} enthält ein vom kanonischen Evidence-Zustand abweichendes Live Dashboard. ` +
+          'Dashboard-Projektionen dürfen ausschließlich vom Evidence → Decision Reconciler abgeleitet werden.',
+      );
+    }
   }
 
   const visibleLevelTwoHeadings = body.match(/^## .+$/gm) || [];
@@ -152,20 +162,22 @@ if (templateVersion === PR_TEMPLATE_VERSION) {
   }
 }
 
-const requiredIds = [PRODUCTION_BASELINE_START, PRODUCTION_BASELINE_END];
-const missingIds = requiredIds.filter((id) => !bodyHasGovernanceId(body, id));
-if (missingIds.length > 0) {
-  fail(`PR #${prNumber} fehlt mindestens eine maschinenlesbare Governance-ID: ${missingIds.join(', ')}`);
-}
+if (validateDynamicEvidence) {
+  const requiredIds = [PRODUCTION_BASELINE_START, PRODUCTION_BASELINE_END];
+  const missingIds = requiredIds.filter((id) => !bodyHasGovernanceId(body, id));
+  if (missingIds.length > 0) {
+    fail(`PR #${prNumber} fehlt mindestens eine maschinenlesbare Governance-ID: ${missingIds.join(', ')}`);
+  }
 
-for (const id of requiredIds) {
-  const commentMarker = `<!-- ${id} -->`;
-  const visibleMarker = `\`${id}\``;
-  if (occurrenceCount(body, commentMarker) !== 1 || occurrenceCount(body, visibleMarker) !== 1) {
-    fail(
-      `PR #${prNumber} muss ${id} genau einmal als HTML-Kommentar und genau einmal sichtbar enthalten. ` +
-        `Duplizierte Baseline-Blöcke sind nicht zulässig.`,
-    );
+  for (const id of requiredIds) {
+    const commentMarker = `<!-- ${id} -->`;
+    const visibleMarker = `\`${id}\``;
+    if (occurrenceCount(body, commentMarker) !== 1 || occurrenceCount(body, visibleMarker) !== 1) {
+      fail(
+        `PR #${prNumber} muss ${id} genau einmal als HTML-Kommentar und genau einmal sichtbar enthalten. ` +
+          `Duplizierte Baseline-Blöcke sind nicht zulässig.`,
+      );
+    }
   }
 }
 
@@ -174,37 +186,39 @@ if (unresolved.length > 0) {
   fail(`PR #${prNumber} enthält nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 }
 
-// Atomare Produktions-Baseline: Der Body darf die Identitäten nicht selbst
-// konstruieren. Alle produktions-, main- und head-bezogenen Felder müssen zu
-// genau der Baseline-ID passen, die der aktuelle trusted-main Preflight erzeugt.
-const baselineErrors = validateProductionBaselineForPr(baseline);
-if (baselineErrors.length > 0) {
-  fail(`Aktuelle CI-Baseline ist nicht valide: ${baselineErrors.join('; ')}`);
-}
+if (validateDynamicEvidence) {
+  // Atomare Produktions-Baseline: Der Body darf die Identitäten nicht selbst
+  // konstruieren. Alle produktions-, main- und head-bezogenen Felder müssen zu
+  // genau der Baseline-ID passen, die der aktuelle trusted-main Preflight erzeugt.
+  const baselineErrors = validateProductionBaselineForPr(baseline);
+  if (baselineErrors.length > 0) {
+    fail(`Aktuelle CI-Baseline ist nicht valide: ${baselineErrors.join('; ')}`);
+  }
 
-const bodyBaselineBlock = extractProductionBaselineBlock(body);
-if (!bodyBaselineBlock) {
-  fail(`PR #${prNumber} enthält keinen eindeutig abgegrenzten Produktions-Baseline-Block.`);
-}
+  const bodyBaselineBlock = extractProductionBaselineBlock(body);
+  if (!bodyBaselineBlock) {
+    fail(`PR #${prNumber} enthält keinen eindeutig abgegrenzten Produktions-Baseline-Block.`);
+  }
 
-const bodyGeneratedAt = extractBaselineGeneratedAt(bodyBaselineBlock);
-if (!bodyGeneratedAt || Number.isNaN(Date.parse(bodyGeneratedAt))) {
-  fail(`PR #${prNumber} enthält keinen gültigen Zeitstempel für die Produktions-Baseline.`);
-}
+  const bodyGeneratedAt = extractBaselineGeneratedAt(bodyBaselineBlock);
+  if (!bodyGeneratedAt || Number.isNaN(Date.parse(bodyGeneratedAt))) {
+    fail(`PR #${prNumber} enthält keinen gültigen Zeitstempel für die Produktions-Baseline.`);
+  }
 
-const expectedBaselineBlock = renderProductionBaselineBlock({
-  ...baseline,
-  generatedAt: bodyGeneratedAt,
-});
+  const expectedBaselineBlock = renderProductionBaselineBlock({
+    ...baseline,
+    generatedAt: bodyGeneratedAt,
+  });
 
-const normalizeBlock = (value) => String(value || '').replace(/\r\n/g, '\n').trim();
-if (normalizeBlock(bodyBaselineBlock) !== normalizeBlock(expectedBaselineBlock)) {
-  fail(
-    `PR #${prNumber} enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. ` +
-      `Erwartete aktuelle Baseline-ID: ${baseline.baselineId}. ` +
-      `Erzeuge den PR-Body erneut über productionPreflight.mjs -> renderPullRequestBody.mjs; ` +
-      `manuelle Einzelwert-Korrekturen sind nicht zulässig.`,
-  );
+  const normalizeBlock = (value) => String(value || '').replace(/\r\n/g, '\n').trim();
+  if (normalizeBlock(bodyBaselineBlock) !== normalizeBlock(expectedBaselineBlock)) {
+    fail(
+      `PR #${prNumber} enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. ` +
+        `Erwartete aktuelle Baseline-ID: ${baseline.baselineId}. ` +
+        `Erzeuge den PR-Body erneut über productionPreflight.mjs -> renderPullRequestBody.mjs; ` +
+        `manuelle Einzelwert-Korrekturen sind nicht zulässig.`,
+    );
+  }
 }
 
 const claims = listAddedClaimFiles(baseRef, headRef);
@@ -234,7 +248,14 @@ if (templateVersion === PR_TEMPLATE_VERSION && !body.includes('| Owner-Aktion | 
   fail('Die Human Decision Card muss die verbleibende Owner-Aktion ausdrücklich als Human/CODEOWNER Merge ausweisen.');
 }
 
-console.log(
-  `[PR-VORLAGE] PR #${prNumber} entspricht unterstütztem Vorlagenvertrag v${templateVersion}; ` +
-    `Baseline ${baseline.baselineId} bindet Production/main/head und Drift atomar an den aktuellen Preflight.`,
-);
+if (validateDynamicEvidence) {
+  console.log(
+    `[PR-VORLAGE] PR #${prNumber} entspricht unterstütztem Vorlagenvertrag v${templateVersion}; ` +
+      `Baseline ${baseline.baselineId} bindet Production/main/head und Drift atomar an den aktuellen Preflight.`,
+  );
+} else {
+  console.log(
+    `[PR-VORLAGE] PR #${prNumber} entspricht dem stabilen Vorlagenvertrag v${templateVersion}; ` +
+      'Live Dashboard, Decision Evidence und Production-Baseline sind nicht Bestandteil dieses Required Governance Gates.',
+  );
+}

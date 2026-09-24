@@ -47,9 +47,10 @@ test('container required check rejects stale PR snapshots before checkout and he
   assert.ok(!container.includes('group: container-security-${{ github.event.pull_request.number || github.ref }}'));
 });
 
-test('governance separates event actions and validates the live head/base snapshot', () => {
-  assert.ok(governance.includes("format('pr-governance-pr-{0}-{1}-{2}-{3}'"));
-  assert.ok(governance.includes('github.event.action'));
+test('governance deduplicates exact code snapshots and validates the live head/base snapshot', () => {
+  assert.ok(governance.includes("format('pr-governance-pr-{0}-{1}-{2}'"));
+  assert.ok(!governance.includes('github.event.action)'));
+  assert.ok(!governance.includes('ready_for_review, edited'));
   assert.ok(governance.includes('github.rest.pulls.get'));
   assert.ok(governance.includes('Stale PR-Event kostensparend beenden'));
   assert.ok(governance.includes('name: PR Governance (Kosten / Workflow / Vorlage)'));

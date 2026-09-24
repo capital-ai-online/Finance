@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CI-SMART-SCOPE-2026-08-15",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok",
@@ -27,5 +27,7 @@
     ".github/workflows/pr-governance.yml",
     ".ai/work-claims/CI-SMART-SCOPE-2026-08-15.json"
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-24T17:34:00+02:00",
+  "releaseReason": "Historical claim has no active owner-correct writer on CURRENT_MAIN; fresh Owner direction supersedes stale coordination metadata for PR Governance Evidence/Dashboard decoupling."
 }
