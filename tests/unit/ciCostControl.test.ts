@@ -35,7 +35,7 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(yaml).toContain('normalizeSha(main.commit?.sha) === baseSha');
   });
 
-  it('dispatches CI only after the validated non-force branch write and evaluates the planner eligibility output fail-closed', () => {
+  it('dispatches CI only after the validated non-force branch write and keeps baseline repair eligibility fail-closed', () => {
     const yaml = fs.readFileSync(baselineAutofixWorkflowPath, 'utf8');
     const write = yaml.indexOf('await github.rest.git.updateRef');
     const dispatch = yaml.indexOf("workflow_id: 'ci.yml'", write);
@@ -46,9 +46,12 @@ describe('P0 GitHub Actions CI cost control', () => {
     expect(yaml).toContain('expected_head_sha: commit.sha');
     expect(yaml).toContain('expected_head_ref: pr.head.ref');
     expect(yaml).toContain('expected_base_sha: postMain.commit.sha');
-    expect(yaml).toContain("if: ${{ needs.plan.result == 'success' && fromJSON(needs.plan.outputs.eligible || 'false') }}");
-    expect(yaml).toContain('tail -n 700 "$raw" > "$bounded"');
-    expect(yaml).not.toContain('tail -n 700 "$raw" | head -c 120000');
+    expect(yaml).toContain("needs.plan.outputs.candidate_present == 'true'");
+    expect(yaml).toContain("needs.plan.outputs.test_suite_failed == 'true'");
+    expect(yaml).toContain("needs.patch.outputs.eligible == 'true'");
+    expect(yaml).toContain("if: steps.targets.outputs.eligible == 'true'");
+    expect(yaml).toContain('detectCurrentStateProjectionBaselineFailures.mjs');
+    expect(yaml).not.toContain('gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed');
   });
 
   it('places cost control before checkout and expensive work', () => {

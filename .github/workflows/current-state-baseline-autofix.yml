@@ -33,14 +33,14 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      eligible: ${{ steps.targets.outputs.eligible }}
-      reason: ${{ steps.targets.outputs.reason }}
       sync_required: ${{ steps.pr.outputs.sync_required }}
       pr_number: ${{ steps.pr.outputs.pr_number }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
       head_ref: ${{ steps.pr.outputs.head_ref }}
-      targets_json: ${{ steps.targets.outputs.targets_json }}
+      changed_files_json: ${{ steps.pr.outputs.changed_files_json }}
+      candidate_present: ${{ steps.pr.outputs.candidate_present }}
+      test_suite_failed: ${{ steps.pr.outputs.test_suite_failed }}
 
     steps:
       - name: Exakten offenen Same-Repo-PR auflösen
@@ -99,66 +99,30 @@ jobs:
             core.setOutput('sync_required', 'false');
 
             const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: pr.number, per_page: 100 });
-            core.setOutput('changed_files_json', JSON.stringify(files.map((entry) => entry.filename)));
+            const changedFiles = files.map((entry) => entry.filename);
+            const candidatePattern = /^docs\/projects\/[^/]+\/(?:ROADMAP|TASK_REGISTER)\.md$/;
+            core.setOutput('changed_files_json', JSON.stringify(changedFiles));
+            core.setOutput('candidate_present', String(changedFiles.some((entry) => candidatePattern.test(entry))));
 
-      - name: Fehlgeschlagene CI-Logs begrenzt erfassen
-        id: failure_log
-        if: steps.pr.outputs.pr_number != '' && steps.pr.outputs.sync_required != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          raw="$RUNNER_TEMP/current-state-baseline-failed.raw.log"
-          safe="$RUNNER_TEMP/current-state-baseline-failed.safe.log"
-          if ! gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > "$raw" 2>/dev/null; then
-            : > "$raw"
-          fi
-          bounded="$RUNNER_TEMP/current-state-baseline-failed.bounded.log"
-          tail -n 700 "$raw" > "$bounded"
-          head -c 120000 "$bounded" | \
-            perl -pe 's/\e\[[0-9;]*[A-Za-z]//g; s/(gh[pousr]_|github_pat_)[A-Za-z0-9_]{20,}/[REDACTED_GITHUB_TOKEN]/g; s/sk-(?:proj-)?[A-Za-z0-9_-]{20,}/[REDACTED_API_TOKEN]/g' \
-            > "$safe"
-          echo "path=$safe" >> "$GITHUB_OUTPUT"
-
-      - name: Nur exakte Current-State-Baseline-Fehler zulassen
-        id: targets
-        if: steps.pr.outputs.pr_number != '' && steps.pr.outputs.sync_required != 'true'
-        env:
-          FAILURE_LOG: ${{ steps.failure_log.outputs.path }}
-          CHANGED_FILES_JSON: ${{ steps.pr.outputs.changed_files_json }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          targets="$RUNNER_TEMP/current-state-baseline-targets.txt"
-          grep -Eo 'ERROR CURRENT_STATE_PROJECTION_BASELINE_(MISSING|STALE): docs/projects/[^ :]+/(ROADMAP|TASK_REGISTER)\.md' "$FAILURE_LOG" \
-            | sed -E 's/^ERROR CURRENT_STATE_PROJECTION_BASELINE_(MISSING|STALE): //' \
-            | sort -u > "$targets" || true
-
-          if [ ! -s "$targets" ]; then
-            echo 'eligible=false' >> "$GITHUB_OUTPUT"
-            echo 'reason=no-exact-current-state-baseline-failure' >> "$GITHUB_OUTPUT"
-            echo 'targets_json=[]' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          targets_json="$(jq -R -s -c 'split("\n") | map(select(length > 0))' < "$targets")"
-          TARGETS_JSON="$targets_json" node - <<'NODE'
-          const changed = new Set(JSON.parse(process.env.CHANGED_FILES_JSON));
-          const targets = JSON.parse(process.env.TARGETS_JSON);
-          const exact = /^docs\/projects\/[^/]+\/(?:ROADMAP|TASK_REGISTER)\.md$/;
-          if (!targets.length || targets.some((p) => !exact.test(p))) process.exit(2);
-          if (targets.some((p) => !changed.has(p))) process.exit(3);
-          NODE
-          echo 'eligible=true' >> "$GITHUB_OUTPUT"
-          echo 'reason=exact-current-state-baseline-failure' >> "$GITHUB_OUTPUT"
-          echo "targets_json=$targets_json" >> "$GITHUB_OUTPUT"
+            const jobs = await github.paginate(
+              github.rest.actions.listJobsForWorkflowRun,
+              { owner, repo, run_id: run.id, per_page: 100 },
+            );
+            const fullSuiteFailed = jobs
+              .filter((job) => job.name === 'build-and-test' && job.conclusion === 'failure')
+              .some((job) => (job.steps ?? []).some(
+                (step) => step.name === 'Vollständige Test-Suite ausführen' && step.conclusion === 'failure',
+              ));
+            core.setOutput('test_suite_failed', String(fullSuiteFailed));
 
   sync-before-fix:
     name: PR vor Baseline-Fix auf CURRENT_MAIN korrelieren
     needs: [plan]
-    if: needs.plan.result == 'success' && needs.plan.outputs.sync_required == 'true'
+    if: >-
+      needs.plan.result == 'success' &&
+      needs.plan.outputs.sync_required == 'true' &&
+      needs.plan.outputs.candidate_present == 'true' &&
+      needs.plan.outputs.test_suite_failed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -189,12 +153,19 @@ jobs:
   patch:
     name: Baseline-Patch read-only erzeugen und validieren
     needs: [plan]
-    if: ${{ needs.plan.result == 'success' && fromJSON(needs.plan.outputs.eligible || 'false') }}
+    if: >-
+      needs.plan.result == 'success' &&
+      needs.plan.outputs.sync_required != 'true' &&
+      needs.plan.outputs.candidate_present == 'true' &&
+      needs.plan.outputs.test_suite_failed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
       contents: read
     outputs:
+      eligible: ${{ steps.targets.outputs.eligible }}
+      reason: ${{ steps.targets.outputs.reason }}
+      targets_json: ${{ steps.targets.outputs.targets_json }}
       tree_sha: ${{ steps.bundle.outputs.tree_sha }}
       bundle_sha: ${{ steps.bundle.outputs.bundle_sha }}
     steps:
@@ -225,16 +196,26 @@ jobs:
           test "$(git rev-parse refs/remotes/origin/main)" = "$EXPECTED_MAIN_SHA"
           git merge-base --is-ancestor "$EXPECTED_MAIN_SHA" HEAD
 
-      - name: Baselinezeilen deterministisch mit trusted-main Script reparieren
+      - name: Baseline-Drift aus trusted Repository-Evidence reproduzieren
+        id: targets
         env:
           WORKTREE: work
-          TARGET_FILES_JSON: ${{ needs.plan.outputs.targets_json }}
+          CHANGED_FILES_JSON: ${{ needs.plan.outputs.changed_files_json }}
+          EXPECTED_MAIN_SHA: ${{ needs.plan.outputs.base_sha }}
+        run: node policy/scripts/pr/detectCurrentStateProjectionBaselineFailures.mjs
+
+      - name: Baselinezeilen deterministisch mit trusted-main Script reparieren
+        if: steps.targets.outputs.eligible == 'true'
+        env:
+          WORKTREE: work
+          TARGET_FILES_JSON: ${{ steps.targets.outputs.targets_json }}
           EXPECTED_MAIN_SHA: ${{ needs.plan.outputs.base_sha }}
         run: node policy/scripts/pr/repairCurrentStateProjectionBaselines.mjs
 
       - name: Patch-Scope fail-closed prüfen
+        if: steps.targets.outputs.eligible == 'true'
         env:
-          TARGET_FILES_JSON: ${{ needs.plan.outputs.targets_json }}
+          TARGET_FILES_JSON: ${{ steps.targets.outputs.targets_json }}
         shell: bash
         run: |
           set -euo pipefail
@@ -250,13 +231,15 @@ jobs:
           done < <(printf '%s' "$TARGET_FILES_JSON" | jq -r '.[]')
 
       - name: Governance-Control-Plane mit trusted-main Validator revalidieren
+        if: steps.targets.outputs.eligible == 'true'
         working-directory: work
         run: node ../policy/scripts/governance/validateGovernanceControlPlane.mjs
 
       - name: Validierte Dateien und exakten Git-Tree bündeln
         id: bundle
+        if: steps.targets.outputs.eligible == 'true'
         env:
-          TARGET_FILES_JSON: ${{ needs.plan.outputs.targets_json }}
+          TARGET_FILES_JSON: ${{ steps.targets.outputs.targets_json }}
         shell: bash
         run: |
           set -euo pipefail
@@ -275,6 +258,7 @@ jobs:
           echo "bundle_sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Kurzlebiges validiertes Bundle hochladen
+        if: steps.targets.outputs.eligible == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: current-state-baseline-autofix-${{ github.event.workflow_run.id }}
@@ -285,7 +269,10 @@ jobs:
   write:
     name: Validierten Baseline-Tree atomar schreiben
     needs: [plan, patch]
-    if: needs.plan.result == 'success' && needs.patch.result == 'success'
+    if: >-
+      needs.plan.result == 'success' &&
+      needs.patch.result == 'success' &&
+      needs.patch.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -430,7 +417,7 @@ jobs:
         env:
           PREVIOUS_HEAD: ${{ needs.plan.outputs.head_sha }}
           NEW_HEAD: ${{ steps.write.outputs.new_head_sha }}
-          TARGETS: ${{ needs.plan.outputs.targets_json }}
+          TARGETS: ${{ needs.patch.outputs.targets_json }}
           CI_DISPATCHED: ${{ steps.write.outputs.ci_dispatched }}
           REVALIDATION: ${{ steps.write.outputs.revalidation }}
         shell: bash
@@ -441,7 +428,7 @@ jobs:
             echo "- previous head: \`$PREVIOUS_HEAD\`"
             echo "- new head: \`$NEW_HEAD\`"
             echo "- repaired projections: \`$TARGETS\`"
-            echo '- source: exact CI baseline freshness errors only'
+            echo '- source: failed exact-head Full Test Suite + trusted repository-evidence reproduction'
             echo '- policy/runtime: trusted current-main checkout only'
             echo '- write: exact validated Git tree, force=false'
             echo "- revalidation: \`${REVALIDATION:-sync-deferred}\` (CI dispatched=\`$CI_DISPATCHED\`)"

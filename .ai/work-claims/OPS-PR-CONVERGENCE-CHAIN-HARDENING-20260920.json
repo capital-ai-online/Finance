@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-PR-CONVERGENCE-CHAIN-HARDENING-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -41,9 +41,13 @@
   ],
   "correlation": {
     "currentMainAtStart": "3a9a55262dbb8ee87dac087a863b1e3369e71d22",
-    "openPullRequestsChecked": [1137],
+    "openPullRequestsChecked": [
+      1137
+    ],
     "changedFileOverlap": false,
     "authorityOverlap": "PR #1136 is merged into CURRENT_MAIN; its self-healing continuation workflow is now hardened in this slice. PR #1137 remains overlap-free and untouched."
   },
-  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human Owner merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1139 was Human/CODEOWNER-merged on 2026-09-20; stale coordination metadata released during SH-02 Issue #1357 writer correlation."
 }

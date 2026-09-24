@@ -42,3 +42,23 @@ test('current-state baseline autofix accepts exact CI workflow_dispatch revalida
   assert.ok(workflow.includes("String(run.head_branch || '') !== pr.head.ref"));
   assert.ok(workflow.includes("github.event.workflow_run.path == '.github/workflows/ci.yml'"));
 });
+
+
+test('baseline autofix reproduces drift from stable workflow metadata and trusted repository evidence', () => {
+  assert.ok(workflow.includes('github.rest.actions.listJobsForWorkflowRun'));
+  assert.ok(workflow.includes("step.name === 'Vollständige Test-Suite ausführen' && step.conclusion === 'failure'"));
+  assert.ok(workflow.includes("core.setOutput('candidate_present', String(changedFiles.some((entry) => candidatePattern.test(entry))))"));
+  assert.ok(workflow.includes('detectCurrentStateProjectionBaselineFailures.mjs'));
+  assert.ok(workflow.includes("needs.plan.outputs.candidate_present == 'true'"));
+  assert.ok(workflow.includes("needs.plan.outputs.test_suite_failed == 'true'"));
+  assert.doesNotMatch(workflow, /gh run view "\$SOURCE_RUN_ID" --repo "\$GITHUB_REPOSITORY" --log-failed/);
+});
+
+test('baseline writer only receives a trusted reproduced target set', () => {
+  assert.ok(workflow.includes("eligible: ${{ steps.targets.outputs.eligible }}"));
+  assert.ok(workflow.includes("targets_json: ${{ steps.targets.outputs.targets_json }}"));
+  assert.ok(workflow.includes("TARGET_FILES_JSON: ${{ steps.targets.outputs.targets_json }}"));
+  assert.ok(workflow.includes("needs.patch.outputs.eligible == 'true'"));
+  assert.ok(workflow.includes("TARGETS: ${{ needs.patch.outputs.targets_json }}"));
+  assert.ok(workflow.includes('failed exact-head Full Test Suite + trusted repository-evidence reproduction'));
+});

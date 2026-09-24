@@ -136,6 +136,16 @@ export function classifyPrAutofixFailure(
     });
   }
 
+  if (!log.trim()) {
+    return result({
+      classification: 'FAILURE_EVIDENCE_UNAVAILABLE',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+      reason: 'source-failure-evidence-unavailable',
+      findingClass: 'REPOSITORY_FAILURE_EVIDENCE_UNAVAILABLE',
+      actionId: 'OBSERVE_ONLY',
+    });
+  }
+
   if (PROTECTED_ACTIONS_MINUTE_BLOCKER.some((pattern) => pattern.test(log))) {
     return result({
       classification: 'PROTECTED_ACTIONS_MINUTE_COST_BLOCKER',

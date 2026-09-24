@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
   "owner": "CAPITAL-AI-GOV",
@@ -51,5 +51,7 @@
   "releaseCondition": "Release when the associated Pull Request is merged, closed, superseded or abandoned.",
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
-  "recorrelatedAt": "2026-09-21"
+  "recorrelatedAt": "2026-09-21",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1218 was Human/CODEOWNER-merged on 2026-09-21; stale coordination metadata released during SH-02 Issue #1357 writer correlation."
 }
