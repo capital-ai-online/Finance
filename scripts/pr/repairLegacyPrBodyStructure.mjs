@@ -390,6 +390,47 @@ function repairCurrentDecisionBodyStructure(bodyText, { prClass = 'N/A', durable
   const machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>';
   const hybridNotRunSentinel =
     'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.';
+  const exactMarkerFreeBaselineSentinelShape =
+    visibleHeadings.length === expectedHeadings.length &&
+    expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
+    occurrenceCount(body, placeholder) === 0 &&
+    occurrenceCount(body, legacyHeading) === 0 &&
+    !baselineBlock &&
+    occurrenceCount(body, machineBaselineSummary) === 1 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->') === 0 &&
+    occurrenceCount(body, '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->') === 0;
+
+  if (exactMarkerFreeBaselineSentinelShape) {
+    const summaryIndex = body.indexOf(machineBaselineSummary);
+    const detailsStart = summaryIndex >= 0 ? body.lastIndexOf('<details>', summaryIndex) : -1;
+    const detailsEnd = summaryIndex >= 0 ? body.indexOf('</details>', summaryIndex) : -1;
+    if (
+      summaryIndex < 0 ||
+      detailsStart < 0 ||
+      detailsEnd < 0 ||
+      !(detailsStart < summaryIndex && summaryIndex < detailsEnd)
+    ) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-marker-free-baseline-boundary-unresolved', body };
+    }
+
+    const managedContentStart = summaryIndex + machineBaselineSummary.length;
+    const managedContent = body.slice(managedContentStart, detailsEnd).trim();
+    if (managedContent !== hybridNotRunSentinel) {
+      return { eligible: false, changed: false, reason: 'current-v1.8-marker-free-baseline-content-unresolved', body };
+    }
+
+    const metadataRepair = repairCurrentDecisionRequiredMetadata(body, {
+      prClass,
+      durableClaimEvidence,
+    });
+    if (metadataRepair.changed) return metadataRepair;
+    if (!metadataRepair.eligible && metadataRepair.reason !== 'already-canonical') return metadataRepair;
+
+    // Structure is canonical; the existing production-baseline specialist owns
+    // the marker-free sentinel -> atomic baseline transition.
+    return { eligible: false, changed: false, reason: 'already-canonical', body };
+  }
+
   const exactHybridLegacyBaselineShape =
     visibleHeadings.length === 4 &&
     expectedHeadings.every((heading, index) => visibleHeadings[index] === heading) &&
