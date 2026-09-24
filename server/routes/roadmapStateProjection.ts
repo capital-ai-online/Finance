@@ -115,9 +115,6 @@ function classifyState(
     return { state: 'EVIDENCE_GATE' };
   }
   if (normalized.includes('QUEUED')) return { state: 'QUEUED' };
-  if (normalized.includes('READY') && !normalized.includes('NOT_READY')) {
-    return { state: 'READY' };
-  }
   if (
     normalized.includes('HELD') ||
     normalized.includes('PENDING') ||
@@ -127,6 +124,9 @@ function classifyState(
     normalized.includes('UNAVAILABLE_BY_PLAN')
   ) {
     return { state: 'HELD' };
+  }
+  if (normalized.includes('READY') && !normalized.includes('NOT_READY')) {
+    return { state: 'READY' };
   }
   if (
     normalized.includes('IN_PROGRESS') ||
