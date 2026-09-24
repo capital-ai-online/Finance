@@ -1,3 +1,4 @@
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import {
   Activity,
   BarChart3,
@@ -9,14 +10,83 @@ import {
   SlidersHorizontal,
   Star,
 } from 'lucide-react';
-import {
-  AnalyticsUI,
-  CryptoUI,
-  NewsUI,
-  ReportingUI,
-} from '../../features';
 import type { UserSession } from '../types/UserSession';
 import type { DashboardView } from './dashboardViews';
+
+const CryptoScoringEnterprise = lazy(() =>
+  import('../../features/crypto/ui/CryptoScoringWorkspace').then((module) => ({
+    default: module.CryptoScoringWorkspace,
+  })),
+);
+const RealtimeAiNewsfeed = lazy(() =>
+  import('../../features/news/ui/RealtimeAiNewsfeed').then((module) => ({
+    default: module.RealtimeAiNewsfeed,
+  })),
+);
+const ComplianceExporter = lazy(() =>
+  import('../../features/reporting/ui').then((module) => ({ default: module.ComplianceExporter })),
+);
+const MarketSentiment = lazy(() =>
+  import('../../features/news/ui').then((module) => ({ default: module.MarketSentiment })),
+);
+const ImageAnalyzer = lazy(() =>
+  import('../../features/analytics/ui').then((module) => ({ default: module.ImageAnalyzer })),
+);
+
+function DashboardWidgetLoading({ label }: { label: string }) {
+  return (
+    <div
+      className="flex min-h-48 items-center justify-center rounded-2xl border border-white/10 bg-black/25 px-6 py-10 text-center"
+      data-dashboard-widget-loading={label}
+    >
+      <p className="text-xs font-mono uppercase tracking-widest text-white/45">{label} wird geladen…</p>
+    </div>
+  );
+}
+
+function DeferredDashboardSection({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activated, setActivated] = useState(false);
+
+  useEffect(() => {
+    if (activated) return undefined;
+    const element = containerRef.current;
+    if (!element) return undefined;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setActivated(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setActivated(true);
+        observer.disconnect();
+      },
+      { rootMargin: '600px 0px' },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [activated]);
+
+  return (
+    <div ref={containerRef} data-dashboard-deferred-section={label}>
+      {activated ? (
+        <Suspense fallback={<DashboardWidgetLoading label={label} />}>{children}</Suspense>
+      ) : (
+        <DashboardWidgetLoading label={label} />
+      )}
+    </div>
+  );
+}
 
 export interface DashboardPushNotificationInput {
   symbol: string;
@@ -136,33 +206,43 @@ export function DashboardHome({
         </div>
       )}
 
-      <CryptoUI.CryptoScoringEnterprise
-        selectedSymbol={selectedSymbol}
-        onSelectSymbol={onSelectSymbol}
-        timeframe={timeframe}
-        onChangeTimeframe={onChangeTimeframe}
-        userSession={userSession}
-      />
+      <Suspense fallback={<DashboardWidgetLoading label="Enterprise Scorer" />}>
+        <CryptoScoringEnterprise
+          selectedSymbol={selectedSymbol}
+          onSelectSymbol={onSelectSymbol}
+          timeframe={timeframe}
+          onChangeTimeframe={onChangeTimeframe}
+          userSession={userSession}
+        />
+      </Suspense>
 
-      <div className="w-full">
-        <NewsUI.RealtimeAiNewsfeed
-          onTriggerPushNotification={onTriggerPushNotification}
-          watchlist={watchlist}
-          maxDisplayItems={3}
+      <DeferredDashboardSection label="AI Newsfeed">
+        <div className="w-full">
+          <RealtimeAiNewsfeed
+            onTriggerPushNotification={onTriggerPushNotification}
+            watchlist={watchlist}
+            maxDisplayItems={3}
+            selectedSymbol={selectedSymbol}
+          />
+        </div>
+      </DeferredDashboardSection>
+
+      <DeferredDashboardSection label="Compliance Export">
+        <ComplianceExporter
+          capital={capital}
           selectedSymbol={selectedSymbol}
         />
-      </div>
+      </DeferredDashboardSection>
 
-      <ReportingUI.ComplianceExporter
-        capital={capital}
-        selectedSymbol={selectedSymbol}
-      />
+      <DeferredDashboardSection label="Markt-Sentiment">
+        <MarketSentiment selectedSymbol={selectedSymbol} assetClass={preferredAssetClass} />
+      </DeferredDashboardSection>
 
-      <NewsUI.MarketSentiment selectedSymbol={selectedSymbol} assetClass={preferredAssetClass} />
-
-      <div className="grid grid-cols-1 gap-6">
-        <AnalyticsUI.ImageAnalyzer triggerAttempt={triggerAttempt} />
-      </div>
+      <DeferredDashboardSection label="Bildanalyse">
+        <div className="grid grid-cols-1 gap-6">
+          <ImageAnalyzer triggerAttempt={triggerAttempt} />
+        </div>
+      </DeferredDashboardSection>
     </>
   );
 }
