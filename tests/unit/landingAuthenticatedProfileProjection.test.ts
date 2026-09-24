@@ -6,10 +6,22 @@ const read = (path: string) => fs.readFileSync(path, 'utf8');
 describe('LF-02 authenticated landing profile projection', () => {
   it('keeps root public while projecting an established registered session', () => {
     const routes = read('src/app/routing/AppRoutes.tsx');
-    expect(routes).toContain("if (userSession?.type === 'registered')");
-    expect(routes).toContain('authenticatedProfile={{');
-    expect(routes).toContain('subscriptionTier: userSession.subscriptionTier');
-    expect(routes).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
+    const rootStart = routes.indexOf("if (currentPath === '/')");
+    const loginStart = routes.indexOf("if (currentPath === '/login')", rootStart);
+    expect(rootStart).toBeGreaterThanOrEqual(0);
+    expect(loginStart).toBeGreaterThan(rootStart);
+
+    const rootRoute = routes.slice(rootStart, loginStart);
+    expect(rootRoute).toContain("if (userSession?.type === 'registered')");
+    expect(rootRoute).toContain('authenticatedProfile={{');
+    expect(rootRoute).toContain('subscriptionTier: userSession.subscriptionTier');
+    expect(rootRoute).toContain('onNavigate={navigatePublicRoute}');
+
+    const publicFallbackProps =
+      rootRoute.match(/return <LandingPage\s+([^>]+)\/>;/)?.[1] ?? '';
+    expect(publicFallbackProps).toContain('onLoginNavigate={clearJustLoggedOut}');
+    expect(publicFallbackProps).toContain('onNavigate={navigatePublicRoute}');
+    expect(publicFallbackProps).not.toContain('authenticatedProfile');
   });
 
   it('converges authenticated /login back to the canonical root', () => {
