@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-RENDER-MTA-STS-HEALTHZ-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-6",
@@ -37,5 +37,20 @@
     "Normal primary-host root remains available.",
     "Focused test and required exact-head checks pass; subsequent Render deploy and production identity are read back after Human merge."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T20:33:13.230Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1437 and exact-main Render deploy verification completed the bounded health-check recovery.",
+  "mergedPullRequest": 1437,
+  "mergedHeadSha": "014520bf6316b3c54f08e51fe4c5e0e1f6bf36d1",
+  "mergeCommitSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "postMergeValidation": {
+    "prExactHeadRequiredChecks": "PASS",
+    "focusedMtaStsHostTests": "3/3 PASS",
+    "mainBuildAndTest": "PASS",
+    "mainContainerSecurity": "PASS",
+    "renderDeployId": "dep-daqog5g473hc73bucltg",
+    "renderDeployStatus": "live",
+    "renderProductionSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+    "directExternalHostProbe": "NOT_RUN — workspace egress timed out; CI Host-header HTTP test passed"
+  }
 }
