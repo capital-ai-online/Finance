@@ -86,11 +86,11 @@ Current open writers are deliberately preserved:
 
 - PR #1377 owns GOV version/deploy cadence Evidence/template reconciliation surfaces;
 - PR #1378 owns the GOV PR-v1.8 Decision Reconciler bootstrap correction;
-- PR #1379 owns `docs/projects/operations/ROADMAP.md` and the canonical SH-02 parent work package.
+- PR #1380 owns `docs/projects/operations/ROADMAP.md` and the canonical SH-02 parent work package; closed/unmerged #1379 is evidence only.
 
 This planning slice therefore does **not** mutate those files.
 
-After #1377/#1378/#1379 become terminal, implementation selection must reread `CURRENT_MAIN`, deduplicate their merged outcomes and then decide whether any code/workflow handoff remains necessary. Roadmap/SH-02 parent linkage is deferred until #1379 is terminal.
+After #1377/#1378/#1380 become terminal, implementation selection must reread `CURRENT_MAIN`, deduplicate their merged outcomes and then decide whether any code/workflow handoff remains necessary. Roadmap/SH-02 parent linkage is deferred until #1380 is terminal.
 
 ## Future implementation acceptance criteria
 
