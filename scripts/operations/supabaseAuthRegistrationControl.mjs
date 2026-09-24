@@ -82,7 +82,10 @@ export async function desiredAuthConfig() {
     mfa_totp_verify_enabled: true,
     mfa_web_authn_enroll_enabled: false,
     mfa_web_authn_verify_enabled: false,
-    passkey_enabled: false,
+    passkey_enabled: true,
+    webauthn_rp_display_name: 'CAPITAL-AI',
+    webauthn_rp_id: 'capital-ai.online',
+    webauthn_rp_origins: CANONICAL_SITE_URL,
   };
 }
 
