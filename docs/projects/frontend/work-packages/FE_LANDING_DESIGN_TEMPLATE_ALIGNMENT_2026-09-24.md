@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-FE`  
 **Owner relationship:** cross-cutting Frontend; no productive PVC  
-**Baseline:** `main@36edca389a02ca297d00effdd43a3c35418fdaa8`  
+**Baseline:** `main@8050206f6ae58238e88e859b98db62cf04459ff2`  
 **Priority:** P1  
 **Status:** IN_PROGRESS  
 **Dependency:** current productive Landingpage presentation + canonical Branding Kit  
@@ -28,4 +28,4 @@
 
 ## Current-main re-correlation
 
-Synchronized to `main@36edca389a02ca297d00effdd43a3c35418fdaa8` after PR #1369. The intervening main delta was FINTECH-only and had no path overlap with this FE slice. Open FE PR #1371 also has no changed-file overlap with the claimed paths.
+Synchronized to `main@8050206f6ae58238e88e859b98db62cf04459ff2` after CURRENT_MAIN advanced through PR #1370. The intervening delta is OPS-scoped and has no path overlap with this FE slice.
