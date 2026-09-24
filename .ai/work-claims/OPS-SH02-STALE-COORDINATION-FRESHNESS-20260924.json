@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-STALE-COORDINATION-FRESHNESS-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Correlate repository-wide stale-state evidence, normalize five provider-proven stale OPS coordination claims, and define the bounded DETECT_ONLY handoff into the existing Self-Healing architecture without changing the independently assured runtime/fault-suite generation.",
+  "priority": "P1",
+  "priorityReason": "Stale active/exclusive coordination metadata can create false writer conflicts; remediation is metadata-only, provider-evidenced and bounded.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-02",
+    "PVC-18"
+  ],
+  "startedAt": "2026-09-24T02:02:02Z",
+  "baseBranch": "main",
+  "baseSha": "c06a907ab42bb118133951a27e77f154c8c4cba0",
+  "branch": "operations/sh02-stale-coordination-freshness-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-SH02-STALE-COORDINATION-FRESHNESS-20260924.json",
+    ".ai/work-claims/OPS-08-B-SH-02-POLICY-HOMOGENEITY-20260920.json",
+    ".ai/work-claims/OPS-SH02-BASELINE-EVIDENCE-HANDOFF-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-MERGE-CADENCE-RUNTIME-20260923.json",
+    ".ai/work-claims/OPS-PUBLIC-VISIBILITY-MODE-20260923.json",
+    ".ai/work-claims/OPS-08-B-SH-02-11-RETRY-SAFE-ACTIVATION-20260923.json",
+    "docs/projects/operations/work-packages/OPS_SH02_STALE_COORDINATION_FRESHNESS_01_2026-09-24.md",
+    "docs/projects/operations/evidence/SH_02_STALE_COORDINATION_FRESHNESS_2026-09-24.md"
+  ],
+  "scopeNote": "OPS-owned coordination metadata and evidence only. No foreign-owner claim mutation, no Self-Healing runtime/fault-suite generation change, no new workflow/controller/writer, and no Production mutation.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; terminal provider state must be read back before this claim is treated as released."
+}
