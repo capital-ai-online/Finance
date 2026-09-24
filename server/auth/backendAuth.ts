@@ -187,6 +187,7 @@ function createStatelessAuthClient() {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
+      experimental: { passkey: true },
     },
   });
 }

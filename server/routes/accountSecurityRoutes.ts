@@ -6,7 +6,9 @@ import { createLogger } from '../logger';
 import {
   clearBackendAuthCookies,
   createAuthenticatedBackendAuthClient,
+  createBackendEmailAuthClient,
   persistBackendAuthSession,
+  resolveApplicationOrigin,
   resolveVerifiedBackendAuth,
 } from '../auth/backendAuth';
 import { rateLimitMiddleware } from '../../src/platform/Security/safeIo';
@@ -22,6 +24,16 @@ const ACCOUNT_RATE_LIMIT = rateLimitMiddleware({
 const MFA_RATE_LIMIT = rateLimitMiddleware({
   name: 'account-mfa',
   maxRequests: 12,
+  windowMs: 10 * 60_000,
+});
+const PASSKEY_RATE_LIMIT = rateLimitMiddleware({
+  name: 'account-passkey',
+  maxRequests: 12,
+  windowMs: 10 * 60_000,
+});
+const PASSWORD_RESET_RATE_LIMIT = rateLimitMiddleware({
+  name: 'account-password-reset',
+  maxRequests: 5,
   windowMs: 10 * 60_000,
 });
 const avatarUpload = multer({
@@ -287,18 +299,32 @@ accountSecurityRouter.get('/security/methods', MFA_RATE_LIMIT, async (req, res) 
   if (!verified) return;
   try {
     const client = await createAuthenticatedBackendAuthClient(req, res, verified);
-    const { data, error } = await client.auth.mfa.listFactors();
-    if (error) throw error;
+    const [{ data: factors, error: factorError }, { data: passkeys, error: passkeyError }] = await Promise.all([
+      client.auth.mfa.listFactors(),
+      client.auth.passkey.list(),
+    ]);
+    if (factorError) throw factorError;
+    if (passkeyError) throw passkeyError;
+    const registeredPasskeys = Array.isArray(passkeys) ? passkeys : [];
     res.status(200).json({
       methods: {
         password: { active: true },
         totp: {
-          active: data.totp.some((factor) => factor.status === 'verified'),
-          factors: data.totp
+          active: factors.totp.some((factor) => factor.status === 'verified'),
+          factors: factors.totp
             .filter((factor) => factor.status === 'verified')
             .map((factor) => ({ id: factor.id, friendlyName: factor.friendly_name || 'Authenticator-App' })),
         },
-        passkey: { active: false, available: false, releaseGate: 'USER_TEST_REQUIRED' },
+        passkey: {
+          active: registeredPasskeys.length > 0,
+          available: true,
+          factors: registeredPasskeys.map((passkey) => ({
+            id: passkey.id,
+            friendlyName: passkey.friendly_name || 'Passkey',
+            createdAt: passkey.created_at,
+            lastUsedAt: passkey.last_used_at || null,
+          })),
+        },
       },
     });
   } catch (error) {
@@ -308,6 +334,118 @@ accountSecurityRouter.get('/security/methods', MFA_RATE_LIMIT, async (req, res) 
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(503).json({ error: 'Authentifizierungsmethoden konnten nicht geladen werden.' });
+  }
+});
+
+accountSecurityRouter.post('/security/password/reset', PASSWORD_RESET_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  const email = verified.user.email?.trim();
+  if (!email) {
+    res.status(409).json({ error: 'Für dieses Konto ist keine bestätigte E-Mail-Adresse verfügbar.' });
+    return;
+  }
+
+  try {
+    const origin = resolveApplicationOrigin(req);
+    const client = createBackendEmailAuthClient();
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: new URL('/api/auth/email/confirm', origin).toString(),
+    });
+    if (error) throw error;
+    res.status(202).json({
+      accepted: true,
+      message: 'Bestätigungsmail zum sicheren Zurücksetzen des Passworts wurde angefordert.',
+    });
+  } catch (error) {
+    accountLogger.error('Authenticated password reset request failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Passwort-Bestätigungsmail konnte derzeit nicht angefordert werden.' });
+  }
+});
+
+accountSecurityRouter.post('/security/passkeys/registration/start', PASSKEY_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  try {
+    const client = await createAuthenticatedBackendAuthClient(req, res, verified);
+    const { data, error } = await client.auth.passkey.startRegistration();
+    if (error || !data?.challenge_id || !data?.options) {
+      throw error || new Error('PASSKEY_REGISTRATION_START_FAILED');
+    }
+    res.status(200).json({ challengeId: data.challenge_id, options: data.options });
+  } catch (error) {
+    accountLogger.error('Passkey registration start failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Passkey-Registrierung konnte nicht gestartet werden.' });
+  }
+});
+
+accountSecurityRouter.post('/security/passkeys/registration/verify', PASSKEY_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId.trim() : '';
+  const credential = req.body?.credential;
+  if (!challengeId || challengeId.length > 200 || !credential || typeof credential !== 'object') {
+    res.status(400).json({ error: 'Ungültige Passkey-Verifikationsdaten.' });
+    return;
+  }
+
+  try {
+    const client = await createAuthenticatedBackendAuthClient(req, res, verified);
+    const { data, error } = await client.auth.passkey.verifyRegistration({
+      challengeId,
+      credential: credential as any,
+    });
+    if (error || !data) throw error || new Error('PASSKEY_REGISTRATION_VERIFY_FAILED');
+    res.status(201).json({
+      registered: true,
+      passkey: {
+        id: data.id,
+        friendlyName: data.friendly_name || 'Passkey',
+        createdAt: data.created_at,
+      },
+    });
+  } catch (error) {
+    accountLogger.error('Passkey registration verification failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(422).json({ error: 'Passkey konnte nicht verifiziert werden.' });
+  }
+});
+
+accountSecurityRouter.delete('/security/passkeys/:passkeyId', PASSKEY_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  const passkeyId = typeof req.params.passkeyId === 'string' ? req.params.passkeyId.trim() : '';
+  if (!passkeyId || passkeyId.length > 200) {
+    res.status(400).json({ error: 'Ungültige Passkey-ID.' });
+    return;
+  }
+  try {
+    const client = await createAuthenticatedBackendAuthClient(req, res, verified);
+    const { error } = await client.auth.passkey.delete({ passkeyId });
+    if (error) throw error;
+    res.status(204).end();
+  } catch (error) {
+    accountLogger.error('Passkey removal failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Passkey konnte derzeit nicht entfernt werden.' });
   }
 });
 

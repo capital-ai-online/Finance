@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ACCOUNT-SECURITY-PASSKEY-20260924",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Backend-first account security convergence for confirmation-mail password reset, primary-login passkeys, and profile SPA routing.",
+  "workItemDE": "Backend-first Kontosicherheit für bestätigten Passwort-Reset, Primärlogin-Passkeys und Profil-SPA-Routing.",
+  "startedAt": "2026-09-24T05:06:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "lastSyncedMainSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "branch": "operations/account-security-passkey-profile-route-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 controlled implementation; supporting PVC-08 production operations",
+  "priority": "P1",
+  "priorityReason": "Fresh Human Owner direction makes Profile/Security the authenticated account surface and requires productive self-service security methods.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ACCOUNT-SECURITY-PASSKEY-20260924.json",
+    "docs/projects/operations/work-packages/OPS_ACCOUNT_SECURITY_PASSKEY_2026-09-24.md",
+    "server/auth/backendAuth.ts",
+    "server/routes/backendAuthRoutes.ts",
+    "server/routes/accountSecurityRoutes.ts",
+    "server/middleware/seoUrlNormalize.ts",
+    "server/runtime/spaFallback.ts",
+    "scripts/operations/supabaseAuthRegistrationControl.mjs",
+    "tests/unit/accountSecurityPasskeyBackend.test.ts"
+  ],
+  "scopeBoundary": [
+    "No browser-owned Supabase session or bearer token.",
+    "No primary passkey is treated as MFA/AAL2.",
+    "No direct main mutation or direct provider-secret handling.",
+    "No FE ProfilePage/Header mutation in this OPS slice.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+    "openWriterOverlap": "PASS: FE #1371, OPS #1370 and FINTECH #1369 have no changed-file overlap with this backend slice.",
+    "providerDocs": "Supabase passkeys use experimental two-step WebAuthn start/verify APIs and require stable RP configuration."
+  },
+  "acceptanceCriteria": [
+    "Authenticated password reset targets only the verified current user e-mail and uses the existing e-mail confirmation route.",
+    "Passkey registration and login use backend Supabase start/verify with browser-only WebAuthn public ceremony payloads.",
+    "Successful passkey login persists backend HttpOnly session.",
+    "Profile and password-update direct routes are included in production SPA fallback.",
+    "Provider desired config enables passkeys for capital-ai.online.",
+    "Focused and required checks pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
