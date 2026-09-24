@@ -433,6 +433,7 @@ export function buildPreflightEvidence({
   forceFull = false,
   toolVersions = {},
   results = {},
+  branchContainsCurrentMain = null,
 } = {}) {
   const normalizedBase = assertSha('baseSha', baseSha);
   const normalizedHead = assertSha('headSha', headSha);
@@ -474,6 +475,17 @@ export function buildPreflightEvidence({
     ]),
   );
 
+  const plannedResults = Object.values(checks)
+    .filter((check) => check.planned)
+    .map((check) => check.result);
+  const anyPlannedFailure = plannedResults.includes('FAIL');
+  const allPlannedPass = plannedResults.every((result) => result === 'PASS');
+  const prePrState = branchContainsCurrentMain === false || anyPlannedFailure
+    ? 'BLOCKED'
+    : branchContainsCurrentMain === true && allPlannedPass
+      ? 'READY_FOR_GITHUB_VALIDATION'
+      : 'EVIDENCE_PENDING';
+
   const evidence = {
     schema_version: '1.0.0',
     evidence_type: 'CHATGPT_PREFLIGHT',
@@ -488,6 +500,11 @@ export function buildPreflightEvidence({
     selected_tests: selectedTests(plan, normalizedBase),
     required_exact_head_contexts: REQUIRED_EXACT_HEAD_CONTEXTS,
     required_context_note: 'Required-context names are merge-safety expectations; live ruleset readback remains authoritative.',
+    pre_pr_mergeability: {
+      state: prePrState,
+      branch_contains_current_main: branchContainsCurrentMain,
+      note: 'Advisory ChatGPT preflight only. GitHub mergeability and exact-head Required Checks remain authoritative after PR creation.',
+    },
     quality_profiles: {
       pr_fast: prFastRelevant ? 'PLANNED' : 'NOT_APPLICABLE',
       deep_baseline: 'SCHEDULED_NOT_PR',
@@ -545,6 +562,13 @@ function main() {
     const resolvedHead = execFileSync('git', ['rev-parse', headSha], { encoding: 'utf8' }).trim();
     const treeSha = execFileSync('git', ['rev-parse', `${resolvedHead}^{tree}`], { encoding: 'utf8' }).trim();
     const results = process.env.PREFLIGHT_RESULTS_JSON ? JSON.parse(process.env.PREFLIGHT_RESULTS_JSON) : {};
+    let branchContainsCurrentMain = false;
+    try {
+      execFileSync('git', ['merge-base', '--is-ancestor', baseSha, resolvedHead], { stdio: 'ignore' });
+      branchContainsCurrentMain = true;
+    } catch {
+      branchContainsCurrentMain = false;
+    }
     const evidence = buildPreflightEvidence({
       baseSha,
       headSha: resolvedHead,
@@ -555,6 +579,7 @@ function main() {
       forceFull,
       toolVersions: { node: process.version },
       results,
+      branchContainsCurrentMain,
     });
     const rendered = `${JSON.stringify(evidence, null, 2)}\\n`;
     if (process.env.PREFLIGHT_OUTPUT) fs.writeFileSync(process.env.PREFLIGHT_OUTPUT, rendered, 'utf8');
