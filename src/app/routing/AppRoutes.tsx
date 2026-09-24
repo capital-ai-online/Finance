@@ -7,9 +7,6 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
-const Dashboard = lazy(() =>
-  import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
-);
 const ProfilePage = lazy(() =>
   import('../../components/ProfilePage').then((module) => ({ default: module.ProfilePage })),
 );
@@ -38,7 +35,6 @@ interface AppRoutesProps {
   justLoggedOut: boolean;
   clearJustLoggedOut: () => void;
   handleLogout: () => Promise<void>;
-  handleGlobalLogout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 }
 
@@ -103,7 +99,6 @@ export function AppRoutes({
   justLoggedOut,
   clearJustLoggedOut,
   handleLogout,
-  handleGlobalLogout,
   refreshSession,
 }: AppRoutesProps) {
   const [currentPath, setCurrentPath] = useState(() => {
@@ -186,34 +181,6 @@ export function AppRoutes({
           </RouteLoadingBoundary>
         </div>
       </div>
-    );
-  };
-
-  const renderAuthenticatedDashboard = () => {
-    if (!userSession) {
-      if (authBootstrapPending) return <AuthRouteResolution />;
-      return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
-    }
-
-    return (
-      <RouteLoadingBoundary>
-        <Dashboard
-          userSession={userSession}
-          onLogout={async () => {
-            await handleLogout();
-            if (typeof window !== 'undefined') {
-              window.location.replace('/');
-            }
-          }}
-          onGlobalLogout={async () => {
-            await handleGlobalLogout();
-            if (typeof window !== 'undefined') {
-              window.location.replace('/');
-            }
-          }}
-          onRegister={() => undefined}
-        />
-      </RouteLoadingBoundary>
     );
   };
 
@@ -338,8 +305,8 @@ export function AppRoutes({
               </p>
               <h1 className="mt-1 text-lg font-black text-white">Media Creation Studio</h1>
             </div>
-            <a href="/dashboard" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT">
-              ← Zurück zum Dashboard
+            <a href="/profile" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT">
+              ← Zurück zum Profil
             </a>
           </header>
           <RouteLoadingBoundary>
