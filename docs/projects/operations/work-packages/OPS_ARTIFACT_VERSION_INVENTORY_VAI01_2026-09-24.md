@@ -1,6 +1,6 @@
 # OPS-ARTIFACT-VERSION-INVENTORY-VAI01
 
-Status: IMPLEMENTATION_IN_PROGRESS
+Status: DONE_MAIN
 Project: CAPITAL-AI-OPS
 Primary PVC: PVC-06 Version Management
 Supporting PVC: PVC-04 Supervisor, PVC-07 Release Management
@@ -51,6 +51,15 @@ This slice does not build the producer-consumer graph, does not emit Self-Healin
 - Focused unit tests pass.
 - Exact-head CI, Governance and Security evidence is required before Human/CODEOWNER merge.
 
+## Main completion evidence
+
+- Human/CODEOWNER merge: PR #1430
+- Merge commit: `b23d4c2e1bb00fb0db18cfcd77108e709b532ffa`
+- Post-merge verification baseline: `ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc`
+- VAI-01 implementation is present on CURRENT_MAIN.
+- The VAI-01 work claim is released and non-exclusive in this closeout slice.
+- Issue #1429 remains open because VAI-02, VAI-03 and VAI-04 are separate follow-up slices.
+
 ## Continuation
 
-After VAI-01 is merged and re-correlated, VAI-02 may add the producer-consumer version/fingerprint graph on top of this inventory without duplicating version authority.
+VAI-02 may add the producer-consumer version/fingerprint graph on top of the merged VAI-01 inventory without duplicating version authority. VAI-03 and VAI-04 remain later bounded slices.
