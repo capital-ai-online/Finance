@@ -76,7 +76,8 @@ describe('post-correlation next PR pipeline gate', () => {
   it('scopes ready-for-review to exactly the event PR', () => {
     const yaml = workflow();
     expect(yaml).toContain('EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}');
-    expect(yaml).toContain('gh pr view "$EVENT_PR_NUMBER"');
+    expect(yaml).toContain('pr_snapshot "$EVENT_PR_NUMBER"');
+    expect(yaml).toContain('gh api "repos/$REPO/pulls/$number"');
     expect(yaml).toContain("| jq -c '[.]'");
   });
 
@@ -139,7 +140,7 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("format('capital-ai-pr-writer-{0}', inputs.pr_number)");
     expect(yaml).toContain('DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}');
     expect(yaml).toContain("[ \"$EVENT_NAME\" = 'workflow_dispatch' ] && [ -n \"${DISPATCH_PR_NUMBER:-}\" ]");
-    expect(yaml).toContain('gh pr view \"$DISPATCH_PR_NUMBER\"');
+    expect(yaml).toContain('pr_snapshot "$DISPATCH_PR_NUMBER"');
     expect(yaml).toContain('workflow_dispatch pr_number muss eine positive PR-Nummer sein.');
   });
 

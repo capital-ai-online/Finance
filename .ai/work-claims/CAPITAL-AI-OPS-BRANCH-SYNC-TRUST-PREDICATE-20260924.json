@@ -46,6 +46,13 @@
       "failedRun": 36053719099,
       "symptom": "workflow startup failure; jobs=0",
       "repair": "regenerate from CURRENT_MAIN using callback replacements"
+    },
+    "testContractIncident": {
+      "rootCauseId": "BRANCH_SYNC_SNAPSHOT_TEST_CONTRACT_DRIFT",
+      "failedRun": 36054162718,
+      "failedJob": 107816865294,
+      "symptom": "two stale structural assertions expected gh pr view after canonical snapshot helper migration",
+      "repair": "assert canonical pr_snapshot helper and REST backing read"
     }
   }
 }

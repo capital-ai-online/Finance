@@ -41,3 +41,11 @@ Immediately before `update-branch`, the workflow re-reads the full trust snapsho
 - **Cause:** JavaScript `String.replace(source, replacementString)` interpreted the shell-regex suffix `$'` as a replacement token and injected the unmatched source suffix into the generated workflow.
 - **Repair:** regenerate from clean CURRENT_MAIN and use callback replacements so replacement content is always literal.
 - **Preventive rule:** workflow/text generators must use callback/literal-safe replacement whenever target content may contain `$&`, `$'`, `$`` or `$n`.
+
+## CI contract drift after snapshot hardening
+
+- **Root-Cause-ID:** `BRANCH_SYNC_SNAPSHOT_TEST_CONTRACT_DRIFT`
+- **Observed:** focused Vitest job `107816865294` failed only two structural assertions after the workflow moved from `gh pr view` to the stricter REST-backed `pr_snapshot()` helper.
+- **Cause:** existing pipeline tests asserted the superseded command implementation rather than the invariant that exact event/dispatch PR numbers are resolved through one canonical live PR snapshot.
+- **Repair:** keep the existing test file and update only those assertions to require `pr_snapshot "$EVENT_PR_NUMBER"`, `pr_snapshot "$DISPATCH_PR_NUMBER"`, and its `gh api "repos/$REPO/pulls/$number"` backing read.
+- **Autofix classification:** deterministic stale test-contract repair; no runtime/workflow behavior rollback.
