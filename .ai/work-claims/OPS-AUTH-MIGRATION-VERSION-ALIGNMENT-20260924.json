@@ -19,13 +19,15 @@
   "baseBranch": "main",
   "baseSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
   "workItem": "Align the canonical auth-registration migration filename with the verified Supabase remote migration history version created by the authorized production application.",
-  "approvedScope": "Rename only the already-applied idempotent migration from 20260923193000 to the observed remote version 20260924011545, preserve byte-identical SQL, and update the two canonical test path references.",
+  "approvedScope": "Align the already-applied idempotent migration with remote version 20260924011545, preserve byte-identical SQL, update canonical test references, and refresh the existing OPS migration ledger with the verified 77th exact-match remote row.",
   "claimedPaths": [
     ".ai/work-claims/OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924.json",
     "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql",
     "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql",
     "tests/unit/authRegistrationProfileConvergence.test.ts",
-    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json"
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
+    "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
@@ -37,10 +39,10 @@
     "New migration path exists with byte-identical SQL.",
     "Old migration path is removed.",
     "Repository migration version matches remote schema_migrations history.",
+    "The checked-in Supabase migration ledger records 77/77 remote versions and classifies 20260924011545 as EXACT_MATCH.",
     "Auth-registration convergence tests resolve the aligned migration path and pass.",
     "Exact-head CI/Governance/Security checks complete truthfully.",
-    "Human/CODEOWNER merge remains required.",
-    "Supabase migration ledger local-only set difference points at the aligned migration path without rewriting the historical remote snapshot."
+    "Human/CODEOWNER merge remains required."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "authority": "/AGENTS.md@CURRENT_MAIN",

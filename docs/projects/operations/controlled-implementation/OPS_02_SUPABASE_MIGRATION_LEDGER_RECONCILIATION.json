@@ -5,7 +5,7 @@
   "primary_pvc": "PVC-02",
   "primary_owner": "CAPITAL-AI-OPS",
   "repository": "capital-ai-online/Finance",
-  "repository_baseline": "3c85160aa304f1e52083ff13f14bde7e615236df",
+  "repository_baseline": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
   "supabase_project_ref": "ryzywoktpmyhwzxmstyu",
   "classification_policy": {
     "EXACT_MATCH": "Remote version equals a current local migration timestamp. The local migration file is recorded.",
@@ -13,14 +13,14 @@
     "REMOTE_ONLY_HISTORY": "No current local migration has the same remote timestamp or normalized migration name. Consolidated/catch-up schema may exist elsewhere, but is not treated as an alias without exact migration-name identity."
   },
   "summary": {
-    "remote_total": 76,
+    "remote_total": 77,
     "local_total": 59,
-    "exact_match": 17,
+    "exact_match": 18,
     "timestamp_alias": 32,
     "remote_only_history": 27,
     "unknown": 0,
-    "mapped_current_local": 49,
-    "local_only": 10
+    "mapped_current_local": 50,
+    "local_only": 9
   },
   "remote_migrations": [
     {
@@ -554,6 +554,13 @@
       "classification": "REMOTE_ONLY_HISTORY",
       "local_version": null,
       "local_path": null
+    },
+    {
+      "remote_version": "20260924011545",
+      "remote_name": "auth_registration_profile_convergence",
+      "classification": "EXACT_MATCH",
+      "local_version": "20260924011545",
+      "local_path": "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
     }
   ],
   "local_only_migrations": [
@@ -601,17 +608,12 @@
       "local_version": "20260902000000",
       "local_name": "owner_device_authorization_atomic_activation",
       "local_path": "supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"
-    },
-    {
-      "local_version": "20260924011545",
-      "local_name": "auth_registration_profile_convergence",
-      "local_path": "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
     }
   ],
   "provider_readback": {
-    "observed_at": "2026-09-23T20:04:00Z",
+    "observed_at": "2026-09-24T01:39:21.967Z",
     "source": "Supabase list_migrations",
-    "remote_total": 76,
-    "note": "20260922042903_revoke_trigger_only_security_definer_execute is remote-only on this repository baseline; the #1331 auth convergence migration is local-only until protected post-merge deployment."
+    "remote_total": 77,
+    "note": "20260924011545_auth_registration_profile_convergence is an exact remote/local match after the authorized production application; 20260922042903_revoke_trigger_only_security_definer_execute remains remote-only history."
   }
 }
