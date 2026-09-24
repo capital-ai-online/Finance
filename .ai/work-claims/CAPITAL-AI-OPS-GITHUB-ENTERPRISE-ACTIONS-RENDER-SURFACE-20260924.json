@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-GITHUB-ENTERPRISE-ACTIONS-RENDER-SURFACE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -44,5 +44,26 @@
     "No writer/file/semantic overlap remains before PR creation.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "reason": "PR #1400 Human/CODEOWNER-merged; original claim release condition reached.",
+    "pullRequest": 1400,
+    "exactHeadSha": "46bdd46826a9a3a6136d960429b243d1e159a4bb",
+    "mergeCommitSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+    "mergedAt": "2026-09-24T13:20:45Z",
+    "exactHeadChecks": [
+      "PR / OSS quality: PASS",
+      "PR Governance: PASS",
+      "CI / build-and-test: PASS",
+      "Project Execution Directive: PASS",
+      "Container Security: PASS"
+    ],
+    "runtimeReadback": {
+      "renderService": "Finance",
+      "observedLiveCommit": "fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74",
+      "currentMain": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+      "state": "RUNTIME_DEPLOYMENT_PENDING",
+      "autoDeploy": "off"
+    }
+  }
 }
