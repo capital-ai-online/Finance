@@ -179,7 +179,27 @@ const CURRENT_V18_VERSION_IMPACTS = Object.freeze([
   'MAJOR 💥',
 ]);
 const CURRENT_V18_TECHNICAL_SUMMARY = '<summary>Technische Details & Traceability</summary>';
-const CURRENT_V18_HUMAN_MERGE_GATE = '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja';
+const CURRENT_V18_HUMAN_MERGE_GATE_DEFAULT =
+  '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja';
+const CURRENT_V18_HUMAN_MERGE_GATE_VALUES = new Set([
+  'Ja',
+  'Nein — GitHub Auto-Merge Safety Contract',
+]);
+
+function inspectCurrentV18HumanMergeGate(bodyText) {
+  const body = String(bodyText || '');
+  const matches = [
+    ...body.matchAll(
+      /^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* (.+)$/gm,
+    ),
+  ];
+  if (matches.length === 0) return { state: 'missing', value: '' };
+  if (matches.length !== 1) return { state: 'ambiguous', value: '' };
+  const value = String(matches[0][1] || '').trim();
+  return CURRENT_V18_HUMAN_MERGE_GATE_VALUES.has(value)
+    ? { state: 'valid', value }
+    : { state: 'invalid', value };
+}
 const CURRENT_V18_VERSION_MANAGER_DEFAULT =
   '- **Version-Manager-Check:** NOT_RUN — repositoryseitige Checks liefern die technische Evidence; keine fehlende Prüfung wird als PASS dargestellt.';
 
@@ -201,15 +221,20 @@ function repairCurrentDecisionRequiredMetadata(
   const versionImpact = body.match(/^- \*\*Versionsimpact:\*\* (.+)$/m)?.[1]?.trim() || null;
   const versionManager = body.match(/^- \*\*Version-Manager-Check:\*\* (.+)$/m)?.[1]?.trim() || null;
   const technicalPrClass = body.match(/^- \*\*PR-Klasse:\*\* ([DCR])\s*$/m)?.[1] || null;
+  const humanMergeGate = inspectCurrentV18HumanMergeGate(body);
   const missingDurableEvidence = [...new Set(
     durableClaimEvidence.map((value) => String(value || '').trim()).filter(Boolean),
   )].filter((value) => !body.includes(value));
+
+  if (humanMergeGate.state === 'invalid' || humanMergeGate.state === 'ambiguous') {
+    return { eligible: false, changed: false, reason: 'current-v1.8-human-merge-gate-conflict', body };
+  }
 
   const needsRepair =
     !priority ||
     !versionImpact ||
     !versionManager ||
-    !body.includes(CURRENT_V18_HUMAN_MERGE_GATE) ||
+    humanMergeGate.state === 'missing' ||
     (!technicalPrClass && ['D', 'C', 'R'].includes(String(prClass))) ||
     missingDurableEvidence.length > 0;
 
@@ -263,7 +288,7 @@ function repairCurrentDecisionRequiredMetadata(
   if (!technicalPrClass && ['D', 'C', 'R'].includes(String(prClass))) {
     additions.push('- **PR-Klasse:** ' + String(prClass));
   }
-  if (!body.includes(CURRENT_V18_HUMAN_MERGE_GATE)) additions.push(CURRENT_V18_HUMAN_MERGE_GATE);
+  if (humanMergeGate.state === 'missing') additions.push(CURRENT_V18_HUMAN_MERGE_GATE_DEFAULT);
   for (const value of missingDurableEvidence) {
     additions.push('- **Dauerhafte Claim-Evidence:** ' + value);
   }
@@ -286,8 +311,8 @@ function repairCurrentDecisionRequiredMetadata(
   if (!/^- \*\*Version-Manager-Check:\*\* .+$/m.test(repaired)) {
     throw new Error('Current v1.8 metadata repair did not materialize Version-Manager-Check.');
   }
-  if (!repaired.includes(CURRENT_V18_HUMAN_MERGE_GATE)) {
-    throw new Error('Current v1.8 metadata repair did not preserve the Human/CODEOWNER merge gate.');
+  if (inspectCurrentV18HumanMergeGate(repaired).state !== 'valid') {
+    throw new Error('Current v1.8 metadata repair did not preserve one canonical Human/CODEOWNER merge gate.');
   }
   if (missingDurableEvidence.some((value) => !repaired.includes(value))) {
     throw new Error('Current v1.8 metadata repair did not materialize durable claim evidence.');

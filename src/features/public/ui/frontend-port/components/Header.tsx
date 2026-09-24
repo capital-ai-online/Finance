@@ -17,6 +17,7 @@ import {
   Flame,
   LogIn,
   LogOut,
+  GitBranch,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrandLogo } from './BrandLogo';
@@ -345,6 +346,20 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="flex items-center gap-2.5">
                         <BookOpen className="w-4 h-4 text-[#F9BF21]" />
                         Learning Platform
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </a>
+
+                    <a
+                      href="/roadmap"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full flex min-h-11 items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-200 hover:text-white bg-[#8D26FF]/5 hover:bg-[#8D26FF]/10 border border-[#8D26FF]/20 hover:border-[#8D26FF]/40 text-left transition-all"
+                      data-public-navigation="roadmap"
+                      aria-label="Live Roadmap öffnen"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <GitBranch className="w-4 h-4 text-[#E879F9]" />
+                        Live Roadmap
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                     </a>

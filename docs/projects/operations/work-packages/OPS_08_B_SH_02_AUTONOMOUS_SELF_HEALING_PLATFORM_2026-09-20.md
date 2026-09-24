@@ -415,7 +415,7 @@ Each tier has an independent kill switch.
 
 ### SH-02.12A — deterministic TypeScript literal-union intake (#1355)
 
-**State:** `IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY / NO_REPAIR_AUTHORITY`
+**State:** `DONE_MAIN / TERMINAL / OBSERVE_ONLY / NO_REPAIR_AUTHORITY`
 
 Issue #1355 adds one bounded classifier-only extension to the existing
 `repository.pr.autofix` path. Exact CI evidence for TypeScript `TS2322` where
@@ -429,6 +429,8 @@ provider mutation, repair registry entry or generic compiler autofix is created.
 Unknown TypeScript diagnostics remain `UNKNOWN_FAILURE / BLOCKED_UNKNOWN`.
 A later automatic repair would require a separately registered exact repair
 contract, changed-path allowlist and ordinary exact-head validation.
+
+PR #1380 is Human/CODEOWNER-merged as `67f9be45e41d78ca5d5c58f9be860d1887e4afad`. The observed post-repair Governance generation passed after exact Production/Main/Head rebinding. A subsequently scheduled Decision Evidence Reconciler reached bootstrap only after the PR had already merged and therefore failed closed with no body mutation; terminal PR state is preserved as a no-write boundary.
 
 ### SH-02.12 routed Issue Auto-Fix — HELD follow-up
 
