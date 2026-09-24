@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-PRICING-ARCHIVE-OPEN-VISIBILITY-20260923",
-  "status": "active",
+  "status": "released",
   "exclusive": false,
   "agent": {
     "provider": "OpenAI",
@@ -13,7 +13,7 @@
   "startedAt": "2026-09-23T19:05:00+02:00",
   "baseBranch": "main",
   "baseSha": "f65753961359d74cdf19de996bace459a98725b9",
-  "lastSyncedMainSha": "f65753961359d74cdf19de996bace459a98725b9",
+  "lastSyncedMainSha": "c06a907ab42bb118133951a27e77f154c8c4cba0",
   "branch": "frontend/pricing-archive-open-visibility-20260923",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -59,7 +59,11 @@
     "currentMain": "f65753961359d74cdf19de996bace459a98725b9",
     "openWriterOverlap": "Fresh CURRENT_MAIN correlation after merged PR #1324 shows no direct changed-file overlap with the remaining pricing slice.",
     "handovers": "OPS #1326; COMP #1327",
-    "currentMainCorrelation": "Clean pricing archive slice correlated onto fresh CURRENT_MAIN f65753961359d74cdf19de996bace459a98725b9; behind_by must remain 0 through merge decision."
+    "currentMainCorrelation": "Clean pricing archive slice correlated onto fresh CURRENT_MAIN f65753961359d74cdf19de996bace459a98725b9; behind_by must remain 0 through merge decision.",
+    "terminalPr": "#1325",
+    "terminalPrState": "MERGED",
+    "mergedMain": "5acdac23acce3999394ea05949fc9cd2479ffc63",
+    "staleCoordinationRelease": "Released while touching overlapping dashboard paths for FE dashboard freeze recovery; historical status no longer represents an active writer."
   },
   "acceptanceCriteria": [
     "The active pricing UI is an archive notice with no price or checkout action.",
@@ -71,5 +75,7 @@
     "Focused regression tests and normal required checks pass.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-24T04:11:00+02:00",
+  "releaseReason": "PR #1325 is Human/CODEOWNER-merged; the residual active marker is stale coordination metadata and must not block fresh CURRENT_MAIN work."
 }
