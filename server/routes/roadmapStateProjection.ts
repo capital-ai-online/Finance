@@ -100,7 +100,13 @@ function classifyState(
   label: string,
 ): { state: RoadmapLiveState; warning?: RoadmapProjectionWarning['code'] } | null {
   const normalized = stripMarkdown(label).toUpperCase();
-  if (!normalized || TERMINAL_STATE.test(normalized)) return null;
+  if (!normalized) return null;
+
+  // Only the leading state segment is authoritative for terminality. Narrative
+  // evidence may legitimately mention a closed/retired PR while the work item
+  // itself remains open (for example: EVIDENCE_MISSING / OPEN — PR #802 closed).
+  const terminalScope = normalized.split(/\s+[—–]\s+|\s+VIA\s+/i, 1)[0].trim();
+  if (TERMINAL_STATE.test(terminalScope)) return null;
 
   if (
     normalized.includes('IMPLEMENTED_ON_BRANCH') ||
