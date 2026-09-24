@@ -3,8 +3,9 @@
 **Project:** CAPITAL-AI-OPS  
 **Owner/PVC:** CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07  
 **Requested:** 2026-09-24  
-**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED  
-**Implementation branch:** `agent/operations-ci-validation-classification-v2-20260924` from `main@332861e4ae19f80c3bdc15dccf3733cdc52c265f`
+**State:** `MERGED_ON_MAIN / SUPERSEDED_BY OPS-CI-MINIMAL-VALIDATION-V3`  
+**Merged PR:** `#1411` on 2026-09-24  
+**Historical implementation branch:** `agent/operations-ci-validation-classification-v2-20260924` from `main@332861e4ae19f80c3bdc15dccf3733cdc52c265f`
 
 ## Goal
 
@@ -112,3 +113,10 @@ Representative examples after merge:
 - release/deploy/security/dependency/global configuration: full validation.
 
 No Required context is removed and no Human/CODEOWNER gate is weakened.
+
+
+## Post-merge supersession — 2026-09-24
+
+PR #1411 merged the V2 selective-validation foundation. Its historical work claim is released and non-exclusive. Fresh Human/Owner direction now extends that merged foundation through `OPS-CI-MINIMAL-VALIDATION-V3` from `main@13c27d69ba5564e32eea089455d3ccf60860c391`.
+
+V3 does not revive the historical branch or create a second CI controller. The existing D/C/R classifier, `NONE / FOCUSED / FULL` planner and exact-snapshot reuse path remain the canonical architecture.
