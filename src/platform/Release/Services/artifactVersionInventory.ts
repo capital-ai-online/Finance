@@ -72,7 +72,7 @@ interface GitIndexEntry {
 
 const MAX_SIGNAL_BYTES = 1024 * 1024;
 const GENERATED_PATH = /(^|\/)(?:dist|coverage|generated|artifacts?|snapshots?)(?:\/|$)/i;
-const GENERATED_HEADER = /(?:@generated|auto[- ]?generated|generated file|do not edit)/i;
+const GENERATED_HEADER = /^\\s*(?:(?:\\/\\/|#|<!--|\\*)\\s*)?(?:@generated\\b|this file is (?:auto[- ]?)?generated\\b|generated file\\b|do not edit\\b)/im;
 const STRONG_SEMANTIC_PATH = /(^|\/)(?:docs\/(?:adr|governance|contracts?)|\.ai\/skills|src\/platform\/Release)(?:\/|$)/i;
 const TEST_OR_FIXTURE_PATH = /(^|\/)(?:tests?|__tests__|fixtures?)(?:\/|$)/i;
 
@@ -252,7 +252,7 @@ function detectSignals(repoPath: string, text: string | null): ArtifactVersionSi
   detectMarkdownSignals(repoPath, text, signals);
   detectYamlSignals(repoPath, text, signals);
 
-  if (GENERATED_HEADER.test(text.slice(0, 4096))) {
+  const generatedHeaderWindow = text.split(/\\r?\\n/).slice(0, 8).join('\\n');\n  if (GENERATED_HEADER.test(generatedHeaderWindow)) {
     pushSignal(signals, 'GENERATED_MARKER', 'generated', 'true');
   }
 
