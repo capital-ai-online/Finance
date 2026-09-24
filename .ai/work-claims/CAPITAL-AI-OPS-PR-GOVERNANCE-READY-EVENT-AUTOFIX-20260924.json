@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PR-GOVERNANCE-READY-EVENT-AUTOFIX-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-02",
+    "PVC-04",
+    "PVC-08"
+  ],
+  "priority": "P1",
+  "branchName": "agent/operations-pr-ready-event-autofix-20260924",
+  "baseBranch": "main",
+  "baseSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "workItem": "Register Issue #1427 ready-event CI expectation drift as one evidence-bound, path-allowlisted PR autofix repair without creating a second self-healing controller.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PR-GOVERNANCE-READY-EVENT-AUTOFIX-20260924.json",
+    ".ai/work-claims/OPS-PR-AUTOFIX-CONTROL-PANEL-ROOT-CAUSE-20260920.json",
+    "docs/projects/operations/work-packages/OPS_PR_GOVERNANCE_READY_EVENT_AUTOFIX_2026-09-24.md",
+    "scripts/pr/prAutofixRepairRegistry.mjs",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "scripts/pr/repairers/prGovernanceReadyEventContractV1.mjs",
+    "scripts/pr/repairers/prGovernanceReadyEventContractV1.test.mjs"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Issue #1427 READY_FOR_PROJECT_EXECUTION",
+    "PR #1425 merged fix evidence",
+    "existing repository.pr.autofix controller and registry"
+  ],
+  "boundaries": [
+    "No direct main mutation.",
+    "No workflow/runtime/provider/security/merge-authority mutation.",
+    "Repairer may change only tests/unit/prReadyForReviewPipelineGate.test.ts.",
+    "Unknown, incomplete or repeated evidence remains fail-closed.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "Terminal claim from PR #1174 is released/non-exclusive.",
+    "Exact ready-event failure evidence resolves only to PR_GOVERNANCE_READY_EVENT_CONTRACT_V1.",
+    "Missing evidence is BLOCKED_NOT_PROVEN and repeat signature is BLOCKED_REPEAT_AUTOFIX.",
+    "Repairer changes exactly the historical stale governance test block and no other path.",
+    "Classifier/registry/repairer/controller regression checks and exact-head required checks pass."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc"
+}
