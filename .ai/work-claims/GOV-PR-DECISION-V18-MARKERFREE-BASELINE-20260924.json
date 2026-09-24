@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-DECISION-V18-MARKERFREE-BASELINE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -33,5 +33,9 @@
     "sha": "be33bde31d9e96d8cb306086428f90036350d8ea",
     "status": "SYNCED",
     "correlatedAt": "2026-09-24T14:34:00Z"
-  }
+  },
+  "releasedAt": "2026-09-24T20:46:00+02:00",
+  "releaseReason": "Terminal coordination lease: PR #1407 was Human/CODEOWNER-merged; the claim is historical evidence only and must not remain an active writer.",
+  "terminalPullRequest": 1407,
+  "terminalMergeSha": "f35dccd1880f6b27f98cdde66066231bf13aa592"
 }
