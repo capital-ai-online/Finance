@@ -5,6 +5,7 @@ import test from 'node:test';
 const relay = fs.readFileSync('.github/workflows/pr-production-baseline-refresh.yml', 'utf8');
 const postMerge = fs.readFileSync('.github/workflows/pr-production-baseline-post-merge-refresh.yml', 'utf8');
 const leading = fs.readFileSync('.github/workflows/pr-decision-reconciler.yml', 'utf8');
+const reconcilerScript = fs.readFileSync('scripts/pr/reconcilePrDecisionEvidence.mjs', 'utf8');
 
 function count(source, token) {
   return source.split(token).length - 1;
@@ -28,6 +29,17 @@ test('PR Decision Evidence Reconciler is the only PR-body writer in the converge
     assert.doesNotMatch(source, /validatePrBody\.mjs/, name + ' must not run a second body-validation/write lane');
     assert.doesNotMatch(source, /rerunFailedJobs|reRunWorkflow|rerunWorkflow/, name + ' must not own Governance rerun authority');
   }
+});
+
+test('leading writer can disarm provider auto-merge before repairing a human-merge-required PR body', () => {
+  const reconcileJob = leading.split('  reconcile:\n')[1];
+  assert.ok(reconcileJob, 'reconcile job must exist');
+  assert.match(reconcileJob, /permissions:\n      actions: write\n      checks: read\n(?:      #.*\n)*      contents: write\n      pull-requests: write/);
+  assert.match(reconcilerScript, /disablePullRequestAutoMerge/);
+  assert.match(
+    reconcilerScript,
+    /if \(livePr\?\.auto_merge\) \{\s*await mutateAutoMerge\(\{ repository, token, pr: livePr, enabled: false \}\);/s,
+  );
 });
 
 test('baseline refresh is a read-only Governance observer plus verified post-deploy relay', () => {
