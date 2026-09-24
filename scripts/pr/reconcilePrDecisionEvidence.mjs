@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { resolveMergeCadence } from '../operations/mergeCadence.mjs';
 import {
   PR_TEMPLATE_MARKER,
   PR_TEMPLATE_VERSION,
@@ -185,7 +186,43 @@ export function securityRequirements(policy) {
   });
 }
 
-export function evaluateProductionBaseline(bodyText, mainSha, headSha) {
+function trustedProductionBaselineMatches({
+  baseline,
+  baselineId,
+  repository,
+  productionSha,
+  expectedMain,
+  expectedHead,
+  productionDrift,
+}) {
+  if (!baseline || validateProductionBaselineForPr(baseline).length > 0) return false;
+  if (!baselineId || baselineId !== String(baseline.baselineId || '')) return false;
+  if (baseline?.checks?.productionRepoMatches !== true) return false;
+  if (repository && String(baseline?.production?.repoSlug || '') !== repository) return false;
+
+  return normalizeSha(baseline?.production?.commitSha) === productionSha &&
+    normalizeSha(baseline?.main?.sha) === expectedMain &&
+    normalizeSha(baseline?.head?.sha) === expectedHead &&
+    String(baseline?.production?.branch || '') === 'main' &&
+    String(baseline?.drift?.productionToMainCommits) === productionDrift;
+}
+
+function cadenceAllowsQueuedProduction(cadence, expectedMain) {
+  if (!cadence || cadence.active !== true) return false;
+  if (normalizeSha(cadence.ref) !== expectedMain) return false;
+  if (!['ANCESTOR', 'PRE_EPOCH'].includes(String(cadence.productionRelation || ''))) return false;
+
+  return cadence.deployDue === false &&
+    cadence.recoveryEligible === false &&
+    Number(cadence.deployRemaining) > 0;
+}
+
+export function evaluateProductionBaseline(
+  bodyText,
+  mainSha,
+  headSha,
+  { productionBaseline = null, cadence = null, repository = '' } = {},
+) {
   const body = String(bodyText || '');
   const markerStart = '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->';
   const markerEnd = '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->';
@@ -201,6 +238,7 @@ export function evaluateProductionBaseline(bodyText, mainSha, headSha) {
     new RegExp('^- \\*\\*' + escapeRegex(label) + ':\\*\\* \\`([^\\`\\n]+)\\`\\s*$', 'm'),
   )?.[1]?.trim() || null;
 
+  const baselineId = readText('Baseline-ID');
   const productionSha = readSha('Produktions-Commit');
   const baselineMainSha = readSha('Aktueller main-Commit');
   const baselineHeadSha = readSha('PR-Head-Commit');
@@ -215,13 +253,31 @@ export function evaluateProductionBaseline(bodyText, mainSha, headSha) {
 
   const expectedMain = normalizeSha(mainSha);
   const expectedHead = normalizeSha(headSha);
-  return productionSha === expectedMain &&
+  const bodyIdentityMatches =
     baselineMainSha === expectedMain &&
     baselineHeadSha === expectedHead &&
-    productionBranch === 'main' &&
-    productionDrift === '0'
-    ? 'PASS'
-    : 'BLOCKED';
+    productionBranch === 'main';
+
+  if (!bodyIdentityMatches) return 'BLOCKED';
+
+  if (productionBaseline && !trustedProductionBaselineMatches({
+    baseline: productionBaseline,
+    baselineId,
+    repository,
+    productionSha,
+    expectedMain,
+    expectedHead,
+    productionDrift,
+  })) {
+    return 'BLOCKED';
+  }
+
+  if (productionSha === expectedMain) {
+    return productionDrift === '0' ? 'PASS' : 'BLOCKED';
+  }
+
+  if (!productionBaseline || Number(productionDrift) <= 0) return 'BLOCKED';
+  return cadenceAllowsQueuedProduction(cadence, expectedMain) ? 'PASS' : 'BLOCKED';
 }
 
 export function findExactOverlap(targetFiles, peerPulls) {
@@ -704,13 +760,21 @@ function liveGateDetails({ mainSha, headSha, compare, checkRuns, policy, governa
     },
     baseline: {
       reason: gates.baseline === 'PASS'
-        ? 'Production-, CURRENT_MAIN- und PR-Head-Baseline sind für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' korreliert.'
-        : 'Produktions-Baseline ist nicht auf CURRENT_MAIN ' + mainSha.slice(0, 12) + ' und PR-Head ' + headSha.slice(0, 12) + ' mit Production-Drift 0 gebunden.',
+        ? 'Production-Baseline ist für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' exakt oder cadence-konform als DEPLOYMENT_QUEUED korreliert.'
+        : 'Produktions-Baseline ist weder exakt CURRENT_MAIN noch als gesunde kanonische DEPLOYMENT_QUEUED-Ancestor-Baseline für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' verifiziert.',
     },
   };
 }
 
-async function evaluateSnapshot({ repository, token, prNumber, pr, mainSha }) {
+async function evaluateSnapshot({
+  repository,
+  token,
+  prNumber,
+  pr,
+  mainSha,
+  productionBaseline = null,
+  cadence = null,
+}) {
   const body = String(pr?.body || '');
   const headSha = normalizeSha(pr?.head?.sha);
   if (!/^[0-9a-f]{40}$/.test(headSha)) fail('PR #' + prNumber + ' has invalid head SHA.');
@@ -732,7 +796,11 @@ async function evaluateSnapshot({ repository, token, prNumber, pr, mainSha }) {
     overlap: overlap.conflicts.length === 0 ? 'PASS' : 'BLOCKED',
     checks: gateForRequirements(policy.requiredChecks, checkRuns),
     security: gateForRequirements(securityRequirements(policy), checkRuns),
-    baseline: evaluateProductionBaseline(body, mainSha, headSha),
+    baseline: evaluateProductionBaseline(body, mainSha, headSha, {
+      productionBaseline,
+      cadence,
+      repository,
+    }),
   };
 
   return {
@@ -800,6 +868,7 @@ async function reconcileOne({
   canonicalBootstrapBody = '',
   productionBaseline = null,
   prClass = 'N/A',
+  cadenceRepoRoot = '',
 }) {
   let pr = await githubJson('https://api.github.com/repos/' + repository + '/pulls/' + prNumber, token);
   if (pr?.state !== 'open' || pr?.base?.ref !== 'main' || pr?.head?.repo?.full_name !== repository) {
@@ -812,13 +881,38 @@ async function reconcileOne({
   const mainSha = normalizeSha(main?.commit?.sha);
   if (!/^[0-9a-f]{40}$/.test(mainSha)) fail('CURRENT_MAIN could not be resolved.');
 
+  let cadence = null;
+  if (productionBaseline && cadenceRepoRoot) {
+    try {
+      cadence = resolveMergeCadence({
+        repoRoot: cadenceRepoRoot,
+        ref: mainSha,
+        productionSha: normalizeSha(productionBaseline?.production?.commitSha),
+        productionHealthy: productionBaseline?.checks?.productionHealthy === true,
+      });
+    } catch (error) {
+      console.warn(
+        '[PR-DECISION] Cadence evidence could not be resolved; queued Production remains fail-closed: ' +
+        (error instanceof Error ? error.message : String(error)),
+      );
+    }
+  }
+
   const leadingProjection = productionBaseline
     ? prepareLeadingPrBody(originalBody, productionBaseline, { prClass })
     : { eligible: false, changed: false, reason: 'production-baseline-missing', body: originalBody };
 
   const projectionSeedBody = leadingProjection.eligible ? leadingProjection.body : originalBody;
   const snapshotPr = { ...pr, body: projectionSeedBody };
-  const snapshot = await evaluateSnapshot({ repository, token, prNumber, pr: snapshotPr, mainSha });
+  const snapshot = await evaluateSnapshot({
+    repository,
+    token,
+    prNumber,
+    pr: snapshotPr,
+    mainSha,
+    productionBaseline,
+    cadence,
+  });
   const rendered = reconcileDecisionBodyWithBootstrap(
     projectionSeedBody,
     canonicalBootstrapBody,
@@ -1032,7 +1126,15 @@ async function reconcileOne({
     };
   }
 
-  const finalSnapshot = await evaluateSnapshot({ repository, token, prNumber, pr: livePr, mainSha });
+  const finalSnapshot = await evaluateSnapshot({
+    repository,
+    token,
+    prNumber,
+    pr: livePr,
+    mainSha,
+    productionBaseline,
+    cadence,
+  });
   const finalClassification = classifyAutoMergeEligibility({
     pr: livePr,
     repository,
@@ -1125,6 +1227,7 @@ async function main() {
     canonicalBootstrapBody,
     productionBaseline,
     prClass,
+    cadenceRepoRoot: String(process.env.PR_CADENCE_REPO_ROOT || '').trim(),
   });
   appendGithubOutput({
     changed: String(result.changed === true),
