@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DOC-POST-MERGE-STATUS-CONVERGENCE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge Documentary post-merge status after PRs #1353, #1154 and #1310 by releasing stale claims, terminalizing merged work-package projections and refreshing the canonical Documentary Roadmap.",
+  "workItemDE": "Documentary-Post-Merge-Status nach PR #1353, #1154 und #1310 konvergieren: stale Claims freigeben, gemergte Work-Package-Projektionen terminalisieren und die kanonische Documentary-Roadmap aktualisieren.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "b2eb210a7310da170db75f3065513522a224337e",
+  "lastSyncedMainSha": "b2eb210a7310da170db75f3065513522a224337e",
+  "branch": "agent/documentary-post-merge-status-convergence-20260924",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03",
+  "priority": "P1",
+  "priorityReason": "Merged Documentary work is still projected as active/exclusive and can create false writer/blocker state in current coordination surfaces.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DOC-POST-MERGE-STATUS-CONVERGENCE-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-DOC-VERSION-ARCHIVE-INTEGRITY-20260924-V2.json",
+    ".ai/work-claims/DOCUMENTARY-REPO-STRUCTURE-AUTO-CONVERGENCE-20260920.json",
+    ".ai/work-claims/DOCUMENTARY-STARTUP-FAILURE-PERMISSION-CEILING-20260923.json",
+    "docs/projects/documentary/ROADMAP.md",
+    "docs/projects/documentary/evidence/DOC_POST_MERGE_STATUS_CONVERGENCE_2026-09-24.md",
+    "docs/projects/documentary/work-packages/DOC_VERSION_ARCHIVE_INTEGRITY_01_2026-09-24.md",
+    "docs/projects/documentary/work-packages/CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01/AUTOMATIC_WORK_PACKAGE.md"
+  ],
+  "scopeBoundary": [
+    "Status/evidence convergence only; no Documentary runtime behavior change.",
+    "No FE live-roadmap mutation; that remains an owner-correct follow-up after DOC lands on main.",
+    "No removal of server/documentHygiene.ts or server/documentSanitizer.ts before FE/OPS consumer retirement.",
+    "No GOV/OPS/Production/provider mutation."
+  ],
+  "exitEvidence": [
+    "PR #1353/#1154/#1310 terminal merge identities are recorded.",
+    "The three stale claims are released/exclusive=false.",
+    "Both merged Documentary work packages are terminal.",
+    "Documentary ROADMAP baseline equals 8050206f6ae58238e88e859b98db62cf04459ff2.",
+    "Canonical exact-head checks pass and Human/CODEOWNER merge remains required."
+  ],
+  "acceptanceCriteria": [
+    "No touched terminal Documentary claim remains active/exclusive.",
+    "No terminal work package is projected as executable.",
+    "Historical items are not reactivated.",
+    "Foreign-owner follow-up remains a handoff, not DOC implementation."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

@@ -4,7 +4,7 @@
 **Owner/PVC:** CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18  
 **Parent:** OPS-08-B-SH-02  
 **Source Issue:** #1355  
-**Baseline:** main@cb0012e7f38452eb638ed2e3affe5e74f0b44ed6  
+**Baseline:** main@b0b6985a4786961f3a3125619566fa02003552d4  
 **State:** IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY
 
 ## Scope

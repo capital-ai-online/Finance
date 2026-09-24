@@ -15,7 +15,7 @@
   "priority": "P1",
   "branchName": "operations/issue-1355-ts-literal-union-drift-20260924",
   "baseBranch": "main",
-  "baseSha": "cb0012e7f38452eb638ed2e3affe5e74f0b44ed6",
+  "baseSha": "b0b6985a4786961f3a3125619566fa02003552d4",
   "workItem": "Classify exact TS2322 string-to-literal-union widening as fail-closed SH-02 evidence without enabling code mutation.",
   "claimedPaths": [
     "scripts/pr/classifyPrAutofixFailure.mjs",
@@ -35,5 +35,6 @@
     "Unknown TypeScript failures remain UNKNOWN_FAILURE / BLOCKED_UNKNOWN.",
     "No repairer/controller/writer added."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "b0b6985a4786961f3a3125619566fa02003552d4"
 }
