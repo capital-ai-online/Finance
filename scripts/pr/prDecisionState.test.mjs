@@ -5,6 +5,7 @@ import {
   decisionImpactLabel,
   deriveDecisionStatus,
   deriveProductionCadenceState,
+  deriveVersionCadenceEvidence,
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
@@ -100,6 +101,35 @@ test('production cadence state distinguishes queued lag, due deploy, convergence
   assert.equal(deriveProductionCadenceState({ ...base, productionHealthy: false }), 'PRODUCTION_DRIFT');
   assert.equal(deriveProductionCadenceState({ ...base, productionRelation: 'DIVERGED' }), 'PRODUCTION_DRIFT');
   assert.equal(deriveProductionCadenceState({ ...base, active: false }), 'LEGACY_PER_MERGE');
+});
+
+test('version cadence evidence shows current version and deploy x/2 progress toward next PATCH', () => {
+  const beforeDeploy = deriveVersionCadenceEvidence({
+    active: true,
+    currentVersion: '0.6.1',
+    nextPatchVersion: '0.6.2',
+    versionProgress: 4,
+    versionRemaining: 6,
+  });
+  assert.equal(beforeDeploy.deployProgress, 0);
+  assert.equal(beforeDeploy.deployTotal, 2);
+  assert.equal(beforeDeploy.deployRemaining, 2);
+  assert.match(beforeDeploy.reason, /0\/2/);
+  assert.match(beforeDeploy.reason, /0\.6\.1/);
+  assert.match(beforeDeploy.nextStep, /0\.6\.2/);
+  assert.match(beforeDeploy.nextStep, /4\/10/);
+
+  const afterFirstDeploy = deriveVersionCadenceEvidence({
+    active: true,
+    currentVersion: '0.6.1',
+    nextPatchVersion: '0.6.2',
+    versionProgress: 7,
+    versionRemaining: 3,
+  });
+  assert.equal(afterFirstDeploy.deployProgress, 1);
+  assert.equal(afterFirstDeploy.deployRemaining, 1);
+  assert.match(afterFirstDeploy.reason, /1\/2/);
+  assert.match(afterFirstDeploy.nextStep, /7\/10/);
 });
 
 test('evidence rows explain why a gate is blocked and what happens next', () => {

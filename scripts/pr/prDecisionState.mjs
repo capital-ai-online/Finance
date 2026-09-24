@@ -158,6 +158,56 @@ export function decisionImpactLabel(prClass, securityGate = 'PENDING') {
   return security === 'BLOCKED' ? base + ' · Security/Compliance BLOCKED' : base;
 }
 
+export const VERSION_DEPLOYS_PER_PATCH = 2;
+
+export function deriveVersionCadenceEvidence(cadence = {}) {
+  const fallback = {
+    label: 'Version / Deploy-Zyklus',
+    status: '📡 LIVE',
+    reason: 'Aktuelle Versions-/Deploy-Cadence ist nicht vollständig auflösbar.',
+    nextStep: 'Kanonische mergeCadence-Evidence erneut lesen.',
+    currentVersion: 'N/A',
+    nextPatchVersion: 'N/A',
+    deployProgress: 'N/A',
+    deployTotal: VERSION_DEPLOYS_PER_PATCH,
+    deployRemaining: 'N/A',
+    versionProgress: 'N/A',
+    versionRemaining: 'N/A',
+  };
+  if (cadence?.active !== true) return { ...fallback, status: '📡 LEGACY' };
+
+  const versionProgress = Number(cadence.versionProgress);
+  const versionRemaining = Number(cadence.versionRemaining);
+  const currentVersion = String(cadence.currentVersion || '').trim();
+  const nextPatchVersion = String(cadence.nextPatchVersion || '').trim();
+  if (
+    !Number.isInteger(versionProgress) || versionProgress < 0 || versionProgress > 9 ||
+    !Number.isInteger(versionRemaining) || versionRemaining < 1 || versionRemaining > 10 ||
+    !currentVersion || !nextPatchVersion
+  ) return fallback;
+
+  const deployProgress = Math.floor(versionProgress / 5);
+  const deployRemaining = VERSION_DEPLOYS_PER_PATCH - deployProgress;
+  return {
+    label: 'Version / Deploy-Zyklus',
+    status: '📡 LIVE',
+    reason:
+      'Aktuelle Version `' + currentVersion + '` · Deploy-Zyklus bis nächste Version: `' +
+      deployProgress + '/' + VERSION_DEPLOYS_PER_PATCH + '` · noch `' + deployRemaining +
+      '` Deploy-Grenze(n).',
+    nextStep:
+      'Nächstes PATCH `' + nextPatchVersion + '` · Merge-Fortschritt `' +
+      versionProgress + '/10` · noch `' + versionRemaining + '` Merge(s).',
+    currentVersion,
+    nextPatchVersion,
+    deployProgress,
+    deployTotal: VERSION_DEPLOYS_PER_PATCH,
+    deployRemaining,
+    versionProgress,
+    versionRemaining,
+  };
+}
+
 export function deriveProductionCadenceState({
   active,
   deployDue,
