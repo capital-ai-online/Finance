@@ -42,6 +42,21 @@ test('leading writer can disarm provider auto-merge before repairing a human-mer
   );
 });
 
+test('stale PR heads delegate canonical branch sync before production preflight', () => {
+  const lineageAt = leading.indexOf('Main-Ancestry vor Production-Preflight prüfen');
+  const earlySyncAt = leading.indexOf('Stale Head vor Preflight an kanonischen Branch-Sync delegieren');
+  const preflightAt = leading.indexOf('Produktionsbaseline aus Trusted Main für die führende PR-Convergence erzeugen');
+  assert.ok(lineageAt >= 0, 'bootstrap lineage guard must exist');
+  assert.ok(earlySyncAt > lineageAt, 'stale-head sync delegation must follow lineage classification');
+  assert.ok(preflightAt > earlySyncAt, 'production preflight must run only after the stale-head sync gate');
+  assert.match(leading, /id: bootstrap_lineage/);
+  assert.match(leading, /git merge-base --is-ancestor "\$EXPECTED_MAIN_SHA" HEAD/);
+  assert.match(leading, /Stale Head vor Preflight an kanonischen Branch-Sync delegieren\n        if: steps\.bootstrap_lineage\.outputs\.branch_sync_required == 'true'/);
+  assert.match(leading, /Produktionsbaseline aus Trusted Main für die führende PR-Convergence erzeugen\n        if: steps\.bootstrap_lineage\.outputs\.branch_sync_required != 'true'/);
+  assert.match(leading, /Evidence → Decision gegen Live-State reconciliieren\n        if: steps\.bootstrap_lineage\.outputs\.branch_sync_required != 'true'/);
+  assert.equal(count(leading, "workflow_id: 'sync-agent-pr-branches.yml'"), 2);
+});
+
 test('baseline refresh is a read-only Governance observer plus verified post-deploy relay', () => {
   assert.match(relay, /workflows: \['PR Governance', 'CI'\]/);
   assert.match(relay, /types: \[completed\]/);
