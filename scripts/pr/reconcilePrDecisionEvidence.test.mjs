@@ -684,12 +684,23 @@ test('auto-merge projected v1.8 body refreshes Production baseline without dupli
   const baseline = convergenceBaseline();
   const autoMergeBody = canonicalBody()
     .replace(
+      '> P1 · PR-Klasse C · PATCH',
+      '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    )
+    .replace(
       '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
       '| Owner-Aktion | Keine manuelle Merge-Aktion; GitHub Auto-Merge nach Exact-Head-Revalidierung |',
     )
     .replace(
-      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
-      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+      '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance\n- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      [
+        '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance',
+        '- **Priorität:** P1 🟠 Hoch',
+        '- **Versionsimpact:** PATCH 🩹',
+        '- **Version-Manager-Check:** PASS — canonical auto-merge refresh fixture.',
+        '- **PR-Klasse:** C',
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+      ].join('\n'),
     );
 
   const result = prepareLeadingPrBody(autoMergeBody, baseline, { prClass: 'C' });
