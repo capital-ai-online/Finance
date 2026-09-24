@@ -516,10 +516,18 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
     .split('      - name: Kanonischen v1.8-Body ausschließlich mit Trusted-Main-Renderer erzeugen\n')[1]
     .split('\n      - name: Evidence → Decision gegen Live-State reconciliieren\n')[0];
   assert.match(bootstrapRenderBlock, /PR_ALLOW_CLAIMLESS: 'true'/);
+  assert.match(bootstrapRenderBlock, /PR_PROJECT_ID: \$\{\{ steps\.bootstrap_snapshot\.outputs\.project_id \}\}/);
+  assert.match(bootstrapRenderBlock, /PR_PRIMARY_OWNER: \$\{\{ steps\.bootstrap_snapshot\.outputs\.primary_owner \}\}/);
+  assert.match(bootstrapRenderBlock, /PR_AFFECTED_PVC: \$\{\{ steps\.bootstrap_snapshot\.outputs\.affected_pvc \}\}/);
   assert.match(
     bootstrapRenderBlock,
     /Existing PRs may predate work-claim enforcement/,
   );
+  assert.match(workflow, /Claimless v1\.8 bootstrap requires existing Projekt and Owner \/ PVC evidence/);
+  assert.match(workflow, /Claimless v1\.8 bootstrap project identity mismatch/);
+  assert.match(workflow, /Claimless v1\.8 bootstrap requires canonical project label project:/);
+  assert.match(workflow, /Claimless v1\.8 bootstrap PVC evidence is not canonical/);
+  assert.match(workflow, /projectLabels\.includes\(\`project:\$\{projectId\}\`\)/);
   assert.doesNotMatch(createWorkflow, /PR_ALLOW_CLAIMLESS:\s*['"]?true/);
   assert.match(workflow, /PR_CANONICAL_BOOTSTRAP_BODY: \.\.\/candidate\/artifacts\/pr\/decision-reconciler-bootstrap-body\.md/);
 
