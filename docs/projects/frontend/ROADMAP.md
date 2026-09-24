@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-24 — Owner-directed Roadmap presentation migration from the historical dashboard shell to the current productive Landingpage profile; no productive domain ownership changes  
-**Baseline:** `main@0d63fb5b92934753440d77bcf04057adb2dd6734`
+**Baseline:** `main@b0b6985a4786961f3a3125619566fa02003552d4`
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -31,8 +31,8 @@ This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9
 **Canonical identity:** `FE-LANDING-TEMPLATE-01`  
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** Frontend presentation + canonical Branding Kit only; no productive PVC ownership  
-**Status:** `IN_PROGRESS / OWNER_DIRECTED`  
-**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`
+**Status:** `DONE_MAIN / TERMINAL`  
+**Baseline:** `main@b0b6985a4786961f3a3125619566fa02003552d4`
 
 Fresh Owner direction replaces the historical dashboard-style template used by `/roadmap` with one reusable public-site template derived from the current productive Landingpage.
 
@@ -45,7 +45,7 @@ Implementation boundary:
 - semantic asset/score/status colors and PDF/Social core roles are not redefined;
 - open PR #1367 is an independent Dashboard runtime/performance writer and has no changed-file overlap with this slice.
 
-**Exit:** Roadmap consumes `LandingPageTemplate` / `LandingPanel`, the old shared-`Card`/dashboard shell is absent from the Roadmap renderer, Branding Kit + CSS projection expose the productive Landingpage profile, exact-head validation passes, and Human/CODEOWNER merge remains the final gate.
+**Exit:** SATISFIED — PR #1374 merged as `cb0012e7f38452eb638ed2e3affe5e74f0b44ed6`; Roadmap consumes `LandingPageTemplate` / `LandingPanel`, the old shared-`Card`/dashboard shell is absent from the Roadmap renderer, Branding Kit + CSS projection expose the productive Landingpage profile, and exact-head Governance/CI/Security validation passed.
 
 ## FE-ROADMAP-LIVE-01 — Branded Roadmap Live Dashboard
 
