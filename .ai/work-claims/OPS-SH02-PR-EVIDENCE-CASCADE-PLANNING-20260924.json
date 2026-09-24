@@ -34,11 +34,11 @@
     "MERGE_CADENCE_PATCH_V1 registered repairer",
     "open PR #1377 terminal recorrelation before GOV cadence-evidence implementation changes",
     "open PR #1378 terminal recorrelation before GOV PR-decision-reconciler implementation changes",
-    "open PR #1379 terminal recorrelation before OPS Roadmap/SH-02 parent linkage"
+    "open PR #1380 terminal recorrelation before OPS Roadmap/SH-02 parent linkage; closed/unmerged #1379 is evidence only"
   ],
   "scopeBoundary": [
     "Planning and architecture-evidence integration only; no new remediation action or finding namespace.",
-    "No mutation of docs/projects/operations/ROADMAP.md or the SH-02 parent package while PR #1379 owns those paths.",
+    "No mutation of docs/projects/operations/ROADMAP.md or the SH-02 parent package while PR #1380 owns those paths; closed/unmerged #1379 is evidence only.",
     "No mutation of GOV PR Decision Evidence Reconciler/template surfaces while PRs #1377/#1378 own them.",
     "No SH-02.12 activation and no generic Issue-to-code executor.",
     "No provider, Production, IAM, Secret, Billing, database or merge mutation.",
@@ -47,8 +47,8 @@
   "exitEvidence": [
     "A bounded OPS work package records the #1371/#1373/#1374/#1375/#1376 failure/fix sequence and acceptance criteria.",
     "CAPITAL-AI-ASH-01 records generation-aware repository/PR evidence convergence as a current architectural invariant.",
-    "Changed files do not overlap open PR #1377, #1378 or #1379.",
-    "Roadmap/SH-02 parent linkage is explicitly deferred until #1379 is terminal and CURRENT_MAIN is reread.",
+    "Changed files do not overlap open PR #1377, #1378 or #1380.",
+    "Roadmap/SH-02 parent linkage is explicitly deferred until #1380 is terminal and CURRENT_MAIN is reread.",
     "Exact-head repository checks pass and final merge authority remains unchanged."
   ],
   "acceptanceCriteria": [
