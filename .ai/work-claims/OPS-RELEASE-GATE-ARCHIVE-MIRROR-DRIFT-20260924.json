@@ -20,6 +20,7 @@
     ".ai/work-claims/OPS-RELEASE-GATE-ARCHIVE-MIRROR-DRIFT-20260924.json",
     "src/platform/Release/Services/releaseVersionGate.ts",
     "tests/unit/releaseVersionGate.test.ts",
+    "tests/unit/deterministicVersionMaterialization.test.ts",
     "src/platform/Release/README.md",
     "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md",
     "package.json",
