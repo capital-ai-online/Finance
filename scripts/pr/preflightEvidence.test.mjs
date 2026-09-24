@@ -27,7 +27,23 @@ describe('ChatGPT preflight evidence contract', () => {
     assert.equal(evidence.quality_profiles.pr_fast, 'NOT_APPLICABLE');
     assert.equal(evidence.quality_profiles.deep_baseline, 'SCHEDULED_NOT_PR');
     assert.deepEqual(evidence.required_exact_head_contexts, REQUIRED_EXACT_HEAD_CONTEXTS);
+    assert.equal(evidence.pre_pr_mergeability.state, 'EVIDENCE_PENDING');
+    assert.equal(evidence.pre_pr_mergeability.branch_contains_current_main, null);
     assert.match(evidence.evidence_fingerprint, /^sha256:[0-9a-f]{64}$/);
+  });
+
+  it('blocks pre-PR readiness when the candidate does not contain current main', () => {
+    const evidence = buildPreflightEvidence({
+      baseSha: A,
+      headSha: B,
+      treeSha: C,
+      files: ['docs/projects/operations/ROADMAP.md'],
+      branchContainsCurrentMain: false,
+    });
+
+    assert.equal(evidence.pre_pr_mergeability.state, 'BLOCKED');
+    assert.equal(evidence.pre_pr_mergeability.branch_contains_current_main, false);
+    assert.match(evidence.pre_pr_mergeability.note, /GitHub mergeability/);
   });
 
   it('selects focused validation for bounded application source', () => {

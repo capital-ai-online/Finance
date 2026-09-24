@@ -3,8 +3,8 @@
 **Project:** CAPITAL-AI-OPS  
 **Owner/PVC:** CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07  
 **Requested:** 2026-09-24  
-**State:** READY_AFTER_SETTINGS_INVENTORY / INDEPENDENT  
-**Implementation branch:** fresh CURRENT_MAIN successor after the settings inventory PR
+**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED  
+**Implementation branch:** `agent/operations-ci-validation-classification-v2-20260924` from `main@332861e4ae19f80c3bdc15dccf3733cdc52c265f`
 
 ## Goal
 
@@ -69,3 +69,46 @@ A Render-based ephemeral/JIT runner remains a later feasibility option only if m
 ## Exit target
 
 Measure before/after runner minutes and prove that representative small OPS/tooling, docs, test-only and frontend PRs select strictly smaller validation sets while protected/high-risk examples remain FULL.
+
+
+## Implemented V2 slice
+
+The existing planner remains the single CI-selection authority.
+
+Implemented on the branch:
+
+- ordinary `scripts/operations/**` tooling uses `FOCUSED` + `vitest --changed <base>` instead of the full repository suite;
+- release/deploy/production/cadence controls remain fail-closed `FULL`;
+- documentary/evidence snapshots consumed only by known test files are classified as non-production validation inputs;
+- exact direct Vitest consumers are discovered and executed in addition to the changed dependency graph;
+- documentary artifacts consumed by runtime/workflow or an unhandled test surface remain `FULL`;
+- main pushes, dependency manifests, `ci.yml`, security/auth/billing/entitlement and unknown paths remain `FULL`;
+- candidate changes cannot self-demote because `ci.yml` continues loading classifier/planner policy from the trusted PR base snapshot.
+
+## ChatGPT preflight boundary
+
+The repository contains a machine-readable ChatGPT preflight contract, not a separate repository-bound ChatGPT CI provider.
+
+The pre-PR evidence now exposes:
+
+- exact base/head/tree identity;
+- changed paths and runtime/test consumers;
+- selected focused/full validation;
+- real `PASS / FAIL / NOT_RUN` results only;
+- `BLOCKED / EVIDENCE_PENDING / READY_FOR_GITHUB_VALIDATION` pre-PR state;
+- explicit confirmation that GitHub mergeability and exact-head Required Checks remain authoritative after PR creation.
+
+This prevents a local/hosted-agent preflight from falsely claiming a PR is mergeable.
+
+The canonical one-time PR-creation Production Preflight remains the trusted provider confirmation. Repeated Live-Dashboard/Production-Baseline coupling inside Required PR Governance is owned by the separate GOV convergence slice and is not duplicated here.
+
+## Expected cost effect
+
+Representative examples after merge:
+
+- ordinary OPS adapter + unit test: focused changed tests, no application production build/predeploy;
+- FRONTEND upstream evidence snapshot referenced only from a Vitest regression: changed graph plus the direct regression consumer, no global suite;
+- documentation only with no executable consumer: no software tests;
+- release/deploy/security/dependency/global configuration: full validation.
+
+No Required context is removed and no Human/CODEOWNER gate is weakened.
