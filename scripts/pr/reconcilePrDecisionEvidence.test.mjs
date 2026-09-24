@@ -680,6 +680,38 @@ test('leading PR body projection repairs the PR #1298 hybrid shape and binds one
   ]);
 });
 
+test('PR #1403 marker-free v1.8 NOT_RUN baseline converges through the existing leading baseline specialist', () => {
+  const baseline = convergenceBaseline();
+  const body = canonicalBody()
+    .replace('> P1 · PR-Klasse C · PATCH', '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹')
+    .replace(
+      '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance\n- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      [
+        '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance',
+        '- **Priorität:** P1 🟠 Hoch',
+        '- **Versionsimpact:** PATCH 🩹',
+        '- **Version-Manager-Check:** NOT_RUN — PR #1403 regression fixture.',
+        '- **PR-Klasse:** C',
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      ].join('\n'),
+    )
+    .replace(
+      /<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->[\s\S]*?<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/,
+      'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    );
+
+  const result = prepareLeadingPrBody(body, baseline, { prClass: 'C' });
+
+  assert.equal(result.eligible, true);
+  assert.equal(result.structureChanged, false);
+  assert.equal(result.baselineChanged, true);
+  assert.equal(result.reason, 'production-baseline-reconciled');
+  assert.ok(result.body.includes(baseline.baselineId));
+  assert.doesNotMatch(result.body, /NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt\./);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.equal((result.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
+});
+
 test('auto-merge projected v1.8 body refreshes Production baseline without duplicating the Human/CODEOWNER gate', () => {
   const baseline = convergenceBaseline();
   const autoMergeBody = canonicalBody()
