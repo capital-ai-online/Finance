@@ -6,7 +6,7 @@
  * Execution remains with the existing Supervisor/provider/runtime paths.
  */
 
-export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.2.0' as const;
+export const SELF_HEALING_CONTRACT_VERSION = 'self-healing-contract/1.3.0' as const;
 
 export const FINDING_CLASSES = [
   'PROCESS_FATAL',
@@ -27,6 +27,7 @@ export const FINDING_CLASSES = [
   'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT',
   'REPOSITORY_PR_GOVERNANCE_METADATA_DRIFT',
   'REPOSITORY_ISSUE_PROJECT_DISPATCH_DRIFT',
+  'REPOSITORY_TERMINAL_WORK_CLAIM_STALE',
   'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
   'SECURITY_OR_POLICY_BLOCKED',
 ] as const;
@@ -46,6 +47,7 @@ export type RemediationActionId =
   | 'RECONCILE_PR_DECISION_EVIDENCE'
   | 'RECONCILE_PR_GOVERNANCE_METADATA'
   | 'VERIFY_ISSUE_PROJECT_DISPATCH'
+  | 'RELEASE_TERMINAL_WORK_CLAIM'
   | 'RUNTIME_PROCESS_RECYCLE'
   | 'REDEPLOY_EXACT_SHA'
   | 'PROTECTED_ROLLBACK_RESTORE';
@@ -182,6 +184,19 @@ const ACTIONS: Record<RemediationActionId, RemediationAction> = {
     exhaustionState: 'ESCALATED',
     description: 'Verify GOV issue-routing evidence against the unchanged routing generation, open Issue state and exact canonical project-label provider readback; Issue content never grants execution authority.',
   },
+  RELEASE_TERMINAL_WORK_CLAIM: {
+    id: 'RELEASE_TERMINAL_WORK_CLAIM',
+    tier: 'SH-1',
+    activation: 'HELD',
+    idempotencyClass: 'IDEMPOTENT',
+    blastRadius: 'WORK_ITEM',
+    requiredCapability: 'repository.work-claim.release',
+    killSwitch: 'self-healing.terminal-work-claim-release',
+    verificationProbe: 'terminal-work-claim-release-readback',
+    budget: { maxAttempts: 1, cooldownMs: 0, timeoutMs: 300_000 },
+    exhaustionState: 'ESCALATED',
+    description: 'Bounded candidate remediation for stale active/exclusive work claims after their associated work is terminal. Mutation is limited to status=released and exclusive=false with exact terminal-work and post-merge evidence. The action remains HELD until the learning promotion gate has at least three positive validations and an explicit Human/CODEOWNER-merged contract promotion enables it.',
+  },
   RUNTIME_PROCESS_RECYCLE: {
     id: 'RUNTIME_PROCESS_RECYCLE',
     tier: 'SH-2',
@@ -262,6 +277,11 @@ const POLICIES: Record<FindingClass, RemediationPolicy> = {
     'VERIFY_ISSUE_PROJECT_DISPATCH',
     ['VERIFY_ISSUE_PROJECT_DISPATCH', 'OBSERVE_ONLY'],
   ),
+  REPOSITORY_TERMINAL_WORK_CLAIM_STALE: policy(
+    'REPOSITORY_TERMINAL_WORK_CLAIM_STALE',
+    'RELEASE_TERMINAL_WORK_CLAIM',
+    ['RELEASE_TERMINAL_WORK_CLAIM', 'OBSERVE_ONLY'],
+  ),
   PROTECTED_GITHUB_ACTIONS_COST_BLOCKER: policy(
     'PROTECTED_GITHUB_ACTIONS_COST_BLOCKER',
     'OBSERVE_ONLY',
@@ -298,6 +318,112 @@ export function getRemediationPolicies(): RemediationPolicy[] {
 
 function cloneAction(action: RemediationAction): RemediationAction {
   return { ...action, budget: { ...action.budget } };
+}
+
+
+export const SELF_HEALING_LEARNING_CONTRACT_VERSION = 'self-healing-learning/1.0.0' as const;
+export const SELF_HEALING_MIN_POSITIVE_VALIDATIONS = 3 as const;
+
+export type SelfHealingLearningProcessId = 'POST_MERGE_WORK_CLAIM_RELEASE_V1';
+export type SelfHealingLearningValidationResult = 'POSITIVE' | 'NEGATIVE';
+
+export interface SelfHealingLearningValidation {
+  id: string;
+  result: SelfHealingLearningValidationResult;
+  observedAt: string;
+  evidenceRefs: readonly string[];
+  note: string;
+}
+
+export interface SelfHealingLearningProcess {
+  schema: typeof SELF_HEALING_LEARNING_CONTRACT_VERSION;
+  id: SelfHealingLearningProcessId;
+  findingClass: FindingClass;
+  targetActionId: RemediationActionId;
+  minimumPositiveValidations: typeof SELF_HEALING_MIN_POSITIVE_VALIDATIONS;
+  steps: readonly string[];
+  validations: readonly SelfHealingLearningValidation[];
+}
+
+const SELF_HEALING_LEARNING_PROCESSES: Readonly<Record<SelfHealingLearningProcessId, SelfHealingLearningProcess>> =
+  Object.freeze({
+    POST_MERGE_WORK_CLAIM_RELEASE_V1: Object.freeze({
+      schema: SELF_HEALING_LEARNING_CONTRACT_VERSION,
+      id: 'POST_MERGE_WORK_CLAIM_RELEASE_V1',
+      findingClass: 'REPOSITORY_TERMINAL_WORK_CLAIM_STALE',
+      targetActionId: 'RELEASE_TERMINAL_WORK_CLAIM',
+      minimumPositiveValidations: SELF_HEALING_MIN_POSITIVE_VALIDATIONS,
+      steps: Object.freeze([
+        'READ_CURRENT_MAIN',
+        'CORRELATE_TERMINAL_PR_AND_WORK_CLAIM',
+        'VERIFY_REQUIRED_CHECKS_AND_POST_MERGE_EVIDENCE',
+        'PREPARE_BOUNDED_RELEASE_STATUS_RELEASED_EXCLUSIVE_FALSE',
+        'VERIFY_RELEASE_READBACK',
+      ]),
+      validations: Object.freeze([
+        Object.freeze({
+          id: 'POST_MERGE_WORK_CLAIM_RELEASE_V1-VALIDATION-001',
+          result: 'POSITIVE',
+          observedAt: '2026-09-24T20:35:31.935Z',
+          evidenceRefs: Object.freeze([
+            'github:pr/1437@merge:ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc',
+            'github:pr/1439@head:62bb702b78e19deb2e574812fd40bc2059ceffc9',
+            'github:checks/62bb702b78e19deb2e574812fd40bc2059ceffc9:required-success',
+            'github:pr/1439:post-merge-render-readback:dep-daqog5g473hc73bucltg',
+          ]),
+          note: 'First positive learning validation: PR #1437 is terminal/merged, exact-head CI/Governance/Security checks for the bounded claim-release candidate are successful, and PR #1439 carries the correlated post-merge Render identity used to prepare status=released/exclusive=false. This validation counts toward learning only; it does not enable autonomous mutation.',
+        }),
+      ]),
+    }),
+  });
+
+export interface SelfHealingLearningPromotion {
+  processId: SelfHealingLearningProcessId;
+  positiveValidations: number;
+  requiredPositiveValidations: number;
+  remainingPositiveValidations: number;
+  promotionEligible: boolean;
+  targetActionActivation: RemediationActivation;
+  requiresExplicitContractPromotion: true;
+}
+
+export function getSelfHealingLearningProcess(id: SelfHealingLearningProcessId): SelfHealingLearningProcess {
+  const item = SELF_HEALING_LEARNING_PROCESSES[id];
+  return {
+    ...item,
+    steps: [...item.steps],
+    validations: item.validations.map(validation => ({
+      ...validation,
+      evidenceRefs: [...validation.evidenceRefs],
+    })),
+  };
+}
+
+export function evaluateSelfHealingLearningPromotion(
+  id: SelfHealingLearningProcessId,
+  validations: readonly SelfHealingLearningValidation[] = SELF_HEALING_LEARNING_PROCESSES[id].validations,
+): SelfHealingLearningPromotion {
+  const process = SELF_HEALING_LEARNING_PROCESSES[id];
+  const positiveIds = new Set(
+    validations
+      .filter(validation => validation.result === 'POSITIVE')
+      .map(validation => validation.id),
+  );
+  const positiveValidations = positiveIds.size;
+  const remainingPositiveValidations = Math.max(
+    0,
+    process.minimumPositiveValidations - positiveValidations,
+  );
+
+  return {
+    processId: id,
+    positiveValidations,
+    requiredPositiveValidations: process.minimumPositiveValidations,
+    remainingPositiveValidations,
+    promotionEligible: positiveValidations >= process.minimumPositiveValidations,
+    targetActionActivation: ACTIONS[process.targetActionId].activation,
+    requiresExplicitContractPromotion: true,
+  };
 }
 
 export type RecoveryState =
@@ -663,6 +789,28 @@ export function validateSelfHealingContract(): string[] {
     }
     for (const actionId of remediationPolicy.allowedActionIds) {
       if (!ACTIONS[actionId]) errors.push(`unknown action ${actionId} for ${findingClass}`);
+    }
+  }
+
+  for (const process of Object.values(SELF_HEALING_LEARNING_PROCESSES)) {
+    if (process.minimumPositiveValidations < 3) {
+      errors.push(`${process.id} minimumPositiveValidations must be at least 3`);
+    }
+    const validationIds = new Set<string>();
+    for (const validation of process.validations) {
+      if (!validation.id.trim()) errors.push(`${process.id} validation id required`);
+      if (validationIds.has(validation.id)) errors.push(`${process.id} duplicate validation id ${validation.id}`);
+      validationIds.add(validation.id);
+      if (!Number.isFinite(Date.parse(validation.observedAt))) {
+        errors.push(`${process.id} validation timestamp invalid: ${validation.id}`);
+      }
+      if (validation.evidenceRefs.length === 0) {
+        errors.push(`${process.id} validation evidence required: ${validation.id}`);
+      }
+    }
+    const promotion = evaluateSelfHealingLearningPromotion(process.id);
+    if (!promotion.promotionEligible && ACTIONS[process.targetActionId].activation !== 'HELD') {
+      errors.push(`${process.id} target action must remain HELD before promotion eligibility`);
     }
   }
 
