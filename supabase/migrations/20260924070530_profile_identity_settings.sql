@@ -63,7 +63,7 @@ create or replace function public.sync_profile_identity_from_auth_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   requested_username text;

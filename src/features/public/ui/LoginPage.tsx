@@ -446,8 +446,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
             <button
               type="button"
               id="tab-mode-login"
+              disabled={mfaRequired}
               onClick={() => selectMode('login')}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                 authMode === 'login'
                   ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow'
                   : 'text-slate-400 hover:text-white'
@@ -459,8 +460,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
             <button
               type="button"
               id="tab-mode-register"
+              disabled={mfaRequired}
               onClick={() => selectMode('register')}
-              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                 authMode === 'register'
                   ? 'bg-gradient-to-r from-[#FF2E93] to-[#8D26FF] text-white shadow'
                   : 'text-slate-400 hover:text-white'

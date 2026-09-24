@@ -560,11 +560,7 @@ backendAuthRouter.post('/login/email', AUTH_CREDENTIAL_RATE_LIMIT, async (req, r
 
 
   try {
-    const email = await resolvePasswordLoginEmail(identifier);
-    if (!email) {
-      res.status(401).json({ error: 'Anmeldung fehlgeschlagen. Zugangsdaten und Kontobestätigung prüfen.' });
-      return;
-    }
+    const email = await resolvePasswordLoginEmail(identifier) || 'unresolved-login@invalid.local';
     const supabase = createBackendEmailAuthClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.session || !data.user || data.user.is_anonymous) {
