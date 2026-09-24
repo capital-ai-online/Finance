@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-ROADMAP-LIVE-POST-MERGE-CONVERGENCE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FE",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
@@ -51,5 +51,8 @@
     "executionSurface": "ChatGPT GitHub connector"
   },
   "recorrelatedAt": "2026-09-24T04:30:15Z",
-  "recorrelationNote": "Merged Governance PR #1377 advanced CURRENT_MAIN without claimed-file overlap. The 5/10 cadence is at ordinal 31, so Production on ordinal-30 main d28eff... is expected queued ancestor state. Full-suite regression exposed the now-terminal FE self-lane as a stale fixed-count expectation; roadmapProjectRouting is included to assert seven executable lanes and no FE-ROADMAP-LIVE lane."
+  "recorrelationNote": "Merged Governance PR #1377 advanced CURRENT_MAIN without claimed-file overlap. The 5/10 cadence is at ordinal 31, so Production on ordinal-30 main d28eff... is expected queued ancestor state. Full-suite regression exposed the now-terminal FE self-lane as a stale fixed-count expectation; roadmapProjectRouting is included to assert seven executable lanes and no FE-ROADMAP-LIVE lane.",
+  "releasedAt": "2026-09-24T06:05:00Z",
+  "releaseReason": "PR #1382 merged as CURRENT_MAIN 5c1b6727762364229516d4c74e85d9bf960574d1; its release condition fired and the former exclusive writer is terminal.",
+  "releasedMainSha": "5c1b6727762364229516d4c74e85d9bf960574d1"
 }
