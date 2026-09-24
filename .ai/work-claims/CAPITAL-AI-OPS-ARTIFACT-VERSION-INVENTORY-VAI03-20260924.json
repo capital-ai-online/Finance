@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI03-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "VAI-03 — bind artifact-version inventory identity into the existing Self-Healing PR evidence generation.",
+  "startedAt": "2026-09-24T21:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
+  "lastSyncedMainSha": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
+  "branch": "operations/artifact-version-inventory-vai03-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-06 Version Management; supporting PVC-04 Supervisor and PVC-07 Release Management",
+  "sourceIssue": "#1429",
+  "dependencyMergedPr": "#1443",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI03-20260924.json",
+    "docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI03_2026-09-24.md",
+    "src/platform/Release/Services/artifactVersionSelfHealingGeneration.ts",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/artifactVersionSelfHealingGeneration.test.ts",
+    "tests/unit/selfHealingContract.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse merged VAI-01/VAI-02 inventory and the existing Self-Healing EvidenceGenerationIdentity.",
+    "Bind artifactVersionInventoryHash and changedArtifactDomainVersions into one deterministic PR generation digest.",
+    "Do not register Artifact-Version findings/actions in VAI-03; that remains VAI-04.",
+    "Do not create a second Self-Healing controller, scheduler, writer family, version authority or merge authority.",
+    "No provider, database, deployment or direct-main mutation."
+  ],
+  "acceptanceCriteria": [
+    "PR evidence generation requires a valid artifact-version inventory hash.",
+    "Changed artifact-domain/version evidence is deterministic and strictly path-sorted.",
+    "Same-version structural drift changes artifactVersionInventoryHash and generationDigest.",
+    "Existing evidence validation rejects invalid/ambiguous change evidence fail-closed.",
+    "package.json remains the sole PLATFORM_VERSION_AUTHORITY.",
+    "Exact-head TypeScript, focused tests, CI, Governance and Security evidence pass."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
