@@ -10,11 +10,20 @@ const deep = fs.readFileSync(deepWorkflowPath, 'utf8');
 test('PR OSS quality stays exact-head, read-only and never pull_request_target', () => {
   assert.match(fast, /pull_request:\n/);
   assert.doesNotMatch(fast, /pull_request_target/);
-  assert.match(fast, /name: OSS quality PR scope/);
-  assert.match(fast, /git diff --name-only "\$BASE_SHA\.\.\.\$SOURCE_SHA"/);
-  assert.match(fast, /needs: scope/);
-  assert.match(fast, /needs\.scope\.outputs\.relevant == 'true'/);
-  assert.doesNotMatch(fast, /pull_request:\n[\s\S]{0,500}?\n\s+paths:/);
+  assert.doesNotMatch(fast, /name: OSS quality PR scope/);
+  assert.doesNotMatch(fast, /needs: scope/);
+  assert.doesNotMatch(fast, /needs\.scope\.outputs\.relevant/);
+  assert.match(fast, /pull_request:\n[\s\S]{0,900}?\n\s+paths:/);
+  for (const pathFilter of [
+    "'src/**'",
+    "'server/**'",
+    "'scripts/**'",
+    "'tests/**'",
+    "'package.json'",
+    "'.github/workflows/oss-quality-assurance.yml'",
+  ]) {
+    assert.ok(fast.includes(pathFilter), 'missing PR_FAST path filter: ' + pathFilter);
+  }
   assert.match(fast, /permissions:\s*\{\}/);
   assert.match(fast, /permissions:\n\s+contents: read/);
   assert.doesNotMatch(fast, /contents:\s*write/);
@@ -39,6 +48,7 @@ test('PR OSS quality keeps only blocking secret and dependency regression tools'
   assert.doesNotMatch(fast, /npm ci/);
   assert.doesNotMatch(fast, /repository:quality:snapshot/);
   assert.match(fast, /timeout-minutes: 5/);
+  assert.equal((fast.match(/^\s+runs-on:\s+ubuntu-latest$/gm) || []).length, 1);
 });
 
 test('daily deep assurance owns full coverage and advisory maintainability evidence', () => {
