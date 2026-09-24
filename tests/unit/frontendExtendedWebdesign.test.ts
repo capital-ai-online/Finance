@@ -128,6 +128,15 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
   });
 
+  it('exposes the public Live Roadmap in the mobile sideboard without creating a second route contract', () => {
+    expect(header).toContain('href="/roadmap"');
+    expect(header).toContain('data-public-navigation="roadmap"');
+    expect(header).toContain('aria-label="Live Roadmap öffnen"');
+    expect(header).toContain('Live Roadmap');
+    expect(routes).toContain("currentPath === '/roadmap'");
+    expect(routes).toContain('<RoadmapDashboard />');
+  });
+
   it('binds the new Market Vocabulary route to the existing canonical learning component', () => {
     expect(routes).toContain("currentPath === '/vocabulary'");
     expect(routes).toContain('MarketVocabularyModal');
