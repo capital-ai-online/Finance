@@ -24,7 +24,7 @@ const DIGEST_D = `sha256:${'d'.repeat(64)}`;
 
 function validEvidence(overrides: Partial<VerificationEvidence> = {}): VerificationEvidence {
   return {
-    schema: 'self-healing-evidence/1.0.0',
+    schema: 'self-healing-evidence/1.1.0',
     evidenceId: 'EV-TEST-001',
     generation: {
       kind: 'PR',
@@ -33,7 +33,13 @@ function validEvidence(overrides: Partial<VerificationEvidence> = {}): Verificat
       headSha: SHA_A,
       baseSha: SHA_B,
       currentMainSha: SHA_C,
+      productionSha: 'd'.repeat(40),
       controlPlaneVersion: '4.6.0',
+      controlPlaneGeneration: 'control-plane/4.6.0@main',
+      prTemplateVersion: '1.8.0',
+      platformVersionCadenceGeneration: 'platform/0.6.4@ordinal-7',
+      artifactVersionInventoryHash: DIGEST_B,
+      changedArtifactDomainVersions: [],
       generationDigest: DIGEST_A,
     },
     source: {
@@ -380,6 +386,65 @@ describe('self-healing contract', () => {
       reason: 'VERIFIED',
       evidenceValidation: { valid: true, issues: [] },
     });
+  });
+
+
+  it('requires artifact-version inventory identity on PR evidence generations', () => {
+    const generation = validEvidence().generation;
+    if (generation.kind !== 'PR') throw new Error('expected PR generation');
+
+    const invalid = validEvidence({
+      generation: {
+        ...generation,
+        artifactVersionInventoryHash: 'invalid',
+      },
+    });
+
+    expect(validateVerificationEvidence(invalid)).toMatchObject({
+      valid: false,
+      issues: expect.arrayContaining(['ARTIFACT_VERSION_INVENTORY_HASH_INVALID']),
+    });
+  });
+
+  it('rejects non-changing or unsorted artifact-domain change evidence', () => {
+    const generation = validEvidence().generation;
+    if (generation.kind !== 'PR') throw new Error('expected PR generation');
+    const identity = `sha256:${'e'.repeat(64)}`;
+
+    const invalid = validEvidence({
+      generation: {
+        ...generation,
+        changedArtifactDomainVersions: [
+          {
+            path: 'z.ts',
+            domainBefore: 'DERIVED_CONTENT_IDENTITY',
+            domainAfter: 'DERIVED_CONTENT_IDENTITY',
+            semanticVersionBefore: null,
+            semanticVersionAfter: null,
+            identityBefore: identity,
+            identityAfter: identity,
+          },
+          {
+            path: 'a.ts',
+            domainBefore: null,
+            domainAfter: null,
+            semanticVersionBefore: null,
+            semanticVersionAfter: null,
+            identityBefore: null,
+            identityAfter: null,
+          },
+        ],
+      },
+    });
+
+    const result = validateVerificationEvidence(invalid);
+    expect(result.valid).toBe(false);
+    expect(result.issues).toEqual(expect.arrayContaining([
+      'CHANGED_ARTIFACT_DOMAIN_VERSIONS_NOT_STRICTLY_SORTED',
+      'CHANGED_ARTIFACT_IDENTITY_UNCHANGED',
+      'CHANGED_ARTIFACT_DOMAIN_REQUIRED',
+      'CHANGED_ARTIFACT_IDENTITY_REQUIRED',
+    ]));
   });
 
   it('rejects a bare PASS and every stale/readback-invalid positive claim', () => {
