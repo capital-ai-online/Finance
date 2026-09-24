@@ -36,12 +36,12 @@ export interface MarketDataFanoutSink {
 
 const FANOUT_QUALITY = new Set<MarketDataFanoutQualityState>(['LIVE', 'DELAYED', 'STALE']);
 const SYMBOL = /^[A-Z0-9][A-Z0-9._:-]{0,31}$/;
-const TOPIC = /^market:(crypto|stock|forex|commodity|index|bond|macro):([A-Z0-9][A-Z0-9._:-]{0,31})$/;
+const TOPIC = /^asset:(crypto|stock|forex|commodity|index|bond|macro):([A-Z0-9][A-Z0-9._:-]{0,31})$/;
 
 export function marketDataFanoutTopic(assetClass: MarketDataAssetClass, symbolInput: string): string {
   const symbol = symbolInput.toUpperCase().trim();
   if (!SYMBOL.test(symbol)) throw new Error('MARKET_DATA_FANOUT_INVALID_SYMBOL');
-  return 'market:' + assetClass + ':' + symbol;
+  return 'asset:' + assetClass + ':' + symbol;
 }
 
 export function parseMarketDataFanoutTopic(topic: string): {
