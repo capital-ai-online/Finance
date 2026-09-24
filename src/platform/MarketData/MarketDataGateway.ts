@@ -12,6 +12,7 @@ import {
   type SnapshotRequest,
 } from './contracts';
 import { recordProviderHealth } from '../Supervisor/providerHealth';
+import type { MarketDataFanoutSink } from './Fanout/contracts';
 
 export type MarketDataGatewaySource = 'provider' | 'cache';
 export type MarketDataGatewayEvent =
@@ -44,6 +45,10 @@ export interface MarketDataGatewayOptions {
   nowMs?: () => number;
   /** When false, skip Supervisor health writes (tests). Default true. */
   recordHealth?: boolean;
+  /** Optional post-DQ distribution sink. It is never a market-data authority. */
+  fanoutSink?: MarketDataFanoutSink;
+  /** Payload-free error hook for non-authoritative fan-out failures. */
+  onFanoutFailure?: (error: unknown) => void;
 }
 
 const NOOP_TELEMETRY: MarketDataGatewayTelemetry = { record: () => undefined };
@@ -100,6 +105,8 @@ export class MarketDataGateway {
   private readonly cacheTtlMs: number;
   private readonly nowMs: () => number;
   private readonly recordHealth: boolean;
+  private readonly fanoutSink?: MarketDataFanoutSink;
+  private readonly onFanoutFailure?: (error: unknown) => void;
 
   constructor(private readonly registry: ProviderRegistry, options: MarketDataGatewayOptions = {}) {
     this.nowMs = options.nowMs ?? Date.now;
@@ -116,6 +123,8 @@ export class MarketDataGateway {
     this.telemetry = options.telemetry ?? NOOP_TELEMETRY;
     this.cacheTtlMs = Math.max(0, options.cacheTtlMs ?? 30_000);
     this.recordHealth = options.recordHealth !== false;
+    this.fanoutSink = options.fanoutSink;
+    this.onFanoutFailure = options.onFanoutFailure;
   }
 
   async getSnapshot(request: SnapshotRequest): Promise<MarketDataGatewayResult> {
@@ -183,6 +192,7 @@ export class MarketDataGateway {
           this.cache.set(key, snapshot, this.cacheTtlMs);
           this.telemetry.record('provider_success', { provider: providerId, qualityState: snapshot.qualityState });
           this.writeOutcomeHealth(providerId, 'healthy', snapshot.qualityState);
+          this.publishFanout(snapshot);
           return { snapshot, attemptedProviders, skippedProviders, source: 'provider' };
         }
         this.router.recordFailure(providerId);
@@ -243,6 +253,18 @@ export class MarketDataGateway {
       circuitOpenUntil: this.circuitBreaker.openedUntilIso(providerId) ?? undefined,
       message: `MarketDataGateway snapshot outcome: ${detail}`,
     });
+  }
+
+  private publishFanout(snapshot: CanonicalMarketDataSnapshot): void {
+    if (!this.fanoutSink) return;
+    try {
+      const result = this.fanoutSink.publish(snapshot);
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        void (result as Promise<void>).catch(error => this.onFanoutFailure?.(error));
+      }
+    } catch (error) {
+      this.onFanoutFailure?.(error);
+    }
   }
 
   private assess(snapshot: CanonicalMarketDataSnapshot, request: SnapshotRequest): CanonicalMarketDataSnapshot {
