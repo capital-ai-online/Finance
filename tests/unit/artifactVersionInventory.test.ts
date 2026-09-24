@@ -133,7 +133,15 @@ describe('artifact version inventory VAI-01', () => {
     expect(byPath(inventory.entries, 'metadata.json').domain).toBe('DERIVED_CONTENT_IDENTITY');
   });
 
-  it('does not treat incidental generated wording inside ordinary source as generated identity', () => {\n    const root = createFixture({\n      'src/scanner.ts': \"export const marker = /generated file|do not edit/;\\n\",\n    });\n    const inventory = buildArtifactVersionInventory(root);\n    expect(byPath(inventory.entries, 'src/scanner.ts').domain).toBe('DERIVED_CONTENT_IDENTITY');\n  });\n\n  it('is read-only and never performs a blanket SemVer rewrite', () => {
+  it('does not treat incidental generated wording inside ordinary source as generated identity', () => {
+    const root = createFixture({
+      'src/scanner.ts': "export const marker = /generated file|do not edit/;\n",
+    });
+    const inventory = buildArtifactVersionInventory(root);
+    expect(byPath(inventory.entries, 'src/scanner.ts').domain).toBe('DERIVED_CONTENT_IDENTITY');
+  });
+
+  it('is read-only and never performs a blanket SemVer rewrite', () => {
     const root = createFixture({
       'docs/ordinary.md': 'Historical platform text mentions Version 0.1.0 without declaring authority.\n',
     });
