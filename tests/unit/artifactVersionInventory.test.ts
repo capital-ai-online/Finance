@@ -200,3 +200,99 @@ describe('artifact version inventory VAI-01', () => {
     expect(second.contentInventoryHash).not.toBe(first.contentInventoryHash);
   });
 });
+
+
+describe('artifact version inventory VAI-02 consumer graph', () => {
+  it('represents PR-template contract consumers without a hard-coded consumer path list', () => {
+    const root = createFixture({
+      'scripts/pr/lib.mjs': "export const PR_TEMPLATE_VERSION = '1.8.0';\n",
+      '.github/pull_request_template.md':
+        '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->\n' +
+        'CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0\n',
+      '.github/workflows/pr-consumer.yml':
+        "name: PR consumer\nsteps:\n  - run: 'const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*1\\.8\\.0/.test(body)'\n",
+      'scripts/pr/prBodySectionContract.mjs':
+        "export function detect(body) { return /CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*(1\\.[0-9]+\\.[0-9]+)/.test(body) || '1.8.0'; }\n",
+      'tests/unit/pr-contract.test.ts':
+        "const marker = 'CAPITAL_AI_PR_TEMPLATE_VERSION'; const expected = '1.8.0';\n",
+    });
+
+    const inventory = buildArtifactVersionInventory(root);
+    const producerPath = 'scripts/pr/lib.mjs';
+    const consumers = inventory.consumerEdges
+      .filter((edge) => edge.producerPath === producerPath)
+      .map((edge) => edge.consumerPath);
+
+    expect(consumers).toEqual(expect.arrayContaining([
+      '.github/pull_request_template.md',
+      '.github/workflows/pr-consumer.yml',
+      'scripts/pr/prBodySectionContract.mjs',
+      'tests/unit/pr-contract.test.ts',
+    ]));
+    expect(inventory.consumerGraphAmbiguities).toEqual([]);
+    expect(byPath(inventory.entries, '.github/workflows/pr-consumer.yml').consumerFingerprint)
+      .toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+
+  it('discovers relative imports to versioned producers and fingerprints the consumer', () => {
+    const root = createFixture({
+      'src/useRule.ts': "import { RULE_CONTRACT_VERSION } from './contracts/rule';\nexport const observed = RULE_CONTRACT_VERSION;\n",
+    });
+    const inventory = buildArtifactVersionInventory(root);
+    const edge = inventory.consumerEdges.find((candidate) =>
+      candidate.consumerPath === 'src/useRule.ts' &&
+      candidate.producerPath === 'src/contracts/rule.ts' &&
+      candidate.kind === 'IMPORT');
+
+    expect(edge).toBeDefined();
+    expect(edge?.binding).toBe('import:./contracts/rule');
+    expect(byPath(inventory.entries, 'src/useRule.ts').consumerFingerprint)
+      .toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+
+  it('changes consumer identity when a declared binding changes while the producer blob stays stable', () => {
+    const root = createFixture({
+      'scripts/pr/lib.mjs': "export const PR_TEMPLATE_VERSION = '1.8.0';\n",
+      '.github/workflows/pr-consumer.yml':
+        "name: PR consumer\nsteps:\n  - run: 'echo CAPITAL_AI_PR_TEMPLATE_VERSION 1.8.0'\n",
+    });
+    const first = buildArtifactVersionInventory(root);
+    const firstProducer = byPath(first.entries, 'scripts/pr/lib.mjs');
+    const firstConsumer = byPath(first.entries, '.github/workflows/pr-consumer.yml');
+
+    write(
+      root,
+      '.github/workflows/pr-consumer.yml',
+      "name: PR consumer\nsteps:\n  - run: 'echo CAPITAL_AI_PR_TEMPLATE_VERSION 1.7.0'\n",
+    );
+    git(root, ['add', '.github/workflows/pr-consumer.yml']);
+    const changed = buildArtifactVersionInventory(root);
+    const changedProducer = byPath(changed.entries, 'scripts/pr/lib.mjs');
+    const changedConsumer = byPath(changed.entries, '.github/workflows/pr-consumer.yml');
+
+    expect(changedProducer.blobSha).toBe(firstProducer.blobSha);
+    expect(firstConsumer.consumerFingerprint).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(changedConsumer.consumerFingerprint).toBeNull();
+    expect(changed.contentInventoryHash).not.toBe(first.contentInventoryHash);
+  });
+
+  it('fails closed on ambiguous exported version producers instead of selecting one', () => {
+    const root = createFixture({
+      'src/contracts/a.ts': "export const SHARED_RULE_VERSION = '1.0.0';\n",
+      'src/contracts/b.ts': "export const SHARED_RULE_VERSION = '1.0.0';\n",
+      'src/consumer.ts': "export const binding = 'SHARED_RULE_VERSION 1.0.0';\n",
+    });
+    const inventory = buildArtifactVersionInventory(root);
+    const ambiguity = inventory.consumerGraphAmbiguities.find(
+      (candidate) => candidate.consumerPath === 'src/consumer.ts',
+    );
+
+    expect(ambiguity?.candidateProducerPaths).toEqual([
+      'src/contracts/a.ts',
+      'src/contracts/b.ts',
+    ]);
+    expect(inventory.consumerEdges.some((edge) =>
+      edge.consumerPath === 'src/consumer.ts' &&
+      edge.binding === 'version:SHARED_RULE_VERSION=1.0.0')).toBe(false);
+  });
+});
