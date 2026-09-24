@@ -59,6 +59,12 @@
         "rootCause": "PR v1.8 body lacked required durable Claim path and initially lacked canonical priority/version-impact metadata.",
         "remediation": "Bind canonical priority/version metadata and exact work-claim path in PR Technical Evidence.",
         "verification": "Fresh synchronize-triggered Governance run required on this new head."
+      },
+      {
+        "gate": "PR Governance",
+        "rootCause": "PR v1.8 contract also requires the durable exact Human-/CODEOWNER merge-approval token in addition to the Decision Card owner action.",
+        "remediation": "Add the exact Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja evidence line.",
+        "verification": "Fresh synchronize-triggered Governance run required on the resulting head."
       }
     ]
   }
