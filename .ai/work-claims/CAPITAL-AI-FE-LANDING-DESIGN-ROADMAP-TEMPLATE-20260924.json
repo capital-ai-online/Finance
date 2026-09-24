@@ -8,7 +8,7 @@
   "workItem": "FE-LANDING-TEMPLATE-01 — replace the Roadmap historical dashboard template with the current productive Landingpage design and align the canonical Branding Kit to that presentation.",
   "startedAt": "2026-09-24T04:51:00+02:00",
   "baseBranch": "main",
-  "baseSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "baseSha": "36edca389a02ca297d00effdd43a3c35418fdaa8",
   "branch": "frontend/landing-design-roadmap-template-20260924",
   "claimedPaths": [
     "src/features/public/ui/LandingPageTemplate.tsx",
@@ -32,5 +32,7 @@
     "build validation",
     "fresh CURRENT_MAIN/open-writer correlation",
     "Human/CODEOWNER merge"
-  ]
+  ],
+  "recorrelatedAt": "2026-09-24",
+  "recorrelationNote": "Synchronized after CURRENT_MAIN advanced through PR #1369; main delta was FINTECH-only and had no claimed-path overlap."
 }
