@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-DASHBOARD-FREEZE-PROGRESSIVE-LOAD-20260924",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Remove the authenticated dashboard first-render freeze by separating non-active routed feature graphs and heavyweight below-the-fold modules from the critical dashboard mount path.",
+  "workItemDE": "Freeze beim ersten Aufruf des authentifizierten Dashboards durch progressive Modulgrenzen und bedarfsgesteuertes Laden beseitigen.",
+  "startedAt": "2026-09-24T04:11:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c06a907ab42bb118133951a27e77f154c8c4cba0",
+  "lastSyncedMainSha": "c06a907ab42bb118133951a27e77f154c8c4cba0",
+  "branch": "frontend/dashboard-freeze-progressive-loading-20260924",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation/performance; no productive PVC ownership",
+  "priority": "P0",
+  "priorityReason": "Fresh Human Owner runtime report: Gmail registration succeeds, but entering the Dashboard freezes the page.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-DASHBOARD-FREEZE-PROGRESSIVE-LOAD-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-FE-PRICING-ARCHIVE-OPEN-VISIBILITY-20260923.json",
+    "src/app/dashboard/Dashboard.tsx",
+    "src/app/dashboard/DashboardHome.tsx",
+    "tests/unit/dashboardProgressiveLoading.test.ts",
+    "docs/projects/frontend/work-packages/FE_DASHBOARD_FREEZE_PROGRESSIVE_LOADING_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "No Supabase/Auth/session authority changes.",
+    "No scoring, data, entitlement, Stripe, IAM or provider semantics change.",
+    "Dashboard navigation and visible component contracts remain unchanged; only loading/evaluation timing is changed.",
+    "No direct main mutation or deployment mutation.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "c06a907ab42bb118133951a27e77f154c8c4cba0",
+    "ownerDirection": "Fresh owner report in the active conversation.",
+    "openWriterOverlap": "PASS: open PRs #1363, #1364 and #1365 have no changed-file overlap with the dashboard/auth frontend slice.",
+    "diagnosis": "Dashboard.tsx statically imports DashboardHome, MyWorkspaceView, DashboardViewRouter and billing/user feature barrels; DashboardViewRouter itself statically imports nearly every feature facade and is mounted even for the default dashboard view. DashboardHome simultaneously mounts crypto research, news, PDF/compliance, sentiment and image-analysis surfaces.",
+    "staleClaim": "CAPITAL-AI-FE-PRICING-ARCHIVE-OPEN-VISIBILITY-20260923 is stale coordination metadata: its PR #1325 is already merged."
+  },
+  "acceptanceCriteria": [
+    "The /dashboard shell can render without eagerly evaluating DashboardViewRouter or MyWorkspace feature graphs.",
+    "DashboardViewRouter is mounted only for routed detail views.",
+    "Default dashboard heavyweight sections are split behind lazy/progressive boundaries with stable loading fallbacks.",
+    "Authenticated backend-cookie session and subscription readback semantics remain unchanged.",
+    "Regression test proves the eager feature-barrel path cannot be reintroduced in Dashboard/DashboardHome.",
+    "TypeScript/unit/build and required PR checks pass on the exact head.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
