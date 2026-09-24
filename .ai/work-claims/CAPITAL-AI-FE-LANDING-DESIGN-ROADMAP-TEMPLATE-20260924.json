@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "claimId": "CAPITAL-AI-FE-LANDING-DESIGN-ROADMAP-TEMPLATE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "workItem": "FE-LANDING-TEMPLATE-01 — replace the Roadmap historical dashboard template with the current productive Landingpage design and align the canonical Branding Kit to that presentation.",
+  "startedAt": "2026-09-24T04:51:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "branch": "frontend/landing-design-roadmap-template-20260924",
+  "claimedPaths": [
+    "src/features/public/ui/LandingPageTemplate.tsx",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "src/features/public/ui/roadmapSnapshot.ts",
+    "src/features/public/ui/index.ts",
+    "tests/unit/roadmapDashboardProjection.test.ts",
+    "docs/frontend/design-tokens.json",
+    "src/index.css",
+    "docs/frontend/PHASE0_DESIGN_TOKENS.md",
+    "docs/frontend/FRONTEND_ARCH.md",
+    "docs/projects/frontend/ROADMAP.md",
+    "docs/projects/frontend/work-packages/FE_LANDING_DESIGN_TEMPLATE_ALIGNMENT_2026-09-24.md"
+  ],
+  "dependencies": [
+    "current productive LandingPage/ReferenceApp presentation",
+    "canonical docs/frontend/design-tokens.json authority"
+  ],
+  "exitEvidence": [
+    "focused roadmap/unit validation",
+    "build validation",
+    "fresh CURRENT_MAIN/open-writer correlation",
+    "Human/CODEOWNER merge"
+  ]
+}
