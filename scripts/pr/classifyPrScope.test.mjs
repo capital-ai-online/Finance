@@ -4,6 +4,8 @@ import {
   classifyChangedFiles,
   isDocsPath,
   isKnownNonProductionValidationPath,
+  isOperationsReleaseControlPath,
+  isOrdinaryOperationsToolingPath,
   isRuntimeDeployPath,
   isWorkflowPath,
 } from './classifyPrScope.mjs';
@@ -30,6 +32,19 @@ describe('isWorkflowPath', () => {
   it('flags workflow files', () => {
     assert.equal(isWorkflowPath('.github/workflows/ci.yml'), true);
     assert.equal(isWorkflowPath('src/x.ts'), false);
+  });
+});
+
+describe('operations tooling classification', () => {
+  it('keeps ordinary operations adapters out of release-control scope', () => {
+    assert.equal(isOrdinaryOperationsToolingPath('scripts/operations/renderManagementAdapter.mjs'), true);
+    assert.equal(isOperationsReleaseControlPath('scripts/operations/renderManagementAdapter.mjs'), false);
+  });
+
+  it('keeps cadence/deploy/release controls fail-closed as runtime/deploy scope', () => {
+    assert.equal(isOperationsReleaseControlPath('scripts/operations/mergeCadence.mjs'), true);
+    assert.equal(isRuntimeDeployPath('scripts/operations/mergeCadence.mjs'), true);
+    assert.equal(isOrdinaryOperationsToolingPath('scripts/operations/mergeCadence.mjs'), false);
   });
 });
 
@@ -64,6 +79,33 @@ describe('classifyChangedFiles', () => {
     assert.equal(s.unit, true);
     assert.equal(s.build, true);
     assert.equal(s.consumer_escalation, true);
+  });
+
+  it('keeps a documentary snapshot non-production when its only consumers are tests', () => {
+    const path = 'docs/frontend/upstream-source/SvenKulessa-FRONTEND/manifest.json';
+    const s = classifyChangedFiles([path], {
+      runtimeConsumedPaths: [path],
+      runtimeConsumerFiles: {
+        [path]: ['tests/unit/frontendExtendedWebdesign.test.ts'],
+      },
+    });
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, false);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
+    assert.equal(s.consumer_escalation, true);
+    assert.equal(s.consumer_test_only, true);
+  });
+
+  it('keeps ordinary operations tooling non-production while still testing it', () => {
+    const s = classifyChangedFiles(['scripts/operations/renderManagementAdapter.mjs']);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, false);
+    assert.equal(s.node, true);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
   });
 
   it('class C for src changes with production impact but without docker', () => {
