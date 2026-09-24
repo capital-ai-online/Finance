@@ -692,7 +692,24 @@ test('PR #1364 treats later Production movement as a new baseline generation and
   };
   firstBaseline.baselineId = computeProductionBaselineId(firstBaseline);
 
-  const first = prepareLeadingPrBody(canonicalBody(), firstBaseline, { prClass: 'C' });
+  const canonicalProductionRefreshBody = canonicalBody()
+    .replace(
+      '> P1 · PR-Klasse C · PATCH',
+      '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    )
+    .replace(
+      '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance\n- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      [
+        '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance',
+        '- **Priorität:** P1 🟠 Hoch',
+        '- **Versionsimpact:** PATCH 🩹',
+        '- **Version-Manager-Check:** PASS — canonical production-refresh fixture.',
+        '- **PR-Klasse:** C',
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      ].join('\n'),
+    );
+
+  const first = prepareLeadingPrBody(canonicalProductionRefreshBody, firstBaseline, { prClass: 'C' });
   assert.equal(first.eligible, true);
   assert.equal(first.structureChanged, false);
   assert.equal(first.baselineChanged, true);
