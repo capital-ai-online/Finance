@@ -89,10 +89,25 @@ jobs:
       - name: Read-only GitHub Settings and Retention Inventory
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
           CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
           CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
           CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-settings-evidence.json
+          CAPITAL_AI_GITHUB_SETTINGS_MARKDOWN_PATH: ${{ runner.temp }}/capital-ai-github-settings-evidence.md
         run: node scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs
+
+      - name: Redacted Settings Export in Job Summary anzeigen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          export_path="${RUNNER_TEMP}/capital-ai-github-settings-evidence.md"
+          if [[ -f "${export_path}" ]]; then
+            cat "${export_path}" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "GitHub Settings Markdown Export: NOT_OBSERVABLE" >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
       - name: Zero-cost Storage Capability korrelieren
         env:
@@ -108,4 +123,4 @@ jobs:
           if [[ -n "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-}" ]]; then
             rm -f -- "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH}"
           fi
-          rm -f --             "${RUNNER_TEMP}/capital-ai-github-billing-evidence.json"             "${RUNNER_TEMP}/capital-ai-github-settings-evidence.json"
+          rm -f --             "${RUNNER_TEMP}/capital-ai-github-billing-evidence.json"             "${RUNNER_TEMP}/capital-ai-github-settings-evidence.json"             "${RUNNER_TEMP}/capital-ai-github-settings-evidence.md"

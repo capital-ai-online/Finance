@@ -55,6 +55,14 @@ describe('GitHub settings inventory read client', () => {
         });
       }
 
+      if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/selected-actions`) {
+        return jsonResponse({
+          github_owned_allowed: true,
+          verified_allowed: true,
+          patterns_allowed: ['aquasecurity/trivy-action@*'],
+        });
+      }
+
       if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/permissions/workflow`) {
         return jsonResponse({
           default_workflow_permissions: 'read',
@@ -122,6 +130,14 @@ describe('GitHub settings inventory read client', () => {
         return jsonResponse({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true });
       }
 
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions/selected-actions`) {
+        return jsonResponse({
+          github_owned_allowed: true,
+          verified_allowed: false,
+          patterns_allowed: ['aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'],
+        });
+      }
+
       if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/actions/permissions/workflow`) {
         return jsonResponse({
           default_workflow_permissions: 'read',
@@ -177,6 +193,45 @@ describe('GitHub settings inventory read client', () => {
             { id: 1, name: 'evidence', size_in_bytes: 2048, expired: false },
             { id: 2, name: 'old', size_in_bytes: 512, expired: true },
           ],
+        });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/environments`) {
+        return jsonResponse({
+          total_count: 1,
+          environments: [{
+            name: 'production',
+            protection_rules: [
+              { type: 'wait_timer', wait_timer: 5 },
+              {
+                type: 'required_reviewers',
+                prevent_self_review: true,
+                reviewers: [{ type: 'User', reviewer: { login: 'owner' } }],
+              },
+            ],
+            deployment_branch_policy: {
+              protected_branches: true,
+              custom_branch_policies: false,
+            },
+          }],
+        });
+      }
+
+      if (method === 'GET' && parsed.pathname === `/repos/${REPOSITORY}/code-security-configuration`) {
+        return jsonResponse({
+          status: 'attached',
+          configuration: {
+            id: 1325,
+            target_type: 'organization',
+            name: 'recommended',
+            advanced_security: 'enabled',
+            dependency_graph: 'enabled',
+            dependabot_alerts: 'enabled',
+            code_scanning_default_setup: 'enabled',
+            secret_scanning: 'enabled',
+            secret_scanning_push_protection: 'enabled',
+            enforcement: 'enforced',
+          },
         });
       }
 
@@ -258,6 +313,8 @@ describe('GitHub settings inventory read client', () => {
       rawProxy: false,
       capabilities: Object.keys(GITHUB_SETTINGS_READ_CAPABILITIES),
       repositoryRulesetsPermission: 'Metadata: read',
+      repositoryEnvironmentsPermission: 'Actions: read',
+      repositoryCodeSecurityConfigurationPermission: 'Administration: read',
       tokenPersistence: false,
       clientSecretUsed: false,
     });
