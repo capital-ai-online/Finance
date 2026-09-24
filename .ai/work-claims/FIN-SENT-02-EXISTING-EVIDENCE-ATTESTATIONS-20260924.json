@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FIN-SENT-02-EXISTING-EVIDENCE-ATTESTATIONS-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..14 existing provider evidence, feature engineering and research sentiment projection.",
+  "workItem": "Attest only reproducible sentiment features from current governed evidence paths while preserving fail-closed scoring for unsupported fields.",
+  "startedAt": "2026-09-24T02:45:00Z",
+  "baseBranch": "main",
+  "baseSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "branch": "fintech/sentiment-existing-evidence-attestations-20260924",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "Human-merged PR #1332 FIN-SENT-01",
+    "Human-merged PR #1352 FE projection consumer",
+    "sentiment-feature-contract/1.0.0",
+    "market-sentiment-projection/1.0.0"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FIN-SENT-01-ATTESTED-MARKET-SENTIMENT-20260923.json",
+    ".ai/work-claims/FIN-SENT-02-EXISTING-EVIDENCE-ATTESTATIONS-20260924.json",
+    "docs/projects/fintech/work-packages/FIN_SENT_02_EXISTING_EVIDENCE_ATTESTATIONS_2026-09-24.md",
+    "src/platform/Scoring/SentimentNewsFeatureEvidenceAdapter.ts",
+    "src/features/news/newsRoutes.ts",
+    "tests/unit/sentimentNewsFeatureEvidenceAdapter.test.ts",
+    "tests/unit/marketSentimentProjectionRoute.test.ts"
+  ],
+  "attestedNow": [
+    "novelty via news-exact-headline-novelty/1.0.0",
+    "mentionIntensity via news-evidence-count-24h/1.0.0"
+  ],
+  "remainingEvidenceGaps": [
+    "polarity requires governed NLP/provider evidence",
+    "intensity requires governed NLP/provider evidence",
+    "credibility requires governed source-quality evidence",
+    "botProbability requires governed social/bot evidence",
+    "sourceWeight requires governed source-trust evidence",
+    "regimeAdjustment requires governed sentiment/regime compatibility evidence"
+  ],
+  "protectedBoundaries": [
+    "No headline heuristic promotion",
+    "No ProviderMatrix routing metadata converted to source trust",
+    "No market-price shortcut converted to regime compatibility",
+    "No simulation output as evidence",
+    "No missing-field defaults",
+    "No second provider gateway or scoring engine",
+    "No CanonicalScoreResult/ranking/execution mutation"
+  ],
+  "overlapReadback": {
+    "currentMain": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+    "openPullRequests": [
+      1367
+    ],
+    "directChangedFileOverlap": false,
+    "note": "Open FE PR #1367 changes dashboard progressive-loading paths only."
+  },
+  "exitGate": "Exact-head checks PASS; novelty and mentionIntensity are evidence-backed; remaining six required fields stay fail-closed; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
