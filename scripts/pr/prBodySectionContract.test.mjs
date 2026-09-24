@@ -147,3 +147,29 @@ test('renderer and validator are wired to the deterministic decision-state contr
   assert.doesNotMatch(renderer, /benötigt Human-Freigabe/);
   assert.ok(renderer.includes('NOT_RUN — erforderlicher Check wurde noch nicht ausgeführt.'));
 });
+
+
+test('live PR template projects the existing 5/10 cadence without introducing a second controller', () => {
+  const template = fs.readFileSync('.github/pull_request_template.md', 'utf8');
+  const renderer = fs.readFileSync('scripts/pr/renderPullRequestBody.mjs', 'utf8');
+
+  assert.match(template, /### 🚀 Production & Cadence/);
+  assert.match(template, /Production \/ Deploy Cadence/);
+  for (const token of [
+    'CURRENT_MAIN_SHA',
+    'PRODUCTION_VERSION',
+    'PRODUCTION_SHA',
+    'DEPLOYMENT_STATE',
+    'DEPLOY_PROGRESS',
+    'DEPLOY_REMAINING',
+    'NEXT_DEPLOY_TARGET_SHA',
+    'CURRENT_PACKAGE_VERSION',
+    'VERSION_PROGRESS',
+    'VERSION_REMAINING',
+    'NEXT_PATCH_VERSION',
+  ]) assert.ok(template.includes('{{' + token + '}}'), token);
+
+  assert.match(renderer, /resolveMergeCadence/);
+  assert.match(renderer, /deriveProductionCadenceState/);
+  assert.doesNotMatch(renderer, /function\s+resolveMergeCadence\s*\(/);
+});

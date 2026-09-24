@@ -231,7 +231,7 @@ test('reconciler normalizes v1.8 decision surface and is idempotent', () => {
   assert.equal(first.decisionStatus, 'READY_FOR_HUMAN_DECISION');
   assert.match(first.body, /^> 🧭 \*\*Entscheidungsstatus: READY_FOR_HUMAN_DECISION\*\*$/m);
   assert.match(first.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
-  assert.match(first.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(first.body, /^\| Production \/ Deploy Cadence \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(first.body, /^\| Evidence \| Alle erforderlichen Gates erfüllt \|$/m);
   assert.match(first.body, /^\| Blocker \| Keine \|$/m);
   assert.match(first.body, /^\| Gate \| Status \| Warum offen \/ blockiert \| Nächster verifizierbarer Schritt \|$/m);
@@ -370,7 +370,7 @@ test('reconciler repairs missing v1.8 Decision/Evidence projections without touc
   assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(repaired.body, /^\| Required Checks \| 🟢 PASS \| .* \| .* \|$/m);
   assert.match(repaired.body, /^\| Security \/ Compliance \| 🟢 PASS \| .* \| .* \|$/m);
-  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Production \/ Deploy Cadence \| 🟢 PASS \| .* \| .* \|$/m);
   assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
 });
 
@@ -406,7 +406,7 @@ test('reconciler repairs the observed v1.8 human-decision anchor and stale evide
   assert.match(repaired.body, /^\| Owner-Aktion \| Human\/CODEOWNER Merge erforderlich \|$/m);
   assert.doesNotMatch(repaired.body, /^\| Human-\/CODEOWNER-Entscheidung \|/m);
   assert.match(repaired.body, /^\| Overlap \| 🟢 PASS \| .* \| .* \|$/m);
-  assert.match(repaired.body, /^\| Production Baseline \| 🟢 PASS \| .* \| .* \|$/m);
+  assert.match(repaired.body, /^\| Production \/ Deploy Cadence \| 🟢 PASS \| .* \| .* \|$/m);
   assert.doesNotMatch(repaired.body, /^\| Changed-file overlap \|/m);
   assert.equal(repaired.body.split('## 3. 🔍 Technical Evidence')[1], technical);
 });
@@ -563,7 +563,7 @@ test('reconciler deterministically replaces a bounded non-canonical v1.8 live da
   assert.equal(result.reason, 'decision-evidence-reconciled');
   assert.match(result.body, /^\| Status \| EVIDENCE_PENDING \|$/m);
   assert.match(result.body, /^\| Synchronität \| Main 🟢 PASS · Checks 🟡 PENDING · Security 🟢 PASS · Baseline 🟡 PENDING \|$/m);
-  assert.match(result.body, /^\| Nächster Schritt \| Ausstehende Evidence vervollständigen: Required Checks, Production Baseline \|$/m);
+  assert.match(result.body, /^\| Nächster Schritt \| Ausstehende Evidence vervollständigen: Required Checks, Production \/ Deploy Cadence \|$/m);
   assert.doesNotMatch(result.body, /^\| CURRENT_MAIN \|/m);
   assert.doesNotMatch(result.body, /^\| Exact PR Head \|/m);
   assert.doesNotMatch(result.body, /^\| Branch-Sync \|/m);

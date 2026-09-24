@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveMergeCadence } from '../operations/mergeCadence.mjs';
 import {
   appendGithubOutput,
   fail,
@@ -16,6 +17,7 @@ import { canonicalizeKnownSectionHeadings } from './prBodySectionContract.mjs';
 import {
   decisionEvidenceRows,
   decisionImpactLabel,
+  deriveProductionCadenceState,
   deriveDecisionStatus,
   formatDecisionGateState,
   normalizeDecisionGateState,
@@ -147,6 +149,20 @@ if (claims.length === 1) {
 
 const baseline = readJsonFile(baselinePath);
 const productionBaselineBlock = renderProductionBaselineBlock(baseline);
+const mergeCadence = resolveMergeCadence({
+  repoRoot: process.cwd(),
+  ref: baseRef,
+  productionSha: baseline?.production?.commitSha,
+  productionHealthy: baseline?.checks?.productionHealthy === true,
+});
+const deploymentState = deriveProductionCadenceState({
+  active: mergeCadence.active,
+  deployDue: mergeCadence.deployDue,
+  productionRelation: mergeCadence.productionRelation,
+  productionHealthy: baseline?.checks?.productionHealthy === true,
+  productionSha: baseline?.production?.commitSha,
+  mainSha: baseline?.main?.sha,
+});
 const template = fs.readFileSync(templatePath, 'utf8');
 const headBranch = process.env.PR_HEAD_BRANCH || (() => {
   const value = git(['rev-parse', '--abbrev-ref', headRef]);
@@ -263,6 +279,17 @@ const replacements = {
   BLOCKER_SUMMARY: compactDecisionCell(summarizeDecisionBlockers(decisionGates), 'Keine'),
   LIVE_SYNC_SUMMARY: compactDecisionCell(summarizeLiveDecisionSync(decisionGates), 'N/A'),
   NEXT_VERIFIABLE_STEP: compactDecisionCell(nextVerifiableDecisionStep(decisionGates), 'N/A'),
+  CURRENT_MAIN_SHA: String(baseline.main.sha).slice(0, 12),
+  PRODUCTION_SHA: String(baseline.production.commitSha).slice(0, 12),
+  PRODUCTION_VERSION: baseline.production.version,
+  DEPLOYMENT_STATE: deploymentState,
+  DEPLOY_PROGRESS: mergeCadence.deployProgress ?? 'N/A',
+  DEPLOY_REMAINING: mergeCadence.deployRemaining ?? 'N/A',
+  NEXT_DEPLOY_TARGET_SHA: String(baseline.main.sha).slice(0, 12),
+  CURRENT_PACKAGE_VERSION: mergeCadence.currentVersion,
+  VERSION_PROGRESS: mergeCadence.versionProgress ?? 'N/A',
+  VERSION_REMAINING: mergeCadence.versionRemaining ?? 'N/A',
+  NEXT_PATCH_VERSION: mergeCadence.nextPatchVersion,
   IMPLEMENTATION_DECISION: compactDecisionCell(implementationDetail, workItem),
   WHY_DECISION: compactDecisionCell(whyDetail, 'N/A'),
   IMPLEMENTATION_DETAIL: implementationDetail,

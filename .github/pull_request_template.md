@@ -15,6 +15,18 @@
 | Synchronität | {{LIVE_SYNC_SUMMARY}} |
 | Nächster Schritt | {{NEXT_VERIFIABLE_STEP}} |
 
+### 🚀 Production & Cadence
+
+| Production-Signal | Zustand |
+|---|---|
+| CURRENT_MAIN | `{{CURRENT_MAIN_SHA}}` |
+| Live Production | `{{PRODUCTION_VERSION}}` · `{{PRODUCTION_SHA}}` |
+| Deploy-Cadence | `{{DEPLOYMENT_STATE}}` · `{{DEPLOY_PROGRESS}}/5` · noch `{{DEPLOY_REMAINING}}` Merge(s) |
+| Nächstes Deploy-Ziel | `{{NEXT_DEPLOY_TARGET_SHA}}` |
+| Plattformversion | `{{CURRENT_PACKAGE_VERSION}}` |
+| Version-Cadence | `{{VERSION_PROGRESS}}/10` · noch `{{VERSION_REMAINING}}` Merge(s) |
+| Nächstes PATCH-Ziel | `{{NEXT_PATCH_VERSION}}` |
+
 | Frage | Ergebnis |
 |---|---|
 | Was ändert sich? | {{IMPLEMENTATION_DECISION}} |
@@ -33,7 +45,7 @@
 | Overlap | {{DECISION_OVERLAP}} | {{DECISION_OVERLAP_REASON}} | {{DECISION_OVERLAP_NEXT}} |
 | Required Checks | {{DECISION_CHECKS}} | {{DECISION_CHECKS_REASON}} | {{DECISION_CHECKS_NEXT}} |
 | Security / Compliance | {{DECISION_SECURITY}} | {{DECISION_SECURITY_REASON}} | {{DECISION_SECURITY_NEXT}} |
-| Production Baseline | {{DECISION_BASELINE}} | {{DECISION_BASELINE_REASON}} | {{DECISION_BASELINE_NEXT}} |
+| Production / Deploy Cadence | {{DECISION_BASELINE}} | {{DECISION_BASELINE_REASON}} | {{DECISION_BASELINE_NEXT}} |
 
 ## 3. 🔍 Technical Evidence
 
