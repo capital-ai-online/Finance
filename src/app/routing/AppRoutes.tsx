@@ -7,8 +7,8 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
-const Dashboard = lazy(() =>
-  import('../dashboard/Dashboard').then((module) => ({ default: module.Dashboard })),
+const ProfilePage = lazy(() =>
+  import('../../components/ProfilePage').then((module) => ({ default: module.ProfilePage })),
 );
 const LearningVocabulary = lazy(() =>
   import('../../features/learning/ui/LearningVocabulary').then((module) => ({
@@ -35,7 +35,7 @@ interface AppRoutesProps {
   justLoggedOut: boolean;
   clearJustLoggedOut: () => void;
   handleLogout: () => Promise<void>;
-  handleGlobalLogout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 function RouteLoadingBoundary({ children }: { children: React.ReactNode }) {
@@ -99,7 +99,7 @@ export function AppRoutes({
   justLoggedOut,
   clearJustLoggedOut,
   handleLogout,
-  handleGlobalLogout,
+  refreshSession,
 }: AppRoutesProps) {
   const [currentPath, setCurrentPath] = useState(() => {
     return typeof window !== 'undefined'
@@ -132,31 +132,55 @@ export function AppRoutes({
     setCurrentPath(normalizedPath);
   };
 
-  const renderAuthenticatedDashboard = () => {
+  const renderAuthenticatedProfile = () => {
     if (!userSession) {
       if (authBootstrapPending) return <AuthRouteResolution />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
     return (
-      <RouteLoadingBoundary>
-        <Dashboard
-          userSession={userSession}
-          onLogout={async () => {
-            await handleLogout();
-            if (typeof window !== 'undefined') {
-              window.location.replace('/');
-            }
-          }}
-          onGlobalLogout={async () => {
-            await handleGlobalLogout();
-            if (typeof window !== 'undefined') {
-              window.location.replace('/');
-            }
-          }}
-          onRegister={() => undefined}
-        />
-      </RouteLoadingBoundary>
+      <div className="relative min-h-screen overflow-hidden bg-[#02050e] px-4 py-6 text-white sm:px-6 lg:px-8">
+        <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 rounded-full bg-[#8D26FF]/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-48 h-80 w-80 rounded-full bg-[#F9BF21]/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[#44DE88]/10 blur-3xl" />
+        <div className="relative z-10 mx-auto max-w-6xl space-y-5">
+          <header className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#070b19]/85 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-300">
+                CAPITAL-AI / KONTO
+              </p>
+              <h1 className="mt-1 text-xl font-black text-white">Profil &amp; Sicherheit</h1>
+              <p className="mt-1 text-xs text-white/45">Persönliche Angaben und Kontoschutz an einem Ort.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigatePublicRoute('/')}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            >
+              ← Zur Landingpage
+            </button>
+          </header>
+          <RouteLoadingBoundary>
+            <ProfilePage
+              profile={{
+                id: userSession.id,
+                name: userSession.name,
+                email: userSession.email,
+                avatarId: userSession.avatarId || '1',
+                avatarColor: userSession.avatarColor || 'from-brand-primary to-brand-primary',
+                preferredAssetClass: userSession.preferredAssetClass || 'Crypto',
+                riskProfile: userSession.riskProfile || 'Ausgewogen',
+                capital: userSession.capital || 0,
+                subscriptionTier: userSession.subscriptionTier,
+                customAvatarUrl: userSession.customAvatarUrl,
+              }}
+              onUpdateProfile={() => {
+                void refreshSession();
+              }}
+            />
+          </RouteLoadingBoundary>
+        </div>
+      </div>
     );
   };
 
@@ -257,8 +281,12 @@ export function AppRoutes({
     return <LoginPage justLoggedOut={justLoggedOut} />;
   }
 
+  if (currentPath === '/profile') {
+    return renderAuthenticatedProfile();
+  }
+
   if (currentPath === '/dashboard') {
-    return renderAuthenticatedDashboard();
+    return <RouteRedirect to="/profile" label="Weiter zum Profil" />;
   }
 
   if (currentPath === '/media-studio') {
@@ -277,8 +305,8 @@ export function AppRoutes({
               </p>
               <h1 className="mt-1 text-lg font-black text-white">Media Creation Studio</h1>
             </div>
-            <a href="/dashboard" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT">
-              ← Zurück zum Dashboard
+            <a href="/profile" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT">
+              ← Zurück zum Profil
             </a>
           </header>
           <RouteLoadingBoundary>

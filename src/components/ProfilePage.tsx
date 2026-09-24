@@ -16,8 +16,6 @@ import {
   Cpu,
   Flame,
   Target,
-  CreditCard,
-  Loader2,
   Download,
   ShieldCheck,
   KeyRound,
@@ -59,8 +57,6 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const [customAvatarUrl, setCustomAvatarUrl] = useState(profile.customAvatarUrl || '');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [portalError, setPortalError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -73,37 +69,6 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
 
   const activeAvatar = AVATARS.find((av) => av.id === avatarId) || AVATARS[0];
   const AvatarIcon = activeAvatar.icon;
-
-  const handleManageBilling = async () => {
-    setPortalLoading(true);
-    setPortalError(null);
-    try {
-      const response = await authFetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          returnUrl: window.location.href,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler beim Laden des Kundenportals.');
-      }
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('Ungültige Serverantwort.');
-      }
-    } catch (err: any) {
-      console.error(err);
-      setPortalError(err.message || 'Das Stripe-Kundenportal ist derzeit nicht erreichbar.');
-      setTimeout(() => setPortalError(null), 6000);
-    } finally {
-      setPortalLoading(false);
-    }
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +165,6 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
           preferred_asset_class: preferredAssetClass,
           risk_profile: riskProfile,
           allocated_capital_usd: capital,
-          subscription_tier: profile.subscriptionTier,
           avatar_id: avatarId,
           avatar_style: activeAvatar.label,
           has_custom_avatar: Boolean(customAvatarUrl),
@@ -329,38 +293,6 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
               )}
             </div>
 
-            <div className="w-full pt-4 border-t border-white/5 text-center space-y-3">
-              <div>
-                <span className="text-xs text-white/40 font-mono">Mitgliedschaft</span>
-                <div className="text-base font-black text-brand-primary uppercase tracking-wider font-display mt-0.5">
-                  {profile.subscriptionTier}
-                </div>
-              </div>
-
-              {profile.subscriptionTier !== 'Free' && (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleManageBilling}
-                    disabled={portalLoading}
-                    aria-label="Abrechnung und Abonnements in Stripe verwalten"
-                    className="w-full py-2 px-3 bg-white/5 hover:bg-white/10 focus:ring-2 focus:ring-brand-primary focus:outline-none text-white border border-white/10 rounded-lg text-[10px] uppercase tracking-wider font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    {portalLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-primary" />
-                    ) : (
-                      <CreditCard className="w-3.5 h-3.5 text-brand-primary" />
-                    )}
-                    Abrechnung verwalten
-                  </button>
-                  {portalError && (
-                    <p className="text-[9px] text-score-worst mt-1.5 font-mono text-center leading-tight">
-                      {portalError}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right column: Edit Details Form */}
@@ -368,7 +300,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
             <div className="mb-6">
               <h2 className="text-2xl font-black text-white font-display">Benutzerprofil verwalten</h2>
               <p className="text-xs text-white/50 mt-1 font-sans">
-                Aktualisiere deine Account-Parameter für maßgeschneiderte Backtest- und Scoring-Logiken.
+                Pflege deine persönlichen Angaben und Einstellungen. Deine Änderungen werden geschützt deinem Konto zugeordnet.
               </p>
             </div>
 
@@ -456,7 +388,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
                 <div className="text-xs text-white/40 flex items-center gap-1">
                   <Award size={14} className="text-brand-primary" />
-                  Profiländerungen und Export enthalten keine synthetischen Aktivitätsdaten.
+                  Persönliche Änderungen werden erst nach erfolgreicher Backend-Speicherung übernommen.
                 </div>
 
                 <div className="flex items-center gap-4">

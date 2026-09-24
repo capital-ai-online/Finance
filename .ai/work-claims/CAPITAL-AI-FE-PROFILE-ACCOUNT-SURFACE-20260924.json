@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-PROFILE-ACCOUNT-SURFACE-20260924",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Replace the authenticated Dashboard account entry with a protected landing-designed Profile/Security surface.",
+  "workItemDE": "Authentifizierten Dashboard-Kontoeinstieg durch geschützte Profil-/Sicherheitsoberfläche im Landingpage-Design ersetzen.",
+  "startedAt": "2026-09-24T04:58:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "lastSyncedMainSha": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+  "branch": "frontend/profile-account-surface-20260924",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC ownership",
+  "priority": "P0",
+  "priorityReason": "Fresh Human Owner direction removes the analytics Dashboard from the account entry path and replaces it with Profile/Security.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-PROFILE-ACCOUNT-SURFACE-20260924.json",
+    "docs/projects/frontend/work-packages/FE_PROFILE_ACCOUNT_SURFACE_2026-09-24.md",
+    "src/app/routing/AppRoutes.tsx",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "src/components/ProfilePage.tsx",
+    "tests/unit/profileAccountSurface.test.ts"
+  ],
+  "scopeBoundary": [
+    "No direct main mutation.",
+    "No Supabase provider/config mutation in this FE slice.",
+    "No authentication token/session authority changes.",
+    "No scoring, data or analytics feature implementation changes.",
+    "Password-reset and primary-login passkey backend capability remain owner-correct OPS follow-up.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "31625df9bf114e689ec359fc5e8aecafc5a7026d",
+    "supersededPr": "#1367 closed without merge after fresh Human Owner product direction.",
+    "openWriterOverlap": "PASS: only open PR #1369; no changed-file overlap with this FE slice."
+  },
+  "acceptanceCriteria": [
+    "Authenticated landing account action routes to /profile and is labeled Profil.",
+    "/dashboard redirects to /profile without mounting Dashboard.",
+    "Protected /profile renders ProfilePage from backend-session projection.",
+    "Profile UI contains no active pricing/membership/billing presentation.",
+    "Profile/avatar persistence contracts remain unchanged.",
+    "Focused regression plus normal required checks pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+}
