@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-SIDEBOARD-RUNTIME-TRUTH-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -57,5 +57,16 @@
     "openWriterOverlap": "PASS — merged PR #1347 moved main only in OPS Auth-Control paths; no changed-file overlap with this FE slice.",
     "feedTruth": "CURRENT_MAIN requires provider/licensing entitlement evidence for realtime claims; no guaranteed sub-45ms SLO found.",
     "securityTruth": "CURRENT_MAIN implements CSP; public transport is HTTPS. MiCA is modeled as regulatory/governance guidance, not as a transport security standard."
+  },
+  "pullRequest": 1348,
+  "mergeCommitSha": "23be3c2d257020647884f46267e0c864ff003a68",
+  "mergedAt": "2026-09-24T00:00:06Z",
+  "releasedAt": "2026-09-24T18:56:00+02:00",
+  "releaseReason": "Post-merge coordination reconciliation: associated PR #1348 is Human-merged and the implementation is present on CURRENT_MAIN/Production. The claim no longer represents an active writer.",
+  "releaseEvidence": {
+    "currentMainAtRelease": "6c11bdfce02430846466540a311d9f46a7f3818c",
+    "associatedPullRequest": 1348,
+    "associatedMergeCommit": "23be3c2d257020647884f46267e0c864ff003a68",
+    "authority": "/AGENTS.md@CURRENT_MAIN Section 3 stale coordination metadata release"
   }
 }
