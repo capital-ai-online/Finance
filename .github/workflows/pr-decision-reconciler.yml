@@ -234,11 +234,11 @@ jobs:
             let primaryOwner = '';
             let affectedPvc = '';
             if (bootstrapRequired) {
-              const projectMatch = body.match(/^- \\*\\*Projekt:\\*\\*\\s*.*?(CAPITAL-AI-[A-Z0-9-]+).*$/m);
+              const projectMatch = body.match(/^- \*\*Projekt:\*\*\s*.*?(CAPITAL-AI-[A-Z0-9-]+).*$/m);
               const ownerPvcMatch = body.match(
-                /^- \\*\\*Owner \\/ PVC:\\*\\*\\s*(CAPITAL-AI-[A-Z0-9-]+)\\s*·\\s*([^\\r\\n]+)\\s*$/m,
+                /^- \*\*Owner \/ PVC:\*\*\s*(CAPITAL-AI-[A-Z0-9-]+)\s*·\s*([^\r\n]+)\s*$/m,
               );
-              const titleProject = String(pr.title || '').match(/^\\[(CAPITAL-AI-[A-Z0-9-]+)\\]/)?.[1] || '';
+              const titleProject = String(pr.title || '').match(/^\[(CAPITAL-AI-[A-Z0-9-]+)\]/)?.[1] || '';
               const projectLabels = (pr.labels || [])
                 .map((label) => typeof label === 'string' ? label : String(label?.name || ''))
                 .filter((name) => /^project:CAPITAL-AI-[A-Z0-9-]+$/.test(name));
@@ -250,7 +250,7 @@ jobs:
 
               projectId = ownerPvcMatch[1];
               primaryOwner = ownerPvcMatch[1];
-              affectedPvc = ownerPvcMatch[2].replace(/\\s+/g, ' ').trim();
+              affectedPvc = ownerPvcMatch[2].replace(/\s+/g, ' ').trim();
 
               if (projectMatch[1] !== projectId || titleProject !== projectId) {
                 core.setFailed(
@@ -262,7 +262,7 @@ jobs:
                 core.setFailed(`Claimless v1.8 bootstrap requires canonical project label project:${projectId}.`);
                 return;
               }
-              if (!/^PVC-\\d{2}(?:\\s*\\/\\s*PVC-\\d{2})*$/.test(affectedPvc)) {
+              if (!/^PVC-\d{2}(?:\s*\/\s*PVC-\d{2})*$/.test(affectedPvc)) {
                 core.setFailed(`Claimless v1.8 bootstrap PVC evidence is not canonical: ${affectedPvc || 'missing'}.`);
                 return;
               }

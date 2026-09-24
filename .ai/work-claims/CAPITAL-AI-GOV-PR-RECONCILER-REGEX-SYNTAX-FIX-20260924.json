@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-RECONCILER-REGEX-SYNTAX-FIX-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the trusted PR Decision Evidence Reconciler bootstrap JavaScript syntax regression introduced by doubled regex escaping.",
+  "workItemDE": "Die durch doppelte RegExp-Escapes verursachte JavaScript-Syntaxregression im trusted PR Decision Evidence Reconciler beheben.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "baseBranch": "main",
+  "baseSha": "f3c51cea1244152818431636e024ea3665993127",
+  "lastSyncedMainSha": "f3c51cea1244152818431636e024ea3665993127",
+  "branch": "agent/governance-pr-reconciler-regex-syntax-fix-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-RECONCILER-REGEX-SYNTAX-FIX-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs"
+  ],
+  "scopeBoundary": [
+    "Fix only the embedded claimless-v1.8 bootstrap JavaScript syntax.",
+    "Keep the existing single PR-body writer and fail-closed metadata checks.",
+    "Add syntax-compilation regression evidence.",
+    "No OPS/runtime/provider/database or merge-authority mutation.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "Embedded bootstrap github-script compiles as AsyncFunction.",
+    "Existing reconciler regression suite preserves trusted events, single-writer lease and claimless metadata checks.",
+    "Exact-head CI/Governance/Workflow Security pass.",
+    "Human/CODEOWNER merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
