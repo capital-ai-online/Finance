@@ -1,173 +1,587 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.8.0-roadmap-brand-system",
-  "description": "Canonical CAPITAL-AI design-token registry. The Owner-approved 16.08 appearance language restores the charcoal/Capital-Gold visual hierarchy while current asset, score, status and evidence semantics remain unchanged. Historical design material is provenance input only; this file remains runtime token authority.",
+  "version": "0.9.0-landing-page-profile",
+  "description": "Canonical CAPITAL-AI design-token registry. Cross-media core roles remain stable; the current productive Landingpage presentation is captured as the canonical landingPage profile for public website surfaces such as /roadmap.",
   "provenance": {
     "brandManifestVersion": "6.2",
     "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendments",
     "sourceFileId": "1k57e2jFpMnJMVjWK2tB8vSvZM7rUrwcP",
     "sourceSha256": "e4a6f4247fc8dd4aae9414bb3a5964bd248328592b7f3907eb04899d537d88de",
-    "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only. 2026-09-16: GOV-CHAT-079 Owner direction restores the 16.08 appearance language (charcoal canvas, historical Capital Gold hierarchy, Montserrat display typography, glass surfaces and restrained cyan/purple decoration) without changing current semantic asset/score/status roles.",
+    "ownerAmendment": "2026-09-14: Universe presentation palette materialized: Krypto Purple (#8D26FF), Deadly Green (#44DE88), Pluto Blue (#60A5FA), StarTroops Magenta (#E879F9); Bond presentation disabled while technical compatibility identifiers remain; Meteor Amber remains proposal-only. 2026-09-16: GOV-CHAT-079 Owner direction restores the 16.08 appearance language (charcoal canvas, historical Capital Gold hierarchy, Montserrat display typography, glass surfaces and restrained cyan/purple decoration) without changing current semantic asset/score/status roles. 2026-09-24: Owner direction adds the current productive Landingpage as a canonical public-site profile without silently changing PDF/Social core roles: midnight canvas #02050E, navy #090D1C / rgba(6,12,29,.72) surfaces, Plus Jakarta Sans, AIF Gold #F9BF21, Magenta #FF2E93 and Purple #8D26FF.",
     "ingestedAt": "2026-08-26",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
     "webProjection": "src/index.css @theme"
   },
   "color": {
-    "background": { "value": "#18181B", "type": "color", "css": "--color-background", "note": "Owner-approved 16.08 primary charcoal canvas" },
-    "foreground": { "value": "#FFFFFF", "type": "color", "css": "--color-foreground" },
-    "border": { "value": "rgba(255, 255, 255, 0.08)", "type": "color", "css": "--color-border", "note": "Owner-approved 16.08 generic light border" },
+    "background": {
+      "value": "#18181B",
+      "type": "color",
+      "css": "--color-background",
+      "note": "Owner-approved 16.08 primary charcoal canvas"
+    },
+    "foreground": {
+      "value": "#FFFFFF",
+      "type": "color",
+      "css": "--color-foreground"
+    },
+    "border": {
+      "value": "rgba(255, 255, 255, 0.08)",
+      "type": "color",
+      "css": "--color-border",
+      "note": "Owner-approved 16.08 generic light border"
+    },
     "text": {
-      "primary": { "value": "#FFFFFF", "type": "color", "css": "--color-text-primary" },
-      "secondary": { "value": "#A1A1AA", "type": "color", "css": "--color-text-secondary" }
+      "primary": {
+        "value": "#FFFFFF",
+        "type": "color",
+        "css": "--color-text-primary"
+      },
+      "secondary": {
+        "value": "#A1A1AA",
+        "type": "color",
+        "css": "--color-text-secondary"
+      }
     },
     "brand": {
-      "primary": { "value": "#F5C453", "type": "color", "css": "--color-brand-primary", "note": "Capital Gold / Owner-approved 16.08 premium visual anchor" },
-      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Current secondary AI/intelligence semantic accent; preserved from Branding Manifest v6.2" },
-      "cyan": { "value": "#F5C453", "type": "color", "css": "--color-brand-cyan", "deprecated": true, "note": "Deprecated compatibility alias. New code must use explicit brand/semantic/decorative roles." },
-      "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success", "note": "Semantic compatibility role; not a primary brand color" },
-      "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger", "note": "Semantic compatibility role; not a primary brand color" }
+      "primary": {
+        "value": "#F5C453",
+        "type": "color",
+        "css": "--color-brand-primary",
+        "note": "Capital Gold / Owner-approved 16.08 premium visual anchor"
+      },
+      "accent": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-brand-accent",
+        "note": "Current secondary AI/intelligence semantic accent; preserved from Branding Manifest v6.2"
+      },
+      "cyan": {
+        "value": "#F5C453",
+        "type": "color",
+        "css": "--color-brand-cyan",
+        "deprecated": true,
+        "note": "Deprecated compatibility alias. New code must use explicit brand/semantic/decorative roles."
+      },
+      "success": {
+        "value": "#44DE88",
+        "type": "color",
+        "css": "--color-brand-success",
+        "note": "Semantic compatibility role; not a primary brand color"
+      },
+      "danger": {
+        "value": "#F87171",
+        "type": "color",
+        "css": "--color-brand-danger",
+        "note": "Semantic compatibility role; not a primary brand color"
+      }
     },
     "roadmap": {
-      "foundation": { "value": "#F5C453", "type": "color", "css": "--color-roadmap-foundation", "note": "Capital Gold / Foundation" },
-      "automation": { "value": "#44DE88", "type": "color", "css": "--color-roadmap-automation", "note": "Automation / verified convergence" },
-      "runtime": { "value": "#22D3EE", "type": "color", "css": "--color-roadmap-runtime", "note": "Self-healing runtime / intelligence blue-cyan" },
-      "productMarket": { "value": "#8D26FF", "type": "color", "css": "--color-roadmap-product-market", "note": "Product & Market / platform violet" },
-      "scaling": { "value": "#E879F9", "type": "color", "css": "--color-roadmap-scaling", "note": "Scaling / StarTroops Magenta" }
+      "foundation": {
+        "value": "#F5C453",
+        "type": "color",
+        "css": "--color-roadmap-foundation",
+        "note": "Capital Gold / Foundation"
+      },
+      "automation": {
+        "value": "#44DE88",
+        "type": "color",
+        "css": "--color-roadmap-automation",
+        "note": "Automation / verified convergence"
+      },
+      "runtime": {
+        "value": "#22D3EE",
+        "type": "color",
+        "css": "--color-roadmap-runtime",
+        "note": "Self-healing runtime / intelligence blue-cyan"
+      },
+      "productMarket": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-roadmap-product-market",
+        "note": "Product & Market / platform violet"
+      },
+      "scaling": {
+        "value": "#E879F9",
+        "type": "color",
+        "css": "--color-roadmap-scaling",
+        "note": "Scaling / StarTroops Magenta"
+      }
     },
     "decorative": {
-      "cyan": { "value": "#0DDDDD", "type": "color", "css": "--color-decorative-cyan", "note": "16.08 decorative intelligence/data atmosphere only; no financial semantics" },
-      "purple": { "value": "#B026FF", "type": "color", "css": "--color-decorative-purple", "note": "16.08 decorative intelligence atmosphere only; current semantic AI/asset colors remain unchanged" }
+      "cyan": {
+        "value": "#0DDDDD",
+        "type": "color",
+        "css": "--color-decorative-cyan",
+        "note": "16.08 decorative intelligence/data atmosphere only; no financial semantics"
+      },
+      "purple": {
+        "value": "#B026FF",
+        "type": "color",
+        "css": "--color-decorative-purple",
+        "note": "16.08 decorative intelligence atmosphere only; current semantic AI/asset colors remain unchanged"
+      }
     },
     "assetClass": {
-      "crypto": { "value": "#8D26FF", "type": "color", "css": "--color-asset-crypto", "note": "Krypto Purple / productive Crypto Universe presentation" },
-      "stock": { "value": "#44DE88", "type": "color", "css": "--color-asset-stock", "note": "Deadly Green / productive Stock Universe presentation" },
-      "index": { "value": "#60A5FA", "type": "color", "css": "--color-asset-index", "note": "Pluto Blue / productive Index Universe presentation" },
-      "forex": { "value": "#E879F9", "type": "color", "css": "--color-asset-forex", "note": "StarTroops Magenta / productive Forex Universe presentation" },
-      "commodity": { "value": "#F9BF21", "type": "color", "css": "--color-asset-commodity", "note": "Current productive compatibility value; Meteor Amber #FF9F1C remains OWNER-DESIGN-PROPOSAL and is not activated" },
-      "bond": { "value": "#E879F9", "type": "color", "css": "--color-asset-bond", "note": "Technical compatibility token only; Bond/Anleihen productive Frontend presentation is disabled" }
+      "crypto": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-asset-crypto",
+        "note": "Krypto Purple / productive Crypto Universe presentation"
+      },
+      "stock": {
+        "value": "#44DE88",
+        "type": "color",
+        "css": "--color-asset-stock",
+        "note": "Deadly Green / productive Stock Universe presentation"
+      },
+      "index": {
+        "value": "#60A5FA",
+        "type": "color",
+        "css": "--color-asset-index",
+        "note": "Pluto Blue / productive Index Universe presentation"
+      },
+      "forex": {
+        "value": "#E879F9",
+        "type": "color",
+        "css": "--color-asset-forex",
+        "note": "StarTroops Magenta / productive Forex Universe presentation"
+      },
+      "commodity": {
+        "value": "#F9BF21",
+        "type": "color",
+        "css": "--color-asset-commodity",
+        "note": "Current productive compatibility value; Meteor Amber #FF9F1C remains OWNER-DESIGN-PROPOSAL and is not activated"
+      },
+      "bond": {
+        "value": "#E879F9",
+        "type": "color",
+        "css": "--color-asset-bond",
+        "note": "Technical compatibility token only; Bond/Anleihen productive Frontend presentation is disabled"
+      }
     },
     "score": {
-      "best": { "value": "#44DE88", "type": "color", "css": "--color-score-best" },
-      "worst": { "value": "#F87171", "type": "color", "css": "--color-score-worst" },
-      "warning": { "value": "#F9BF21", "type": "color", "css": "--color-score-warning" },
-      "neutral": { "value": "#A1A1AA", "type": "color", "css": "--color-score-neutral" },
-      "ranking": { "value": "#8D26FF", "type": "color", "css": "--color-score-ranking" }
+      "best": {
+        "value": "#44DE88",
+        "type": "color",
+        "css": "--color-score-best"
+      },
+      "worst": {
+        "value": "#F87171",
+        "type": "color",
+        "css": "--color-score-worst"
+      },
+      "warning": {
+        "value": "#F9BF21",
+        "type": "color",
+        "css": "--color-score-warning"
+      },
+      "neutral": {
+        "value": "#A1A1AA",
+        "type": "color",
+        "css": "--color-score-neutral"
+      },
+      "ranking": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-score-ranking"
+      }
     },
     "factor": {
-      "technical": { "value": "#22D3EE", "type": "color", "css": "--color-factor-technical", "note": "Technical/data visualization only; not branding" },
-      "risk": { "value": "#F9BF21", "type": "color", "css": "--color-factor-risk" },
-      "marketStructure": { "value": "#8D26FF", "type": "color", "css": "--color-factor-market-structure" },
-      "context": { "value": "#44DE88", "type": "color", "css": "--color-factor-context" },
-      "generic": { "value": "#A1A1AA", "type": "color", "css": "--color-factor-generic" }
+      "technical": {
+        "value": "#22D3EE",
+        "type": "color",
+        "css": "--color-factor-technical",
+        "note": "Technical/data visualization only; not branding"
+      },
+      "risk": {
+        "value": "#F9BF21",
+        "type": "color",
+        "css": "--color-factor-risk"
+      },
+      "marketStructure": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-factor-market-structure"
+      },
+      "context": {
+        "value": "#44DE88",
+        "type": "color",
+        "css": "--color-factor-context"
+      },
+      "generic": {
+        "value": "#A1A1AA",
+        "type": "color",
+        "css": "--color-factor-generic"
+      }
     },
     "aif": {
       "note": "Deprecated compatibility namespace. Do not use for new code; values mirror current canonical visual roles only for legacy consumers.",
       "gold": {
-        "light": { "value": "#FFF2B2", "type": "color", "css": "--color-aif-gold-light", "deprecated": true },
-        "DEFAULT": { "value": "#F5C453", "type": "color", "css": "--color-aif-gold-DEFAULT", "deprecated": true },
-        "dark": { "value": "#D4A017", "type": "color", "css": "--color-aif-gold-dark", "deprecated": true },
-        "muted": { "value": "#8A640F", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
+        "light": {
+          "value": "#FFF2B2",
+          "type": "color",
+          "css": "--color-aif-gold-light",
+          "deprecated": true
+        },
+        "DEFAULT": {
+          "value": "#F5C453",
+          "type": "color",
+          "css": "--color-aif-gold-DEFAULT",
+          "deprecated": true
+        },
+        "dark": {
+          "value": "#D4A017",
+          "type": "color",
+          "css": "--color-aif-gold-dark",
+          "deprecated": true
+        },
+        "muted": {
+          "value": "#8A640F",
+          "type": "color",
+          "css": "--color-aif-gold-muted",
+          "deprecated": true
+        }
       },
       "neon": {
-        "cyan": { "value": "#0DDDDD", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Legacy decorative compatibility only; no brand or financial semantics." },
-        "purple": { "value": "#B026FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true, "note": "Legacy decorative compatibility only; use explicit decorative.purple for new presentation work." }
+        "cyan": {
+          "value": "#0DDDDD",
+          "type": "color",
+          "css": "--color-aif-neon-cyan",
+          "deprecated": true,
+          "note": "Legacy decorative compatibility only; no brand or financial semantics."
+        },
+        "purple": {
+          "value": "#B026FF",
+          "type": "color",
+          "css": "--color-aif-neon-purple",
+          "deprecated": true,
+          "note": "Legacy decorative compatibility only; use explicit decorative.purple for new presentation work."
+        }
       }
     },
     "semantic": {
-      "success": { "value": "#44DE88", "type": "color", "note": "validated / READY / BUY semantics" },
-      "danger": { "value": "#F87171", "type": "color", "note": "REJECT / error / SELL semantics" },
-      "warning": { "value": "#F9BF21", "type": "color", "note": "observe / partial" },
-      "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state. Semantic visualization only; never primary branding." },
-      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent; preserved independently from 16.08 decorative purple" },
-      "muted": { "value": "#A1A1AA", "type": "color", "note": "secondary text" },
+      "success": {
+        "value": "#44DE88",
+        "type": "color",
+        "note": "validated / READY / BUY semantics"
+      },
+      "danger": {
+        "value": "#F87171",
+        "type": "color",
+        "note": "REJECT / error / SELL semantics"
+      },
+      "warning": {
+        "value": "#F9BF21",
+        "type": "color",
+        "note": "observe / partial"
+      },
+      "info": {
+        "value": "#22D3EE",
+        "type": "color",
+        "note": "Market/data/live informational state. Semantic visualization only; never primary branding."
+      },
+      "ai": {
+        "value": "#8D26FF",
+        "type": "color",
+        "note": "AI/intelligence semantic accent; preserved independently from 16.08 decorative purple"
+      },
+      "muted": {
+        "value": "#A1A1AA",
+        "type": "color",
+        "note": "secondary text"
+      },
       "status": {
-        "ready": { "value": "#44DE88", "type": "color" },
-        "reject": { "value": "#F87171", "type": "color" },
-        "dataUnavailable": { "value": "#A1A1AA", "type": "color" },
-        "observe": { "value": "#F9BF21", "type": "color" }
+        "ready": {
+          "value": "#44DE88",
+          "type": "color"
+        },
+        "reject": {
+          "value": "#F87171",
+          "type": "color"
+        },
+        "dataUnavailable": {
+          "value": "#A1A1AA",
+          "type": "color"
+        },
+        "observe": {
+          "value": "#F9BF21",
+          "type": "color"
+        }
       }
     },
     "surface": {
-      "glass": { "value": "rgba(10, 10, 10, 0.40)", "type": "color", "note": "Owner-approved 16.08 glass panel surface" },
-      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary dark elevated surface; semantic roles remain unchanged" }
+      "glass": {
+        "value": "rgba(10, 10, 10, 0.40)",
+        "type": "color",
+        "note": "Owner-approved 16.08 glass panel surface"
+      },
+      "elevated": {
+        "value": "#121215",
+        "type": "color",
+        "css": "--color-surface",
+        "note": "Secondary dark elevated surface; semantic roles remain unchanged"
+      }
     },
     "print": {
-      "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
-      "textSecondary": { "value": "#64748B", "type": "color", "note": "Secondary metadata on light PDF surfaces" },
-      "surfaceLight": { "value": "#F8FAFC", "type": "color", "note": "Light report panel background" },
-      "borderLight": { "value": "#E2E8F0", "type": "color", "note": "Light report divider and table border" },
-      "link": { "value": "#6D1FD1", "type": "color", "note": "High-contrast print link derived from Purple" }
+      "textPrimary": {
+        "value": "#1D2430",
+        "type": "color",
+        "note": "Primary text on light PDF surfaces"
+      },
+      "textSecondary": {
+        "value": "#64748B",
+        "type": "color",
+        "note": "Secondary metadata on light PDF surfaces"
+      },
+      "surfaceLight": {
+        "value": "#F8FAFC",
+        "type": "color",
+        "note": "Light report panel background"
+      },
+      "borderLight": {
+        "value": "#E2E8F0",
+        "type": "color",
+        "note": "Light report divider and table border"
+      },
+      "link": {
+        "value": "#6D1FD1",
+        "type": "color",
+        "note": "High-contrast print link derived from Purple"
+      }
+    },
+    "landingPage": {
+      "canvas": {
+        "value": "#02050E",
+        "type": "color",
+        "css": "--color-landing-canvas",
+        "note": "Current productive Landingpage canvas"
+      },
+      "surface": {
+        "value": "#090D1C",
+        "type": "color",
+        "css": "--color-landing-surface",
+        "note": "Current productive Landingpage elevated/nav surface"
+      },
+      "glass": {
+        "value": "rgba(6, 12, 29, 0.72)",
+        "type": "color",
+        "css": "--color-landing-glass",
+        "note": "Current productive Landingpage glass panel surface"
+      },
+      "textPrimary": {
+        "value": "#F8FAFC",
+        "type": "color",
+        "css": "--color-landing-text-primary"
+      },
+      "textSecondary": {
+        "value": "#94A3B8",
+        "type": "color",
+        "css": "--color-landing-text-secondary"
+      },
+      "gold": {
+        "value": "#F9BF21",
+        "type": "color",
+        "css": "--color-landing-gold",
+        "note": "AIF Gold primary/focus role on current Landingpage"
+      },
+      "magenta": {
+        "value": "#FF2E93",
+        "type": "color",
+        "css": "--color-landing-magenta",
+        "note": "Marketing/CTA atmosphere only; not a financial status semantic"
+      },
+      "purple": {
+        "value": "#8D26FF",
+        "type": "color",
+        "css": "--color-landing-purple",
+        "note": "AI/intelligence accent on current Landingpage"
+      }
     }
   },
   "font": {
-    "sans": { "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif", "css": "--font-sans", "role": "body", "note": "Branding Manifest v6.2 body typography; preserved while Montserrat remains the display/heading family." },
-    "display": { "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif", "css": "--font-display", "role": "headings" },
-    "mono": { "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace", "css": "--font-mono", "role": "tech-data" }
+    "sans": {
+      "value": "\"Poppins\", ui-sans-serif, system-ui, sans-serif",
+      "css": "--font-sans",
+      "role": "body",
+      "note": "Branding Manifest v6.2 body typography; preserved while Montserrat remains the display/heading family."
+    },
+    "display": {
+      "value": "\"Montserrat\", ui-sans-serif, system-ui, sans-serif",
+      "css": "--font-display",
+      "role": "headings"
+    },
+    "mono": {
+      "value": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, monospace",
+      "css": "--font-mono",
+      "role": "tech-data"
+    },
+    "landingPage": {
+      "value": "\"Plus Jakarta Sans\", ui-sans-serif, system-ui, sans-serif",
+      "css": "--font-landing-page",
+      "role": "public-site-ui",
+      "note": "Current productive Landingpage UI/display typography"
+    }
   },
   "fontSize": {
-    "xs": { "value": "0.75rem" },
-    "sm": { "value": "0.875rem" },
-    "base": { "value": "1rem" },
-    "lg": { "value": "1.125rem" },
-    "xl": { "value": "1.25rem" },
-    "2xl": { "value": "1.5rem" },
-    "3xl": { "value": "1.875rem" }
+    "xs": {
+      "value": "0.75rem"
+    },
+    "sm": {
+      "value": "0.875rem"
+    },
+    "base": {
+      "value": "1rem"
+    },
+    "lg": {
+      "value": "1.125rem"
+    },
+    "xl": {
+      "value": "1.25rem"
+    },
+    "2xl": {
+      "value": "1.5rem"
+    },
+    "3xl": {
+      "value": "1.875rem"
+    }
   },
   "spacing": {
-    "0": { "value": "0" },
-    "1": { "value": "0.25rem" },
-    "2": { "value": "0.5rem" },
-    "3": { "value": "0.75rem" },
-    "4": { "value": "1rem" },
-    "5": { "value": "1.25rem" },
-    "6": { "value": "1.5rem" },
-    "8": { "value": "2rem" },
-    "10": { "value": "2.5rem" },
-    "12": { "value": "3rem" },
-    "16": { "value": "4rem" },
-    "card": { "value": "1.5rem", "note": "16.08 default card/panel padding" },
-    "section": { "value": "2rem", "note": "16.08 section gap" }
+    "0": {
+      "value": "0"
+    },
+    "1": {
+      "value": "0.25rem"
+    },
+    "2": {
+      "value": "0.5rem"
+    },
+    "3": {
+      "value": "0.75rem"
+    },
+    "4": {
+      "value": "1rem"
+    },
+    "5": {
+      "value": "1.25rem"
+    },
+    "6": {
+      "value": "1.5rem"
+    },
+    "8": {
+      "value": "2rem"
+    },
+    "10": {
+      "value": "2.5rem"
+    },
+    "12": {
+      "value": "3rem"
+    },
+    "16": {
+      "value": "4rem"
+    },
+    "card": {
+      "value": "1.5rem",
+      "note": "16.08 default card/panel padding"
+    },
+    "section": {
+      "value": "2rem",
+      "note": "16.08 section gap"
+    }
   },
   "radius": {
-    "sm": { "value": "0.375rem" },
-    "md": { "value": "0.5rem" },
-    "lg": { "value": "0.75rem" },
-    "xl": { "value": "1rem", "note": "Owner-approved 16.08 primary glass-card radius" },
-    "2xl": { "value": "1rem" },
-    "full": { "value": "9999px" }
+    "sm": {
+      "value": "0.375rem"
+    },
+    "md": {
+      "value": "0.5rem"
+    },
+    "lg": {
+      "value": "0.75rem"
+    },
+    "xl": {
+      "value": "1rem",
+      "note": "Owner-approved 16.08 primary glass-card radius"
+    },
+    "2xl": {
+      "value": "1rem"
+    },
+    "full": {
+      "value": "9999px"
+    }
   },
   "shadow": {
-    "glass": { "value": "0 0 0 1px rgba(255,255,255,0.10)" },
-    "goldGlow": { "value": "0 0 20px rgba(245,196,83,0.45)" },
-    "purpleGlow": { "value": "0 0 15px rgba(176,38,255,0.42)", "note": "Decorative 16.08 atmosphere only" },
-    "cyanGlow": { "value": "0 0 15px rgba(13,221,221,0.35)", "deprecated": true, "note": "Legacy decorative compatibility only" },
-    "brandPulse": { "value": "0 0 25px rgba(245,196,83,0.25), 0 0 35px rgba(13,221,221,0.12), 0 0 22px rgba(176,38,255,0.10)" }
+    "glass": {
+      "value": "0 0 0 1px rgba(255,255,255,0.10)"
+    },
+    "goldGlow": {
+      "value": "0 0 20px rgba(245,196,83,0.45)"
+    },
+    "purpleGlow": {
+      "value": "0 0 15px rgba(176,38,255,0.42)",
+      "note": "Decorative 16.08 atmosphere only"
+    },
+    "cyanGlow": {
+      "value": "0 0 15px rgba(13,221,221,0.35)",
+      "deprecated": true,
+      "note": "Legacy decorative compatibility only"
+    },
+    "brandPulse": {
+      "value": "0 0 25px rgba(245,196,83,0.25), 0 0 35px rgba(13,221,221,0.12), 0 0 22px rgba(176,38,255,0.10)"
+    }
   },
   "motion": {
     "duration": {
-      "fast": { "value": "0.2s", "note": "exit / snappy" },
-      "base": { "value": "0.3s" },
-      "slow": { "value": "0.5s" }
+      "fast": {
+        "value": "0.2s",
+        "note": "exit / snappy"
+      },
+      "base": {
+        "value": "0.3s"
+      },
+      "slow": {
+        "value": "0.5s"
+      }
     },
     "easing": {
-      "standard": { "value": "cubic-bezier(0.4, 0, 0.6, 1)" }
+      "standard": {
+        "value": "cubic-bezier(0.4, 0, 0.6, 1)"
+      }
     },
     "animation": {
-      "neuralPulse": { "value": "neuralPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite" },
-      "neuralPulseFast": { "value": "neuralPulse 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" },
-      "goldShimmer": { "value": "goldShimmer 12s linear infinite" },
-      "goldPulse": { "value": "goldPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }
+      "neuralPulse": {
+        "value": "neuralPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      },
+      "neuralPulseFast": {
+        "value": "neuralPulse 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      },
+      "goldShimmer": {
+        "value": "goldShimmer 12s linear infinite"
+      },
+      "goldPulse": {
+        "value": "goldPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      }
     }
   },
   "accessibility": {
     "focusRing": {
-      "color": { "value": "#F5C453" },
-      "width": { "value": "2px" },
-      "offset": { "value": "4px" }
+      "color": {
+        "value": "#F5C453"
+      },
+      "width": {
+        "value": "2px"
+      },
+      "offset": {
+        "value": "4px"
+      }
     },
-    "minHitTarget": { "value": "44px", "note": "BFSG / EN 301 549 target" },
-    "reducedMotion": { "value": "respect prefers-reduced-motion" }
+    "minHitTarget": {
+      "value": "44px",
+      "note": "BFSG / EN 301 549 target"
+    },
+    "reducedMotion": {
+      "value": "respect prefers-reduced-motion"
+    }
   },
   "patterns": {
     "glassCard": {
@@ -180,12 +594,48 @@
       "buySemanticToken": "color.score.best",
       "sellSemanticToken": "color.score.worst",
       "neutralSemanticToken": "color.score.warning",
-      "strengths": ["strong", "medium", "weak"],
+      "strengths": [
+        "strong",
+        "medium",
+        "weak"
+      ],
       "intensity": {
-        "strong": { "foreground": "100%", "background": "18%", "border": "45%" },
-        "medium": { "foreground": "100%", "background": "10%", "border": "30%" },
-        "weak": { "foreground": "100%", "background": "5%", "border": "18%" }
+        "strong": {
+          "foreground": "100%",
+          "background": "18%",
+          "border": "45%"
+        },
+        "medium": {
+          "foreground": "100%",
+          "background": "10%",
+          "border": "30%"
+        },
+        "weak": {
+          "foreground": "100%",
+          "background": "5%",
+          "border": "18%"
+        }
       }
+    },
+    "landingPage": {
+      "frameClass": "landing-page-frame",
+      "headerClass": "landing-page-header",
+      "panelClass": "landing-page-panel",
+      "elevatedPanelClass": "landing-page-panel--elevated",
+      "secondaryButtonClass": "landing-page-button-secondary",
+      "tokenRefs": [
+        "color.landingPage.canvas",
+        "color.landingPage.surface",
+        "color.landingPage.glass",
+        "color.landingPage.textPrimary",
+        "color.landingPage.textSecondary",
+        "color.landingPage.gold",
+        "color.landingPage.magenta",
+        "color.landingPage.purple",
+        "font.landingPage"
+      ],
+      "source": "src/features/public/ui/frontend-port/frontend-port.css",
+      "template": "src/features/public/ui/LandingPageTemplate.tsx"
     }
   }
 }
