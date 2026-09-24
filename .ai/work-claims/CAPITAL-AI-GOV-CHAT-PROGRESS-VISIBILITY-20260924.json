@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-CHAT-PROGRESS-VISIBILITY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Add one repository-wide project-folder chat progress visibility and bounded-stall rule to the sole AGENTS.md trust root, including two-step Human Owner history, active plaintext work status, 30-second progress detail and a five-minute visible stall pause.",
+  "workItemDE": "Eine repositoryweite Projektordner-Chat-Fortschritts- und Stall-Regel ausschließlich in AGENTS.md ergänzen: maximal zwei erledigte Schritte vor Human Owner, laufender Plaintext-Arbeitsstatus, 30-Sekunden-Detailstatus und sichtbare Pause nach fünf Minuten unverändertem Bearbeitungspunkt.",
+  "startedAt": "2026-09-24T11:25:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74",
+  "lastSyncedMainSha": "fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74",
+  "branch": "agent/governance-chat-progress-visibility-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "priorityReason": "Human Owner requested application-wide, project-folder chat progress visibility without creating a second instruction surface.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-CHAT-PROGRESS-VISIBILITY-20260924.json",
+    "AGENTS.md"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-GOV / PVC-05 trust-root chat-progress semantics only.",
+    "No second chat-policy, provider mirror, roadmap authority or task registry.",
+    "No application runtime, Production, IAM, billing, secret, workflow or deployment mutation.",
+    "Human/CODEOWNER merge remains required because AGENTS.md cannot self-bootstrap."
+  ],
+  "dependencies": [
+    "/AGENTS.md@fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN"
+  ],
+  "exitEvidence": [
+    "AGENTS.md Control Plane Version advances to 4.11.0.",
+    "Section 10 contains one project-folder chat progress visibility and bounded-stall rule.",
+    "Human Owner next-steps history is capped at the two most recently completed steps.",
+    "Active work has human-readable plaintext status and 30-second visibility refresh semantics.",
+    "Five-minute unchanged implementation point pauses with a truthful stall snapshot and exact resume point.",
+    "Thresholds create no sleeps, polling, provider mutation or authority bypass."
+  ],
+  "acceptanceCriteria": [
+    "Only AGENTS.md and this work claim are changed.",
+    "Rule remains subordinate to CURRENT_MAIN/Owner/PVC/Security/Compliance/Human-CODEOWNER gates.",
+    "No fabricated percentage, PASS state or completion is permitted.",
+    "Human/CODEOWNER merge is required before the new rule becomes repository authority."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
