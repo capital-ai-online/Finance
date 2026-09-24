@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-SETTINGS-READ-FAILURE-ISOLATION-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Isolate independent read-only GitHub evidence stages so an Enterprise license-read failure cannot suppress the Enterprise Actions settings inventory, while preserving an overall failing workflow conclusion.",
+  "workItemDE": "Unabhängige read-only GitHub-Evidence-Stufen isolieren, damit ein Fehler beim Enterprise-Lizenz-Read das Enterprise-Actions-Settings-Inventar nicht unterdrückt und der Gesamtworkflow Fehler weiterhin wahrheitsgemäß als FAIL meldet.",
+  "priority": "P1",
+  "priorityReason": "Run #35988980160 proved that a 403 in Enterprise license attribution aborts before the settings inventory can validate the newly configured Enterprise token.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T10:44:33Z",
+  "baseBranch": "main",
+  "baseSha": "e3951f8a1b82f9f6fa272c33ecc57a1de4fd2736",
+  "lastSyncedMainSha": "e3951f8a1b82f9f6fa272c33ecc57a1de4fd2736",
+  "branch": "operations/github-settings-read-failure-isolation-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-READ-FAILURE-ISOLATION-20260924.json",
+    ".github/workflows/private-github-billing-read.yml",
+    "docs/projects/operations/work-packages/OPS_GITHUB_SETTINGS_EFFECTIVE_EXPORT_01_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "Read-only workflow control-flow hardening only; no GitHub provider setting mutation.",
+    "No secret/token value export, persistence or scope expansion.",
+    "Independent read stages may continue after peer-stage failure, but the final workflow result remains FAIL when any required evidence stage fails."
+  ],
+  "exitEvidence": [
+    "Run #35988980160 remains recorded as the reproducer: Enterprise license read returned HTTP 403 before settings inventory execution.",
+    "Each independent read stage exposes its original step outcome.",
+    "A final completion gate fails the job if any required read stage outcome is not success.",
+    "Cleanup remains if: always() and removes runner-temporary secret/evidence files.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
