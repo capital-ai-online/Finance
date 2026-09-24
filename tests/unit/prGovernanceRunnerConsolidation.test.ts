@@ -32,9 +32,11 @@ describe('P1 PR governance runner consolidation', () => {
     expect(countMatches(yaml, /^\s+runs-on:\s+ubuntu-latest$/gm)).toBe(1);
   });
 
-  it('preserves pull-request events including edited and keeps merge-group runner-free', () => {
+  it('does not retrigger Required Governance for body-only Evidence edits and keeps merge-group runner-free', () => {
     const yaml = workflow();
-    expect(yaml).toContain('types: [opened, reopened, synchronize, ready_for_review, edited]');
+    expect(yaml).toContain('types: [opened, reopened, synchronize, ready_for_review]');
+    expect(yaml).not.toContain('ready_for_review, edited');
+    expect(yaml).not.toContain("github.event.action != 'edited'");
     expect(yaml).toContain("if: github.event_name == 'pull_request'");
     expect(yaml).toContain('merge_group:');
   });
@@ -70,21 +72,26 @@ describe('P1 PR governance runner consolidation', () => {
     expect(yaml).toContain('PR_HEAD_REF: HEAD');
   });
 
-  it('preserves the canonical production baseline and PR-body contract for the current live snapshot without any retired M10 bypass condition', () => {
+  it('validates only the stable PR contract and leaves dynamic Production/Dashboard Evidence to the reconciler', () => {
     const yaml = workflow();
-    const preflightStep = workflowStep(yaml, 'Produktions-Baseline über trusted-main Policy erzeugen');
-    const bodyStep = workflowStep(yaml, 'Kanonische PR-Vorlage fail-closed prüfen');
+    const bodyStep = workflowStep(yaml, 'Stabilen PR-Vertrag fail-closed prüfen');
     const liveSnapshotGuard = "if: steps.snapshot.outputs.current_snapshot == 'true'";
 
-    expect(preflightStep).toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
+    expect(yaml).not.toContain('name: Produktions-Baseline über trusted-main Policy erzeugen');
+    expect(yaml).not.toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
     expect(bodyStep).toContain('run: node ../policy/scripts/pr/validatePrBody.mjs');
-    expect(preflightStep).toContain(liveSnapshotGuard);
+    expect(bodyStep).toContain('PR_BODY_VALIDATION_MODE: static-contract');
+    expect(bodyStep).not.toContain('PR_BASELINE_OUTPUT');
     expect(bodyStep).toContain(liveSnapshotGuard);
-    expect(countMatches(preflightStep, /^\s*if:/gm)).toBe(1);
     expect(countMatches(bodyStep, /^\s*if:/gm)).toBe(1);
-    expect(preflightStep).not.toContain('M10');
     expect(bodyStep).not.toContain('M10');
     expect(yaml).not.toContain('agent/fix-unit-invariants-m10-bypass');
+  });
+
+  it('deduplicates governance by exact code snapshot rather than PR-body action', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("format('pr-governance-pr-{0}-{1}-{2}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)");
+    expect(yaml).not.toContain('github.event.action)');
   });
 
   it('keeps governance permissions read-only and never runs a second build/test pipeline', () => {
