@@ -29,7 +29,8 @@
     "src/platform/Scoring/SentimentNewsFeatureEvidenceAdapter.ts",
     "src/features/news/newsRoutes.ts",
     "tests/unit/sentimentNewsFeatureEvidenceAdapter.test.ts",
-    "tests/unit/marketSentimentProjectionRoute.test.ts"
+    "tests/unit/marketSentimentProjectionRoute.test.ts",
+    "tests/unit/sentimentEvidenceProjection.test.ts"
   ],
   "attestedNow": [
     "novelty via news-exact-headline-novelty/1.0.0",
