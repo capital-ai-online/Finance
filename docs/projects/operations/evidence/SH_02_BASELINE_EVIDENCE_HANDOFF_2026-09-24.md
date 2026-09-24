@@ -2,7 +2,7 @@
 
 **Issue:** #1357  
 **Parent:** OPS-08-B-SH-02  
-**Implementation baseline:** `main@db5c673502c6ae62547371d7bd6c58d42460be25`  
+**Implementation baseline:** `main@9b049c52041a48827e11bdaa58c2eb8154811799`  
 **Branch:** `operations/sh02-baseline-evidence-handoff-20260924`
 
 ## Observed failure
@@ -70,8 +70,7 @@ but their own release conditions had already fired:
 - `GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921` → associated PR #1218 merged;
 - `OPS-PR-CONVERGENCE-CHAIN-HARDENING-20260920` → associated PR #1139 merged.
 
-They are released in this slice as stale coordination metadata. Open PR #1356
-does not touch the files mutated by this slice.
+They are released in this slice as stale coordination metadata. PR #1356 is merged. The subsequent cadence-governance merge #1358 changed only the Decision Evidence path and has been synchronized into this branch without overlap.
 
 ## Validation target
 
