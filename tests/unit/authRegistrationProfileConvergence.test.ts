@@ -19,7 +19,7 @@ describe('registration and profile convergence', () => {
 
   it('persists profile fields and private avatar objects through backend authorization', () => {
     const route = read('server/routes/accountSecurityRoutes.ts');
-    const migration = read('supabase/migrations/20260923193000_auth_registration_profile_convergence.sql');
+    const migration = read('supabase/migrations/20260924011545_auth_registration_profile_convergence.sql');
     expect(route).toContain("resolveVerifiedBackendAuth(req, res)");
     expect(route).toContain(".from('profile-avatars')");
     expect(route).toContain(".from('profile-avatars').download(profile.avatar_url)");
@@ -30,7 +30,7 @@ describe('registration and profile convergence', () => {
   });
 
   it('migrates every legacy usage identity before removing the old identity table', () => {
-    const migration = read('supabase/migrations/20260923193000_auth_registration_profile_convergence.sql');
+    const migration = read('supabase/migrations/20260924011545_auth_registration_profile_convergence.sql');
     expect(migration).toContain('LEGACY_IDENTITY_MAPPING_INCOMPLETE');
     expect(migration).toContain('LEGACY_USAGE_BACKFILL_INCOMPLETE');
     expect(migration).toContain('foreign key (user_id) references auth.users(id)');

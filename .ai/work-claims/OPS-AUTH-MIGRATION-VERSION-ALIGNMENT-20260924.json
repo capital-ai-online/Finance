@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-02",
+    "PVC-04",
+    "PVC-06",
+    "PVC-07",
+    "PVC-08",
+    "PVC-18"
+  ],
+  "priority": "P1",
+  "branchName": "operations/auth-migration-version-alignment-20260924",
+  "baseBranch": "main",
+  "baseSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+  "workItem": "Align the canonical auth-registration migration filename with the verified Supabase remote migration history version created by the authorized production application.",
+  "approvedScope": "Align the already-applied idempotent migration with remote version 20260924011545, preserve byte-identical SQL, update canonical test references, and refresh the existing OPS migration ledger with the verified 77th exact-match remote row.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924.json",
+    "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql",
+    "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql",
+    "tests/unit/authRegistrationProfileConvergence.test.ts",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
+    "scripts/governance/verifySupabaseMigrationLedgerReconciliation.mjs",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Human Owner direction in current interaction",
+    "Supabase migration history readback version 20260924011545",
+    "CURRENT_MAIN 8a173021a03d6776fa7323523c1e2acd713c3c5b after PR #1360"
+  ],
+  "exitEvidence": [
+    "New migration path exists with byte-identical SQL.",
+    "Old migration path is removed.",
+    "Repository migration version matches remote schema_migrations history.",
+    "The checked-in Supabase migration ledger records 77/77 remote versions and classifies 20260924011545 as EXACT_MATCH.",
+    "Auth-registration convergence tests resolve the aligned migration path and pass.",
+    "Exact-head CI/Governance/Security checks complete truthfully.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "recorrelatedAt": "2026-09-24"
+}
