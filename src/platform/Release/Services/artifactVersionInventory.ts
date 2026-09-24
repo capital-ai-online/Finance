@@ -1,6 +1,4 @@
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 export const ARTIFACT_VERSION_INVENTORY_VERSION = 'artifact-version-inventory/1.0.0' as const;
@@ -139,17 +137,32 @@ function resolveHead(repoRoot: string): string | null {
 }
 
 function readSignalText(repoRoot: string, entry: GitIndexEntry): string | null {
-  if (entry.gitMode === '160000') return null;
-  const absolute = path.join(repoRoot, entry.path);
-  let stat: fs.Stats;
+  if (!['100644', '100755'].includes(entry.gitMode)) return null;
+
+  let size: number;
   try {
-    stat = fs.lstatSync(absolute);
+    size = Number(execFileSync('git', ['cat-file', '-s', entry.blobSha], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim());
   } catch {
     return null;
   }
-  if (stat.isSymbolicLink()) return null;
-  if (!stat.isFile() || stat.size > MAX_SIGNAL_BYTES) return null;
-  const buffer = fs.readFileSync(absolute);
+
+  if (!Number.isSafeInteger(size) || size < 0 || size > MAX_SIGNAL_BYTES) return null;
+
+  let buffer: Buffer;
+  try {
+    buffer = execFileSync('git', ['cat-file', 'blob', entry.blobSha], {
+      cwd: repoRoot,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      maxBuffer: MAX_SIGNAL_BYTES + 1,
+    });
+  } catch {
+    return null;
+  }
+
   if (buffer.includes(0)) return null;
   return buffer.toString('utf8');
 }
