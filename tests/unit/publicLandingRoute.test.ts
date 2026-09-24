@@ -177,8 +177,10 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(loginPageRedirect).toContain('href="/login"');
   });
 
-  it('protects dashboard/application deep links while authenticated login and unknown routes return to root', () => {
+  it('protects the profile/application deep links while the retired dashboard entry redirects', () => {
+    expect(routes).toContain("if (currentPath === '/profile')");
     expect(routes).toContain("if (currentPath === '/dashboard')");
+    expect(routes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
     expect(routes).toContain("if (currentPath === '/media-studio')");
     expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
     expect(routes).toContain('<RouteRedirect to="/login" label="Weiter zur Anmeldung" />');
@@ -243,11 +245,12 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(landingPort).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
-    expect(routes).toContain("import('../dashboard/Dashboard')");
+    expect(routes).toContain("import('../../components/ProfilePage')");
+    expect(routes).not.toContain("import('../dashboard/Dashboard')");
     expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");
   });
 
-  it('keeps Dashboard as a protected deep link while root remains the static landing surface', () => {
+  it('keeps Profile as the protected account surface while root remains the static landing surface', () => {
     const rootStart = routes.indexOf("if (currentPath === '/')");
     const loginStart = routes.indexOf("if (currentPath === '/login')");
     const rootBlock = routes.slice(rootStart, loginStart);
@@ -255,7 +258,9 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(rootBlock).not.toContain('userSession=');
     expect(rootBlock).not.toContain('handleLogin');
     expect(rootBlock).not.toContain('handleRegister');
-    expect(routes).toContain('const Dashboard = lazy');
+    expect(routes).toContain('const ProfilePage = lazy');
+    expect(routes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
+    expect(routes).not.toContain('const Dashboard = lazy');
     expect(routes).not.toContain('const PublicAnalysisWorkbench = lazy');
   });
 
