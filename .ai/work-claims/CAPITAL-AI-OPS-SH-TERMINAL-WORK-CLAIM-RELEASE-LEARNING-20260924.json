@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SH-TERMINAL-WORK-CLAIM-RELEASE-LEARNING-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Persist the post-merge terminal work-claim release pattern as a reusable bounded Self-Healing learning process with promotion gated behind at least three positive validations.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": [
+    "PVC-04"
+  ],
+  "baseBranch": "main",
+  "baseSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "branch": "agent/operations-self-healing-terminal-claim-learning-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SH-TERMINAL-WORK-CLAIM-RELEASE-LEARNING-20260924.json",
+    "src/platform/Supervisor/selfHealingContract.ts",
+    "tests/unit/selfHealingContract.test.ts"
+  ],
+  "learningPattern": {
+    "id": "POST_MERGE_WORK_CLAIM_RELEASE_V1",
+    "minimumPositiveValidations": 3,
+    "currentPositiveValidations": 1,
+    "promotionState": "LEARNING",
+    "targetActionActivation": "HELD",
+    "firstValidation": {
+      "sourcePullRequest": 1437,
+      "terminalMergeSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+      "evidencePullRequest": 1439,
+      "evidenceHeadSha": "62bb702b78e19deb2e574812fd40bc2059ceffc9",
+      "requiredChecks": "PASS",
+      "observedOutcome": "Terminal merged work claim is deterministically identifiable and a bounded status=released/exclusive=false mutation can be prepared from exact post-merge evidence."
+    }
+  },
+  "invariants": [
+    "No autonomous work-claim mutation while the target remediation action is HELD.",
+    "Promotion requires at least three distinct positive validations.",
+    "Promotion eligibility never self-enables the action; an explicit Human/CODEOWNER-merged contract change remains required.",
+    "Release is bounded to status=released and exclusive=false for claims whose associated work is terminal and evidence-correlated.",
+    "Ambiguous terminal identity, stale evidence, failed checks, unresolved production identity, ownership conflict or contradiction fails closed."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
