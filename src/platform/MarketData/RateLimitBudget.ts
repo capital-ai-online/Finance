@@ -1,69 +1,72 @@
 export interface RateLimitBudgetOptions {
-  /** Default capacity when no per-provider override exists. */
+  /** Maximum burst, also the number of tokens refilled during windowMs. */
   capacity?: number;
-  /** Default window when no per-provider override exists. */
   windowMs?: number;
   nowMs?: () => number;
-  /**
-   * SC-4: optional per-provider capacity/window overrides (from ProviderMatrix).
-   * Key = providerId (not provider:capability).
-   */
   perProvider?: Record<string, { capacity: number; windowMs: number }>;
+  maxBuckets?: number;
 }
 
 export interface RateLimitDecision {
   allowed: boolean;
   remaining: number;
+  /** Earliest instant at which another token will be available. */
   resetAtMs: number;
 }
 
-interface WindowState {
-  startedAtMs: number;
-  consumed: number;
-}
+interface BucketState { tokens: number; lastRefillMs: number }
 
+/** Process-local provider quota. This is not an edge WAF or a shared multi-instance abuse control. */
 export class RateLimitBudget {
-  private readonly states = new Map<string, WindowState>();
+  private readonly states = new Map<string, BucketState>();
   private readonly capacity: number;
   private readonly windowMs: number;
   private readonly nowMs: () => number;
   private readonly perProvider: Record<string, { capacity: number; windowMs: number }>;
+  private readonly maxBuckets: number;
 
   constructor(options: RateLimitBudgetOptions = {}) {
-    this.capacity = Math.max(1, Math.floor(options.capacity ?? 60));
-    this.windowMs = Math.max(1, Math.floor(options.windowMs ?? 60_000));
+    this.capacity = RateLimitBudget.positiveInteger(options.capacity ?? 60);
+    this.windowMs = RateLimitBudget.positiveInteger(options.windowMs ?? 60_000);
+    this.maxBuckets = RateLimitBudget.positiveInteger(options.maxBuckets ?? 5_000);
     this.nowMs = options.nowMs ?? Date.now;
     this.perProvider = options.perProvider ?? {};
+    for (const policy of Object.values(this.perProvider)) {
+      RateLimitBudget.positiveInteger(policy.capacity);
+      RateLimitBudget.positiveInteger(policy.windowMs);
+    }
   }
 
-  private policyFor(providerId: string): { capacity: number; windowMs: number } {
-    const override = this.perProvider[providerId];
-    if (override) {
-      return {
-        capacity: Math.max(1, Math.floor(override.capacity)),
-        windowMs: Math.max(1, Math.floor(override.windowMs)),
-      };
-    }
-    return { capacity: this.capacity, windowMs: this.windowMs };
+  private static positiveInteger(value: number): number {
+    if (!Number.isSafeInteger(value) || value <= 0) throw new Error('Invalid provider rate-limit policy.');
+    return value;
   }
 
   tryConsume(providerId: string, capability = 'snapshot'): RateLimitDecision {
-    const key = `${providerId}:${capability}`;
+    if (!providerId.trim() || !capability.trim()) throw new Error('Provider and capability are required.');
     const now = this.nowMs();
-    const policy = this.policyFor(providerId);
-    let state = this.states.get(key);
-    if (!state || now - state.startedAtMs >= policy.windowMs) {
-      state = { startedAtMs: now, consumed: 0 };
-      this.states.set(key, state);
+    if (!Number.isFinite(now)) throw new Error('Invalid rate-limit clock.');
+    const key = JSON.stringify([providerId, capability]);
+    const policy = Object.hasOwn(this.perProvider, providerId)
+      ? this.perProvider[providerId] : { capacity: this.capacity, windowMs: this.windowMs };
+    const previous = this.states.get(key);
+    const effectiveNow = Math.max(now, previous?.lastRefillMs ?? now);
+    const elapsed = previous ? effectiveNow - previous.lastRefillMs : 0;
+    const tokens = Math.min(policy.capacity,
+      (previous?.tokens ?? policy.capacity) + elapsed * policy.capacity / policy.windowMs);
+    const allowed = tokens >= 1;
+    const remainingTokens = allowed ? tokens - 1 : tokens;
+    if (!previous && this.states.size >= this.maxBuckets) {
+      const oldest = this.states.keys().next().value;
+      if (oldest !== undefined) this.states.delete(oldest);
     }
-    if (state.consumed >= policy.capacity) {
-      return { allowed: false, remaining: 0, resetAtMs: state.startedAtMs + policy.windowMs };
-    }
-    state.consumed += 1;
+    this.states.delete(key);
+    this.states.set(key, { tokens: remainingTokens, lastRefillMs: effectiveNow });
     return {
-      allowed: true,
-      remaining: policy.capacity - state.consumed,
-      resetAtMs: state.startedAtMs + policy.windowMs,
+      allowed,
+      remaining: Math.floor(remainingTokens),
+      resetAtMs: allowed && remainingTokens >= 1
+        ? effectiveNow : effectiveNow + Math.ceil((1 - remainingTokens) * policy.windowMs / policy.capacity),
     };
   }
 }

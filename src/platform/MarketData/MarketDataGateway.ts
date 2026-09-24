@@ -1,4 +1,5 @@
 import { assessMarketDataSnapshot, withAssessedQuality } from './DataQualityService';
+import { MARKET_TICK_GATE_VERSION, MarketTickGate, type MarketTick, type MarketTickDecision } from './MarketTickGate';
 import { CircuitBreaker } from './CircuitBreaker';
 import { MarketDataCache, marketDataRequestKey } from './MarketDataCache';
 import { ProviderRegistry } from './ProviderRegistry';
@@ -38,6 +39,8 @@ export interface MarketDataGatewayOptions {
   cache?: MarketDataCache;
   coalescer?: RequestCoalescer;
   rateLimitBudget?: RateLimitBudget;
+  tickIngressBudget?: RateLimitBudget;
+  tickGate?: MarketTickGate;
   circuitBreaker?: CircuitBreaker;
   telemetry?: MarketDataGatewayTelemetry;
   cacheTtlMs?: number;
@@ -95,6 +98,8 @@ export class MarketDataGateway {
   private readonly cache: MarketDataCache;
   private readonly coalescer: RequestCoalescer;
   private readonly router: ProviderRouter;
+  private readonly tickIngressBudget: RateLimitBudget;
+  private readonly tickGate: MarketTickGate;
   private readonly circuitBreaker: CircuitBreaker;
   private readonly telemetry: MarketDataGatewayTelemetry;
   private readonly cacheTtlMs: number;
@@ -113,9 +118,35 @@ export class MarketDataGateway {
         perProvider: rateLimitOverridesFromMatrix(),
       });
     this.router = new ProviderRouter(registry, rateLimitBudget, this.circuitBreaker);
+    this.tickIngressBudget = options.tickIngressBudget ?? new RateLimitBudget({ capacity: 600, windowMs: 1_000, nowMs: this.nowMs });
+    this.tickGate = options.tickGate ?? new MarketTickGate({ nowMs: this.nowMs });
     this.telemetry = options.telemetry ?? NOOP_TELEMETRY;
     this.cacheTtlMs = Math.max(0, options.cacheTtlMs ?? 30_000);
     this.recordHealth = options.recordHealth !== false;
+  }
+
+  /** Tier-1 adapters can submit only registered provider evidence. Never publishes a score or execution price. */
+  ingestTick(tick: MarketTick): MarketTickDecision {
+    const rejected = (reason: MarketTickDecision['reason']): MarketTickDecision => ({
+      contractVersion: MARKET_TICK_GATE_VERSION,
+      status: 'REJECTED',
+      reason,
+      vwap: null,
+      bbo: null,
+      evidenceRefs: [],
+    });
+    if (tick.kind !== 'trade' && tick.kind !== 'bbo') return rejected('invalid_market');
+    const provider = this.registry.get(tick.providerId);
+    const capability = tick.kind === 'trade' ? 'trade' : 'quote';
+    if (!provider || !provider.descriptor.enabled || provider.descriptor.role === 'shadow'
+      || !provider.descriptor.assetClasses.includes(tick.assetClass)
+      || !provider.descriptor.capabilities.includes(capability)) {
+      return rejected('provider_not_approved');
+    }
+    if (!this.tickIngressBudget.tryConsume(tick.providerId, capability).allowed) {
+      return rejected('rate_budget_exhausted');
+    }
+    return this.tickGate.ingest(tick);
   }
 
   async getSnapshot(request: SnapshotRequest): Promise<MarketDataGatewayResult> {
