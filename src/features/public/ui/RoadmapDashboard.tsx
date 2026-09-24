@@ -30,6 +30,12 @@ import {
   resolveRoadmapProjects,
   type RoadmapProjectFilters,
 } from './roadmapProjectRouting';
+import {
+  matchesRoadmapLiveItemFilters,
+  parseRoadmapLiveProjection,
+  splitRoadmapLiveItems,
+  type RoadmapLiveClientState,
+} from './roadmapLiveState';
 
 type ProductionIdentityState =
   | { status: 'loading'; commitSha: null; branch: null; version: null }
@@ -223,6 +229,11 @@ export function RoadmapDashboard() {
     version: null,
   });
 
+  const [liveRoadmap, setLiveRoadmap] = useState<RoadmapLiveClientState>({
+    status: 'loading',
+    projection: null,
+    error: null,
+  });
   const [projectFilters, setProjectFilters] = useState<RoadmapProjectFilters>(EMPTY_FILTERS);
 
   useEffect(() => {
@@ -252,13 +263,53 @@ export function RoadmapDashboard() {
     return () => controller.abort();
   }, []);
 
-  const visibleWorkPackages = useMemo(
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch('/api/roadmap/state', {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('roadmap-live-state-unavailable');
+        return parseRoadmapLiveProjection(await response.json());
+      })
+      .then((projection) => {
+        if (!controller.signal.aborted) {
+          setLiveRoadmap({ status: 'available', projection, error: null });
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setLiveRoadmap({
+            status: 'unavailable',
+            projection: null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const liveProjection =
+    liveRoadmap.status === 'available' ? liveRoadmap.projection : null;
+
+  const filteredLiveItems = useMemo(
     () =>
-      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter((item) =>
-        matchesRoadmapProjectFilters(item.owner, projectFilters, PROJECT_ROUTES),
-      ),
-    [projectFilters],
+      liveProjection?.items.filter((item) =>
+        matchesRoadmapLiveItemFilters(item, projectFilters),
+      ) ?? [],
+    [liveProjection, projectFilters],
   );
+
+  const liveWork = useMemo(
+    () => splitRoadmapLiveItems(filteredLiveItems),
+    [filteredLiveItems],
+  );
+  const visibleWorkPackages = liveWork.activeWorkPackages;
 
   const visibleIntegrations = useMemo(
     () =>
@@ -268,13 +319,7 @@ export function RoadmapDashboard() {
     [projectFilters],
   );
 
-  const visibleQueuedItems = useMemo(
-    () =>
-      ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.filter((item) =>
-        matchesRoadmapProjectFilters(item.owner, projectFilters, PROJECT_ROUTES),
-      ),
-    [projectFilters],
-  );
+  const visibleQueuedItems = liveWork.queuedItems;
 
   const executionLanes = useMemo(
     () => buildRoadmapExecutionLanes(visibleWorkPackages, visibleQueuedItems, PROJECT_ROUTES),
@@ -282,29 +327,25 @@ export function RoadmapDashboard() {
   );
 
   const metrics = useMemo(() => {
-    const prBacked = visibleWorkPackages.filter(
-      (item) => 'prNumber' in item && typeof item.prNumber === 'number',
-    ).length;
-    const owners = new Set(
-      [...visibleWorkPackages, ...visibleQueuedItems]
-        .flatMap((item) => resolveRoadmapProjects(item.owner, PROJECT_ROUTES))
-        .map((project) => project.projectId),
-    ).size;
+    const owners = new Set(filteredLiveItems.map((item) => item.projectId)).size;
     const legacyDrift = visibleIntegrations.filter((item) => item.state === 'legacy-drift').length;
     return {
       active: visibleWorkPackages.length,
-      prBacked,
+      workerCandidates: filteredLiveItems.filter((item) => item.workerCandidate).length,
       owners,
       integrations: visibleIntegrations.length,
       legacyDrift,
       parallelLanes: executionLanes.length,
     };
-  }, [executionLanes, visibleIntegrations, visibleQueuedItems, visibleWorkPackages]);
+  }, [executionLanes, filteredLiveItems, visibleIntegrations, visibleWorkPackages]);
 
+  const liveCurrentMainSha = liveProjection?.repository.currentMainSha ?? null;
   const productionAligned =
+    liveProjection?.stale === false &&
     production.status === 'available' &&
     Boolean(production.commitSha) &&
-    production.commitSha === ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha;
+    Boolean(liveCurrentMainSha) &&
+    production.commitSha === liveCurrentMainSha;
 
   return (
     <LandingPageTemplate
@@ -313,8 +354,8 @@ export function RoadmapDashboard() {
       title="CAPITAL-AI Roadmap"
       description={
         <>
-          Aktive Arbeitspakete, Owner-Grenzen und Runtime-Evidence auf Basis des korrelierten
-          CURRENT_MAIN-Snapshots. Produktivstatus wird separat über <code>/healthz</code> gelesen.
+          Aktive Arbeitspakete, Owner-Grenzen und Runtime-Evidence aus dem
+          Live-Work-State von <code>/api/roadmap/state</code>. Produktivstatus wird separat über <code>/healthz</code> gelesen.
         </>
       }
       actions={
@@ -336,16 +377,20 @@ export function RoadmapDashboard() {
               <Activity className="h-5 w-5 text-brand-success" aria-hidden="true" />
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">Aktive Pakete</p>
-                <p className="mt-1 text-2xl font-black text-white">{metrics.active}</p>
+                <p className="mt-1 text-2xl font-black text-white">
+                  {liveRoadmap.status === 'available' ? metrics.active : '—'}
+                </p>
               </div>
             </div>
           </LandingPanel>
           <LandingPanel className="border-white/8 bg-surface/70 p-4">
             <div className="flex items-center gap-3">
-              <GitPullRequest className="h-5 w-5 text-status-info" aria-hidden="true" />
+              <UsersRound className="h-5 w-5 text-status-info" aria-hidden="true" />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">Offene PRs</p>
-                <p className="mt-1 text-2xl font-black text-white">{metrics.prBacked}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">Worker Candidates</p>
+                <p className="mt-1 text-2xl font-black text-white">
+                  {liveRoadmap.status === 'available' ? metrics.workerCandidates : '—'}
+                </p>
               </div>
             </div>
           </LandingPanel>
@@ -355,7 +400,11 @@ export function RoadmapDashboard() {
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">Korrelations-Basis</p>
                 <p className="mt-1 font-mono text-sm font-black text-white">
-                  {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha)}
+                  {liveRoadmap.status === 'loading'
+                    ? 'wird gelesen…'
+                    : liveRoadmap.status === 'unavailable'
+                      ? 'nicht verfügbar'
+                      : shortSha(liveCurrentMainSha)}
                 </p>
               </div>
             </div>
@@ -390,6 +439,72 @@ export function RoadmapDashboard() {
               </div>
             </div>
           </LandingPanel>
+        </section>
+
+        <section
+          aria-live="polite"
+          data-roadmap-live-state={
+            liveRoadmap.status === 'available'
+              ? liveRoadmap.projection.stale
+                ? 'stale'
+                : 'live'
+              : liveRoadmap.status
+          }
+          className="landing-page-panel"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
+                Repository Work-State
+              </p>
+              <h2 className="mt-1 text-lg font-black text-white">
+                {liveRoadmap.status === 'loading'
+                  ? 'Live Work-State wird geladen'
+                  : liveRoadmap.status === 'unavailable'
+                    ? 'Live Work-State nicht verfügbar'
+                    : liveRoadmap.projection.stale
+                      ? 'STALE · letzte bestätigte Repository-Generation'
+                      : 'LIVE · exakter CURRENT_MAIN Work-State'}
+              </h2>
+            </div>
+            {liveRoadmap.status === 'available' ? (
+              <span
+                className={
+                  liveRoadmap.projection.stale
+                    ? 'rounded-full border border-score-warning/30 bg-score-warning/10 px-2.5 py-1 text-[10px] font-black uppercase text-score-warning'
+                    : 'rounded-full border border-brand-success/30 bg-brand-success/10 px-2.5 py-1 text-[10px] font-black uppercase text-brand-success'
+                }
+              >
+                {liveRoadmap.projection.stale ? 'STALE' : 'LIVE'}
+              </span>
+            ) : null}
+          </div>
+
+          {liveRoadmap.status === 'available' ? (
+            <div className="mt-3 space-y-1 text-xs leading-5 text-text-secondary">
+              <p>
+                Generation <code>{shortSha(liveRoadmap.projection.repository.currentMainSha)}</code>
+                {' · '}beobachtet {liveRoadmap.projection.observedAt}
+                {' · '}{liveRoadmap.projection.sources.length} Quellen
+              </p>
+              {liveRoadmap.projection.stale ? (
+                <p className="font-semibold text-score-warning">
+                  Cached Evidence ist als STALE markiert und wird nicht als aktueller CURRENT_MAIN behauptet.
+                </p>
+              ) : null}
+              {liveRoadmap.projection.warnings.length > 0 ? (
+                <p>{liveRoadmap.projection.warnings.length} Live-State-Warnung(en) · Details bleiben fail-closed.</p>
+              ) : null}
+            </div>
+          ) : liveRoadmap.status === 'unavailable' ? (
+            <p className="mt-3 text-xs leading-5 text-score-warning">
+              Aktive Arbeit, Queue und Worker-Lanes werden fail-closed ausgeblendet. Fehler: {liveRoadmap.error}
+            </p>
+          ) : (
+            <p className="mt-3 text-xs leading-5 text-text-secondary">
+              Bis zum erfolgreichen Readback werden keine statischen Work-Package-Daten als aktuell dargestellt.
+            </p>
+          )}
         </section>
 
         <section aria-labelledby="roadmap-filters-title" className="landing-page-panel landing-page-panel--elevated">
@@ -484,7 +599,9 @@ export function RoadmapDashboard() {
                   Parallel Worker Projection
                 </p>
                 <h2 id="parallel-work-title" className="text-lg font-black text-white">
-                  {metrics.parallelLanes} parallelisierbare Worker-Lanes im aktuellen Filter
+                  {liveRoadmap.status === 'available'
+                    ? `${metrics.parallelLanes} parallelisierbare Worker-Lanes im aktuellen Filter`
+                    : 'Live Worker-State nicht verfügbar'}
                 </h2>
               </div>
             </div>
@@ -567,14 +684,28 @@ export function RoadmapDashboard() {
               </h2>
             </div>
             <p className="text-xs text-white/45">
-              {metrics.owners} beteiligte Owner · Snapshot {ROADMAP_DASHBOARD_SNAPSHOT.correlatedDate}
+              {liveRoadmap.status === 'available'
+                ? `${metrics.owners} beteiligte Owner · ${liveRoadmap.projection.stale ? 'STALE' : 'LIVE'} ${shortSha(liveCurrentMainSha)}`
+                : 'Live Work-State nicht verfügbar'}
             </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {visibleWorkPackages.map((item) => (
-              <WorkPackageCard key={item.id} item={item} />
-            ))}
+            {liveRoadmap.status === 'loading' ? (
+              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+                Live Work-State wird geladen…
+              </LandingPanel>
+            ) : liveRoadmap.status === 'unavailable' ? (
+              <LandingPanel className="border-score-warning/20 bg-score-warning/5 p-4 text-sm text-score-warning">
+                Live Work-State nicht verfügbar — aktive Arbeit wird fail-closed ausgeblendet.
+              </LandingPanel>
+            ) : visibleWorkPackages.length === 0 ? (
+              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+                Keine aktiven Arbeitspakete im aktuellen Filter.
+              </LandingPanel>
+            ) : (
+              visibleWorkPackages.map((item) => <WorkPackageCard key={item.id} item={item} />)
+            )}
           </div>
         </section>
 
@@ -615,31 +746,41 @@ export function RoadmapDashboard() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            {visibleQueuedItems.map((item) => (
-              <div key={item.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">{item.owner}</p>
-                    <h3 className="mt-1 text-sm font-black text-white">{item.id}</h3>
+            {liveRoadmap.status === 'loading' ? (
+              <p className="text-xs text-text-secondary">Live Queue wird geladen…</p>
+            ) : liveRoadmap.status === 'unavailable' ? (
+              <p className="text-xs font-semibold text-score-warning">
+                Live Queue nicht verfügbar — keine statische Queue wird als aktuell dargestellt.
+              </p>
+            ) : visibleQueuedItems.length === 0 ? (
+              <p className="text-xs text-text-secondary">Keine Ready/Held/Queued-Items im aktuellen Filter.</p>
+            ) : (
+              visibleQueuedItems.map((item) => (
+                <div key={item.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">{item.owner}</p>
+                      <h3 className="mt-1 text-sm font-black text-white">{item.id}</h3>
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase ${QUEUE_STYLE[item.state]}`}>
+                      {item.stateLabel}
+                    </span>
                   </div>
-                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase ${QUEUE_STYLE[item.state]}`}>
-                    {item.stateLabel}
-                  </span>
+                  <p className="mt-3 text-xs leading-5 text-text-secondary">{item.gate}</p>
+                  <div className="mt-3">
+                    <ProjectMetadata owner={item.owner} />
+                  </div>
+                  <p className="mt-3 break-all font-mono text-[10px] text-white/35">{item.source}</p>
                 </div>
-                <p className="mt-3 text-xs leading-5 text-text-secondary">{item.gate}</p>
-                <div className="mt-3">
-                  <ProjectMetadata owner={item.owner} />
-                </div>
-                <p className="mt-3 break-all font-mono text-[10px] text-white/35">{item.source}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
 
         <footer className="flex flex-col gap-3 border-t border-white/8 py-4 text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <p>Branding: LandingPageTemplate · BrandLogo · canonical landingPage token profile.</p>
           <p className="font-mono">
-            Korrelation {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha)} · Production bleibt separate Live-Evidence.
+            Korrelation {liveRoadmap.status === 'available' ? shortSha(liveCurrentMainSha) : 'nicht verfügbar'} · Production bleibt separate Live-Evidence.
           </p>
         </footer>
     </LandingPageTemplate>
