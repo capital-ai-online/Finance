@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-V18-CLAIMLESS-METADATA-BINDING-20260924",
+  "status": "released",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete the existing single PR Decision Evidence Reconciler claimless v1.8 bootstrap by binding canonical project/owner/PVC metadata before trusted-main rendering.",
+  "workItemDE": "Den claimlosen v1.8-Bootstrap des bestehenden Single-Writer PR Decision Evidence Reconciler durch fail-closed gebundene Projekt-/Owner-/PVC-Metadaten vervollständigen.",
+  "priority": "P1",
+  "priorityReason": "PR #1415 and #1416 still fail Governance after PR #1428 because the renderer passes the claim gate but receives no project identity for historical claimless PRs.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-24T21:21:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "90522e3241c650aeec73096e1871373bb83643cc",
+  "branch": "agent/governance-claimless-bootstrap-metadata-binding-v2-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-V18-CLAIMLESS-METADATA-BINDING-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-V18-CLAIMLESS-BOOTSTRAP-SELF-HEALING-20260924.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "PR #1428 merged claimless-renderer gate fix",
+    "existing single PR Decision Evidence Reconciler",
+    "trusted-main renderPullRequestBody.mjs"
+  ],
+  "boundaries": [
+    "No second PR-body writer",
+    "No direct main mutation",
+    "No relaxation of new Agent PR claim requirement",
+    "Claimless bootstrap metadata must be recovered only from internally consistent existing PR evidence",
+    "Matching productive project label is required; additional cross-cutting project labels are allowed",
+    "PVC evidence must use canonical PVC-xx token form",
+    "Human/CODEOWNER merge remains required"
+  ],
+  "rootCause": {
+    "observedPrs": [
+      1415,
+      1416
+    ],
+    "priorFix": 1428,
+    "remainingBlocker": "renderPullRequestBody.mjs receives PR_ALLOW_CLAIMLESS=true but no PR_PROJECT_ID / PR_PRIMARY_OWNER / PR_AFFECTED_PVC for historical claimless PRs",
+    "effect": "trusted-main bootstrap render cannot materialize a canonical v1.8 body, so Governance keeps failing on collapsed technical Traceability"
+  },
+  "exitEvidence": [
+    "Bootstrap snapshot binds project identity from consistent title/body/label evidence.",
+    "Owner/PVC evidence is normalized and fails closed if missing, inconsistent or malformed.",
+    "Trusted-main renderer receives PR_PROJECT_ID, PR_PRIMARY_OWNER and PR_AFFECTED_PVC only for the bounded bootstrap path.",
+    "open-agent-draft-pr.yml remains claim-required.",
+    "Merged PR #1428 claim is released/non-exclusive.",
+    "Exact-head CI/Governance/workflow-security pass.",
+    "No second writer or merge authority is created."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T21:33:00+02:00",
+  "releaseReason": "Terminal coordination lease: PR #1431 was Human/CODEOWNER-merged. Per /AGENTS.md@CURRENT_MAIN, merged historical claims must not remain active/exclusive.",
+  "terminalPullRequest": 1431,
+  "terminalMergeSha": "09fea757610eed8186cb827face0b854d06a16cf",
+  "lastSyncedMainSha": "09fea757610eed8186cb827face0b854d06a16cf"
+}
