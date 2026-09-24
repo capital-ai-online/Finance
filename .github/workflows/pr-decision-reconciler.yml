@@ -210,7 +210,7 @@ jobs:
               return;
             }
             const body = String(pr.body || '');
-            const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*1\\.8\\.0/.test(body);
+            const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.8\.0/.test(body);
             const headings = body.match(/^## .+$/gm) || [];
             const expected = [
               '## 1. 🧭 Entscheidung',

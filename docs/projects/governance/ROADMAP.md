@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@5da1db0eb398d87e967ce984fa07f9198effeafd`
+**Baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
@@ -74,6 +74,24 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 6. `SH-02.9 — Observability/SLO/incident convergence`: `IMPLEMENTED_ON_MAIN` through merged OPS PR #1262. Open OPS PR #1271 owns the post-merge projection/convergence readback and does not overlap this GOV roadmap reconciliation.
 7. `SH-02.10 — Fault injection/convergence suite`: remains dependency-held until the owner-correct SH-02.9 post-merge projection in PR #1271 reaches verified terminal evidence.
 8. `SH-02.11 — Staged production activation`: dependency-held until the enabled preceding tiers are verified.
+
+### GOV-PR-DECISION-BOOTSTRAP-REGEX-01 — Issue #1366
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Source Issue:** `#1366`
+
+The existing single PR Decision Evidence Reconciler contained an over-escaped
+JavaScript regex in its GitHub-Script bootstrap gate. The source literal matched
+a backslash sequence instead of the canonical
+`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0` marker.
+
+This slice changes only that existing writer and its regression test. It creates
+no second PR-body writer, renderer, workflow or merge authority.
+
+**Exit:** the current v1.8 marker is recognized from the actual workflow source;
+the double-escaped form is forbidden by regression coverage; ordinary exact-head
+Governance/CI/workflow-security must pass before Human/CODEOWNER merge.
 
 ### Single-writer and protected-blocker rules
 
