@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-MARKET-VOCABULARY-CBC5580-20260922",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -67,5 +67,8 @@
     "Exact-head TypeScript/frontend/unit/build/governance evidence passes before merge.",
     "Human/CODEOWNER merge remains required before production deployment."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "pullRequest": 1280,
+  "releasedAt": "2026-09-24T00:00:00+02:00",
+  "releaseReason": "Lifecycle correlation: merged PR #1280; stale active/exclusive coordination metadata released before the fresh sideboard runtime-truth slice."
 }
