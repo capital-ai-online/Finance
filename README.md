@@ -1,11 +1,11 @@
 # CAPITAL-AI — Enterprise Financial Intelligence Platform
 
-[![Version](https://img.shields.io/badge/Version-0.6.1_Beta-00f0ff.svg?style=for-the-badge)](https://capital-ai.online)
+[![Version](https://img.shields.io/badge/Version-0.6.2_Beta-00f0ff.svg?style=for-the-badge)](https://capital-ai.online)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.18_%3C25-68a063.svg?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg?style=for-the-badge)](#lizenz)
 
-> **CAPITAL-AI** ist eine webbasierte FinTech-Plattform für Multi-Asset-Screening, quantitative Analysen, erklärbare Scorings und kontrollierte AI-gestützte Auswertungen. Version 0.6.1 befindet sich in der Beta-Phase und ist kein Ersatz für Anlage-, Rechts- oder Steuerberatung.
+> **CAPITAL-AI** ist eine webbasierte FinTech-Plattform für Multi-Asset-Screening, quantitative Analysen, erklärbare Scorings und kontrollierte AI-gestützte Auswertungen. Version 0.6.2 befindet sich in der Beta-Phase und ist kein Ersatz für Anlage-, Rechts- oder Steuerberatung.
 
 Diese Root-README ist die **Enterprise-Einstiegs- und Navigationsoberfläche** des Repositories. Sie beschreibt Produkt, Architektur, Entwicklungsmodell und zentrale Betriebsgrenzen, erzeugt jedoch **keine eigene Governance- oder Architektur-Authority**. Verbindliche Repository-Regeln werden aus [`/AGENTS.md`](./AGENTS.md), den kanonischen Projekt-/PVC-Zuordnungen, akzeptierten ADRs, aktiven ESS sowie den jeweiligen Registries aufgelöst.
 
@@ -101,7 +101,7 @@ Google Gemini ist wieder als **server-only, Free-Tier-only Research-Evidence-Pro
 
 | Komponente | Repository-Version | Authority |
 |---|---:|---|
-| CAPITAL-AI Plattform | `0.6.1` | `package.json#version` |
+| CAPITAL-AI Plattform | `0.6.2` | `package.json#version` |
 | Node.js Runtime | `24.18.0` | `.nvmrc` |
 | Node.js Engine | `>=24.18.0 <25` | `package.json#engines.node` |
 | TypeScript | `~7.0.2` | `package.json#devDependencies.typescript` |
@@ -342,7 +342,7 @@ Ebenso stellt diese README weder eine Zertifizierung noch einen Auditbericht dar
 
 - Inhaber: Sven Kulessa
 - Kontakt: [sven.kulessa@capital-ai.online](mailto:sven.kulessa@capital-ai.online)
-- Plattformversion: `0.6.1 Beta`
+- Plattformversion: `0.6.2 Beta`
 - Plattformversions-Authority: `package.json#version`; diese README ist nur Projektion
 - Repository: `capital-ai-online/Finance`
 - Sichtbarkeit: privat

@@ -29,8 +29,12 @@ function createFixture(): string {
   write(root, 'AGENTS.md', '**Control Plane Version:** 2.1.0');
   write(root, 'docs/code-quality/CODE_QUALITY_STANDARDS.md', '**Version:** 0.6.0\nPinned to **Version 0.6.0**.');
   write(root, 'docs/ceo/EXECUTIVE_SUMMARY.md', '**Version:** 0.6.0 (Beta-Phase)');
-  write(root, 'docs/API.md', '*Verified under CAPITAL-AI Platform Specification Version 0.6.0.*');
-  write(root, 'index.html', '<meta name="description" content="CAPITAL-AI (Version 0.6.0)">');
+  write(root, 'docs/archive/raw-materials/API.md', '*Historical snapshot under CAPITAL-AI Platform Specification Version 0.6.0.*');
+  write(
+    root,
+    'index.html',
+    '<meta name="description" content="CAPITAL-AI (Version 0.6.0)"><script type="application/ld+json">{"@type":"SoftwareApplication","softwareVersion":"0.6.0"}</script>',
+  );
   return root;
 }
 
@@ -87,16 +91,23 @@ describe('ADR-0030 release version gate', () => {
     const root = createFixture();
     const originalReadme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     const originalAgents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+    const archivedApiPath = path.join(root, 'docs/archive/raw-materials/API.md');
+    const originalArchivedApi = fs.readFileSync(archivedApiPath, 'utf8');
     const plan = buildReleaseVersionPlan(root, request());
 
     expect(plan.updatedFiles).toContain('README.md');
     expect(plan.updatedFiles).not.toContain('AGENTS.md');
+    expect(plan.updatedFiles).not.toContain('docs/API.md');
+    expect(plan.updatedFiles).not.toContain('docs/archive/raw-materials/API.md');
 
     const originals = applyReleaseVersionPlan(root, plan);
     expect(() => assertAppliedVersionConsistency(root, '0.7.0')).not.toThrow();
     expect(fs.readFileSync(path.join(root, 'README.md'), 'utf8')).toBe(originalReadme);
     expect(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8')).toBe(originalAgents);
-    expect(fs.readFileSync(path.join(root, 'index.html'), 'utf8')).toContain('Version 0.7.0');
+    expect(fs.readFileSync(archivedApiPath, 'utf8')).toBe(originalArchivedApi);
+    const updatedIndex = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    expect(updatedIndex).toContain('Version 0.7.0');
+    expect(updatedIndex).toContain('"softwareVersion":"0.7.0"');
 
     restoreReleaseVersionFiles(root, originals);
     expect(JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version).toBe('0.6.0');
