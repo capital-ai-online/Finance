@@ -1,0 +1,53 @@
+name: GitHub Enterprise Workflow Permissions Admin
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type SET_PR_APPROVAL_FALSE to execute the fixed Enterprise mutation'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-enterprise-workflow-permissions-admin
+  cancel-in-progress: false
+
+jobs:
+  harden-enterprise-workflow-permissions:
+    name: Harden Enterprise workflow permissions
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'SvenKulessa' &&
+      inputs.confirm == 'SET_PR_APPROVAL_FALSE'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+
+      - name: Enterprise Writer Konfiguration fail-closed prüfen
+        env:
+          ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          ENTERPRISE_ADMIN_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${ENTERPRISE_SLUG}" ]] || { echo "::error::CAPITAL_AI_GITHUB_ENTERPRISE_SLUG fehlt."; exit 1; }
+          [[ -n "${ENTERPRISE_ADMIN_PAT}" ]] || { echo "::error::CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT fehlt."; exit 1; }
+
+      - name: Enterprise Workflow Permissions bounded härten
+        env:
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
+        run: node scripts/operations/runGitHubEnterpriseWorkflowPermissionsWrite.mjs

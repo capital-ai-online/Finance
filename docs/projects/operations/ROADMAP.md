@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@b33fe5bb4782a3bd8d1d5c9da64f9182b85c62b7`
+**Baseline:** `main@7c8f572e7112c96ee31264ec8a7775b971678a4d`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -13,6 +13,23 @@
 `historical/non-terminal != active`
 
 This file remains a temporary project execution projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Archive/superseded copies, old chat/work context, prior branch state and historical non-terminal markers are ledger/evidence only. A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical identity or freshly defined/re-authorized by the Human/Owner in the current interaction. Terminal history is retained as ledger and is not reopened.
+
+## Current execution priority — Owner-directed Enterprise Actions hardening 2026-09-24
+
+### OPS-GITHUB-ENTERPRISE-WORKFLOW-PERMISSIONS-WRITER-01 — Bounded Enterprise PR-approval writer
+
+**State:** `IMPLEMENTATION_ON_BRANCH / PROTECTED_PROVIDER_MUTATION_NOT_EXECUTED`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08, PVC-18`  
+**Source package:** `work-packages/OPS_GITHUB_ENTERPRISE_WORKFLOW_PERMISSIONS_WRITER_01_2026-09-24.md`
+
+Run `#35999363977` established complete Enterprise Actions readback and observed
+`default_workflow_permissions=read` plus
+`can_approve_pull_request_reviews=true`. Fresh Human Owner direction authorizes
+one bounded writer capability whose only permitted transition is
+`read/true -> read/false`. The writer must fail before mutation if the default
+permission is not already `read`, expose no raw REST proxy, use no user-supplied
+provider values and require exact post-write readback. Provider mutation cannot
+occur from the PR branch and Human/CODEOWNER merge remains mandatory.
 
 ## Current execution priority — Human-directed Merge Cadence 2026-09-23
 
