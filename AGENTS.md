@@ -89,7 +89,7 @@ These directions do not transfer productive PVC ownership.
 
 ### Current implementation integrity — no legacy runtime/UI integration
 
-The current product implementation MUST NOT integrate, mount, render, import, execute, route through, or depend on an implementation that is explicitly classified as `legacy`, `compatibility`, `deprecated`, `suspended`, `retired`, `superseded` or `historical` when that implementation participates in the active website, API, runtime, worker, workflow or user/admin interface.
+The current product implementation MUST NOT integrate, mount, render, import, execute, route through, or depend on an implementation that is explicitly classified as `legacy`, `compatibility`, `deprecated`, `suspended`, `retired`, `superseded` or `historical` when that implementation participates in the current website, API, runtime, worker, workflow or user/admin interface.
 
 When a current capability is still required, the owner-correct Project/PVC MUST implement or migrate that capability through the current canonical architecture instead of wrapping, renaming, proxying or re-exposing the legacy implementation. A compatibility adapter MAY exist only as bounded migration evidence on a non-current execution path with an explicit removal condition; it MUST NOT be the productive implementation consumed by the current website or runtime.
 
