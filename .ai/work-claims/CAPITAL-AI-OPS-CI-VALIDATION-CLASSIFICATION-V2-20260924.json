@@ -19,15 +19,16 @@
   "priority": "P0",
   "priorityReason": "Fresh Owner direction requires selective affected-file PR validation and pre-PR ChatGPT preflight without weakening main, release, dependency or security gates.",
   "claimedPaths": [
-    ".ai/work-claims/CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924.json",
     ".ai/work-claims/CAPITAL-AI-OPS-02-CI-01E-20260921.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924.json",
     ".github/workflows/ci.yml",
-    "scripts/pr/runtimeConsumedArtifacts.mjs",
+    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md",
     "scripts/pr/classifyPrScope.mjs",
     "scripts/pr/classifyPrScope.test.mjs",
     "scripts/pr/planPrValidation.mjs",
     "scripts/pr/planPrValidation.test.mjs",
-    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md"
+    "scripts/pr/preflightEvidence.test.mjs",
+    "scripts/pr/runtimeConsumedArtifacts.mjs"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
 }
