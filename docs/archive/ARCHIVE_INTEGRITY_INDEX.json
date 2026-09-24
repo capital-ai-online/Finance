@@ -1,0 +1,254 @@
+{
+  "schemaVersion": "1.0.0",
+  "contractVersion": "documentary-archive-integrity/1.1.0",
+  "authority": "CAPITAL-AI-DOC / PVC-03",
+  "role": "TAMPER_EVIDENT_NON_AUTHORIZING_ARCHIVE_INDEX",
+  "baselineCommit": "23be3c2d257020647884f46267e0c864ff003a68",
+  "indexPath": "docs/archive/ARCHIVE_INTEGRITY_INDEX.json",
+  "excludedPaths": [
+    "docs/archive/ARCHIVE_INTEGRITY_INDEX.json"
+  ],
+  "rule": "Every tracked regular file under docs/archive/** except this self-index must match this exact path/blob set. Registered archive manifests additionally preserve lifecycle/source provenance. Any unexplained addition, removal, content change or provenance mismatch fails closed; this index grants no mutation or deletion authority.",
+  "entries": [
+    {
+      "path": "docs/archive/billing/PRICING_MODEL_ARCHIVED_2026-09-23.md",
+      "blobSha": "44c5afc7d790fca4ab4cfde5faff58a8bffdc3dd",
+      "size": 3111
+    },
+    {
+      "path": "docs/archive/evidence/COMPLIANCE_REPORT.md",
+      "blobSha": "05ddb4fedb4844c87a00897fce93ea291b837b3c",
+      "size": 4049
+    },
+    {
+      "path": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+      "blobSha": "8acf1095f6c699ff3963360384939dbbd1c4f5e5",
+      "size": 6232
+    },
+    {
+      "path": "docs/archive/evidence/post-pvc-folder-mapping/README.md",
+      "blobSha": "f7c2ce9c8dde2fda953b4e1c9bc5897bf666d54f",
+      "size": 1854
+    },
+    {
+      "path": "docs/archive/evidence/SECURITY_AUDIT.md",
+      "blobSha": "dd4ef50fe6497604b52148d42d858d19927bfe82",
+      "size": 4471
+    },
+    {
+      "path": "docs/archive/governance/historical/ESS-0022-Passkey-Only-Owner-PR-Authorization.md",
+      "blobSha": "4c60eec13e5fa7a1952762dc1f059839b9f7e50d",
+      "size": 2716
+    },
+    {
+      "path": "docs/archive/governance/historical/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md",
+      "blobSha": "08634942c4bfe3d9df6144edbf6f25756d8632c7",
+      "size": 12453
+    },
+    {
+      "path": "docs/archive/governance/superseded/AUTONOMOUS_SELF_HEALING_RUNTIME_SUPERSESSION_2026-09-20.md",
+      "blobSha": "b356ce23d52b9481f9829e76be15379dbac0b51a",
+      "size": 3707
+    },
+    {
+      "path": "docs/archive/governance/superseded/DOCUMENTATION_HYGIENE_POLICY.md",
+      "blobSha": "ad4de397d10454964fe77938c7db63e8910e5d10",
+      "size": 2261
+    },
+    {
+      "path": "docs/archive/governance/superseded/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md",
+      "blobSha": "56aea2408830f5035370b1b3e424647b95cfcc7a",
+      "size": 2834
+    },
+    {
+      "path": "docs/archive/governance/superseded/GOVERNANCE_HARDENING_2026-08-19.md",
+      "blobSha": "1d8d83ba43090742a124a7b814336d73943f9222",
+      "size": 2112
+    },
+    {
+      "path": "docs/archive/governance/superseded/GOVERNANCE_SUPERSESSION_DIFF_IMPACT_2026-08-19.md",
+      "blobSha": "948eb7052522373d1d0bf911369fe11f5a283964",
+      "size": 2939
+    },
+    {
+      "path": "docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md",
+      "blobSha": "7c81821a169d057cbae703564d18e0fc82eb5b40",
+      "size": 4196
+    },
+    {
+      "path": "docs/archive/legacy/ARCHITECTURE_REVIEW.md",
+      "blobSha": "debc9f5dd7a26533d5d60d0a79bfda5a6d5efc23",
+      "size": 6596
+    },
+    {
+      "path": "docs/archive/legacy/ARCHIVE_NOTE_2026-08-15.md",
+      "blobSha": "ec3bfb0f2f201ad58dd7c9bf84c4ddfed46ce5fa",
+      "size": 1274
+    },
+    {
+      "path": "docs/archive/legacy/Documentary.md",
+      "blobSha": "8a9d4daf079c951901c74ab0edb28928f52e6acc",
+      "size": 4091
+    },
+    {
+      "path": "docs/archive/legacy/integration-plan.md",
+      "blobSha": "0690af37ae85bf5b16048460e0272872d08b40b9",
+      "size": 12836
+    },
+    {
+      "path": "docs/archive/legacy/PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "blobSha": "425f435eb906f2015c1452837954556ec5a8c39e",
+      "size": 6571
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-09/evidence/DATA_09_PROVIDER_TIMESTAMP_VALIDATION_2026-09-16.md",
+      "blobSha": "d4307652362c1674d15c58e46118720712ab7d7d",
+      "size": 3750
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-09/evidence/DATA_14_PROVIDER_INPUT_2026-09-07.md",
+      "blobSha": "d66b92c6737087807a4cc11cf81f19ce53138636",
+      "size": 923
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-10/evidence/CANONICAL_DATA_CONNECTIONS_2026-09-03.md",
+      "blobSha": "f6e2b41199a061d157ffe11a1d9793eb4e07a303",
+      "size": 10791
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-10/evidence/CURRENT_MAIN_SECURITY_HANDOFF_RECONCILIATION_2026-09-02.md",
+      "blobSha": "38f0b19a8dae1a484912ef3b6400131ab4fb8f31",
+      "size": 680
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-10/evidence/DATA_10_14_GAP_CLOSE_2026-09-07.md",
+      "blobSha": "5659b65b335bd638b7566efd5c885684a788477e",
+      "size": 996
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-10/evidence/DATA_12_PROVENANCE_LINEAGE_2026-09-07.md",
+      "blobSha": "7f7b9f0bd7977d22d9592b3a821b2758c8a49106",
+      "size": 971
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-10/evidence/S1_R2_11_EVIDENCE_IDENTITY_FRESHNESS_2026-09-07.md",
+      "blobSha": "e35321611b19d303a3cebe5530446a96de055561",
+      "size": 2513
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-11/evidence/DATA_11_QUALITY_GATE_2026-09-07.md",
+      "blobSha": "8189c0c6596d46aa85f008b7c3b07d98b84522fb",
+      "size": 1367
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-11/evidence/DATA_13_FRESHNESS_2026-09-07.md",
+      "blobSha": "db375de79ca939ffd832a9faf091927299989dfb",
+      "size": 938
+    },
+    {
+      "path": "docs/archive/projects/fintech/pvc-11/evidence/DATA_FIN12_SIGNED_HISTORY_VALUE_SEMANTICS_2026-09-16.md",
+      "blobSha": "0733728388c73b8217fb18d28df8ab52f15879e1",
+      "size": 5474
+    },
+    {
+      "path": "docs/archive/projects/operations/superseded/OPS_08_B_SH_01_SELF_HEALING_READINESS_2026-09-10.md",
+      "blobSha": "c1ab3b6ab672f48779e2311bd555eefe8ba415e1",
+      "size": 2401
+    },
+    {
+      "path": "docs/archive/raw-materials/API.md",
+      "blobSha": "795ff199ac472629e37dbcb1037f9ac1cd85a181",
+      "size": 3526
+    },
+    {
+      "path": "docs/archive/raw-materials/Classification-Agent.md",
+      "blobSha": "a075cc052f6ffdeab4a065051e43a3bb3971a874",
+      "size": 3055
+    },
+    {
+      "path": "docs/archive/raw-materials/Classification-Model.md",
+      "blobSha": "6b13ef8112fee2c1879399cd54030bd0de1b41e9",
+      "size": 1746
+    },
+    {
+      "path": "docs/archive/raw-materials/Fundamentals-Agent.md",
+      "blobSha": "3c39f0e964b672704251267f718a2ae1ec35a508",
+      "size": 2765
+    },
+    {
+      "path": "docs/archive/raw-materials/Orchestrator.md",
+      "blobSha": "f4d28d62a8d1c0115996fd92a9c7e16bbfc79d81",
+      "size": 2364
+    },
+    {
+      "path": "docs/archive/raw-materials/Risk-Agent.md",
+      "blobSha": "157cf8e5732e5a5a64049e370f2c4b4396edca4f",
+      "size": 2901
+    },
+    {
+      "path": "docs/archive/raw-materials/Scoring-Model.md",
+      "blobSha": "2e881c63cfd0d0365102ab713a21ab557b8445d3",
+      "size": 3071
+    },
+    {
+      "path": "docs/archive/raw-materials/Valuation-Agent.md",
+      "blobSha": "3abd3f979b8fe3b550c590e90be20d0563f23b2b",
+      "size": 1787
+    },
+    {
+      "path": "docs/archive/README.md",
+      "blobSha": "90e393b919e6814e28bf02d10a514d1da06d7042",
+      "size": 1326
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/ARCHIVE_MANIFEST.json",
+      "blobSha": "122f3c34e2244376f2bd7ca4b6d3b74f32adc3ac",
+      "size": 7250
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/DATA_BASELINE.md",
+      "blobSha": "0416afb6ec3d5c63accd2817dac2a81691db5f5d",
+      "size": 1195
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/evidence/README.md",
+      "blobSha": "0e86e90d1040b13f3426d566810850869b95a1c7",
+      "size": 1255
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/HANDOFFS.md",
+      "blobSha": "eb3bd342c2987fbd4c0c0a8d1935bb0b912af7b6",
+      "size": 5372
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/handoffs/CAPITAL_AI_SEC_CROSS_PROJECT_HANDOFF.md",
+      "blobSha": "6d8806ea6522e923e26f35646a02f6bb84f2119b",
+      "size": 780
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/README.md",
+      "blobSha": "d8af66f8d18ee25518094a54062eacad0c644d18",
+      "size": 2726
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/ROADMAP.md",
+      "blobSha": "41405fc379253f447554d55c1ff77593a067547b",
+      "size": 1749
+    },
+    {
+      "path": "docs/archive/shared/capital-ai-data/TAKEOVER_INDEX.md",
+      "blobSha": "5adabf7c09edc602fac82ec65470e04dc43be325",
+      "size": 8877
+    }
+  ],
+  "manifests": [
+    {
+      "manifestPath": "docs/archive/shared/capital-ai-data/ARCHIVE_MANIFEST.json",
+      "policy": "BYTE_PRESERVED_SOURCE_BOUND"
+    },
+    {
+      "manifestPath": "docs/archive/evidence/post-pvc-folder-mapping/ARCHIVE_MANIFEST.json",
+      "policy": "DEACTIVATED_NON_AUTHORIZING"
+    }
+  ]
+}

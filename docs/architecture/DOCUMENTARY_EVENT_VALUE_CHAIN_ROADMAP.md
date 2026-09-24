@@ -42,10 +42,11 @@ Foreign productive implementation remains `REFERRED_NOT_EXECUTED` from this road
 
 ## 2. Current Documentary baseline
 
-The original 2026-08-10 target snapshot is historical. Current `main@c6d36c216801f16788d205664ab4cfdf0c970dca` shows:
+The original 2026-08-10 target snapshot is historical. Current state is resolved from `/AGENTS.md@CURRENT_MAIN`; Documentary version and archive-integrity projections are revalidated on every current-main impact run. Current implementation shows:
 
-- Documentary component version `1.21.0` in `src/platform/Documentary/manifest.json` and component README;
+- Documentary component version `1.22.0` in `src/platform/Documentary/manifest.json` and component README;
 - component-version authority: `src/platform/Documentary/manifest.json#version`;
+- tamper-evident Archive Integrity: complete `docs/archive/**` Git-blob index plus historical source-manifest verification, read-only and fail-closed;
 - document-schema-version authority: `Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`;
 - platform-version authority: repository `package.json#version`, consumed through the Release control plane;
 - implemented areas: Agents, ArchiveRetention, Contracts, Discovery, Documentation, Engine, Events, Generators, Governance, Interfaces, Knowledge, Lifecycle, Mermaid, Migration planning, Models, Observability maintenance slice, Orchestration, Traceability and Versioning;
