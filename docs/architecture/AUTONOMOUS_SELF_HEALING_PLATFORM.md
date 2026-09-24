@@ -239,7 +239,7 @@ The visible PR Decision projection is also generation-bound. If the latest exact
 
 This rule creates no new remediation action, finding namespace, writer, scheduler or workflow. It does not activate SH-02.12. Project/PVC ownership, protected provider boundaries, Security/Compliance/QM independence and the current merge-authority contract remain unchanged.
 
-Implementation planning and observed evidence are captured in `docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md`. Current open writers #1377/#1378/#1379 remain dependencies; their files are not mutated by this planning slice.
+Implementation planning and observed evidence are captured in `docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md`. Current open writers #1377/#1378/#1380 remain dependencies; their files are not mutated by this planning slice. Closed/unmerged #1379 is historical evidence only.
 
 ## 10. Rollout
 
