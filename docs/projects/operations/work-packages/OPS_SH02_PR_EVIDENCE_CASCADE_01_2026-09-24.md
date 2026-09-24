@@ -3,14 +3,14 @@
 **Project:** `CAPITAL-AI-OPS`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18`  
 **Parent:** `OPS-08-B-SH-02 — Autonomous Self-Healing Backend & Frontend`  
-**Baseline:** `main@d28eff774f24ceab05c1d18268c9b12749a09fe5`  
+**Baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`  
 **Status:** `PLANNED / OWNER_DIRECTED / NO_NEW_ACTION`  
 **Priority:** P0  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Goal
 
-Integrate the repeated PR convergence behavior observed in PRs #1371, #1373, #1374, #1375 and #1376 into the existing Self-Healing plan without adding a second PR-body writer, repository-projection writer, cadence writer, workflow, finding namespace, remediation action or merge authority.
+Integrate the repeated PR convergence behavior observed in PRs #1371, #1373, #1374, #1375, #1376 and #1380 into the existing Self-Healing plan without adding a second PR-body writer, repository-projection writer, cadence writer, workflow, finding namespace, remediation action or merge authority.
 
 The planning target is a deterministic **generation-aware evidence cascade** across the already-existing bounded paths:
 
@@ -27,6 +27,7 @@ The planning target is a deterministic **generation-aware evidence cascade** acr
 | #1374 | Full Suite failed with `CURRENT_STATE_PROJECTION_BASELINE_STALE`; the existing baseline specialist wrote head `4a960492d2ccd30e1b4879a8a3931bfb5b68dc75`, invalidating the prior PR-body baseline | `RECONCILE_REPOSITORY_PROJECTION` followed by `RECONCILE_PR_DECISION_EVIDENCE` | a repository projection repair that changes head must hand the new generation to PR-body convergence |
 | #1375 | Documentary Roadmap baseline was repaired on head `acbf52c098fbfe7446409b278c7909a125c8dde5`; Governance then required a newly bound Production baseline | the same two existing SH-1 paths | the #1374 cascade is reproducible across projects and is not FE-specific |
 | #1376 | fixed 10-merge gate failed at `mergeOrdinal=29`; existing cadence semantics required PATCH `0.6.3`; version materialization changed the PR head, the current-state baseline then required another head mutation, and PR-body Production evidence had to rebind again before CI/Governance passed | `MERGE_CADENCE_PATCH_V1` + `RECONCILE_REPOSITORY_PROJECTION` + `RECONCILE_PR_DECISION_EVIDENCE` | multiple already-authorized repairers need generation-aware sequencing; final Decision Evidence must follow the final exact-head check generation |
+| #1380 | CI exposed `CURRENT_STATE_PROJECTION_BASELINE_STALE` for the OPS Roadmap after main moved to `bac6f422...`; the existing baseline specialist created head `a0ab9e29...`, which invalidated PR-body Production evidence. A fresh edited-event Governance run then passed after exact baseline rebinding. The automatically scheduled Decision Evidence Reconciler started, but the Human/CODEOWNER merge completed at 04:56:43Z before bootstrap readback at 04:56:48Z; the writer rejected the now-closed PR with no mutation. | `RECONCILE_REPOSITORY_PROJECTION` + `RECONCILE_PR_DECISION_EVIDENCE` + terminal-state fail-closed boundary | The generation cascade is valid; PR terminal state is an explicit convergence boundary and must suppress post-merge body mutation. |
 
 ## Generation identity
 
@@ -74,23 +75,22 @@ A successful mutation is not convergence by itself.
 
 ### 4. Final decision-state convergence
 
-The #1376 sequence exposed an additional projection race: required checks can become PASS while the visible PR Decision block still reflects a previous `BLOCKED` generation.
+The #1376 sequence exposed an additional projection race: required checks can become PASS while the visible PR Decision block still reflects a previous `BLOCKED` generation. PR #1380 adds the terminal-race boundary: a scheduled body reconciliation may become obsolete because the Human/CODEOWNER merge closes the PR before the writer obtains its bootstrap snapshot.
 
 Planning therefore requires the final PR-body Decision Evidence to be derived from the latest exact-head terminal check set. Merge readiness must not rely on a stale body generation that still reports a superseded failure.
 
-This requirement does not grant merge authority and does not change Human/CODEOWNER or current repository merge contracts.
+If the PR is no longer open when the single writer binds its bootstrap snapshot, reconciliation must stop with no body mutation. That terminal no-write outcome is convergence-safe and must not be reported as a failed product repair. This requirement does not grant merge authority and does not change Human/CODEOWNER or current repository merge contracts.
 
 ## Ownership and open-writer boundary
 
-Current open writers are deliberately preserved:
+The formerly blocking writers are now terminal:
 
-- PR #1377 owns GOV version/deploy cadence Evidence/template reconciliation surfaces;
-- PR #1378 owns the GOV PR-v1.8 Decision Reconciler bootstrap correction;
-- PR #1380 owns `docs/projects/operations/ROADMAP.md` and the canonical SH-02 parent work package; closed/unmerged #1379 is evidence only.
+- PR #1377 merged as `adcd5609b0db58627fb2d89e58d32f7054baf918`;
+- PR #1378 merged as `bac6f4224cdb4f570c415c1310a264b3081756e6`;
+- PR #1380 merged as `67f9be45e41d78ca5d5c58f9be860d1887e4afad`;
+- closed/unmerged #1379 remains historical evidence only.
 
-This planning slice therefore does **not** mutate those files.
-
-After #1377/#1378/#1380 become terminal, implementation selection must reread `CURRENT_MAIN`, deduplicate their merged outcomes and then decide whether any code/workflow handoff remains necessary. Roadmap/SH-02 parent linkage is deferred until #1380 is terminal.
+Implementation selection must reread `CURRENT_MAIN`, deduplicate these merged outcomes and preserve their single-writer boundaries.
 
 ## Future implementation acceptance criteria
 
@@ -104,6 +104,7 @@ After #1377/#1378/#1380 become terminal, implementation selection must reread `C
 8. No SH-02.12 activation occurs.
 9. Protected provider/Production actions remain excluded.
 10. Exact-head required checks and merge-authority boundaries remain unchanged.
+11. A reconciliation scheduled before merge but reading the PR after terminal merge/close exits no-write and is treated as a safe terminal race, not an invitation to reopen or mutate the PR.
 
 ## Non-goals
 
