@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LANDING-DESIGN-ROADMAP-TEMPLATE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
   "workItem": "FE-LANDING-TEMPLATE-01 — replace the Roadmap historical dashboard template with the current productive Landingpage design and align the canonical Branding Kit to that presentation.",
@@ -46,5 +46,8 @@
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub connector"
-  }
+  },
+  "releaseCondition": "Satisfied by Human/CODEOWNER merge of PR #1374 on 2026-09-24.",
+  "releasedBy": "post-merge reconciliation",
+  "releasedMainSha": "cb0012e7f38452eb638ed2e3affe5e74f0b44ed6"
 }
