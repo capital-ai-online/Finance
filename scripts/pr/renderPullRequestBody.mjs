@@ -18,6 +18,7 @@ import {
   decisionEvidenceRows,
   decisionImpactLabel,
   deriveProductionCadenceState,
+  deriveVersionCadenceEvidence,
   deriveDecisionStatus,
   formatDecisionGateState,
   normalizeDecisionGateState,
@@ -155,6 +156,7 @@ const mergeCadence = resolveMergeCadence({
   productionSha: baseline?.production?.commitSha,
   productionHealthy: baseline?.checks?.productionHealthy === true,
 });
+const versionCadenceEvidence = deriveVersionCadenceEvidence(mergeCadence);
 const deploymentState = deriveProductionCadenceState({
   active: mergeCadence.active,
   deployDue: mergeCadence.deployDue,
@@ -291,6 +293,9 @@ const replacements = {
   VERSION_PROGRESS: mergeCadence.versionProgress ?? 'N/A',
   VERSION_REMAINING: mergeCadence.versionRemaining ?? 'N/A',
   NEXT_PATCH_VERSION: mergeCadence.nextPatchVersion,
+  VERSION_DEPLOY_PROGRESS: versionCadenceEvidence.deployProgress,
+  VERSION_DEPLOY_TOTAL: versionCadenceEvidence.deployTotal,
+  VERSION_DEPLOY_REMAINING: versionCadenceEvidence.deployRemaining,
   IMPLEMENTATION_DECISION: compactDecisionCell(implementationDetail, workItem),
   WHY_DECISION: compactDecisionCell(whyDetail, 'N/A'),
   IMPLEMENTATION_DETAIL: implementationDetail,
