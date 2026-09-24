@@ -2,6 +2,7 @@ import type { CanonicalMarketDataSnapshot } from '../contracts';
 import { MarketDataRingBuffer } from './MarketDataRingBuffer';
 import {
   fanoutTickFromSnapshot,
+  isMarketDataFanoutTick,
   marketDataFanoutEventId,
   parseMarketDataFanoutTopic,
   type MarketDataFanoutSink,
@@ -42,17 +43,22 @@ export class MarketDataFanoutHub implements MarketDataFanoutSink {
 
   publish(snapshot: CanonicalMarketDataSnapshot): void {
     const tick = fanoutTickFromSnapshot(snapshot);
-    if (!tick) return;
-    if (!this.acceptTick(tick)) return;
+    if (tick) this.publishTick(tick);
+  }
 
+  /** Integration point for a post-Tier-2 accepted trade/BBO adapter. */
+  publishTick(tick: MarketDataFanoutTick): boolean {
+    if (!isMarketDataFanoutTick(tick) || !this.acceptTick(tick)) return false;
     if (this.redis) {
       void this.redis.writeAndPublish(tick).catch(error => {
         this.onFanoutError?.('redis-write', error);
       });
     }
+    return true;
   }
 
   acceptRemoteTick(tick: MarketDataFanoutTick): boolean {
+    if (!isMarketDataFanoutTick(tick)) return false;
     return this.acceptTick(tick);
   }
 
