@@ -162,7 +162,10 @@ jobs:
     permissions:
       actions: write
       checks: read
-      contents: read
+      # GitHub GraphQL enable/disablePullRequestAutoMerge requires repository
+      # content write capability in addition to pull-request write for this
+      # integration. Candidate code is never executed with these credentials.
+      contents: write
       pull-requests: write
 
     steps:
