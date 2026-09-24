@@ -637,7 +637,7 @@ export function RoadmapDashboard() {
         </section>
 
         <footer className="flex flex-col gap-3 border-t border-white/8 py-4 text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
-          <p>Branding: brandmark.json · design-tokens.json · CapitalAiLogo · landing-page-panel/Card contracts.</p>
+          <p>Branding: LandingPageTemplate · BrandLogo · canonical landingPage token profile.</p>
           <p className="font-mono">
             Korrelation {shortSha(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha)} · Production bleibt separate Live-Evidence.
           </p>
