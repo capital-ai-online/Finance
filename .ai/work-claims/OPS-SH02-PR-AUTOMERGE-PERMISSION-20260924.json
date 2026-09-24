@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-PR-AUTOMERGE-PERMISSION-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Fix the existing PR Decision Evidence Reconciler so an active provider auto-merge can be safely disarmed before stale PR-body evidence is repaired.",
+  "workItemDE": "Den bestehenden PR Decision Evidence Reconciler so korrigieren, dass aktives Provider-Auto-Merge vor der Reparatur veralteter PR-Body-Evidence sicher deaktiviert werden kann.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "42001c9968d7f0907d98781920b66e19c6a48265",
+  "lastSyncedMainSha": "42001c9968d7f0907d98781920b66e19c6a48265",
+  "branch": "agent/operations-pr-automerge-permission-fix-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-04 / PVC-08 / PVC-18",
+  "priority": "P0",
+  "priorityReason": "PR #1381 proved that stale governance evidence remains unrepaired when the leading writer cannot disable an already-active GitHub auto-merge request.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-SH02-PR-AUTOMERGE-PERMISSION-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/productionBaselineRefreshWorkflow.test.mjs",
+    "docs/projects/operations/work-packages/OPS_SH02_PR_AUTOMERGE_PERMISSION_01_2026-09-24.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "existing PR Decision Evidence Reconciler single-writer chain",
+    "PR #1381 run 35958041567 / job 107500472507 observed failure evidence"
+  ],
+  "scopeBoundary": [
+    "No second PR-body writer, autofix controller, merge authority or workflow architecture.",
+    "No weakening of fail-closed auto-merge safety: body mutation remains blocked until an active provider auto-merge request is disarmed.",
+    "Permission expansion is limited to the existing reconcile job that already owns PR-body and auto-merge provider mutation.",
+    "Candidate code remains data-only and is never executed with write credentials.",
+    "No direct main mutation and no autonomous merge."
+  ],
+  "exitEvidence": [
+    "Reconcile job grants contents:write together with pull-requests:write for GitHub GraphQL auto-merge mutation.",
+    "Regression test binds the permission to the existing disablePullRequestAutoMerge safety path.",
+    "Workflow/security validation and exact-head CI pass.",
+    "PR #1381 can subsequently converge stale production-baseline evidence without Resource not accessible by integration."
+  ],
+  "acceptanceCriteria": [
+    "When livePr.auto_merge is active and the PR is HUMAN_MERGE_REQUIRED, provider auto-merge is disabled before any body PATCH.",
+    "If provider disarm still fails, the reconciler remains fail-closed and does not rewrite merge-safety evidence.",
+    "After successful disarm, stale production baseline and Decision/Evidence may converge in the same leading writer generation.",
+    "No compatibility relay receives PR-body write authority."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
