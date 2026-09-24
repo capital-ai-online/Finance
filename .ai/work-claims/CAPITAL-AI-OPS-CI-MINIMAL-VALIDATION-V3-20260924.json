@@ -29,10 +29,10 @@
     "tests/unit/ciDeploymentControlPlane.test.ts",
     "tests/unit/ciDeploymentGuards.test.ts",
     "tests/unit/productionCiRunnerConsolidation.test.ts",
-    "tests/unit/ciProductionContract.test.ts",
     "docs/projects/operations/work-packages/OPS_CI_MINIMAL_VALIDATION_V3_2026-09-24.md",
     "docs/projects/operations/evidence/OPS_CI_MINIMAL_VALIDATION_BASELINE_2026-09-24.md",
-    "docs/projects/operations/work-packages/OPS_TO_DOC_ARCHIVE_COMPACTION_HANDOVER_2026-09-24.md"
+    "docs/projects/operations/work-packages/OPS_TO_DOC_ARCHIVE_COMPACTION_HANDOVER_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md"
   ],
   "scopeBoundary": [
     "No Required Check, Security, QM, Governance, Human/CODEOWNER or Production gate is removed.",
