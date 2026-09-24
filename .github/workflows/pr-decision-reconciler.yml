@@ -328,6 +328,10 @@ jobs:
           PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md
           PR_PROJECT_MAPPING_PATH: ../policy/docs/projects/README.md
           PR_BODY_OUTPUT: artifacts/pr/decision-reconciler-bootstrap-body.md
+          # Existing PRs may predate work-claim enforcement. This flag is scoped to
+          # trusted-main body reconciliation only; new Agent PR creation remains
+          # claim-required in open-agent-draft-pr.yml.
+          PR_ALLOW_CLAIMLESS: 'true'
         run: node ../policy/scripts/pr/renderPullRequestBody.mjs
 
       - name: Evidence → Decision gegen Live-State reconciliieren

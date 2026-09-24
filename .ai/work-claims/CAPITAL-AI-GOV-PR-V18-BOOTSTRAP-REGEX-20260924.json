@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-PR-V18-BOOTSTRAP-REGEX-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
   "owner": "CAPITAL-AI-GOV",
@@ -33,5 +33,9 @@
     "No second PR-body writer."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "lastSyncedMainSha": "b0b6985a4786961f3a3125619566fa02003552d4"
+  "lastSyncedMainSha": "b0b6985a4786961f3a3125619566fa02003552d4",
+  "releasedAt": "2026-09-24T20:46:00+02:00",
+  "releaseReason": "Terminal coordination lease: PR #1378 was Human/CODEOWNER-merged; the claim is historical evidence only and must not remain an active writer.",
+  "terminalPullRequest": 1378,
+  "terminalMergeSha": "bac6f4224cdb4f570c415c1310a264b3081756e6"
 }
