@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-TIER3-CACHE-FANOUT-20260925",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "FIN-TIER3-CACHE-FANOUT — bounded post-DQ ring-buffer, delta and Redis/WebSocket fan-out core",
+  "startedAt": "2026-09-25T00:32:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "f510699a182c4a184e2fdc8691bbef1d830c9e21",
+  "branch": "agent/fintech-tier3-cache-fanout-20260925",
+  "projectId": "CAPITAL-AI-FINTECH",
+  "projectFolder": "docs/projects/fintech/",
+  "projectStage": "PVC-09/PVC-10/PVC-11",
+  "priority": "P1",
+  "priorityReason": "Fresh Human Owner direction requests Tier-3 cache and fan-out directly behind the existing provider/evidence/DQ path without creating a second market-data authority.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-TIER3-CACHE-FANOUT-20260925.json",
+    "docs/projects/fintech/work-packages/FIN_TIER3_CACHE_FANOUT_2026-09-25.md",
+    "src/platform/MarketData/MarketDataGateway.ts",
+    "src/platform/MarketData/Fanout/contracts.ts",
+    "src/platform/MarketData/Fanout/MarketDataRingBuffer.ts",
+    "src/platform/MarketData/Fanout/MarketDataDeltaCodec.ts",
+    "src/platform/MarketData/Fanout/UpstashRedisRestFanout.ts",
+    "src/platform/MarketData/Fanout/MarketDataWebSocketRoomMultiplexer.ts",
+    "src/platform/MarketData/Fanout/MarketDataFanoutHub.ts",
+    "tests/unit/marketDataTier3Fanout.test.ts"
+  ],
+  "scopeBoundary": [
+    "Tier 3 consumes only canonical post-DQ MarketDataGateway snapshots and creates no provider, evidence, DQ, scoring or execution authority.",
+    "No provider promotion, trading capability, score formula, execution eligibility or frontend-local market truth is introduced.",
+    "Redis is a bounded cache/distribution projection; loss of Redis or WebSocket fan-out cannot turn invalid or unavailable data into valid market evidence.",
+    "Public WebSocket transport activation remains gated by data redistribution/entitlement evidence and an explicit server transport dependency/integration slice.",
+    "No Render, Upstash, secret, IAM, billing or production-provider mutation is performed by this repository slice."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct main mutation or self-merge."
+}
