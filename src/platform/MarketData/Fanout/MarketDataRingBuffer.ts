@@ -3,7 +3,7 @@ import { MARKET_DATA_FANOUT_RING_SIZE, type MarketDataFanoutTick } from './contr
 export class MarketDataRingBuffer {
   private readonly topics = new Map<string, MarketDataFanoutTick[]>();
 
-  constructor(private readonly capacity = MARKET_DATA_FANOUT_RING_SIZE) {
+  constructor(private readonly capacity: number = MARKET_DATA_FANOUT_RING_SIZE) {
     if (!Number.isInteger(capacity) || capacity < 1) {
       throw new Error('MARKET_DATA_RING_BUFFER_INVALID_CAPACITY');
     }
@@ -28,7 +28,7 @@ export class MarketDataRingBuffer {
     this.topics.set(topic, bounded);
   }
 
-  recent(topic: string, limit = this.capacity): MarketDataFanoutTick[] {
+  recent(topic: string, limit: number = this.capacity): MarketDataFanoutTick[] {
     const bounded = Math.max(0, Math.min(this.capacity, Math.floor(limit)));
     if (bounded === 0) return [];
     const values = this.topics.get(topic) ?? [];
