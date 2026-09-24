@@ -87,7 +87,7 @@ describe('GitHub settings effective policy projection', () => {
           authorization: 'Bearer secret',
         },
       },
-    }, (value) => value);
+    }, (value: unknown) => value);
 
     expect(projected).toEqual({
       status: 'NOT_OBSERVABLE',
