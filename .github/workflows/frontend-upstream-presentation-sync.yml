@@ -2,8 +2,6 @@ name: Frontend upstream presentation sync
 run-name: Frontend presentation sync — ${{ github.run_id }}
 
 on:
-  schedule:
-    - cron: '23 * * * *'
   workflow_dispatch:
 
 permissions:

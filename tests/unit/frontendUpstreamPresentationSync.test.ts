@@ -64,8 +64,10 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(syncScript).toContain('responsiveRuntimeAdapter: config.responsiveRuntimeAdapter');
   });
 
-  it('runs hourly from trusted main with least privilege and immutable actions', () => {
-    expect(workflow).toContain("cron: '23 * * * *'");
+  it('runs only by explicit manual dispatch from trusted main with least privilege and immutable actions', () => {
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).not.toContain('schedule:');
+    expect(workflow).not.toContain('cron:');
     expect(workflow).toContain("github.ref == 'refs/heads/main'");
     expect(workflow).toContain('contents: write');
     expect(workflow).toContain('pull-requests: write');
