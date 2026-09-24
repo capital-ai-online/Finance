@@ -48,7 +48,7 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
     const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 4_000);
     try {
       const response = await (this.options.fetchImpl ?? fetch)(
-        `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}`,
+        `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&timezone=UTC`,
         {
           headers: {
             Accept: 'application/json',
@@ -74,6 +74,9 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
         : request.assetClass === 'forex' || request.assetClass === 'crypto'
           ? symbol.slice(-3)
           : null;
+      if (request.assetClass === 'crypto' && currency?.toUpperCase() !== 'USD') {
+        throw new Error('Twelve Data crypto quote currency is not USD.');
+      }
       return {
         contractVersion: MARKET_DATA_CONTRACT_VERSION,
         provider: 'TwelveData',

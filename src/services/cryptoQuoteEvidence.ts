@@ -13,6 +13,7 @@ import {
   CoinGeckoMarketDataProvider,
   COINGECKO_SYMBOL_IDS,
 } from '../platform/MarketData/providers/CoinGeckoMarketDataProvider';
+import { TwelveDataMarketDataProvider } from '../platform/MarketData/providers/TwelveDataMarketDataProvider';
 import { recordMarketDataProviderOutcome } from './marketDataProviderRouter';
 
 export const CRYPTO_QUOTE_CONTRACT_VERSION = 'crypto-quote/1.0.0' as const;
@@ -46,6 +47,7 @@ export interface CryptoQuoteOptions {
   nowMs?: () => number;
   maxAgeMs?: number;
   apiKey?: string;
+  twelveDataApiKey?: string;
 }
 
 function nowMs(options: CryptoQuoteOptions): number {
@@ -60,7 +62,8 @@ let productionCryptoQuoteGateway: MarketDataGateway | undefined;
 
 function cryptoQuoteGateway(options: CryptoQuoteOptions): MarketDataGateway {
   const usesInjectedRuntime = Boolean(
-    options.fetchImpl || options.nowMs || options.timeoutMs !== undefined || options.apiKey !== undefined,
+    options.fetchImpl || options.nowMs || options.timeoutMs !== undefined
+      || options.apiKey !== undefined || options.twelveDataApiKey !== undefined,
   );
   if (!usesInjectedRuntime && productionCryptoQuoteGateway) return productionCryptoQuoteGateway;
 
@@ -73,6 +76,12 @@ function cryptoQuoteGateway(options: CryptoQuoteOptions): MarketDataGateway {
       apiKey: options.apiKey,
     }),
   );
+  registry.register(new TwelveDataMarketDataProvider({
+    fetchImpl: options.fetchImpl,
+    timeoutMs: options.timeoutMs,
+    nowMs: options.nowMs,
+    apiKey: options.twelveDataApiKey,
+  }));
   const gateway = new MarketDataGateway(registry, {
     nowMs: options.nowMs,
     rateLimitBudget: new RateLimitBudget({
@@ -149,7 +158,7 @@ export async function fetchVerifiedCryptoQuote(
     correlationId: `crypto-quote:${symbol}:${nowMs(options)}`,
     maxAgeMs: options.maxAgeMs ?? DEFAULT_MAX_QUOTE_AGE_MS,
     allowStale: true,
-    allowedProviderIds: ['coingecko'],
+    allowedProviderIds: ['coingecko', 'twelvedata'],
   });
 
   const snapshot = result.snapshot;
@@ -161,12 +170,12 @@ export async function fetchVerifiedCryptoQuote(
   );
 
   recordMarketDataProviderOutcome({
-    provider: 'CoinGecko',
+    provider: snapshot.provider,
     success,
     latencyMs: Date.now() - startedAt,
   });
   recordProviderHealth({
-    provider: 'CoinGecko',
+    provider: snapshot.provider,
     capability: 'crypto-quote',
     state: ready ? 'healthy' : stale ? 'degraded' : 'unavailable',
     cacheMode: result.source,
@@ -207,12 +216,14 @@ export async function fetchVerifiedCryptoQuote(
     assetClass: 'crypto',
     price: ready ? snapshot.price : null,
     currency: snapshot.currency,
-    provider: success ? 'CoinGecko' : null,
-    providers: success ? ['CoinGecko'] : [],
+    provider: success ? snapshot.provider : null,
+    providers: success ? [snapshot.provider] : [],
     observedAt: snapshot.sourceTimestamp,
     retrievedAt: snapshot.receivedAt,
     evidenceIds: snapshot.evidenceId ? [snapshot.evidenceId] : [],
-    sourcePath: 'https://api.coingecko.com/api/v3/simple/price',
+    sourcePath: success
+      ? snapshot.provider === 'TwelveData' ? 'https://api.twelvedata.com/quote' : 'https://api.coingecko.com/api/v3/coins/{id}'
+      : null,
     alertEligible: ready,
     // Spot execution eligibility stays false until multi-provider quorum (cryptoSpotConsensus) is
     // explicitly linked as Owner-gated follow-up.

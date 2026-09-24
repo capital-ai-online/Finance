@@ -52,6 +52,22 @@ describe('TwelveDataMarketDataProvider', () => {
     expect(requestedUrl).toContain(encodeURIComponent('BTC/USD'));
   });
 
+  it('weist eine abweichende Crypto-Quotewährung fail-closed zurück', async () => {
+    const provider = new TwelveDataMarketDataProvider({
+      apiKey: 'test-key',
+      nowMs: () => Date.parse('2026-09-24T12:00:01Z'),
+      fetchImpl: vi.fn(async () => new Response(JSON.stringify({
+        close: '65000', currency: 'USDT', datetime: '2026-09-24T12:00:00Z',
+      }), { status: 200 })) as unknown as typeof fetch,
+    });
+    const result = await provider.getSnapshot({
+      symbol: 'BTC', assetClass: 'crypto', correlationId: 'wrong-currency',
+    });
+    expect(result).toMatchObject({
+      qualityState: 'UNAVAILABLE', price: null, evidenceId: null,
+    });
+  });
+
   it('schlägt bei fehlendem Secret ohne synthetischen Preis fehl', async () => {
     const previous = process.env.TWELVEDATA_API_KEY;
     delete process.env.TWELVEDATA_API_KEY;

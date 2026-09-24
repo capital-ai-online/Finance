@@ -1,6 +1,8 @@
 import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
 import { getVerifiedCryptoSnapshot } from './cryptoSnapshotProvider';
 import { getCryptoSpotConsensus } from './cryptoSpotConsensus';
+import { fetchVerifiedCryptoQuote } from './cryptoQuoteEvidence';
+import { getBinanceSpotVenueQuote } from './binanceSpotVenueQuote';
 import { fetchVerifiedTraditionalQuote } from './traditionalQuoteEvidence';
 import { getTwelveDataCommodityEvidence } from './commodityMarketEvidence';
 import { resolveSovereignBondProviderMapping } from './sovereignBondProviderMapping';
@@ -97,6 +99,7 @@ function unavailableBase(symbol: string, name: string, assetClass: VerifiedAsset
 async function cryptoDisplay(symbol: string, name: string): Promise<VerifiedAssetDisplay> {
   const snapshot = await getVerifiedCryptoSnapshot(symbol, { maxAttempts: 1 });
   let price = finite(snapshot?.priceUsd);
+  let priceCurrency = 'USD';
   let providers: string[] = snapshot ? [snapshot.provider] : [];
   let evidenceIds = snapshot
     ? Object.values(snapshot.provenance)
@@ -108,9 +111,32 @@ async function cryptoDisplay(symbol: string, name: string): Promise<VerifiedAsse
   let degraded = snapshot?.degraded ?? false;
   let reason: string | null = null;
 
-  // Only pay for the multi-provider quorum when the bounded CoinGecko display snapshot does not
-  // cover the selected symbol or is temporarily unavailable. This keeps the UI progressive and
-  // avoids the provider storm caused by eager full-catalog hydration.
+  if (price === null) {
+    const quote = await fetchVerifiedCryptoQuote(symbol);
+    if (quote.status === 'READY' && quote.currency === 'USD') {
+      price = finite(quote.price);
+      providers = [...new Set([...providers, ...quote.providers])];
+      evidenceIds = [...new Set([...evidenceIds, ...quote.evidenceIds])];
+      observedAt = quote.observedAt;
+      retrievedAt = quote.retrievedAt;
+    }
+  }
+
+  // The keyless venue stream is a separate USDT quote. It is never silently promoted to USD.
+  if (price === null) {
+    const venue = await getBinanceSpotVenueQuote(symbol);
+    if (venue.qualityState === 'LIVE' && venue.currency === 'USDT' && venue.price !== null) {
+      price = venue.price;
+      priceCurrency = 'USDT';
+      providers = [...new Set([...providers, venue.provider])];
+      evidenceIds = [...new Set([...evidenceIds, ...(venue.evidenceId ? [venue.evidenceId] : [])])];
+      observedAt = venue.sourceTimestamp;
+      retrievedAt = venue.receivedAt;
+      reason = null;
+    }
+  }
+
+  // Preserve the existing USD quorum for markets without an approved/fresh Binance Spot pair.
   if (price === null) {
     const consensus = await getCryptoSpotConsensus(symbol);
     if (consensus.status === 'CONSENSUS') {
@@ -136,7 +162,7 @@ async function cryptoDisplay(symbol: string, name: string): Promise<VerifiedAsse
     status: price !== null ? 'READY' : 'PARTIAL',
     valueKind: 'price',
     value: price,
-    unit: price !== null ? 'USD' : null,
+    unit: price !== null ? priceCurrency : null,
     price,
     change24hPct,
     marketCap,

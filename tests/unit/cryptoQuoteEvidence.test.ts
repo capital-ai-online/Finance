@@ -151,6 +151,32 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
 });
 
 describe('SC-5 fetchVerifiedCryptoQuote', () => {
+  it('uses Twelve Data USD quote as a gateway fallback without exposing the key', async () => {
+    const urls: string[] = [];
+    const fetchImpl = vi.fn(async (input: string, init?: RequestInit) => {
+      urls.push(input);
+      if (input.includes('coingecko')) return new Response(null, { status: 429 });
+      expect(init?.headers).toMatchObject({ Authorization: 'apikey test-twelve' });
+      return new Response(JSON.stringify({
+        close: '65000', currency: 'USD', datetime: '2026-09-24T12:00:00Z',
+        exchange: 'Crypto',
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const quote = await fetchVerifiedCryptoQuote('BTC', {
+      fetchImpl,
+      apiKey: '',
+      twelveDataApiKey: 'test-twelve',
+      nowMs: () => Date.parse('2026-09-24T12:00:01Z'),
+    });
+    expect(quote).toMatchObject({
+      status: 'READY', price: 65000, currency: 'USD',
+      provider: 'TwelveData', providers: ['TwelveData'], executionPriceEligible: false,
+      sourcePath: 'https://api.twelvedata.com/quote',
+    });
+    expect(urls).toHaveLength(2);
+    expect(urls[1]).toContain('timezone=UTC');
+    expect(JSON.stringify(quote)).not.toContain('test-twelve');
+  });
   it('returns READY through gateway for mapped symbol', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: true,
