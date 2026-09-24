@@ -91,6 +91,21 @@ describe('artifact version inventory VAI-01', () => {
     expect(inventory.unclassifiedPaths).toEqual(['docs/governance/manifest.json']);
   });
 
+  it('binds declarations to the indexed blob instead of unstaged working-tree drift', () => {
+    const root = createFixture();
+    const first = buildArtifactVersionInventory(root);
+    const firstContract = byPath(first.entries, 'src/contracts/rule.ts');
+
+    write(root, 'src/contracts/rule.ts', JSON.stringify({ schemaVersion: '99.0.0' }, null, 2));
+    const unstaged = buildArtifactVersionInventory(root);
+    const unstagedContract = byPath(unstaged.entries, 'src/contracts/rule.ts');
+
+    expect(unstaged.contentInventoryHash).toBe(first.contentInventoryHash);
+    expect(unstagedContract.blobSha).toBe(firstContract.blobSha);
+    expect(unstagedContract.domain).toBe(firstContract.domain);
+    expect(unstagedContract.semanticVersion).toBe(firstContract.semanticVersion);
+  });
+
   it('produces a deterministic hash for an unchanged Git index and changes when one tracked blob changes', () => {
     const root = createFixture();
     const first = buildArtifactVersionInventory(root);
