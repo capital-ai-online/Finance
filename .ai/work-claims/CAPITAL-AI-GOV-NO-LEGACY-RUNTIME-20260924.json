@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-NO-LEGACY-RUNTIME-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Define one repository-wide current-implementation integrity invariant that prohibits legacy/compatibility/deprecated/suspended/retired/superseded/historical implementations from active website/runtime/UI/API/worker/workflow paths.",
+  "startedAt": "2026-09-24T01:45:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "lastSyncedMainSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "branch": "governance/no-legacy-runtime-integration-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "priority": "P1",
+  "claimedPaths": [
+    "AGENTS.md",
+    "docs/governance/control-catalog.json",
+    "docs/governance/authority-registry.json",
+    "docs/projects/governance/ROADMAP.md",
+    "tests/unit/prApprovalEnvelopeGovernance.test.ts",
+    "tests/unit/noLegacyRuntimeIntegrationGovernance.test.ts",
+    ".ai/work-claims/CAPITAL-AI-GOV-NO-LEGACY-RUNTIME-20260924.json"
+  ],
+  "scopeBoundary": [
+    "Governance authority only; no DOC/OPS/FE runtime implementation in this branch.",
+    "Historical evidence remains allowed only as non-current provenance.",
+    "No second authority or compatibility architecture.",
+    "Human/CODEOWNER merge required."
+  ],
+  "exitEvidence": [
+    "AGENTS.md contains the no-legacy current implementation invariant.",
+    "One stable Control Catalog entry projects the rule.",
+    "Authority Registry versions and tests converge.",
+    "Foreign-owner follow-up remains explicitly routed."
+  ],
+  "acceptanceCriteria": [
+    "Current runtime/UI/API/worker/workflow may not consume legacy-classified implementation.",
+    "Required capability is migrated/reimplemented under current canonical architecture.",
+    "Archive retention preserves verifiable provenance.",
+    "No direct main mutation or self-merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment."
+}

@@ -177,6 +177,7 @@ jobs:
 
           const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, 'utf8'));
           const changedKeys = Array.isArray(result.changedKeys) ? result.changedKeys : [];
+          const planConstraints = Array.isArray(result.planConstraints) ? result.planConstraints : [];
           const lines = [
             '### ✅ Supabase Auth Registration Configuration verifiziert',
             '',
@@ -184,6 +185,7 @@ jobs:
             `- Credential-Quelle: \`${result.credentialSource}\``,
             `- Verifizierte Config-Keys: \`${result.verifiedKeyCount}\``,
             `- Geänderte Config-Keys: ${changedKeys.length ? changedKeys.map((key) => `\`${key}\``).join(', ') : 'keine — Desired State war bereits aktuell'}`,
+            `- Plan-Constraints: ${planConstraints.length ? planConstraints.map((entry) => `\`${entry.key}=${entry.state} (HTTP ${entry.httpStatus}, ${entry.authority})\``).join(', ') : 'keine'}`,
             '',
             'Der Controller hat nach der Mutation einen Management-API-Readback durchgeführt; Secret-Werte werden nicht ausgegeben.',
           ];
