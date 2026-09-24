@@ -81,7 +81,7 @@ Bekannte Entscheidungen, die **bewusst nicht** als erledigt klassifiziert werden
 | ADR-0017 | **Revalidierung 2026-08-02: offen.** Supabase-Migrationen `user_quota`, Service-Role-RLS-Härtung, `handle_new_user`-search_path und `compliance_runs` sind live angewendet; der Security Advisor zeigt für diesen Scope keine neue DB-Warnung. Der Stripe-Code nutzt korrekterweise separate `STRIPE_PRICE_ID_*_YEARLY` ohne serverseitige Rabattberechnung. Die aktuelle Live-Stripe-Konfiguration widerspricht jedoch der dokumentierten 10%-Jahresregel für PRO: 29,00 EUR/Monat = 348,00 EUR/Jahr; 10% rabattiert = 313,20 EUR, der aktive PRO-Jahrespreis beträgt 248,00 EUR. Bis die Preis-/Business-Rule-Abweichung bewusst entschieden und dokumentiert ist, darf ADR-0017 nicht nach `resolved/`. |
 | ADR-0022 | Allgemeines Individual-Bond-Scoring bleibt evidence-gated und gesperrt. |
 | ADR-0029 | Bond-Scoring-Gewichte sind weiterhin `Proposed / Pending Review`; Rating- und Liquidity/Spread-Evidence sowie fachliche Modellfreigabe fehlen. |
-| ADR-0031 | Supabase-Free-Tier-Leaked-Password-Protection ist eine aktive, planbedingte Risk Acceptance bis Pro+. |
+| ADR-0031 | Der native Supabase-Free-Tier-WARN bleibt planbedingt akzeptiert; CAPITAL-AI-Passwortmutationen sind durch den produktiven Backend-HIBP-Adapter geschützt. |
 
 ### ADR-0017 Revalidation Evidence — 2026-08-02
 

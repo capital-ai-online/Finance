@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-V18-CLAIMLESS-BOOTSTRAP-SELF-HEALING-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Make the existing single PR Decision Evidence Reconciler capable of canonically bootstrapping non-canonical v1.8 bodies on pre-existing claimless PRs without weakening claim requirements for new Agent PR creation.",
+  "workItemDE": "Den bestehenden Single-Writer PR Decision Evidence Reconciler so härten, dass nicht-kanonische v1.8-Bodies bestehender claimloser PRs kanonisch gebootstrapped werden können, ohne die Claim-Pflicht für neue Agenten-PRs zu lockern.",
+  "priority": "P1",
+  "priorityReason": "PR #1415 demonstrates a repeatable governance deadlock: structural v1.8 drift is correctly classified but the trusted renderer cannot materialize a bootstrap body because the historical PR has no added work-claim.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-24T20:46:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4090b779cba461ef34e1ff5bc91b1eb766f7c6dd",
+  "branch": "agent/governance-v18-claimless-bootstrap-self-healing-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-V18-CLAIMLESS-BOOTSTRAP-SELF-HEALING-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-V18-BOOTSTRAP-REGEX-20260924.json",
+    ".ai/work-claims/GOV-PR-DECISION-V18-MARKERFREE-BASELINE-20260924.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "existing single PR Decision Evidence Reconciler",
+    "trusted-main renderPullRequestBody.mjs",
+    "PR #1415 observed v1.8 collapsed-details failure"
+  ],
+  "boundaries": [
+    "No direct main mutation",
+    "No second PR-body writer or template authority",
+    "PR_ALLOW_CLAIMLESS is allowed only in trusted-main reconciliation of an already-existing PR",
+    "open-agent-draft-pr.yml remains claim-required",
+    "No Security/Compliance/provider/Production/merge-authority weakening",
+    "Human/CODEOWNER merge remains required"
+  ],
+  "rootCause": {
+    "observedPr": 1415,
+    "validatorFailure": "PR #1415 muss technische Traceability in v1.8.0 standardmäßig einklappen.",
+    "classification": "PR_DECISION_EVIDENCE_DRIFT",
+    "blocker": "renderPullRequestBody.mjs defaults PR_ALLOW_CLAIMLESS=false, while the Decision Reconciler bootstrap render step did not override it for historical claimless PRs",
+    "effect": "bootstrap body generation fails before reconcilePrDecisionEvidence.mjs can patch the malformed v1.8 body"
+  },
+  "exitEvidence": [
+    "Decision Reconciler bootstrap render step explicitly sets PR_ALLOW_CLAIMLESS=true.",
+    "Regression test proves the flag is scoped to the Decision Reconciler bootstrap block.",
+    "open-agent-draft-pr.yml contains no PR_ALLOW_CLAIMLESS=true path.",
+    "Merged stale writer claims #1378 and #1407 are released/non-exclusive.",
+    "Exact-head CI and Governance pass.",
+    "No second PR-body writer, version authority or merge authority is introduced."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
