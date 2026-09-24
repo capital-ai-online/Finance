@@ -13,7 +13,7 @@
   "startedAt": "2026-09-24T07:25:00Z",
   "baseBranch": "main",
   "baseSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
-  "lastSyncedMainSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+  "lastSyncedMainSha": "d1d083437f8bb041870112580989a662f60ac0e1",
   "branch": "operations/auth-profile-identity-settings-convergence-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -21,15 +21,17 @@
   "priority": "P1",
   "priorityReason": "The signed-in profile route can stall and the Owner requires username, passkey, TOTP and recovery methods on the productive account surface.",
   "claimedPaths": [
-    ".env.example",
     ".ai/work-claims/CAPITAL-AI-FE-PROFILE-ACCOUNT-SURFACE-20260924.json",
     ".ai/work-claims/CAPITAL-AI-OPS-ACCOUNT-SECURITY-PASSKEY-20260924.json",
     ".ai/work-claims/CAPITAL-AI-OPS-AUTH-PROFILE-IDENTITY-SETTINGS-20260924.json",
+    ".env.example",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
     "docs/projects/operations/work-packages/OPS_AUTH_PROFILE_IDENTITY_SETTINGS_2026-09-24.md",
     "server/auth/backendAuth.ts",
-    "server/routes/backendAuthRoutes.ts",
     "server/routes/accountSecurityRoutes.ts",
+    "server/routes/backendAuthRoutes.ts",
     "src/app/auth/SessionComposition.tsx",
+    "src/app/dashboard/Dashboard.tsx",
     "src/app/routing/AppRoutes.tsx",
     "src/app/types/UserSession.ts",
     "src/components/ProfilePage.tsx",
@@ -39,7 +41,10 @@
     "tests/unit/accountSecurityPasskeyBackend.test.ts",
     "tests/unit/authIdentityProfileSettings.test.ts",
     "tests/unit/authPrimaryLoginRegression.test.ts",
-    "tests/unit/profileAccountSurface.test.ts"
+    "tests/unit/privateRouteAuthResolution.test.ts",
+    "tests/unit/profileAccountSurface.test.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/sessionCompositionTimeouts.test.ts"
   ],
   "scopeBoundary": [
     "Browser remains tokenless; Supabase access and refresh tokens stay in backend HttpOnly cookies.",
@@ -50,8 +55,8 @@
     "Human/CODEOWNER merge remains required."
   ],
   "evidence": {
-    "currentMain": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
-    "openWriterOverlap": "PASS: no open pull requests at final pre-branch correlation.",
+    "currentMain": "d1d083437f8bb041870112580989a662f60ac0e1",
+    "openWriterOverlap": "PASS: PR #1392 was the sole open writer at CURRENT_MAIN d1d083437f8b correlation; no changed-file overlap with merged PR #1393.",
     "providerDocs": "Supabase passkeys, TOTP and phone OTP use current server-side APIs; phone OTP requires an external paid SMS provider."
   },
   "acceptanceCriteria": [

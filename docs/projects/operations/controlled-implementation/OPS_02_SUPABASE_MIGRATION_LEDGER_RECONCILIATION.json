@@ -14,13 +14,13 @@
   },
   "summary": {
     "remote_total": 77,
-    "local_total": 59,
+    "local_total": 60,
     "exact_match": 18,
     "timestamp_alias": 32,
     "remote_only_history": 27,
     "unknown": 0,
     "mapped_current_local": 50,
-    "local_only": 9
+    "local_only": 10
   },
   "remote_migrations": [
     {
@@ -608,12 +608,17 @@
       "local_version": "20260902000000",
       "local_name": "owner_device_authorization_atomic_activation",
       "local_path": "supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"
+    },
+    {
+      "local_version": "20260924070530",
+      "local_name": "profile_identity_settings",
+      "local_path": "supabase/migrations/20260924070530_profile_identity_settings.sql"
     }
   ],
   "provider_readback": {
     "observed_at": "2026-09-24T01:39:21.967Z",
     "source": "Supabase list_migrations",
     "remote_total": 77,
-    "note": "20260924011545_auth_registration_profile_convergence is an exact remote/local match after the authorized production application; 20260922042903_revoke_trigger_only_security_definer_execute remains remote-only history."
+    "note": "Remote snapshot remains 77 migrations from the 2026-09-24T01:39:21.967Z readback; 20260924070530_profile_identity_settings is a new current local-only migration pending the canonical post-merge migration path."
   }
 }
