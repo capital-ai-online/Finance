@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-BASELINE-EVIDENCE-HANDOFF-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-02",
+    "PVC-04",
+    "PVC-08",
+    "PVC-18"
+  ],
+  "priority": "P1",
+  "branchName": "operations/sh02-baseline-evidence-handoff-20260924",
+  "baseBranch": "main",
+  "baseSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "workItem": "Harden the existing SH-02 Current-State Baseline Autofix failure-evidence handoff for Issue #1357 without creating a second writer or controller.",
+  "approvedScope": "Use stable completed-run step metadata plus trusted repository freshness reproduction; preserve exact docs/projects current-state path allowlist, bounded mutation, exact-head revalidation and Human/CODEOWNER merge authority.",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-SH-V3-02-DISPATCH-REENTRY-FIX-20260921.json",
+    ".ai/work-claims/OPS-PR-CONVERGENCE-CHAIN-HARDENING-20260920.json",
+    ".ai/work-claims/OPS-SH02-BASELINE-EVIDENCE-HANDOFF-20260924.json",
+    ".github/workflows/current-state-baseline-autofix.yml",
+    "scripts/pr/detectCurrentStateProjectionBaselineFailures.mjs",
+    "scripts/pr/detectCurrentStateProjectionBaselineFailures.test.mjs",
+    "scripts/pr/currentStateBaselineAutofixWorkflow.test.mjs",
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "docs/projects/operations/work-packages/OPS_SH02_BASELINE_EVIDENCE_HANDOFF_01_2026-09-24.md",
+    "docs/projects/operations/evidence/SH_02_BASELINE_EVIDENCE_HANDOFF_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Issue #1357 READY_FOR_PROJECT_EXECUTION",
+    "Existing RECONCILE_REPOSITORY_PROJECTION SH-1 action",
+    "Existing Current-State Baseline Autofix writer"
+  ],
+  "exitEvidence": [
+    "Repository-evidence detector regression suite passes.",
+    "Workflow no longer uses gh run view --log-failed for baseline eligibility.",
+    "Central classifier reports unavailable evidence explicitly fail-closed.",
+    "Exact-head CI/Governance/workflow-security pass.",
+    "No second writer/controller/merge authority."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "recorrelatedAt": "2026-09-24"
+}
