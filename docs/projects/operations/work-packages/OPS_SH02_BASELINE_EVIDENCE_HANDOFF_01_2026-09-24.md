@@ -4,8 +4,8 @@
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18`  
 **Parent:** `OPS-08-B-SH-02 — Autonomous Self-Healing Backend & Frontend`  
 **Source Issue:** `#1357`  
-**Baseline:** `main@db5c673502c6ae62547371d7bd6c58d42460be25`  
-**Status:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`
+**Baseline:** `main@9b049c52041a48827e11bdaa58c2eb8154811799`  
+**Status:** `IMPLEMENTED_ON_BRANCH / REVALIDATION_PENDING_AFTER_#1358`
 
 ## Goal
 
