@@ -12,7 +12,7 @@
   "priority": "P1",
   "branchName": "governance/issue-1366-pr-v18-bootstrap-regex-20260924",
   "baseBranch": "main",
-  "baseSha": "cb0012e7f38452eb638ed2e3affe5e74f0b44ed6",
+  "baseSha": "b0b6985a4786961f3a3125619566fa02003552d4",
   "workItem": "Fix Issue #1366 by correcting the over-escaped v1.8 bootstrap marker regex in the existing single PR Decision Evidence Reconciler.",
   "claimedPaths": [
     ".github/workflows/pr-decision-reconciler.yml",
@@ -32,5 +32,6 @@
     "Exact-head Governance/CI/workflow-security pass.",
     "No second PR-body writer."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "b0b6985a4786961f3a3125619566fa02003552d4"
 }

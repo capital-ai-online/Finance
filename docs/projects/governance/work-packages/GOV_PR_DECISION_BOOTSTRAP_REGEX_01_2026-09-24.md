@@ -3,7 +3,7 @@
 **Project:** CAPITAL-AI-GOV  
 **Owner/PVC:** CAPITAL-AI-GOV / PVC-05  
 **Source Issue:** #1366  
-**Baseline:** main@cb0012e7f38452eb638ed2e3affe5e74f0b44ed6  
+**Baseline:** main@b0b6985a4786961f3a3125619566fa02003552d4  
 **State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED
 
 ## Finding

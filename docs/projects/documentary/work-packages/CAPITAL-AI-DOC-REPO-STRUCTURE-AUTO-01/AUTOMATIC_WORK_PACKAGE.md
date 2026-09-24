@@ -3,9 +3,9 @@
 **Work package:** `CAPITAL-AI-DOC-REPO-STRUCTURE-AUTO-01`  
 **Project:** `CAPITAL-AI-DOC`  
 **PVC:** `PVC-03`  
-**Baseline:** `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`  
+**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`  
 **Execution:** branch-only, fail-closed, workflow-autonomous; final merge Human Owner-controlled  
-**Status:** ACTIVE
+**Status:** `DONE_MAIN / TERMINAL`
 
 ## Objective
 
@@ -66,10 +66,19 @@ Converge the repository documentation/project structure onto the canonical proje
 
 ## Current-main convergence readback — 2026-09-20
 
-- Baseline: `main@c9980602f691b855fd6f8c66a49822e7a9611b4a`.
+- Baseline: `main@b2eb210a7310da170db75f3065513522a224337e`.
 - Canonical routing: `docs/projects/README.md` and `docs/projects/PROJECT_VALUE_CHAIN.md` both resolve `PVC-09..17` to `CAPITAL-AI-FINTECH`.
 - FINTECH project surface: `docs/projects/fintech/README.md` confirms the same ownership and treats former DATA material as historical/compatibility provenance only.
 - `docs/projects/data/` is absent from current main.
 - Historical/archive evidence, dated assessment reports and released work claims retain their original DATA wording for provenance and are not rewritten by this work package.
 - Current non-historical routing projections that still assign productive `PVC-09..11` ownership to DATA are eligible for bounded documentary reference repair only; runtime/provider/domain semantics remain unchanged.
 - Final merge remains a Human Owner decision. Automated checks/reviews are validation evidence only.
+
+
+## Terminal merge evidence
+
+- Human/CODEOWNER-merged PR: `#1154`
+- Merge commit: `5474fef107bf7ee4cb649cfefdb9c40db7f26278`
+- Merged at: `2026-09-20T16:23:04Z`
+- Post-merge correlation baseline: `main@b2eb210a7310da170db75f3065513522a224337e`
+- This package is terminal evidence only and is not an active writer or executable queue item.
