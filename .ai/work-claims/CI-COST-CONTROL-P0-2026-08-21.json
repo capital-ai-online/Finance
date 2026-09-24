@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CI-COST-CONTROL-P0-2026-08-21",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -45,11 +45,18 @@
   ],
   "correlation": {
     "currentMain": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
-    "mergedPullRequestsSinceStart": [467, 468],
-    "openPullRequests": [469],
+    "mergedPullRequestsSinceStart": [
+      467,
+      468
+    ],
+    "openPullRequests": [
+      469
+    ],
     "directPathOverlap": [],
     "finding": "PR #469 is the only open PR and is this claim's own branch. The first hosted run on head 29feca6067089bbdcfecb812ea535ba443b654b7 reached npm ci, audit and TypeScript successfully, then exposed legacy M7 unit/config invariants that still encoded the pre-P2B four-job topology. The correction updates those guards to the preserved P2B trust semantics without weakening main-only, Sigstore, production-environment, Render or exact-SHA controls."
   },
   "externalMutationScope": "none",
-  "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
+  "releaseCondition": "Release claim after merge, closure, supersession or abandonment.",
+  "releasedAt": "2026-09-24T17:34:00+02:00",
+  "releaseReason": "Historical claim has no active owner-correct writer on CURRENT_MAIN; fresh Owner direction supersedes stale coordination metadata for PR Governance Evidence/Dashboard decoupling."
 }
