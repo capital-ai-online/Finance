@@ -50,12 +50,16 @@ async function capture(label, requiredPermission, operation) {
     });
   } catch (error) {
     if (error?.status === 403 || error?.status === 404) {
-      return Object.freeze({
+      const captured = {
         status: 'NOT_OBSERVABLE',
         requiredPermission,
         providerStatus: error.status,
         reason: `${label} is not readable with the currently configured bounded read capability`,
-      });
+      };
+      if (error?.providerDiagnostics && typeof error.providerDiagnostics === 'object') {
+        captured.providerDiagnostics = error.providerDiagnostics;
+      }
+      return Object.freeze(captured);
     }
     throw error;
   }

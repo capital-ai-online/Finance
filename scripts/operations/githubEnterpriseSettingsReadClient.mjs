@@ -48,6 +48,72 @@ function normalizeBaseUrl(value) {
   return url.href.replace(/\/$/, '');
 }
 
+
+function sortedUnique(values) {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+}
+
+function parseScopeHeader(value) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return Object.freeze([]);
+  }
+  return Object.freeze(sortedUnique(
+    value
+      .split(',')
+      .map((scope) => scope.trim())
+      .filter((scope) => /^[A-Za-z0-9:_-]{1,80}$/.test(scope)),
+  ));
+}
+
+function parseHeaderInteger(value) {
+  if (typeof value !== 'string' || !/^\d+$/.test(value.trim())) return null;
+  const parsed = Number.parseInt(value.trim(), 10);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function sanitizeRateLimitResource(value) {
+  const resource = typeof value === 'string' ? value.trim() : '';
+  return /^[A-Za-z0-9_-]{1,40}$/.test(resource) ? resource : null;
+}
+
+function sanitizeProviderReason(payload) {
+  const raw = typeof payload?.message === 'string'
+    ? payload.message
+    : 'GitHub API request rejected';
+  const sanitized = raw
+    .replace(/https?:\/\/[^\s)"']+/gi, '[REDACTED_URL]')
+    .replace(/\b(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)\b/g, '[REDACTED_TOKEN]')
+    .replace(/\bBearer\s+[^\s]+/gi, 'Bearer [REDACTED_TOKEN]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 240);
+  return sanitized || 'GitHub API request rejected';
+}
+
+function buildProviderDiagnostics(response, payload) {
+  const ssoRequired = response.headers.has('x-github-sso');
+  const remaining = parseHeaderInteger(response.headers.get('x-ratelimit-remaining'));
+  let classification = 'HTTP_ERROR';
+  if (ssoRequired) classification = 'SSO_AUTHORIZATION_REQUIRED';
+  else if (response.status === 403 && remaining === 0) classification = 'RATE_LIMITED';
+  else if (response.status === 403) classification = 'FORBIDDEN';
+  else if (response.status === 404) classification = 'NOT_FOUND_OR_HIDDEN';
+
+  return Object.freeze({
+    classification,
+    oauthScopes: parseScopeHeader(response.headers.get('x-oauth-scopes')),
+    acceptedOauthScopes: parseScopeHeader(response.headers.get('x-accepted-oauth-scopes')),
+    ssoRequired,
+    rateLimit: Object.freeze({
+      limit: parseHeaderInteger(response.headers.get('x-ratelimit-limit')),
+      remaining,
+      resetEpochSeconds: parseHeaderInteger(response.headers.get('x-ratelimit-reset')),
+      resource: sanitizeRateLimitResource(response.headers.get('x-ratelimit-resource')),
+    }),
+    providerReason: sanitizeProviderReason(payload),
+  });
+}
+
 async function parseJson(response) {
   const text = await response.text();
   if (!text) return null;
@@ -103,6 +169,7 @@ export function createGitHubEnterpriseSettingsReadClient({
         `[GITHUB-ENTERPRISE-SETTINGS-READ] GitHub API request failed with HTTP ${response.status}`,
       );
       error.status = response.status;
+      error.providerDiagnostics = buildProviderDiagnostics(response, payload);
       throw error;
     }
     return payload;

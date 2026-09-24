@@ -177,14 +177,64 @@ export function projectArtifactStorageInventory(raw) {
   });
 }
 
+
+function sanitizeDiagnosticReason(value) {
+  if (typeof value !== 'string') return null;
+  const sanitized = value
+    .replace(/https?:\/\/[^\s)"']+/gi, '[REDACTED_URL]')
+    .replace(/\b(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)\b/g, '[REDACTED_TOKEN]')
+    .replace(/\bBearer\s+[^\s]+/gi, 'Bearer [REDACTED_TOKEN]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 240);
+  return sanitized || null;
+}
+
+function projectProviderDiagnostics(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const allowedClassifications = new Set([
+    'SSO_AUTHORIZATION_REQUIRED',
+    'RATE_LIMITED',
+    'FORBIDDEN',
+    'NOT_FOUND_OR_HIDDEN',
+    'HTTP_ERROR',
+  ]);
+  const scopes = (value) => sortedUnique(
+    (Array.isArray(value) ? value : [])
+      .filter((scope) => typeof scope === 'string' && /^[A-Za-z0-9:_-]{1,80}$/.test(scope)),
+  );
+  const integerOrNull = (value) => Number.isSafeInteger(value) && value >= 0 ? value : null;
+  const resource = typeof raw?.rateLimit?.resource === 'string'
+    && /^[A-Za-z0-9_-]{1,40}$/.test(raw.rateLimit.resource)
+    ? raw.rateLimit.resource
+    : null;
+
+  return Object.freeze({
+    classification: allowedClassifications.has(raw.classification) ? raw.classification : 'HTTP_ERROR',
+    oauthScopes: Object.freeze(scopes(raw.oauthScopes)),
+    acceptedOauthScopes: Object.freeze(scopes(raw.acceptedOauthScopes)),
+    ssoRequired: raw.ssoRequired === true,
+    rateLimit: Object.freeze({
+      limit: integerOrNull(raw?.rateLimit?.limit),
+      remaining: integerOrNull(raw?.rateLimit?.remaining),
+      resetEpochSeconds: integerOrNull(raw?.rateLimit?.resetEpochSeconds),
+      resource,
+    }),
+    providerReason: sanitizeDiagnosticReason(raw.providerReason),
+  });
+}
+
 export function projectCapturedSetting(capture, projector) {
   if (!capture || capture.status !== 'PASS') {
-    return Object.freeze({
+    const projected = {
       status: capture?.status || 'NOT_OBSERVABLE',
       requiredPermission: capture?.requiredPermission || null,
       providerStatus: Number.isInteger(capture?.providerStatus) ? capture.providerStatus : null,
       reason: typeof capture?.reason === 'string' ? capture.reason : null,
-    });
+    };
+    const providerDiagnostics = projectProviderDiagnostics(capture?.providerDiagnostics);
+    if (providerDiagnostics) projected.providerDiagnostics = providerDiagnostics;
+    return Object.freeze(projected);
   }
 
   return Object.freeze({

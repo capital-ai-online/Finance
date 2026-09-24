@@ -4,9 +4,9 @@
 **Primary PVC:** PVC-02; supporting PVC-08/PVC-18  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Owner direction:** 2026-09-24 — complete the GitHub settings inventory, add effective-policy resolution, and produce versioned redacted JSON/Markdown exports  
-**Fresh baseline:** `main@e3951f8a1b82f9f6fa272c33ecc57a1de4fd2736`  
-**Branch:** `operations/github-settings-read-failure-isolation-20260924`  
-**Status:** POST_MERGE_VALIDATION / FAILURE_ISOLATION_ON_BRANCH  
+**Fresh baseline:** `main@57ccdfeeedd6fb16212d9c55699fe77745900dc3`  
+**Branch:** `operations/github-enterprise-403-diagnostics-20260924`  
+**Status:** IMPLEMENTATION_ON_BRANCH / ENTERPRISE_403_DIAGNOSTICS  
 **Merge authority:** HUMAN_MERGE_REQUIRED
 
 ## Purpose
@@ -107,3 +107,35 @@ The follow-up slice isolates each read-only evidence stage with its original ste
 - independent evidence failures remain observable as their original step outcomes;
 - the final job conclusion remains failing whenever a required read stage fails;
 - runner-temporary private-key and evidence cleanup still executes under `if: always()`.
+
+
+## Enterprise 403 diagnostics follow-up — 2026-09-24
+
+Post-merge run `#35992205549` on `main@57ccdfeeedd6fb16212d9c55699fe77745900dc3` proved the failure-isolation change works as intended:
+
+- the settings inventory executed even though the independent Enterprise consumed-license read remained blocked;
+- all three Enterprise Actions policy reads returned HTTP `403`;
+- Organization and Repository settings remained observable;
+- Human Owner evidence confirms the configured Enterprise read token is a classic PAT with `admin:enterprise`, SAML SSO is disabled, and the PAT is stored as an Organization Actions secret.
+
+The remaining gap is diagnostic observability, not permission to broaden provider access.
+
+### Bounded diagnostics scope
+
+The existing Enterprise settings client may expose only:
+
+- observed OAuth scope names from `X-OAuth-Scopes`;
+- accepted OAuth scope names from `X-Accepted-OAuth-Scopes`;
+- whether `X-GitHub-SSO` is present, never its value or authorization URL;
+- bounded rate-limit counters/reset/resource metadata;
+- a sanitized provider message with URLs and token-like values redacted;
+- a conservative classification such as `SSO_AUTHORIZATION_REQUIRED`, `RATE_LIMITED`, `FORBIDDEN`, or `NOT_FOUND_OR_HIDDEN`.
+
+Raw response headers, Authorization values, PATs, GitHub App credentials, SSO authorization URLs and unknown provider metadata remain outside the evidence boundary.
+
+### Additional exit evidence
+
+- targeted unit tests prove SSO URL and token-like values cannot escape the client diagnostics;
+- the projection layer independently re-redacts provider reason text and allowlists diagnostic fields;
+- no Enterprise/Organization/Repository setting is mutated;
+- the next manual `Private GitHub Billing Read` can distinguish the remaining 403 class without exposing credentials.
