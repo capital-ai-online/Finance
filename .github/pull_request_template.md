@@ -1,7 +1,5 @@
 <!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->
 `CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`
-> 📦 **package.json:** `{{CURRENT_PACKAGE_VERSION}}` · 🚀 **Render Production:** PR #{{DEPLOYED_PR_NUMBER}} · ⏳ **Auto-Deploy:** noch `{{DEPLOY_REMAINING}}` PR-Merge(s)
-
 # {{WORK_ITEM}}
 
 > 🧭 **Entscheidungsstatus: {{DECISION_STATUS}}**  
@@ -17,18 +15,6 @@
 | Synchronität | {{LIVE_SYNC_SUMMARY}} |
 | Nächster Schritt | {{NEXT_VERIFIABLE_STEP}} |
 
-### 🚀 Production & Cadence
-
-| Production-Signal | Zustand |
-|---|---|
-| CURRENT_MAIN | `{{CURRENT_MAIN_SHA}}` |
-| Live Production | `{{PRODUCTION_VERSION}}` · `{{PRODUCTION_SHA}}` |
-| Render Production PR | `#{{DEPLOYED_PR_NUMBER}}` |
-| Deploy-Cadence | `{{DEPLOYMENT_STATE}}` · `{{DEPLOY_PROGRESS}}/5` · noch `{{DEPLOY_REMAINING}}` Merge(s) |
-| Nächstes Deploy-Ziel | `{{NEXT_DEPLOY_TARGET_SHA}}` |
-| Plattformversion | `{{CURRENT_PACKAGE_VERSION}}` |
-| Version-Cadence | `{{VERSION_PROGRESS}}/10` · noch `{{VERSION_REMAINING}}` Merge(s) |
-| Nächstes PATCH-Ziel | `{{NEXT_PATCH_VERSION}}` |
 
 | Frage | Ergebnis |
 |---|---|
