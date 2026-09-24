@@ -530,6 +530,82 @@ test('canonical current v1.8 Human Decision + Live Dashboard body is left unchan
   assert.equal(result.body, body);
 });
 
+test('canonical current v1.8 auto-merge gate stays single-valued during structure repair', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Auto-Merge Decision PR',
+    '',
+    '> 🧭 **Entscheidungsstatus: READY_FOR_HUMAN_DECISION**',
+    '> P2 🟡 Normal · PR-Klasse C · NONE ➖',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Keine manuelle Merge-Aktion; GitHub Auto-Merge nach Exact-Head-Revalidierung |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '| Scope / Ownership | 🟢 PASS |',
+    '| Overlap | 🟢 PASS |',
+    '| Required Checks | 🟢 PASS |',
+    '| Security / Compliance | 🟢 PASS |',
+    '| Production Baseline | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '',
+    '- **Priorität:** P2 🟡 Normal',
+    '- **Versionsimpact:** NONE ➖',
+    '- **Version-Manager-Check:** PASS — fixture evidence.',
+    '- **PR-Klasse:** C',
+    '- **Merge-Modus:** AUTO_MERGE_ELIGIBLE',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+    '- **Auto-Merge:** AUTO_MERGE_ELIGIBLE',
+    '',
+    '</details>',
+    '',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    '',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_START`',
+    '- **Baseline-ID:** `sha256:test-auto-merge`',
+    '`CAPITAL_AI_PRODUCTION_BASELINE_END`',
+    '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
+    '',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'already-canonical');
+  assert.equal(
+    (result.body.match(/^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\*/gm) || []).length,
+    1,
+  );
+  assert.match(
+    result.body,
+    /^- \*\*Human-\/CODEOWNER-Freigabe für Merge erforderlich:\*\* Nein — GitHub Auto-Merge Safety Contract$/m,
+  );
+
+  const duplicated = body.replace(
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+    [
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Nein — GitHub Auto-Merge Safety Contract',
+      '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    ].join('\n'),
+  );
+  const blocked = repairLegacyPrBodyStructure(duplicated, { prClass: 'C' });
+  assert.equal(blocked.eligible, false);
+  assert.equal(blocked.changed, false);
+  assert.equal(blocked.reason, 'current-v1.8-human-merge-gate-conflict');
+});
+
 test('normalizes only the observed current v1.8 P0-HIGHEST priority token', () => {
   const body = [
     '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
