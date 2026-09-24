@@ -9,7 +9,7 @@
   "startedAt": "2026-09-24T04:51:00+02:00",
   "baseBranch": "main",
   "baseSha": "36edca389a02ca297d00effdd43a3c35418fdaa8",
-  "branch": "frontend/landing-design-roadmap-template-20260924",
+  "branch": "agent/frontend-landing-design-roadmap-template-20260924",
   "claimedPaths": [
     "src/features/public/ui/LandingPageTemplate.tsx",
     "src/features/public/ui/RoadmapDashboard.tsx",
@@ -34,5 +34,7 @@
     "Human/CODEOWNER merge"
   ],
   "recorrelatedAt": "2026-09-24",
-  "recorrelationNote": "Synchronized after CURRENT_MAIN advanced through PR #1369; main delta was FINTECH-only and had no claimed-path overlap."
+  "recorrelationNote": "Synchronized after CURRENT_MAIN advanced through PR #1369; main delta was FINTECH-only and had no claimed-path overlap.",
+  "previousBranch": "frontend/landing-design-roadmap-template-20260924",
+  "branchNormalizationReason": "Canonical pre-create validator requires an approved agent namespace; project identity remains explicit through the frontend slug and CAPITAL-AI-FE claim."
 }
