@@ -166,7 +166,8 @@ test('R-002 build step still emits immutable release and Documentary evidence', 
     assert.equal(manifest.contract, 'capital-ai-runtime-release-manifest/1.0.0');
     assert.equal(manifest.authority, 'ci-or-controlled-build');
     assert.equal(manifest.mutable, false);
-    assert.equal(manifest.version, '0.6.0');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
+    assert.equal(manifest.version, packageJson.version);
     assert.equal(manifest.sourceCommit, fixture.commitSha);
     assert.match(manifest.buildIdentity, /^[a-f0-9]{64}$/);
     assert.match(manifest.inputs.packageLockSha256, /^[a-f0-9]{64}$/);
