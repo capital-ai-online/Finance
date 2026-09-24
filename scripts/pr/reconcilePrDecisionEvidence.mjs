@@ -18,6 +18,7 @@ import {
   PR_DECISION_GATES,
   decisionEvidenceRows,
   deriveDecisionStatus,
+  deriveVersionCadenceEvidence,
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
@@ -101,7 +102,7 @@ function escapeRegex(value) {
 }
 
 function compactCell(value) {
-  return String(value || '').replace(/\s+/g, ' ').replace(/\|/g, '/').trim();
+  return String(value ?? '').replace(/\s+/g, ' ').replace(/\|/g, '/').trim();
 }
 
 export function rulesetAppliesToMain(ruleset) {
@@ -304,6 +305,51 @@ function canonicalEvidenceTable(gates, details = {}) {
       `| ${label} | ${status} | ${compactCell(reason)} | ${compactCell(nextStep)} |`
     ),
   ].join('\n');
+}
+
+const VERSION_CADENCE_EVIDENCE_START = '<!-- CAPITAL_AI_VERSION_CADENCE_EVIDENCE_START -->';
+const VERSION_CADENCE_EVIDENCE_END = '<!-- CAPITAL_AI_VERSION_CADENCE_EVIDENCE_END -->';
+
+function renderVersionCadenceEvidenceTable(evidence = deriveVersionCadenceEvidence({})) {
+  return [
+    VERSION_CADENCE_EVIDENCE_START,
+    '### 📦 Version & Deploy Cadence',
+    '',
+    '| Live Evidence | Wert |',
+    '|---|---|',
+    '| Aktuelle Version | `' + compactCell(String(evidence.currentVersion ?? 'N/A')) + '` |',
+    '| Deploy-Zyklus bis nächste Version | `' + compactCell(String(evidence.deployProgress ?? 'N/A')) + '/' +
+      compactCell(String(evidence.deployTotal ?? 'N/A')) + '` · noch `' + compactCell(String(evidence.deployRemaining ?? 'N/A')) +
+      '` Deploy-Grenze(n) |',
+    '| Merge-Fortschritt bis nächste Version | `' + compactCell(String(evidence.versionProgress ?? 'N/A')) +
+      '/10` · noch `' + compactCell(String(evidence.versionRemaining ?? 'N/A')) + '` Merge(s) |',
+    '| Nächstes PATCH | `' + compactCell(String(evidence.nextPatchVersion ?? 'N/A')) + '` |',
+    VERSION_CADENCE_EVIDENCE_END,
+  ].join('\n');
+}
+
+function upsertVersionCadenceEvidenceTable(bodyText, evidence) {
+  const body = String(bodyText || '');
+  const startCount = body.split(VERSION_CADENCE_EVIDENCE_START).length - 1;
+  const endCount = body.split(VERSION_CADENCE_EVIDENCE_END).length - 1;
+  if (startCount > 1 || endCount > 1 || startCount !== endCount) return null;
+
+  const block = renderVersionCadenceEvidenceTable(evidence);
+  if (startCount === 1) {
+    const start = body.indexOf(VERSION_CADENCE_EVIDENCE_START);
+    const end = body.indexOf(VERSION_CADENCE_EVIDENCE_END, start) + VERSION_CADENCE_EVIDENCE_END.length;
+    return body.slice(0, start) + block + body.slice(end);
+  }
+
+  const evidenceHeading = '## 2. ✅ Evidence';
+  const technicalHeading = '## 3. 🔍 Technical Evidence';
+  const sectionStart = body.indexOf(evidenceHeading);
+  const sectionEnd = body.indexOf(technicalHeading, sectionStart + evidenceHeading.length);
+  if (sectionStart < 0 || sectionEnd < 0 || sectionEnd <= sectionStart) return null;
+
+  const before = body.slice(0, sectionEnd).replace(/\s+$/, '');
+  const after = body.slice(sectionEnd).replace(/^\s+/, '');
+  return before + '\n\n' + block + '\n\n' + after;
 }
 
 function replaceCanonicalEvidenceTable(bodyText, gates, details = {}) {
@@ -528,6 +574,11 @@ export function reconcileDecisionBody(bodyText, gates, details = {}) {
     return { eligible: false, changed: false, reason: 'decision-evidence-section-missing', body: original };
   }
 
+  body = upsertVersionCadenceEvidenceTable(body, details?.versionCadence);
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'version-cadence-evidence-boundary-ambiguous', body: original };
+  }
+
   body = upsertDecisionSummaryRow(body, 'Evidence', summarizeDecisionEvidence(gates));
   if (body == null) {
     return { eligible: false, changed: false, reason: 'decision-evidence-summary-boundary-missing', body: original };
@@ -738,7 +789,7 @@ function overlapGateReason(conflicts, gateState) {
   }).join('; ');
 }
 
-function liveGateDetails({ mainSha, headSha, compare, checkRuns, policy, governanceRequirement, overlaps, gates }) {
+function liveGateDetails({ mainSha, headSha, compare, checkRuns, policy, governanceRequirement, overlaps, gates, cadence }) {
   const security = securityRequirements(policy);
   return {
     main: {
@@ -763,6 +814,7 @@ function liveGateDetails({ mainSha, headSha, compare, checkRuns, policy, governa
         ? 'Production-Baseline ist für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' exakt oder cadence-konform als DEPLOYMENT_QUEUED korreliert.'
         : 'Produktions-Baseline ist weder exakt CURRENT_MAIN noch als gesunde kanonische DEPLOYMENT_QUEUED-Ancestor-Baseline für main ' + mainSha.slice(0, 12) + ' / head ' + headSha.slice(0, 12) + ' verifiziert.',
     },
+    versionCadence: deriveVersionCadenceEvidence(cadence),
   };
 }
 
@@ -821,6 +873,7 @@ async function evaluateSnapshot({
       governanceRequirement,
       overlaps: overlap.conflicts,
       gates,
+      cadence,
     }),
   };
 }

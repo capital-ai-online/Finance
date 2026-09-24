@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-EVIDENCE-VERSION-CADENCE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Project the active 5-merge deploy / 10-merge PATCH cadence directly inside the Pull Request Evidence table with live current-version and deploy-cycle progress, using only the canonical mergeCadence resolver.",
+  "workItemDE": "Aktuelle Version und x/2-Deploy-Zyklus bis zur nächsten Version live in der PR-Evidence-Tabelle anzeigen",
+  "startedAt": "2026-09-24T04:54:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "8050206f6ae58238e88e859b98db62cf04459ff2",
+  "lastSyncedMainSha": "8050206f6ae58238e88e859b98db62cf04459ff2",
+  "branch": "governance/pr-evidence-version-cadence-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "priorityReason": "Die 5/10-Authority ist aktiv, aber die Evidence-Tabelle zeigt aktuelle Plattformversion und Deploy-Zyklus bis zum nächsten PATCH noch nicht als live reconciliierte Evidence.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-EVIDENCE-VERSION-CADENCE-20260924.json",
+    ".github/pull_request_template.md",
+    "scripts/pr/prDecisionState.mjs",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.mjs",
+    "scripts/pr/prBodySectionContract.test.mjs",
+    "scripts/pr/prDecisionState.test.mjs",
+    "scripts/pr/versionCadenceEvidence.test.mjs"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-GOV / PVC-05 PR presentation and Evidence projection only.",
+    "No new GitHub Actions workflow and no workflow-file mutation.",
+    "scripts/operations/mergeCadence.mjs remains the single cadence authority and is consumed read-only.",
+    "The Version & Deploy Cadence Evidence subtable is informational and does not become a PASS/PENDING/BLOCKED gate.",
+    "No package.json, deployment, Render, IAM, billing or direct-main mutation.",
+    "Fresh CURRENT_MAIN convergence onto main@8050206f6ae58238e88e859b98db62cf04459ff2; intervening main changes have no claimed-path overlap."
+  ],
+  "dependencies": [
+    "/AGENTS.md@8050206f6ae58238e88e859b98db62cf04459ff2",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "scripts/operations/mergeCadence.mjs@CURRENT_MAIN"
+  ],
+  "exitEvidence": [
+    "Evidence table shows current package version from mergeCadence.currentVersion.",
+    "Evidence table shows deploy-cycle progress x/2 toward the next PATCH version and remaining deploy boundary count.",
+    "Evidence table shows next PATCH version and merge progress x/10.",
+    "Decision Evidence Reconciler regenerates the informational cadence row from fresh live cadence state and keeps exactly one row.",
+    "No additional decision gate, cadence controller, version registry or Actions workflow is introduced."
+  ],
+  "acceptanceCriteria": [
+    "Template placeholders resolve with no unresolved keys.",
+    "0..4 versionProgress renders 0/2; 5..9 renders 1/2.",
+    "Current version and next PATCH are sourced from canonical mergeCadence output.",
+    "Live reconciliation updates the row after CURRENT_MAIN/Production movement.",
+    "No changed-file overlap remains with open writers."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
