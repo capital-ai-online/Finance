@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-24`  
-**Baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`  
+**Baseline:** `main@5c1b6727762364229516d4c74e85d9bf960574d1`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -69,7 +69,7 @@ Current projection drift is a bounded Self-Healing finding. Repository-owned det
 
 ## Live Security state — `CAPITAL-AI-SEC`
 
-**Correlation:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad` on 2026-09-24  
+**Correlation:** `main@5c1b6727762364229516d4c74e85d9bf960574d1` on 2026-09-24  
 **Relationship:** cross-cutting Security; no productive `PVC-*` ownership  
 **Direction:** `SECURITY_FOUNDATION_FIRST`  
 **Current status source:** this Live Roadmap; public projection: `/roadmap`
