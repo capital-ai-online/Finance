@@ -11,6 +11,7 @@ const routeComposition = readFileSync('server/routes/registerApplicationRoutes.t
 describe('Market sentiment evidence wiring', () => {
   it('reuses the governed authenticated news evidence boundary', () => {
     expect(sentiment).toContain("fetchAuthenticatedNews('/api/news?limit=20'");
+    expect(sentiment).toContain("fetchAuthenticatedNews('/api/news/sentiment-projection?limit=20'");
     expect(sentiment).toContain("from '../../../news/authenticatedNewsFetch'");
     expect(newsTransport).toContain("const NEWS_API_PREFIX = '/api/news'");
     expect(routeComposition).toContain("app.use('/api/news', realtimeAiNewsfeedEntitlement, newsRouter);");
@@ -24,10 +25,16 @@ describe('Market sentiment evidence wiring', () => {
     expect(sentiment).not.toContain('evaluateSentimentResearch(');
     expect(sentiment).not.toContain('CATEGORY_SENTIMENTS');
     expect(sentiment).not.toContain('generate30DaySentimentHistory');
+    expect(sentiment).toContain("value.authority !== 'RESEARCH_CONTEXT_ONLY'");
+    expect(sentiment).toContain('value.scoreEligible !== false');
+    expect(sentiment).toContain('value.executionEligible !== false');
   });
 
   it('lets an attested upstream projection override evidence-only presentation data', () => {
-    expect(sentiment).toContain('() => ({ ...evidenceProjections, ...projections })');
+    expect(sentiment).toContain('() => ({ ...evidenceProjections, ...fintechProjections, ...projections })');
+    expect(sentiment).toContain("fintechProjection.state === 'ready'");
+    expect(sentiment).toContain("FINTECH_SENTIMENT_PROJECTION_VERSION = 'market-sentiment-projection/1.0.0'");
+    expect(sentiment).toContain("FINTECH_SENTIMENT_CONTRACT_VERSION = 'sentiment-feature-contract/1.0.0'");
     expect(sentiment).toContain("projection?.modelVersion ?? 'Kein FINTECH-Modell attestiert'");
   });
 });

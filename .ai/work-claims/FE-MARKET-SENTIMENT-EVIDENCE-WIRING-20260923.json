@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FE-MARKET-SENTIMENT-EVIDENCE-WIRING-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FE",
   "projectFolder": "frontend",
   "ownerScope": "Presentation-only consumer wiring; FINTECH retains PVC-09..14 data/scoring authority.",
@@ -42,5 +42,7 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "dependencies": [
     "OPS-PUBLIC-VISIBILITY-MODE-20260923 / PR #1324 must merge first for public read-only evidence visibility"
-  ]
+  ],
+  "releasedAt": "2026-09-24T00:02:00Z",
+  "releaseReason": "Associated FE Market Sentiment evidence wiring PR #1323 is Human-merged; stale coordination lock released before the successor projection-consumer slice touches the same presentation path."
 }
