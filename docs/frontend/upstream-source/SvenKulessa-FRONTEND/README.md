@@ -11,7 +11,8 @@ This snapshot contains the current allowlisted graphical architecture, including
 - The upstream legal component contains sample/template legal copy. That copy is inert evidence and MUST NOT be promoted into productive Finance routes.
 - Asset classes and subclasses: the Sideboard/navigation presentation is mirrored, while canonical asset taxonomy and scoring semantics remain owned by `CAPITAL-AI-FINTECH`.
 - Every market asset already visible on the active landing has a symbol/ticker in the presentation model; the Finance regression contract verifies complete symbol coverage.
-- `src/data/mockData.ts` remains `VISUAL_FIXTURE_ONLY`.
-- Upstream Analytics/SEO runtime code is not promoted by this presentation sync. Finance keeps its existing consent, analytics, SEO, auth, security and compliance controls.
+- `src/data/mockData.ts` and the allowlisted `src/data/assets/*.ts` files remain `VISUAL_FIXTURE_ONLY`.
+- `src/context/PriceAlertsContext.tsx` and `src/utils/priceAlerts.ts` are inert `PRESENTATION_INTERACTION_FIXTURE` evidence only.
+- Upstream Analytics/SEO runtime code and canonical Vocabulary data are intentionally not mirrored or promoted. Finance keeps its existing consent, analytics, learning, SEO, auth, security and compliance controls.
 
 Automatic runtime promotion remains disabled. Productive binding is performed only through bounded Finance adapters with exact-head validation and owner-correct handovers.

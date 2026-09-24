@@ -8,7 +8,12 @@
   "allCurrentElementsMirrored": true,
   "currentGraphicalComponentCount": 22,
   "visualFixtureOnly": [
-    "src/data/mockData.ts"
+    "src/data/mockData.ts",
+    "src/data/assets/indexAssets.ts",
+    "src/data/assets/cryptoAssets.ts",
+    "src/data/assets/stockAssets.ts",
+    "src/data/assets/forexAssets.ts",
+    "src/data/assets/commodityAssets.ts"
   ],
   "runtimePromotionAutomatic": false,
   "financeComponentsBindAfterArchitectureAdoption": true,
@@ -69,6 +74,26 @@
     },
     {
       "sourcePath": "src/data/mockData.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/data/assets/indexAssets.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/data/assets/cryptoAssets.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/data/assets/stockAssets.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/data/assets/forexAssets.ts",
+      "role": "VISUAL_FIXTURE_ONLY"
+    },
+    {
+      "sourcePath": "src/data/assets/commodityAssets.ts",
       "role": "VISUAL_FIXTURE_ONLY"
     },
     {
@@ -160,6 +185,14 @@
       "role": "GRAPHICAL_COMPONENT"
     },
     {
+      "sourcePath": "src/context/PriceAlertsContext.tsx",
+      "role": "PRESENTATION_INTERACTION_FIXTURE"
+    },
+    {
+      "sourcePath": "src/utils/priceAlerts.ts",
+      "role": "PRESENTATION_INTERACTION_FIXTURE"
+    },
+    {
       "sourcePath": "src/assets/images/capital_ai_brand_emblem_1789997857835.jpg",
       "role": "VISUAL_ASSET"
     },
@@ -180,5 +213,13 @@
     "visibleAssetCount": 0,
     "symbolContract": "Every market asset already visible on the landing carries a non-empty symbol/ticker and the active landing card renders asset.symbol.",
     "authority": "Presentation only; canonical asset taxonomy/data/scoring remains CAPITAL-AI-FINTECH."
-  }
+  },
+  "presentationInteractionFixtureOnly": [
+    "src/context/PriceAlertsContext.tsx",
+    "src/utils/priceAlerts.ts"
+  ],
+  "intentionalUnmirroredRelativeDependencies": [
+    "src/data/vocabularyData.ts",
+    "src/utils/analytics.ts"
+  ]
 }

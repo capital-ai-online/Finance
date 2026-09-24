@@ -14,14 +14,26 @@
     "src/types.ts"
   ],
   "visualFixtureExactPaths": [
-    "src/data/mockData.ts"
+    "src/data/mockData.ts",
+    "src/data/assets/indexAssets.ts",
+    "src/data/assets/cryptoAssets.ts",
+    "src/data/assets/stockAssets.ts",
+    "src/data/assets/forexAssets.ts",
+    "src/data/assets/commodityAssets.ts"
   ],
   "allowedExactPaths": [
     "src/App.tsx",
     "src/main.tsx",
     "src/index.css",
     "src/types.ts",
-    "src/data/mockData.ts"
+    "src/data/mockData.ts",
+    "src/data/assets/indexAssets.ts",
+    "src/data/assets/cryptoAssets.ts",
+    "src/data/assets/stockAssets.ts",
+    "src/data/assets/forexAssets.ts",
+    "src/data/assets/commodityAssets.ts",
+    "src/context/PriceAlertsContext.tsx",
+    "src/utils/priceAlerts.ts"
   ],
   "allowedPathPatterns": [
     "^src/components/.+\\.(?:tsx|ts|css|svg|png|jpe?g|webp|avif|gif)$",
@@ -102,5 +114,13 @@
       "max-w-md",
       "hidden sm:flex"
     ]
-  }
+  },
+  "interactionFixtureExactPaths": [
+    "src/context/PriceAlertsContext.tsx",
+    "src/utils/priceAlerts.ts"
+  ],
+  "intentionalUnmirroredRelativeDependencies": [
+    "src/utils/analytics.ts",
+    "src/data/vocabularyData.ts"
+  ]
 }

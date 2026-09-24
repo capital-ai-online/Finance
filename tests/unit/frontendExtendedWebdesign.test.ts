@@ -35,6 +35,8 @@ const snapshotManifest = JSON.parse(
   presentationSurfaces?: Record<string, unknown>;
   ownerBoundaries?: Record<string, string>;
   files?: Array<{ sourcePath: string; role: string }>;
+  presentationInteractionFixtureOnly?: string[];
+  intentionalUnmirroredRelativeDependencies?: string[];
   assetPresentation?: {
     visibleAssetCount?: number;
     symbolContract?: string;
@@ -55,6 +57,44 @@ describe('extended FRONTEND webdesign sync', () => {
       legalRoutes: ['/impressum', '/datenschutz', '/agb', '/faq'],
       routeNormalization: 'src/App.tsx::resolveAppRoute',
     });
+  });
+
+  it('keeps the synchronized alert/sentiment source dependency-complete but inert', () => {
+    const files = new Map(
+      (snapshotManifest.files ?? []).map((entry) => [entry.sourcePath, entry.role]),
+    );
+    const expectedVisualFixtures = [
+      'src/data/mockData.ts',
+      'src/data/assets/indexAssets.ts',
+      'src/data/assets/cryptoAssets.ts',
+      'src/data/assets/stockAssets.ts',
+      'src/data/assets/forexAssets.ts',
+      'src/data/assets/commodityAssets.ts',
+    ];
+    for (const sourcePath of expectedVisualFixtures) {
+      expect(files.get(sourcePath)).toBe('VISUAL_FIXTURE_ONLY');
+      expect(
+        fs.existsSync(
+          path.join(
+            process.cwd(),
+            'docs/frontend/upstream-source/SvenKulessa-FRONTEND',
+            `${sourcePath}.source`,
+          ),
+        ),
+      ).toBe(true);
+    }
+
+    for (const sourcePath of [
+      'src/context/PriceAlertsContext.tsx',
+      'src/utils/priceAlerts.ts',
+    ]) {
+      expect(files.get(sourcePath)).toBe('PRESENTATION_INTERACTION_FIXTURE');
+      expect(snapshotManifest.presentationInteractionFixtureOnly).toContain(sourcePath);
+    }
+
+    expect(snapshotManifest.intentionalUnmirroredRelativeDependencies).toEqual(
+      expect.arrayContaining(['src/utils/analytics.ts', 'src/data/vocabularyData.ts']),
+    );
   });
 
   it('keeps both mobile-first and active desktop landing presentation', () => {

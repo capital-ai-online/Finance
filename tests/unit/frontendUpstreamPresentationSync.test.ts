@@ -30,8 +30,31 @@ describe('FRONTEND upstream presentation sync contract', () => {
   });
 
   it('keeps the upstream demo dataset solely as a visual fixture and excludes productive authorities', () => {
-    expect(config.visualFixtureExactPaths).toEqual(['src/data/mockData.ts']);
-    expect(config.allowedExactPaths).toContain('src/data/mockData.ts');
+    expect(config.visualFixtureExactPaths).toEqual(
+      expect.arrayContaining([
+        'src/data/mockData.ts',
+        'src/data/assets/indexAssets.ts',
+        'src/data/assets/cryptoAssets.ts',
+        'src/data/assets/stockAssets.ts',
+        'src/data/assets/forexAssets.ts',
+        'src/data/assets/commodityAssets.ts',
+      ]),
+    );
+    expect(config.interactionFixtureExactPaths).toEqual(
+      expect.arrayContaining([
+        'src/context/PriceAlertsContext.tsx',
+        'src/utils/priceAlerts.ts',
+      ]),
+    );
+    expect(config.intentionalUnmirroredRelativeDependencies).toEqual(
+      expect.arrayContaining(['src/utils/analytics.ts', 'src/data/vocabularyData.ts']),
+    );
+    for (const dependency of [
+      ...config.visualFixtureExactPaths,
+      ...config.interactionFixtureExactPaths,
+    ]) {
+      expect(config.allowedExactPaths).toContain(dependency);
+    }
     const denied = config.neverCopyPathPatterns.join('\n');
     for (const boundary of ['api', 'server', 'auth', 'billing', 'scoring', 'entitlement', 'provider', 'package']) {
       expect(denied).toContain(boundary);
@@ -39,7 +62,9 @@ describe('FRONTEND upstream presentation sync contract', () => {
     expect(syncScript).toContain("config?.schemaVersion !== '1.2.0'");
     expect(syncScript).toContain('schemaVersion: config.schemaVersion');
     expect(syncScript).toContain('VISUAL_FIXTURE_ONLY');
-    expect(syncScript).toContain('runtimePromotionEligible: !fixtureOnly');
+    expect(syncScript).toContain('PRESENTATION_INTERACTION_FIXTURE');
+    expect(syncScript).toContain('runtimePromotionEligible: !inertOnly');
+    expect(syncScript).toContain('presentation dependency not allowlisted');
   });
 
   it('requires the desktop-only Finance adapter and re-correlates it on every upstream sync', () => {

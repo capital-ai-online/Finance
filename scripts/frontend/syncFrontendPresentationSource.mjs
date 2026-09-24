@@ -65,6 +65,10 @@ function isVisualFixture(file, config) {
   return config.visualFixtureExactPaths.includes(file);
 }
 
+function isInteractionFixture(file, config) {
+  return (config.interactionFixtureExactPaths ?? []).includes(file);
+}
+
 function destinationFor(file, config) {
   const ext = path.extname(file).toLowerCase();
   const base = path.join(config.destination, file);
@@ -80,6 +84,7 @@ function contentPromotionBlocks(buffer, file, config) {
 
 function sourceRole(file, config) {
   if (isVisualFixture(file, config)) return 'VISUAL_FIXTURE_ONLY';
+  if (isInteractionFixture(file, config)) return 'PRESENTATION_INTERACTION_FIXTURE';
   if (file === 'src/App.tsx' || file === 'src/main.tsx') return 'PRESENTATION_ARCHITECTURE';
   if (file === 'src/index.css') return 'VISUAL_STYLE';
   if (file === 'src/types.ts') return 'PRESENTATION_TYPE_SHAPE';
@@ -122,6 +127,45 @@ for (const file of selected) {
   if (matchesAny(file, config.neverCopyPathPatterns)) fail(`allowlist/denylist conflict for ${file}`);
 }
 
+const trackedSet = new Set(tracked);
+const selectedSet = new Set(selected);
+const intentionalUnmirrored = new Set(
+  (config.intentionalUnmirroredRelativeDependencies ?? []).map(safeRelativePath),
+);
+
+function resolveTrackedRelativeDependency(fromFile, specifier) {
+  const base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), specifier));
+  const candidates = [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.css`,
+    `${base}.svg`,
+    `${base}.png`,
+    `${base}.jpg`,
+    `${base}.jpeg`,
+    `${base}.webp`,
+    `${base}/index.ts`,
+    `${base}/index.tsx`,
+  ];
+  return candidates.find((candidate) => trackedSet.has(candidate)) ?? null;
+}
+
+for (const file of selected) {
+  const ext = path.extname(file).toLowerCase();
+  if (!config.textExtensions.includes(ext)) continue;
+  const text = fs.readFileSync(path.join(sourceDir, file), 'utf8');
+  const imports = [
+    ...text.matchAll(/(?:\bfrom\s*|\bimport\s*)['"]([^'"]+)['"]/g),
+  ].map((match) => match[1]).filter((specifier) => specifier.startsWith('.'));
+
+  for (const specifier of imports) {
+    const resolved = resolveTrackedRelativeDependency(file, specifier);
+    if (!resolved || selectedSet.has(resolved) || intentionalUnmirrored.has(resolved)) continue;
+    fail(`presentation dependency not allowlisted: ${file} -> ${specifier} -> ${resolved}`);
+  }
+}
+
 fs.rmSync(config.destination, { recursive: true, force: true });
 fs.mkdirSync(config.destination, { recursive: true });
 
@@ -144,14 +188,17 @@ for (const file of selected.sort()) {
 
   const promotionBlockPatterns = contentPromotionBlocks(buffer, file, config);
   const fixtureOnly = isVisualFixture(file, config);
+  const interactionFixtureOnly = isInteractionFixture(file, config);
+  const inertOnly = fixtureOnly || interactionFixtureOnly;
+  const role = sourceRole(file, config);
   manifestFiles.push({
     sourcePath: file,
     mirroredPath: targetPath.replaceAll('\\', '/'),
-    role: sourceRole(file, config),
+    role,
     bytes: stat.size,
-    runtimePromotionEligible: !fixtureOnly && promotionBlockPatterns.length === 0,
-    promotionBlockPatterns: fixtureOnly
-      ? ['VISUAL_FIXTURE_ONLY', ...promotionBlockPatterns]
+    runtimePromotionEligible: !inertOnly && promotionBlockPatterns.length === 0,
+    promotionBlockPatterns: inertOnly
+      ? [role, ...promotionBlockPatterns]
       : promotionBlockPatterns,
   });
 }
@@ -180,6 +227,9 @@ const componentSummary = manifestFiles
 const uiSummary = manifestFiles
   .filter((entry) => entry.role === 'UI_SLICE')
   .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
+const interactionSummary = manifestFiles
+  .filter((entry) => entry.role === 'PRESENTATION_INTERACTION_FIXTURE')
+  .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
 const assetSummary = manifestFiles
   .filter((entry) => entry.role === 'VISUAL_ASSET')
   .sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
@@ -197,6 +247,8 @@ const manifest = {
   allCurrentElementsMirrored: true,
   currentGraphicalComponentCount: componentSummary.length,
   visualFixtureOnly: config.visualFixtureExactPaths,
+  presentationInteractionFixtureOnly: config.interactionFixtureExactPaths ?? [],
+  intentionalUnmirroredRelativeDependencies: [...intentionalUnmirrored].sort(),
   runtimePromotionAutomatic: false,
   financeComponentsBindAfterArchitectureAdoption: true,
   responsiveRuntimeAdapter: config.responsiveRuntimeAdapter,
@@ -214,7 +266,7 @@ const manifest = {
     fintech: 'CAPITAL-AI-FINTECH remains authoritative for asset classes/subclasses; mockData is visual fixture only',
     analytics: 'upstream src/utils/analytics.ts and index.html are intentionally not mirrored by the presentation allowlist',
   },
-  files: [...architectureSummary, ...fixtureSummary, ...componentSummary, ...uiSummary, ...assetSummary].map(
+  files: [...architectureSummary, ...fixtureSummary, ...componentSummary, ...uiSummary, ...interactionSummary, ...assetSummary].map(
     ({ sourcePath, role }) => ({ sourcePath, role }),
   ),
   assetPresentation: {
