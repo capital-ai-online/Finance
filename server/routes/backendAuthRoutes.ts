@@ -264,6 +264,66 @@ backendAuthRouter.get('/login/google', AUTH_RATE_LIMIT, async (req, res) => {
   }
 });
 
+backendAuthRouter.post('/login/passkey/start', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const supabase = createBackendEmailAuthClient();
+    const { data, error } = await supabase.auth.passkey.startAuthentication();
+    if (error || !data?.challenge_id || !data?.options) {
+      throw error || new Error('PASSKEY_AUTHENTICATION_START_FAILED');
+    }
+    res.status(200).json({ challengeId: data.challenge_id, options: data.options });
+  } catch (error) {
+    authLogger.error('Passkey authentication start failed', {
+      requestId: req.requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Passkey-Anmeldung konnte nicht gestartet werden.' });
+  }
+});
+
+backendAuthRouter.post('/login/passkey/verify', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId.trim() : '';
+  const credential = req.body?.credential;
+  if (!challengeId || challengeId.length > 200 || !credential || typeof credential !== 'object') {
+    res.status(400).json({ error: 'Ungültige Passkey-Verifikationsdaten.' });
+    return;
+  }
+
+  try {
+    const supabase = createBackendEmailAuthClient();
+    const { data, error } = await supabase.auth.passkey.verifyAuthentication({
+      challengeId,
+      credential: credential as any,
+    });
+    if (error || !data?.session || !data?.user || data.user.is_anonymous) {
+      authLogger.warn('Passkey authentication verification failed', {
+        requestId: req.requestId,
+        error: error?.message || 'missing-session',
+      });
+      clearBackendAuthCookies(req, res);
+      res.status(401).json({ error: 'Passkey-Anmeldung konnte nicht verifiziert werden.' });
+      return;
+    }
+
+    persistBackendAuthSession(req, res, data.session);
+    authLogger.info('Backend passkey session established', {
+      requestId: req.requestId,
+      userId: data.user.id,
+      sessionFingerprint: sessionFingerprint(data.session.access_token),
+    });
+    res.status(200).json({ authenticated: true });
+  } catch (error) {
+    authLogger.error('Passkey authentication verification failed unexpectedly', {
+      requestId: req.requestId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    clearBackendAuthCookies(req, res);
+    res.status(503).json({ error: 'Passkey-Anmeldung ist derzeit nicht verfügbar.' });
+  }
+});
+
 backendAuthRouter.post('/register', AUTH_CREDENTIAL_RATE_LIMIT, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
