@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-UPSTREAM-MANUAL-SYNC-ONLY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Disable scheduled FRONTEND upstream synchronization and retain manual workflow_dispatch only, because FRONTEND changes are requested ad hoc by the Human Owner.",
+  "startedAt": "2026-09-24T19:25:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
+  "branch": "frontend/manual-upstream-sync-only-20260924",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-MANUAL-SYNC-ONLY-20260924.json",
+    ".github/workflows/frontend-upstream-presentation-sync.yml",
+    "tests/unit/frontendUpstreamPresentationSync.test.ts"
+  ],
+  "scopeBoundary": [
+    "Remove only the scheduled trigger from the existing FRONTEND upstream sync workflow.",
+    "Retain workflow_dispatch so the Owner can start an ad-hoc sync explicitly.",
+    "Do not change the sync implementation, allowlist, runtime promotion boundary, upstream source, or productive website runtime.",
+    "Do not disable unrelated GitHub Actions."
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Fresh Human Owner direction: FRONTEND changes are requested ad hoc; no automatic synchronization.",
+    "CAPITAL-AI-FE / docs/projects/frontend/; cross-cutting presentation, no productive PVC."
+  ],
+  "exitEvidence": [
+    "frontend-upstream-presentation-sync.yml contains workflow_dispatch and no schedule/cron trigger.",
+    "Regression test fails if schedule or cron is reintroduced.",
+    "No changed-file overlap with current open PR writers at branch creation.",
+    "Exact-head required checks pass before merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
