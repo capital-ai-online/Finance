@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-11-RETRY-SAFE-ACTIVATION-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -84,5 +84,9 @@
       "repository.issue.autofix capability"
     ]
   },
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1330 was Human/CODEOWNER-merged at 2026-09-23T19:08:32Z; stale active/exclusive coordination metadata normalized without changing historical implementation evidence.",
+  "terminalPullRequest": 1330,
+  "terminalMergeSha": "f4b00e7c04e3b4c68a84d9c70936da692be3f570"
 }

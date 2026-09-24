@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-MERGE-CADENCE-RUNTIME-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -65,5 +65,9 @@
     "All workflow/security/required checks pass on exact PR head.",
     "No self-merge."
   ],
-  "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1338 was Human/CODEOWNER-merged at 2026-09-23T22:09:26Z; stale active/exclusive coordination metadata normalized without changing historical implementation evidence.",
+  "terminalPullRequest": 1338,
+  "terminalMergeSha": "72a22038c88d3cc170cbecac6d04547d7226853d"
 }

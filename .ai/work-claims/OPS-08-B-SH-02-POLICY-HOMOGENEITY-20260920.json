@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-08-B-SH-02-POLICY-HOMOGENEITY-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -29,5 +29,9 @@
   ],
   "scopeNote": "OPS-owned corrections only. GOV/DOC/SEC/COMP/QM contradictions are evidence-backed handoffs and are not mutated from this branch.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; merge authority remains Human/CODEOWNER-only.",
-  "recorrelatedAt": "2026-09-20T15:09:00Z"
+  "recorrelatedAt": "2026-09-20T15:09:00Z",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1147 was Human/CODEOWNER-merged at 2026-09-20T15:57:22Z; stale active/exclusive coordination metadata normalized without changing historical implementation evidence.",
+  "terminalPullRequest": 1147,
+  "terminalMergeSha": "f0c14ed5571a4b681c4360e27bc84bbd0ab3527f"
 }
