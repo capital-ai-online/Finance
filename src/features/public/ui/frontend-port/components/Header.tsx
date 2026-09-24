@@ -25,6 +25,7 @@ import { MainCategory, AssetSubclass } from '../types';
 import { trackLoginClick } from '../utils/analytics';
 import { useLandingSessionLogout, useLandingSessionProfile } from '../../LandingSessionContext';
 import { SubscriptionStatusBadge } from '../../SubscriptionStatusBadge';
+import { CAPITAL_AI_VERSION_LABEL } from '../../../../../platform/Release/clientVersion';
 
 interface HeaderProps {
   onOpenAnalysis?: () => void;
@@ -513,12 +514,20 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="p-5 border-t border-slate-800/80 bg-[#060914]">
                 <div className="text-[11px] text-slate-400 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span>Echtzeit-Feed:</span>
-                    <span className="text-emerald-400 font-mono">Sub-45ms Latenz</span>
+                    <span>Webanwendung:</span>
+                    <span className="text-cyan-300 font-mono">{CAPITAL_AI_VERSION_LABEL}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Sicherheitsstandard:</span>
-                    <span className="text-amber-300 font-mono">SSL 256-Bit • MiCA</span>
+                    <span>Marktdaten-Feed:</span>
+                    <span className="text-emerald-400 font-mono">Providerabhängig</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Sicherheitsprofil:</span>
+                    <span className="text-amber-300 font-mono">HTTPS • CSP</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Regulatorik:</span>
+                    <span className="text-amber-300 font-mono">MiCA-Leitplanken</span>
                   </div>
                 </div>
 
