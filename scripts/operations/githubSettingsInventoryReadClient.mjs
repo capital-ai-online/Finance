@@ -12,6 +12,11 @@ const MAX_ARTIFACT_PAGES = 100;
 const MAX_ENVIRONMENT_PAGES = 100;
 
 export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
+  'organization.settings.get': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Organization metadata/settings: read',
+    path: ({ organization }) => `/orgs/${organization}`,
+  }),
   'organization.actions.permissions.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
@@ -21,6 +26,12 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
     path: ({ organization }) => `/orgs/${organization}/actions/permissions/selected-actions`,
+  }),
+  'organization.actions.selected_repositories.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/repositories`,
+    pagination: Object.freeze({ kind: 'object', field: 'repositories' }),
   }),
   'organization.actions.workflow_permissions.get': Object.freeze({
     scope: 'organization',
@@ -42,6 +53,18 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Administration: read',
     path: ({ organization }) => `/orgs/${organization}/actions/permissions/self-hosted-runners`,
   }),
+  'organization.actions.self_hosted_runners.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Self-hosted runners: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/runners`,
+    pagination: Object.freeze({ kind: 'object', field: 'runners' }),
+  }),
+  'organization.actions.runner_groups.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Self-hosted runners: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/runner-groups`,
+    pagination: Object.freeze({ kind: 'object', field: 'groups' }),
+  }),
   'organization.actions.cache_usage.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
@@ -56,6 +79,24 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
     path: ({ organization }) => `/orgs/${organization}/actions/cache/storage-limit`,
+  }),
+  'organization.rulesets.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/rulesets`,
+    pagination: Object.freeze({ kind: 'array' }),
+  }),
+  'organization.custom_properties.schema.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Custom properties: read',
+    path: ({ organization }) => `/orgs/${organization}/properties/schema`,
+    pagination: Object.freeze({ kind: 'array' }),
+  }),
+  'organization.code_security.configurations.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/code-security/configurations`,
+    pagination: Object.freeze({ kind: 'array' }),
   }),
   'repository.settings.get': Object.freeze({
     scope: 'repository',
@@ -102,6 +143,12 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Actions: read',
     path: ({ repository }) => `/repos/${repository}/actions/cache/storage-limit`,
   }),
+  'repository.actions.self_hosted_runners.list': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Administration: read',
+    path: ({ repository }) => `/repos/${repository}/actions/runners`,
+    pagination: Object.freeze({ kind: 'object', field: 'runners' }),
+  }),
   'repository.actions.artifacts.list': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Actions: read',
@@ -123,6 +170,12 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     scope: 'repository',
     requiredPermission: 'Metadata: read',
     path: ({ repository }) => `/repos/${repository}/properties/values`,
+  }),
+  'repository.rulesets.list': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Metadata: read',
+    path: ({ repository }) => `/repos/${repository}/rulesets`,
+    pagination: Object.freeze({ kind: 'array' }),
   }),
 });
 
@@ -335,6 +388,31 @@ export function createGitHubSettingsInventoryReadClient({
     return { organization, repository };
   }
 
+  async function readPaginatedCollection(path, pagination) {
+    const rows = [];
+    let totalCount = 0;
+    for (let page = 1; page <= MAX_RULESET_PAGES; page += 1) {
+      const joiner = path.includes('?') ? '&' : '?';
+      const payload = await authenticatedGet(`${path}${joiner}per_page=100&page=${page}`);
+      const pageRows = pagination.kind === 'array'
+        ? payload
+        : payload?.[pagination.field];
+      if (!Array.isArray(pageRows)) {
+        fail(`paginated settings response must contain an array for ${pagination.field || 'root'}`);
+      }
+      if (page === 1 && Number.isInteger(payload?.total_count)) totalCount = payload.total_count;
+      rows.push(...pageRows);
+      if (pageRows.length < 100) {
+        return Object.freeze({
+          total_count: totalCount || rows.length,
+          items: Object.freeze(rows),
+        });
+      }
+      if (page === MAX_RULESET_PAGES) fail('settings pagination exceeded safety limit');
+    }
+    return Object.freeze({ total_count: rows.length, items: Object.freeze(rows) });
+  }
+
   async function readArtifactCollection(path) {
     const artifacts = [];
     let totalCount = 0;
@@ -405,22 +483,15 @@ export function createGitHubSettingsInventoryReadClient({
       const path = descriptor.path(context(repository));
       if ('pagination' in descriptor && descriptor.pagination === 'artifactCollection') return readArtifactCollection(path);
       if ('pagination' in descriptor && descriptor.pagination === 'environmentCollection') return readEnvironmentCollection(path);
+      if ('pagination' in descriptor && typeof descriptor.pagination === 'object') {
+        return readPaginatedCollection(path, descriptor.pagination);
+      }
       return authenticatedGet(path);
     },
 
     async listRepositoryRulesets({ repository } = {}) {
-      assertRepository(repository, organization);
-      const rulesets = [];
-      for (let page = 1; page <= MAX_RULESET_PAGES; page += 1) {
-        const pageRows = await authenticatedGet(
-          `/repos/${repository}/rulesets?per_page=100&page=${page}`,
-        );
-        if (!Array.isArray(pageRows)) fail('repository rulesets response must be an array');
-        rulesets.push(...pageRows);
-        if (pageRows.length < 100) return Object.freeze(rulesets);
-        if (page === MAX_RULESET_PAGES) fail('ruleset pagination exceeded safety limit');
-      }
-      return Object.freeze(rulesets);
+      const payload = await this.read('repository.rulesets.list', { repository });
+      return Object.freeze(payload.items);
     },
 
     async preflight() {
