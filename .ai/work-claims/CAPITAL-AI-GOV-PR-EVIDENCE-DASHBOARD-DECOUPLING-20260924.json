@@ -20,15 +20,16 @@
   "priorityReason": "Dynamic PR-body Evidence writes currently retrigger or fail Required Governance without code changes, consuming runner minutes and producing false pipeline failures.",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-PR-EVIDENCE-DASHBOARD-DECOUPLING-20260924.json",
-    ".ai/work-claims/CI-SMART-SCOPE-2026-08-15.json",
     ".ai/work-claims/CI-COST-CONTROL-P0-2026-08-21.json",
+    ".ai/work-claims/CI-SMART-SCOPE-2026-08-15.json",
     ".ai/work-claims/CI-YAML-SYNTAX-OUTAGE-FIX-2026-08-15.json",
     ".ai/work-claims/HOSTED-GITHUB-VALIDATION-COST-S0-S6-2026-08-21.json",
     ".ai/work-claims/PR-CONTRACT-PIPELINE-FIX-2026-08-15.json",
     ".github/workflows/pr-governance.yml",
+    "docs/projects/governance/work-packages/GOV_PR_EVIDENCE_DASHBOARD_PIPELINE_DECOUPLING_01_2026-09-24.md",
+    "scripts/pr/prGovernanceStaticContractMode.test.mjs",
     "scripts/pr/validatePrBody.mjs",
-    "tests/unit/prGovernanceRunnerConsolidation.test.ts",
-    "docs/projects/governance/work-packages/GOV_PR_EVIDENCE_DASHBOARD_PIPELINE_DECOUPLING_01_2026-09-24.md"
+    "tests/unit/prGovernanceRunnerConsolidation.test.ts"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
 }
