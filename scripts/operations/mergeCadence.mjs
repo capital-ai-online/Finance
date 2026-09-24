@@ -53,6 +53,18 @@ export function isPullRequestMerge(subject, parents) {
   return parentCount >= 2 && /^Merge pull request #\d+ from /i.test(String(subject || '').trim());
 }
 
+export function pullRequestNumberFromMergeSubject(subject) {
+  const match = /^Merge pull request #(\d+) from /i.exec(String(subject || '').trim());
+  return match ? Number(match[1]) : null;
+}
+
+function resolveProductionPullRequestNumber(repoRoot, productionSha) {
+  const normalized = String(productionSha || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(normalized)) return null;
+  const subject = git(repoRoot, ['show', '-s', '--format=%s', normalized], true);
+  return pullRequestNumberFromMergeSubject(subject);
+}
+
 export function isCadenceContractActive(contract) {
   return contract?.version === '1.1.0'
     && contract?.automaticMaterializationPolicy?.mode === 'MERGED_PR_CADENCE_PATCH'
@@ -188,6 +200,7 @@ export function resolveMergeCadence({
   const contract = readJsonAtRef(root, resolvedRef, VERSION_CONTRACT_PATH);
   const packageJson = readJsonAtRef(root, resolvedRef, 'package.json');
   const currentVersion = String(packageJson?.version || '');
+  const productionPullRequestNumber = resolveProductionPullRequestNumber(root, productionSha);
   const active = isCadenceContractActive(contract);
 
   if (!active) {
@@ -196,6 +209,7 @@ export function resolveMergeCadence({
       ref: resolvedRef,
       epochSha: null,
       currentVersion,
+      productionPullRequestNumber,
       ...computeMergeCadence({
         active: false,
         mergeOrdinal: 0,
@@ -217,6 +231,7 @@ export function resolveMergeCadence({
     ref: resolvedRef,
     epochSha,
     currentVersion,
+    productionPullRequestNumber,
     ...computeMergeCadence({
       active: true,
       mergeOrdinal,
@@ -252,6 +267,7 @@ function writeGithubOutput(result) {
     merge_ordinal: result.mergeOrdinal,
     production_ordinal: result.productionOrdinal,
     production_relation: result.productionRelation,
+    production_pr_number: result.productionPullRequestNumber ?? '',
     deployment_boundary: result.deploymentBoundary ?? '',
     satisfied_deployment_boundary: result.satisfiedDeploymentBoundary ?? '',
     deploy_due: result.deployDue ? 'true' : 'false',

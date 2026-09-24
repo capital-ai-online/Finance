@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-LIVE-PR-CADENCE-DISPLAY-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -56,5 +56,7 @@
     "Hosted exact-head checks run after PR creation.",
     "Human/CODEOWNER merge remains the protected final boundary."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1359 was Human/CODEOWNER-merged; stale coordination metadata released while extending the same live PR cadence display with the Render production PR."
 }

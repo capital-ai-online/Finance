@@ -159,6 +159,7 @@ test('live PR template projects the existing 5/10 cadence without introducing a 
     'CURRENT_MAIN_SHA',
     'PRODUCTION_VERSION',
     'PRODUCTION_SHA',
+    'DEPLOYED_PR_NUMBER',
     'DEPLOYMENT_STATE',
     'DEPLOY_PROGRESS',
     'DEPLOY_REMAINING',
@@ -169,7 +170,13 @@ test('live PR template projects the existing 5/10 cadence without introducing a 
     'NEXT_PATCH_VERSION',
   ]) assert.ok(template.includes('{{' + token + '}}'), token);
 
+  const summaryIndex = template.indexOf('> 📦 **package.json:**');
+  assert.ok(summaryIndex >= 0 && summaryIndex < template.indexOf('# {{WORK_ITEM}}'));
+  assert.match(template, /Render Production:\*\* PR #\{\{DEPLOYED_PR_NUMBER\}\}/);
+  assert.match(template, /Auto-Deploy:\*\* noch `\{\{DEPLOY_REMAINING\}\}` PR-Merge\(s\)/);
+
   assert.match(renderer, /resolveMergeCadence/);
+  assert.match(renderer, /productionPullRequestNumber/);
   assert.match(renderer, /deriveProductionCadenceState/);
   assert.doesNotMatch(renderer, /function\s+resolveMergeCadence\s*\(/);
 });
