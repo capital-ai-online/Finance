@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-PUBLIC-VISIBILITY-MODE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "operations",
   "projectStage": "PVC-02",
@@ -30,5 +30,9 @@
     "CAPITAL-AI-FINTECH / PVC-09..17 evidence authority",
     "CAPITAL-AI-FE presentation consumers"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1324 was Human/CODEOWNER-merged at 2026-09-23T17:54:56Z; stale active/exclusive coordination metadata normalized without changing historical implementation evidence.",
+  "terminalPullRequest": 1324,
+  "terminalMergeSha": "f65753961359d74cdf19de996bace459a98725b9"
 }

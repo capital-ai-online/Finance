@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-SH02-BASELINE-EVIDENCE-HANDOFF-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
   "owner": "CAPITAL-AI-OPS",
@@ -50,5 +50,9 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "authority": "/AGENTS.md@CURRENT_MAIN",
   "executionSurface": "ChatGPT GitHub Connector",
-  "recorrelatedAt": "2026-09-24"
+  "recorrelatedAt": "2026-09-24",
+  "releasedAt": "2026-09-24",
+  "releaseReason": "Associated PR #1360 was Human/CODEOWNER-merged at 2026-09-24T01:29:30Z; stale active/exclusive coordination metadata normalized without changing historical implementation evidence.",
+  "terminalPullRequest": 1360,
+  "terminalMergeSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b"
 }
