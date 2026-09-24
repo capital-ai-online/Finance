@@ -1,9 +1,9 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.9.0`  
+**Control Plane Version:** `4.10.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
-**Effective date:** 2026-09-23  
+**Effective date:** 2026-09-24  
 **Repository:** `capital-ai-online/Finance`
 
 ## 1. Single instruction surface
@@ -85,6 +85,20 @@ Work that belongs to another canonical Owner is handed over with source/target O
 - `CAPITAL-AI-COMP` / Supply Chain: `REQUIREMENT_AND_EVIDENCE_FIRST` — start from applicable requirement, provenance and evidence; no unsupported compliance claim.
 
 These directions do not transfer productive PVC ownership.
+
+
+### Current implementation integrity — no legacy runtime/UI integration
+
+The current product implementation MUST NOT integrate, mount, render, import, execute, route through, or depend on an implementation that is explicitly classified as `legacy`, `compatibility`, `deprecated`, `suspended`, `retired`, `superseded` or `historical` when that implementation participates in the current website, API, runtime, worker, workflow or user/admin interface.
+
+When a current capability is still required, the owner-correct Project/PVC MUST implement or migrate that capability through the current canonical architecture instead of wrapping, renaming, proxying or re-exposing the legacy implementation. A compatibility adapter MAY exist only as bounded migration evidence on a non-current execution path with an explicit removal condition; it MUST NOT be the productive implementation consumed by the current website or runtime.
+
+Historical source, rules, ADRs, reports and implementation evidence MAY remain only when needed for provenance, audit or rollback evidence. Such material must be clearly non-authorizing/non-current and, when retained outside Git history, reside in the appropriate archive or historical surface with provenance preserved. Retired or superseded material MUST NOT silently remain in an active routing, import, runtime registration, UI navigation, background-watcher or mutation path.
+
+A current guard, test or validator MAY reference a retired path only to deny, detect or prove its absence. This exception does not reactivate that path.
+
+When an obsolete implementation has no continuing evidence obligation, owner-correct removal is preferred over indefinite compatibility retention. When archive retention is required, archive integrity must be verifiable from repository provenance and must fail closed on unexplained content or provenance mismatch.
+
 
 ## 4. Autonomous work graph
 
