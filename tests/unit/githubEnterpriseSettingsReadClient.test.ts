@@ -7,10 +7,10 @@ import {
 const ENTERPRISE = 'capital-ai-online';
 const TOKEN = 'ghp_enterprise_settings_read_only_123456';
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
   });
 }
 
@@ -57,6 +57,53 @@ describe('GitHub enterprise settings read client', () => {
     expect(calls).toHaveLength(3);
     expect(calls.every((call) => call.method === 'GET')).toBe(true);
     expect(calls.every((call) => call.authorization === `Bearer ${TOKEN}`)).toBe(true);
+  });
+
+
+  it('captures bounded 403 diagnostics without exposing SSO URLs or token-like values', async () => {
+    const client = createGitHubEnterpriseSettingsReadClient({
+      enterprise: ENTERPRISE,
+      enterpriseReadPat: TOKEN,
+      fetchImpl: (async () => jsonResponse({
+        message: 'Enterprise policy denied request. See https://github.com/orgs/capital-ai-online/sso?authorization_request=secret ghp_should_not_escape_123',
+      }, 403, {
+        'x-oauth-scopes': 'read:enterprise, admin:enterprise',
+        'x-accepted-oauth-scopes': 'admin:enterprise',
+        'x-github-sso': 'required; url=https://github.com/orgs/capital-ai-online/sso?authorization_request=secret',
+        'x-ratelimit-limit': '5000',
+        'x-ratelimit-remaining': '4999',
+        'x-ratelimit-reset': '1760000000',
+        'x-ratelimit-resource': 'core',
+      })) as typeof fetch,
+    });
+
+    let caught: any = null;
+    try {
+      await client.read('enterprise.actions.permissions.get');
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      status: 403,
+      providerDiagnostics: {
+        classification: 'SSO_AUTHORIZATION_REQUIRED',
+        oauthScopes: ['admin:enterprise', 'read:enterprise'],
+        acceptedOauthScopes: ['admin:enterprise'],
+        ssoRequired: true,
+        rateLimit: {
+          limit: 5000,
+          remaining: 4999,
+          resetEpochSeconds: 1760000000,
+          resource: 'core',
+        },
+        providerReason: 'Enterprise policy denied request. See [REDACTED_URL] [REDACTED_TOKEN]',
+      },
+    });
+    const serialized = JSON.stringify(caught.providerDiagnostics);
+    expect(serialized).not.toContain('authorization_request');
+    expect(serialized).not.toContain('ghp_should_not_escape_123');
+    expect(serialized).not.toContain(TOKEN);
   });
 
   it('fails closed on unsupported capabilities and exposes no raw proxy', async () => {
