@@ -24,7 +24,8 @@
     ".ai/work-claims/OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924.json",
     "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql",
     "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql",
-    "tests/unit/authRegistrationProfileConvergence.test.ts"
+    "tests/unit/authRegistrationProfileConvergence.test.ts",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
@@ -38,7 +39,8 @@
     "Repository migration version matches remote schema_migrations history.",
     "Auth-registration convergence tests resolve the aligned migration path and pass.",
     "Exact-head CI/Governance/Security checks complete truthfully.",
-    "Human/CODEOWNER merge remains required."
+    "Human/CODEOWNER merge remains required.",
+    "Supabase migration ledger local-only set difference points at the aligned migration path without rewriting the historical remote snapshot."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
   "authority": "/AGENTS.md@CURRENT_MAIN",
