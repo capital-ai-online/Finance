@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-24 — Owner-directed Roadmap presentation migration from the historical dashboard shell to the current productive Landingpage profile; no productive domain ownership changes  
-**Baseline:** `main@31625df9bf114e689ec359fc5e8aecafc5a7026d`  
+**Baseline:** `main@36edca389a02ca297d00effdd43a3c35418fdaa8`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -32,7 +32,7 @@ This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** Frontend presentation + canonical Branding Kit only; no productive PVC ownership  
 **Status:** `IN_PROGRESS / OWNER_DIRECTED`  
-**Baseline:** `main@31625df9bf114e689ec359fc5e8aecafc5a7026d`
+**Baseline:** `main@36edca389a02ca297d00effdd43a3c35418fdaa8`
 
 Fresh Owner direction replaces the historical dashboard-style template used by `/roadmap` with one reusable public-site template derived from the current productive Landingpage.
 
