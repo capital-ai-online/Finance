@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RENDER-MANAGEMENT-HARDENING-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Bounded Render management hardening, comprehensive read-only settings inventory and provider-capability readback.",
+  "workItemDE": "Begrenzte Render-Management-Härtung, umfassendes read-only Settings-Inventar und Provider-Capability-Readback.",
+  "priority": "P1",
+  "priorityReason": "Fresh Human Owner direction requests Render quota and credential hygiene with fail-closed provider boundaries.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-08/PVC-18",
+  "startedAt": "2026-09-24T15:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "lastSyncedMainSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "branch": "agent/operations-render-management-hardening-20260924-v2",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-RENDER-MANAGEMENT-HARDENING-20260924.json",
+    ".github/workflows/render-management.yml",
+    "docs/projects/operations/work-packages/OPS_RENDER_MANAGEMENT_HARDENING_01_2026-09-24.md",
+    "scripts/operations/renderManagementAdapter.mjs",
+    "tests/unit/renderManagementAdapter.test.ts"
+  ],
+  "scopeBoundary": [
+    "Branch-only repository mutation; protected provider actions execute only after Human/CODEOWNER merge through the bounded main workflow.",
+    "Read-only inventory may GET service settings, custom domains, notifications, workflows, tasks, task runs and bounded metrics but never projects environment variables, task inputs/outputs, provider tokens or registry usernames.",
+    "Historical-service cleanup is exact-identity bound and excludes Finance.",
+    "Registry credential removal remains blocked while any Render service references it.",
+    "Existing signed private GHCR container-security controls remain intact.",
+    "Unsupported pipeline usage/spend and overlapping-deploy-policy API capabilities are reported explicitly and never inferred.",
+    "Edge caching is recommendation-only; common-static-files is not applied by this branch and all-files remains blocked pending complete dynamic cache-policy coverage.",
+    "FINTECH market-data cache semantics are not mutated by this OPS package."
+  ],
+  "exitEvidence": [
+    "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
+    "Focused tests cover exact identity, GET-only comprehensive inventory and least-privilege boundaries.",
+    "Provider tokens, environment variables, registry usernames and workflow task input/output data are not projected.",
+    "No unresolved writer/file/semantic overlap before the next merge decision.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
