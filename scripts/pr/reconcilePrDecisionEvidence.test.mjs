@@ -528,6 +528,19 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /Claimless v1\.8 bootstrap requires canonical project label project:/);
   assert.match(workflow, /Claimless v1\.8 bootstrap PVC evidence is not canonical/);
   assert.match(workflow, /projectLabels\.includes\(\`project:\$\{projectId\}\`\)/);
+
+  const bootstrapStep = workflow
+    .split('      - name: PR-v1.8-Struktur und exakten Bootstrap-Snapshot binden\n')[1]
+    .split('\n      - name: Trusted Policy exakt an Live-CURRENT_MAIN binden\n')[0];
+  const bootstrapScript = bootstrapStep
+    .split('          script: |\n')[1]
+    .split('\n')
+    .map((line) => line.startsWith('            ') ? line.slice(12) : line)
+    .join('\n');
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  assert.doesNotThrow(() =>
+    new AsyncFunction('github', 'context', 'core', 'process', bootstrapScript),
+  );
   assert.doesNotMatch(createWorkflow, /PR_ALLOW_CLAIMLESS:\s*['"]?true/);
   assert.match(workflow, /PR_CANONICAL_BOOTSTRAP_BODY: \.\.\/candidate\/artifacts\/pr\/decision-reconciler-bootstrap-body\.md/);
 
