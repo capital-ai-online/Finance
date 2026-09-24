@@ -47,5 +47,6 @@
     "agentLaneAtRebind": "FREE",
     "cjsImportMetaStatus": "DONE_MAIN"
   },
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "startedAt": "2026-09-24T13:23:45Z"
 }
