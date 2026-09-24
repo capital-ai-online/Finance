@@ -73,6 +73,10 @@ export function registerApplicationRoutes(
 ): void {
   const { ai, anthropic, openai } = providers;
 
+  // Render can use any verified custom domain as the HTTP health-check Host.
+  // Keep process liveness available before the dedicated MTA-STS host guard.
+  app.use(createHealthRouter());
+
   // The dedicated MTA-STS hostname shares this Render service but must not expose
   // the user-facing application, consent UI or unrelated runtime routes.
   app.use(createMtaStsHostGuard());
@@ -98,12 +102,8 @@ export function registerApplicationRoutes(
   // declarations that still remain in server.application.ts.
   registerMarketDataAdapters(app);
 
-  // Operations health has one composition authority:
-  // - /healthz = network-independent process liveness and fatal-state readback;
-  // - /healthz/readiness = diagnostic business-readiness projection;
-  // - /readyz = strict business-readiness gate.
-  // Liveness is intentionally mounted separately from dependency readiness.
-  app.use(createHealthRouter());
+  // Diagnostic business-readiness routes remain separate from the early
+  // process-liveness route. External providers do not gate Render's /healthz.
   app.use(createBusinessReadinessRouter());
 
   // RFC 8461 policy endpoint. DNS discovery and the mta-sts custom domain remain

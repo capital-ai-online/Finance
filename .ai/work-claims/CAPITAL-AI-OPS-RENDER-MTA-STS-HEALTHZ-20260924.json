@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RENDER-MTA-STS-HEALTHZ-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Restore Render HTTP liveness on the shared Finance service when the selected health-check Host is the MTA-STS custom domain.",
+  "workItemDE": "Render-/healthz vor der MTA-STS-Host-Sperre erreichbar machen und die Host-spezifische Isolation weiter absichern.",
+  "priority": "P1",
+  "priorityReason": "Two production deploys failed to reach live despite completing the Docker build and starting the server.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "startedAt": "2026-09-24T20:23:46.482Z",
+  "baseBranch": "main",
+  "baseSha": "ba77d1899d4b739dc495621aa2e86c07a44a19e4",
+  "lastSyncedMainSha": "ba77d1899d4b739dc495621aa2e86c07a44a19e4",
+  "branch": "agent/operations-render-mta-sts-healthz-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-RENDER-MTA-STS-HEALTHZ-20260924.json",
+    "server/routes/registerApplicationRoutes.ts",
+    "tests/unit/mtaStsPolicy.test.ts"
+  ],
+  "scopeBoundary": [
+    "Move only the canonical process-liveness router before the MTA-STS host guard.",
+    "Keep MTA-STS root, consent assets and business-readiness paths blocked on the dedicated hostname.",
+    "No DNS, Render settings, credentials, database, provider or production deployment mutation in this branch.",
+    "Human/CODEOWNER merge and required checks remain prerequisites for promotion."
+  ],
+  "exitEvidence": [
+    "GET /healthz with Host mta-sts.capital-ai.online returns 200 and process-liveness JSON; HEAD /healthz succeeds.",
+    "MTA-STS root and unrelated routes remain 404, policy remains 200 and POST policy remains 405.",
+    "Normal primary-host root remains available.",
+    "Focused test and required exact-head checks pass; subsequent Render deploy and production identity are read back after Human merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
