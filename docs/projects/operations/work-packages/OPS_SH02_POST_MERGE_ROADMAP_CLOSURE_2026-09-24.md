@@ -113,6 +113,7 @@ SH-02.13 is complete only when tests prove all of the following:
 - build/test PASS plus Governance FAIL is preserved as two distinct evidence states rather than collapsed into one result;
 - the #1403 marker-free v1.8 Production-Baseline regression routes to the existing GOV single-writer repair and cannot create an OPS-side PR-body writer;
 - after the GOV repair is Human-merged, #1403 is re-correlated on fresh CURRENT_MAIN/exact-head evidence before its work-package state can advance.
+- a touched canonical Roadmap/current-state projection with a stale main baseline is refreshed owner-correctly to exact CURRENT_MAIN; the governance freshness validator remains unchanged and fail-closed.
 
 ## Human boundary
 
