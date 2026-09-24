@@ -52,6 +52,6 @@
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
   "releasedAt": "2026-09-24T04:21:28Z",
-  "releaseReason": "PR #1335 merged as 8f5fff57613f183e0e1a2a8c8b41017338e63491; no surviving branch/open FE writer exists, and Render production is live on exact current main d28eff774f24ceab05c1d18268c9b12749a09fe5.",
-  "releasedMainSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5"
+  "releaseReason": "PR #1335 merged as 8f5fff57613f183e0e1a2a8c8b41017338e63491; no surviving branch/open FE writer exists. Post-merge correlation at CURRENT_MAIN adcd5609... confirms its release condition fired; current Production d28eff... remains a healthy cadence-conformant ancestor after Governance-only merge #1377.",
+  "releasedMainSha": "adcd5609b0db58627fb2d89e58d32f7054baf918"
 }

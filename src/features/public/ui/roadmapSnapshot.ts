@@ -49,15 +49,15 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
   schemaVersion: '1.4.0',
   role: 'NON_AUTHORIZING_DERIVED_UI_PROJECTION',
   correlatedDate: '2026-09-24',
-  correlatedMainSha: 'd28eff774f24ceab05c1d18268c9b12749a09fe5',
-  currentMainSha: 'd28eff774f24ceab05c1d18268c9b12749a09fe5',
+  correlatedMainSha: 'adcd5609b0db58627fb2d89e58d32f7054baf918',
+  currentMainSha: 'adcd5609b0db58627fb2d89e58d32f7054baf918',
   productionAudit: {
     observedCommitSha: 'd28eff774f24ceab05c1d18268c9b12749a09fe5',
     deployId: 'dep-daqa9sh42hec738ulhcg',
-    classification: 'EXACT_CURRENT_MAIN_LIVE',
+    classification: 'DEPLOYMENT_QUEUED_ANCESTOR',
     previousFailedDeployId: 'dep-daq378mk1f9s738adt70',
     latestFailedDeployId: 'dep-daq3dkmgekts73be39i0',
-    note: 'Post-merge correlation and Render provider evidence confirm this exact CURRENT_MAIN deploy is live. Runtime identity is still read independently from /healthz by the dashboard.',
+    note: 'Render provider evidence confirms the ordinal-30 deploy is healthy. Governance-only merge #1377 advanced CURRENT_MAIN to ordinal 31; under the canonical 5/10 cadence this Production SHA is an expected ancestor, while runtime identity is still read independently from /healthz.',
   },
   branding: {
     brandmark: 'docs/frontend/brandmark.json',
@@ -194,7 +194,7 @@ export const ROADMAP_DASHBOARD_SNAPSHOT = {
       state: 'production-covered',
       stateLabel: 'DONE_MAIN · PRODUCTION COVERED',
       source: 'PR #1335 · PR #1374 · PR #1376 · Render dep-daqa9sh42hec738ulhcg',
-      detail: 'The non-authorizing /roadmap surface, LandingPageTemplate presentation and current Branding Kit profile are merged and covered by exact CURRENT_MAIN Production. Canonical work state remains in owner project Roadmaps.',
+      detail: 'The non-authorizing /roadmap surface, LandingPageTemplate presentation and current Branding Kit profile are merged and covered by the healthy ordinal-30 Production deploy. Governance-only #1377 advanced CURRENT_MAIN without invalidating that deployed FE generation; canonical work state remains in owner project Roadmaps.',
     },
     {
       id: 'SEC-AUTH-DIAG-AAL2-01',

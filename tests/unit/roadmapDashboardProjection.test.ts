@@ -9,14 +9,14 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 describe('Roadmap dashboard projection', () => {
   it('binds the projection to the freshly correlated main baseline without claiming runtime identity', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha).toBe(
-      'd28eff774f24ceab05c1d18268c9b12749a09fe5',
+      'adcd5609b0db58627fb2d89e58d32f7054baf918',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha).toBe(
       ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha,
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'EXACT_CURRENT_MAIN_LIVE',
+      'DEPLOYMENT_QUEUED_ANCESTOR',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.observedCommitSha).toBe(
       'd28eff774f24ceab05c1d18268c9b12749a09fe5',

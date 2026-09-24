@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-FE`  
 **Owner relationship:** cross-cutting Frontend; no productive PVC  
-**Baseline:** `main@d28eff774f24ceab05c1d18268c9b12749a09fe5`  
+**Baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`  
 **Priority:** P1  
 **Status:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED  
 **Branch:** `agent/frontend-roadmap-live-post-merge-convergence-20260924`
@@ -20,9 +20,13 @@
 - PR #1335 merged as `8f5fff57613f183e0e1a2a8c8b41017338e63491`.
 - PR #1374 merged the Landingpage-derived Roadmap template as `cb0012e7f38452eb638ed2e3affe5e74f0b44ed6`.
 - PR #1376 merged the Landingpage/Branding reconciliation and platform version `0.6.3` as `d28eff774f24ceab05c1d18268c9b12749a09fe5`.
-- Render deploy `dep-daqa9sh42hec738ulhcg` is live on exact `d28eff774f24ceab05c1d18268c9b12749a09fe5`.
+- Render deploy `dep-daqa9sh42hec738ulhcg` is live on `d28eff774f24ceab05c1d18268c9b12749a09fe5`; after merged Governance PR #1377 the repository is at `adcd5609b0db58627fb2d89e58d32f7054baf918`, and the canonical 5/10 cadence classifies Production as the expected queued ancestor.
 - Post-Merge Production Correlation for `d28eff774f24ceab05c1d18268c9b12749a09fe5` passed.
 - No open `project:CAPITAL-AI-FE` issue or PR existed at branch creation; #1377/#1378/#1380 had zero claimed-file overlap.
+
+## Current-main re-correlation
+
+Merged PR #1377 advanced only Governance cadence-presentation files and has no claimed-file overlap. CURRENT_MAIN is now `adcd5609b0db58627fb2d89e58d32f7054baf918`; platform version remains `0.6.3`; merge progress is `1/10`; Production remains the healthy ordinal-30 ancestor until the next deploy boundary.
 
 ## Exit gate
 

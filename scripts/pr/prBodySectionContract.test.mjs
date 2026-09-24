@@ -149,21 +149,18 @@ test('renderer and validator are wired to the deterministic decision-state contr
 });
 
 
-test('live PR template projects the existing 5/10 cadence without introducing a second controller', () => {
+test('PR template keeps one live cadence evidence projection without duplicate merge-count status', () => {
   const template = fs.readFileSync('.github/pull_request_template.md', 'utf8');
   const renderer = fs.readFileSync('scripts/pr/renderPullRequestBody.mjs', 'utf8');
+  const reconciler = fs.readFileSync('scripts/pr/reconcilePrDecisionEvidence.mjs', 'utf8');
 
-  assert.match(template, /### 🚀 Production & Cadence/);
-  assert.match(template, /Production \/ Deploy Cadence/);
+  assert.ok(template.includes('Production / Deploy Cadence'));
+  assert.equal(template.includes('> 📦 **package.json:**'), false);
+  assert.equal(template.includes('### 🚀 Production & Cadence'), false);
+  assert.equal(template.includes('| Deploy-Cadence |'), false);
+  assert.equal(template.includes('| Version-Cadence |'), false);
+
   for (const token of [
-    'CURRENT_MAIN_SHA',
-    'PRODUCTION_VERSION',
-    'PRODUCTION_SHA',
-    'DEPLOYED_PR_NUMBER',
-    'DEPLOYMENT_STATE',
-    'DEPLOY_PROGRESS',
-    'DEPLOY_REMAINING',
-    'NEXT_DEPLOY_TARGET_SHA',
     'CURRENT_PACKAGE_VERSION',
     'VERSION_PROGRESS',
     'VERSION_REMAINING',
@@ -173,19 +170,26 @@ test('live PR template projects the existing 5/10 cadence without introducing a 
     'VERSION_DEPLOY_REMAINING',
   ]) assert.ok(template.includes('{{' + token + '}}'), token);
 
-  const summaryIndex = template.indexOf('> 📦 **package.json:**');
-  assert.ok(summaryIndex >= 0 && summaryIndex < template.indexOf('# {{WORK_ITEM}}'));
-  assert.match(template, /Render Production:\*\* PR #\{\{DEPLOYED_PR_NUMBER\}\}/);
-  assert.match(template, /Auto-Deploy:\*\* noch `\{\{DEPLOY_REMAINING\}\}` PR-Merge\(s\)/);
-  assert.match(template, /CAPITAL_AI_VERSION_CADENCE_EVIDENCE_START/);
-  assert.match(template, /### 📦 Version & Deploy Cadence/);
-  assert.match(template, /Deploy-Zyklus bis nächste Version/);
-  assert.match(template, /\{\{VERSION_DEPLOY_PROGRESS\}\}\/\{\{VERSION_DEPLOY_TOTAL\}\}/);
-  assert.match(template, /CAPITAL_AI_VERSION_CADENCE_EVIDENCE_END/);
+  for (const duplicateOnlyToken of [
+    'CURRENT_MAIN_SHA',
+    'PRODUCTION_VERSION',
+    'PRODUCTION_SHA',
+    'DEPLOYED_PR_NUMBER',
+    'DEPLOYMENT_STATE',
+    'DEPLOY_PROGRESS',
+    'DEPLOY_REMAINING',
+    'NEXT_DEPLOY_TARGET_SHA',
+  ]) assert.equal(template.includes('{{' + duplicateOnlyToken + '}}'), false, duplicateOnlyToken);
 
-  assert.match(renderer, /resolveMergeCadence/);
-  assert.match(renderer, /productionPullRequestNumber/);
-  assert.match(renderer, /deriveProductionCadenceState/);
-  assert.match(renderer, /deriveVersionCadenceEvidence/);
-  assert.doesNotMatch(renderer, /function\s+resolveMergeCadence\s*\(/);
+  assert.equal(template.split('CAPITAL_AI_VERSION_CADENCE_EVIDENCE_START').length - 1, 1);
+  assert.equal(template.split('CAPITAL_AI_VERSION_CADENCE_EVIDENCE_END').length - 1, 1);
+  assert.equal(template.split('### 📦 Version & Deploy Cadence').length - 1, 1);
+  assert.ok(template.includes('Deploy-Zyklus bis nächste Version'));
+  assert.ok(template.includes('{{VERSION_DEPLOY_PROGRESS}}/{{VERSION_DEPLOY_TOTAL}}'));
+
+  assert.ok(renderer.includes('resolveMergeCadence'));
+  assert.ok(renderer.includes('deriveVersionCadenceEvidence'));
+  assert.equal(/function\s+resolveMergeCadence\s*\(/.test(renderer), false);
+  assert.ok(reconciler.includes('removeDuplicateCadencePresentation'));
+  assert.ok(reconciler.includes('upsertVersionCadenceEvidenceTable'));
 });
