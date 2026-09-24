@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.21.0
+Version: 1.22.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, der inkrementelle `GOV-DOC-004` Dokumentklassen-Validator, der bounded `GOV-DOC-005` Documentation-Path-Exception-Validator, der bounded `GOV-DOC-007` Unresolved-Reference-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning, der bounded WP-DOC-14 Migration-Execution-Readiness-Dry-Run sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, der bounded ESS-0012 `GOV-DOC-003` Documentation-Freshness-Validator, der inkrementelle `GOV-DOC-006` Generator-Marking-Validator, der inkrementelle `GOV-DOC-001` Dokumentversions-Validator, der inkrementelle `GOV-DOC-002` ESS/ADR-Referenz-Validator, der inkrementelle `GOV-DOC-004` Dokumentklassen-Validator, der bounded `GOV-DOC-005` Documentation-Path-Exception-Validator, der bounded `GOV-DOC-007` Unresolved-Reference-Validator, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer einschließlich deterministischer Mermaid-Projektion, D7 Knowledge Projection, D8 read-only Migration Planning, der bounded WP-DOC-14 Migration-Execution-Readiness-Dry-Run sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability eines eng begrenzten Archive-Retention-Planners sowie einer tamper-evidenten Archive-Integrity-Verifikation des vollständigen `docs/archive/**`-Bestands.
 
 ## Implemented Scope
 
@@ -36,6 +36,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Discovery/SemanticFreshnessAnalyzer.ts`
 - `Agents/DocumentaryMaintenanceAgent.ts`
 - `Agents/ArchiveRetentionAgent.ts`
+- `ArchiveIntegrity/ArchiveIntegrityVerifier.ts`
 - `Migration/DocumentaryMigrationPlanner.ts`
 - `Migration/DocumentaryMigrationDryRun.ts`
 - `Orchestration/DocumentaryMaintenanceOrchestrator.ts`
@@ -75,6 +76,12 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 `ArchiveRetentionAgent` erweitert denselben Documentary-Agentenpfad ausschließlich um deterministische Retention-Klassifikation. `archived` bedeutet ausdrücklich **nicht** `delete-authorized`.
 
 Automatisch `delete-eligible` können nur alte, unregistrierte, unreferenzierte und deterministisch reproduzierbare Duplikate unter `docs/archive/generated/**` oder `docs/archive/transient/**` werden. Registrierte Dokumente, Authorities, Evidence, Security-/Compliance-Artefakte und referenzierte Historie bleiben erhalten. Der Agent führt selbst keine Löschung aus; `planDeletion()` liefert nur einen Owner-gated Plan mit `mutationPerformed=false`. Eine spätere physische Löschung muss als normaler, separat autorisierter Maintenance-Patch über Agent IAM, Kill Switch, Branch, PR und Human Merge laufen.
+
+### Archive Integrity / Kompromittierungserkennung
+
+`ArchiveIntegrity/ArchiveIntegrityVerifier.ts` bindet den vollständigen aktuellen `docs/archive/**`-Dateibaum (mit Ausnahme des selbstreferenziellen Index) an Pfad, Dateigröße und Git-Blob-SHA. Jede unerklärte Änderung, Hinzufügung oder Entfernung schlägt fail-closed fehl. Vorhandene Archive-Manifeste werden zusätzlich semantisch geprüft; bei `BYTE_PRESERVED`-Migrationen wird der historische `sourceCommit` mit dem im Manifest gespeicherten Source-Blob verglichen.
+
+Der Index und der Verifier sind rein read-only und erteilen weder Lösch-, Restore-, Runtime-, Merge- noch Release-Autorität. Legitimer Archivumbau erfordert einen normalen owner-korrekten Branch/PR, der Index und Provenance sichtbar aktualisiert.
 
 ### D8 Migration Planning / Legacy Compatibility
 
