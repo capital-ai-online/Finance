@@ -48,7 +48,9 @@ describe('canonical landing-first routing, static baseline and protected-route b
 
     expect(rootStart).toBeGreaterThanOrEqual(0);
     expect(loginStart).toBeGreaterThan(rootStart);
-    expect(rootBlock).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
+    expect(rootBlock).toContain("if (userSession?.type === 'registered')");
+    expect(rootBlock).toContain('authenticatedProfile={{');
+    expect(rootBlock).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} onNavigate={navigatePublicRoute} />');
     expect(rootBlock).not.toContain('<Dashboard');
     expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");
     expect(routes).not.toContain('LandingRealtimeAiNewsfeed');

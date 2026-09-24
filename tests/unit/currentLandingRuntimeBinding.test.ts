@@ -83,7 +83,8 @@ describe('current cbc5580 landing runtime binding', () => {
   });
 
   it('keeps login and new subclass navigation from cbc5580 intact', () => {
-    expect(referenceApp).toContain("window.location.assign('/login')");
+    expect(referenceApp).toContain("onNavigateLogin={() => navigate('/login')}");
+    expect(referenceApp).toContain('window.location.assign(path)');
     expect(referenceApp).toContain('onSelectSubclass');
     expect(referenceApp).toContain('<SubclassDetailModal');
     expect(referenceApp).toContain('runtimeBinding.openScorerGate();');

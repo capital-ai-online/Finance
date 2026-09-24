@@ -3,7 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const LEDGER_RELATIVE_PATH = 'docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json';
-export const EXPECTED_REMOTE_TOTAL = 77;
 export const ALLOWED_CLASSIFICATIONS = new Set([
   'EXACT_MATCH',
   'TIMESTAMP_ALIAS',
@@ -47,8 +46,11 @@ export function validateSupabaseMigrationLedgerObject(root, ledger) {
   if (ledger?.project !== 'CAPITAL-AI-OPS') errors.push('ledger project must be CAPITAL-AI-OPS');
   if (ledger?.primary_pvc !== 'PVC-02') errors.push('ledger primary_pvc must be PVC-02');
   if (ledger?.primary_owner !== 'CAPITAL-AI-OPS') errors.push('ledger primary_owner must be CAPITAL-AI-OPS');
-  if (remote.length !== EXPECTED_REMOTE_TOTAL) {
-    errors.push(`remote migration snapshot must contain ${EXPECTED_REMOTE_TOTAL} rows, got ${remote.length}`);
+  const providerRemoteTotal = ledger?.provider_readback?.remote_total;
+  if (!Number.isInteger(providerRemoteTotal) || providerRemoteTotal < 0) {
+    errors.push('provider_readback.remote_total must be a non-negative integer');
+  } else if (remote.length !== providerRemoteTotal) {
+    errors.push(`remote migration snapshot must contain ${providerRemoteTotal} rows from provider readback, got ${remote.length}`);
   }
 
   const remoteVersions = new Set();
@@ -151,6 +153,7 @@ if (isDirectRun) {
     for (const error of errors) console.error(`ERROR: ${error}`);
     process.exitCode = 1;
   } else {
-    console.log('Supabase migration ledger reconciliation: OK — 77/77 remote versions classified, unknown=0');
+    const ledger = loadSupabaseMigrationLedger();
+    console.log(`Supabase migration ledger reconciliation: OK — ${ledger.summary.remote_total}/${ledger.provider_readback.remote_total} remote versions classified, unknown=0`);
   }
 }

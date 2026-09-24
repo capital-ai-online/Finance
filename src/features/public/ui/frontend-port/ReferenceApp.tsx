@@ -23,6 +23,10 @@ const DESKTOP_SITE_COMPAT_MEDIA_QUERY = '(min-width: 960px)';
 
 type LandingViewMode = 'mockup' | 'fullscreen';
 
+interface ReferenceAppProps {
+  onNavigate?: (path: string) => void;
+}
+
 function resolveViewportViewMode(): LandingViewMode {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return 'mockup';
@@ -33,7 +37,7 @@ function resolveViewportViewMode(): LandingViewMode {
   return canonicalDesktop || desktopSiteCompat ? 'fullscreen' : 'mockup';
 }
 
-export default function App() {
+export default function App({ onNavigate }: ReferenceAppProps) {
   const [viewMode, setViewMode] = useState<LandingViewMode>(resolveViewportViewMode);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isProductTourOpen, setIsProductTourOpen] = useState(false);
@@ -43,6 +47,14 @@ export default function App() {
   const [selectedModule, setSelectedModule] = useState<CoreModule | null>(null);
   const [selectedSubclass, setSelectedSubclass] = useState<{ subclass: AssetSubclass; category: MainCategory } | null>(null);
   const runtimeBinding = useCurrentLandingRuntimeBinding();
+
+  const navigate = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+      return;
+    }
+    window.location.assign(path);
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -73,7 +85,7 @@ export default function App() {
 
   const handleOpenModuleById = (moduleId: string) => {
     if (moduleId === 'vocabulary') {
-      window.location.assign('/vocabulary');
+      navigate('/vocabulary');
       return;
     }
     const found = CORE_MODULES.find((m) => m.id === moduleId);
@@ -158,9 +170,9 @@ export default function App() {
         <Header
           onOpenAnalysis={runtimeBinding.openScorerGate}
           onOpenModule={handleOpenModuleById}
-          onOpenVocabulary={() => window.location.assign('/vocabulary')}
-          onNavigateLogin={() => window.location.assign('/login')}
-          onNavigate={(path) => window.location.assign(path)}
+          onOpenVocabulary={() => navigate('/vocabulary')}
+          onNavigateLogin={() => navigate('/login')}
+          onNavigate={navigate}
           onSelectSubclass={(subclass, category) => setSelectedSubclass({ subclass, category })}
           onViewAllMarkets={() => {
             setMarketCategoryFilter('ALLE');
@@ -198,7 +210,7 @@ export default function App() {
         <CoreModules
           onSelectModule={(module) => {
             if (module.id === 'vocabulary') {
-              window.location.assign('/vocabulary');
+              navigate('/vocabulary');
               return;
             }
             if (!runtimeBinding.handleModuleSelection(module)) setSelectedModule(module);
@@ -207,7 +219,7 @@ export default function App() {
         />
 
         {/* Footer with Slogan & Home Indicator */}
-        <Footer onNavigate={(path) => window.location.assign(path)} />
+        <Footer onNavigate={navigate} />
       </main>
 
       {/* Interactive Modals */}
@@ -237,11 +249,11 @@ export default function App() {
           const moduleId = selectedModule?.id;
           setSelectedModule(null);
           if (moduleId === 'enterprise-scorer') runtimeBinding.openScorerGate();
-          else window.location.assign('/login');
+          else navigate('/login');
         }}
         onOpenVocabulary={() => {
           setSelectedModule(null);
-          window.location.assign('/vocabulary');
+          navigate('/vocabulary');
         }}
       />
 

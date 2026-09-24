@@ -5,7 +5,7 @@
   "primary_pvc": "PVC-02",
   "primary_owner": "CAPITAL-AI-OPS",
   "repository": "capital-ai-online/Finance",
-  "repository_baseline": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+  "repository_baseline": "6c11bdfce02430846466540a311d9f46a7f3818c",
   "supabase_project_ref": "ryzywoktpmyhwzxmstyu",
   "classification_policy": {
     "EXACT_MATCH": "Remote version equals a current local migration timestamp. The local migration file is recorded.",
@@ -13,14 +13,14 @@
     "REMOTE_ONLY_HISTORY": "No current local migration has the same remote timestamp or normalized migration name. Consolidated/catch-up schema may exist elsewhere, but is not treated as an alias without exact migration-name identity."
   },
   "summary": {
-    "remote_total": 77,
+    "remote_total": 78,
     "local_total": 60,
-    "exact_match": 18,
+    "exact_match": 19,
     "timestamp_alias": 32,
     "remote_only_history": 27,
     "unknown": 0,
-    "mapped_current_local": 50,
-    "local_only": 10
+    "mapped_current_local": 51,
+    "local_only": 9
   },
   "remote_migrations": [
     {
@@ -561,6 +561,13 @@
       "classification": "EXACT_MATCH",
       "local_version": "20260924011545",
       "local_path": "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
+    },
+    {
+      "remote_version": "20260924161429",
+      "remote_name": "profile_identity_settings",
+      "classification": "EXACT_MATCH",
+      "local_version": "20260924161429",
+      "local_path": "supabase/migrations/20260924161429_profile_identity_settings.sql"
     }
   ],
   "local_only_migrations": [
@@ -608,17 +615,12 @@
       "local_version": "20260902000000",
       "local_name": "owner_device_authorization_atomic_activation",
       "local_path": "supabase/migrations/20260902000000_owner_device_authorization_atomic_activation.sql"
-    },
-    {
-      "local_version": "20260924070530",
-      "local_name": "profile_identity_settings",
-      "local_path": "supabase/migrations/20260924070530_profile_identity_settings.sql"
     }
   ],
   "provider_readback": {
-    "observed_at": "2026-09-24T01:39:21.967Z",
+    "observed_at": "2026-09-24T16:55:00Z",
     "source": "Supabase list_migrations",
-    "remote_total": 77,
-    "note": "Remote snapshot remains 77 migrations from the 2026-09-24T01:39:21.967Z readback; 20260924070530_profile_identity_settings is a new current local-only migration pending the canonical post-merge migration path."
+    "remote_total": 78,
+    "note": "Remote ledger contains 20260924161429_profile_identity_settings; repository migration filename and controlled reconciliation evidence now use the exact remote version."
   }
 }

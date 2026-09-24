@@ -7,7 +7,7 @@ const BADGE_ASSETS: Record<string, { src: string; label: string }> = {
   founder: { src: '/brand/subscriptions/founder.webp', label: 'Founder Abonnement' },
 };
 
-export function SubscriptionStatusBadge({ tier }: { tier: string }) {
+export function SubscriptionStatusBadge({ tier, compact = false }: { tier: string; compact?: boolean }) {
   const normalizedTier = String(tier || 'Free').trim().toLowerCase();
   const badge = BADGE_ASSETS[normalizedTier];
 
@@ -15,7 +15,10 @@ export function SubscriptionStatusBadge({ tier }: { tier: string }) {
     return (
       <div
         data-subscription-badge="free"
-        className="flex min-h-12 items-center rounded-xl border border-slate-500/35 bg-slate-500/10 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-300"
+        className={compact
+          ? 'flex min-h-7 items-center rounded-lg border border-slate-500/35 bg-slate-500/10 px-2 text-[8px] font-black uppercase tracking-wider text-slate-300'
+          : 'flex min-h-12 items-center rounded-xl border border-slate-500/35 bg-slate-500/10 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-300'
+        }
         aria-label="Free Abonnement"
       >
         FREE · ABONNEMENT
@@ -28,7 +31,10 @@ export function SubscriptionStatusBadge({ tier }: { tier: string }) {
       data-subscription-badge={normalizedTier}
       src={badge.src}
       alt={badge.label}
-      className="block h-auto w-full max-w-[280px] object-contain"
+      className={compact
+        ? 'block h-7 w-auto max-w-[72px] object-contain'
+        : 'block h-auto w-full max-w-[280px] object-contain'
+      }
       loading="eager"
       decoding="async"
     />
