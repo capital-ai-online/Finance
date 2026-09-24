@@ -23,11 +23,13 @@ export interface MarketDataFanoutTick {
   receivedAt: string;
   freshnessMs: number | null;
   qualityState: MarketDataFanoutQualityState;
+  eventKind: 'snapshot' | 'trade' | 'bbo';
   correlationId: string;
   evidenceId: string;
   price: number;
   bid: number | null;
   ask: number | null;
+  vwap: number | null;
 }
 
 export interface MarketDataFanoutSink {
@@ -82,11 +84,13 @@ export function fanoutTickFromSnapshot(
     receivedAt: snapshot.receivedAt,
     freshnessMs: snapshot.freshnessMs,
     qualityState: snapshot.qualityState as MarketDataFanoutQualityState,
+    eventKind: 'snapshot',
     correlationId: snapshot.correlationId,
     evidenceId: snapshot.evidenceId,
     price: snapshot.price,
     bid: snapshot.bid ?? null,
     ask: snapshot.ask ?? null,
+    vwap: null,
   };
 }
 
@@ -107,6 +111,7 @@ export function isMarketDataFanoutTick(value: unknown): value is MarketDataFanou
     && Number.isFinite(Date.parse(tick.receivedAt))
     && (typeof tick.freshnessMs === 'number' || tick.freshnessMs === null)
     && FANOUT_QUALITY.has(tick.qualityState as MarketDataFanoutQualityState)
+    && (tick.eventKind === 'snapshot' || tick.eventKind === 'trade' || tick.eventKind === 'bbo')
     && typeof tick.correlationId === 'string'
     && tick.correlationId.length > 0
     && typeof tick.evidenceId === 'string'
@@ -114,7 +119,8 @@ export function isMarketDataFanoutTick(value: unknown): value is MarketDataFanou
     && typeof tick.price === 'number'
     && Number.isFinite(tick.price)
     && (typeof tick.bid === 'number' || tick.bid === null)
-    && (typeof tick.ask === 'number' || tick.ask === null);
+    && (typeof tick.ask === 'number' || tick.ask === null)
+    && (typeof tick.vwap === 'number' || tick.vwap === null);
 }
 
 export function marketDataFanoutEventId(tick: MarketDataFanoutTick): string {
