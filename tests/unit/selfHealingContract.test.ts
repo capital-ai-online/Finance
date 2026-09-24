@@ -3,11 +3,9 @@ import {
   FINDING_CLASSES,
   canTransitionRecoveryState,
   evaluateRemediationEligibility,
-  evaluateSelfHealingLearningPromotion,
   getRemediationAction,
   getRemediationPolicies,
   getRemediationPolicy,
-  getSelfHealingLearningProcess,
   getSelfHealingContractSnapshot,
   projectRecoveryObservation,
   resolveConvergence,
@@ -106,90 +104,6 @@ describe('self-healing contract', () => {
       operationIdempotency: 'IDEMPOTENT',
     });
     expect(exhausted).toMatchObject({ state: 'BLOCKED', reason: 'BUDGET_EXHAUSTED' });
-  });
-
-
-  it('stores terminal work-claim release as a reusable 1/3 learning process while mutation stays held', () => {
-    const policy = getRemediationPolicy('REPOSITORY_TERMINAL_WORK_CLAIM_STALE');
-    expect(policy.preferredActionId).toBe('RELEASE_TERMINAL_WORK_CLAIM');
-    expect(policy.allowedActionIds).toEqual([
-      'RELEASE_TERMINAL_WORK_CLAIM',
-      'OBSERVE_ONLY',
-    ]);
-
-    const action = getRemediationAction('RELEASE_TERMINAL_WORK_CLAIM');
-    expect(action).toMatchObject({
-      tier: 'SH-1',
-      activation: 'HELD',
-      idempotencyClass: 'IDEMPOTENT',
-      blastRadius: 'WORK_ITEM',
-      requiredCapability: 'repository.work-claim.release',
-      killSwitch: 'self-healing.terminal-work-claim-release',
-      verificationProbe: 'terminal-work-claim-release-readback',
-      budget: { maxAttempts: 1 },
-    });
-
-    const learning = getSelfHealingLearningProcess('POST_MERGE_WORK_CLAIM_RELEASE_V1');
-    expect(learning.minimumPositiveValidations).toBe(3);
-    expect(learning.steps).toEqual([
-      'READ_CURRENT_MAIN',
-      'CORRELATE_TERMINAL_PR_AND_WORK_CLAIM',
-      'VERIFY_REQUIRED_CHECKS_AND_POST_MERGE_EVIDENCE',
-      'PREPARE_BOUNDED_RELEASE_STATUS_RELEASED_EXCLUSIVE_FALSE',
-      'VERIFY_RELEASE_READBACK',
-    ]);
-    expect(learning.validations).toHaveLength(1);
-    expect(learning.validations[0]).toMatchObject({
-      id: 'POST_MERGE_WORK_CLAIM_RELEASE_V1-VALIDATION-001',
-      result: 'POSITIVE',
-    });
-
-    const current = evaluateSelfHealingLearningPromotion('POST_MERGE_WORK_CLAIM_RELEASE_V1');
-    expect(current).toEqual({
-      processId: 'POST_MERGE_WORK_CLAIM_RELEASE_V1',
-      positiveValidations: 1,
-      requiredPositiveValidations: 3,
-      remainingPositiveValidations: 2,
-      promotionEligible: false,
-      targetActionActivation: 'HELD',
-      requiresExplicitContractPromotion: true,
-    });
-
-    const held = evaluateRemediationEligibility({
-      findingClass: 'REPOSITORY_TERMINAL_WORK_CLAIM_STALE',
-      actionId: 'RELEASE_TERMINAL_WORK_CLAIM',
-      attemptsUsed: 0,
-      nowMs: 1_000,
-      killSwitchActive: false,
-      capabilityAuthorized: true,
-      verificationAvailable: true,
-      operationIdempotency: 'IDEMPOTENT',
-    });
-    expect(held).toMatchObject({ state: 'BLOCKED', reason: 'ACTION_HELD' });
-
-    const simulatedThreePositive = evaluateSelfHealingLearningPromotion(
-      'POST_MERGE_WORK_CLAIM_RELEASE_V1',
-      [
-        ...learning.validations,
-        {
-          ...learning.validations[0],
-          id: 'POST_MERGE_WORK_CLAIM_RELEASE_V1-VALIDATION-002',
-        },
-        {
-          ...learning.validations[0],
-          id: 'POST_MERGE_WORK_CLAIM_RELEASE_V1-VALIDATION-003',
-        },
-      ],
-    );
-    expect(simulatedThreePositive).toMatchObject({
-      positiveValidations: 3,
-      requiredPositiveValidations: 3,
-      remainingPositiveValidations: 0,
-      promotionEligible: true,
-      targetActionActivation: 'HELD',
-      requiresExplicitContractPromotion: true,
-    });
-    expect(getRemediationAction('RELEASE_TERMINAL_WORK_CLAIM').activation).toBe('HELD');
   });
 
   it('maps repository projection drift to one bounded PR-autofix action', () => {

@@ -21,8 +21,8 @@
   "branch": "agent/operations-self-healing-terminal-claim-learning-20260924",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SH-TERMINAL-WORK-CLAIM-RELEASE-LEARNING-20260924.json",
-    "src/platform/Supervisor/selfHealingContract.ts",
-    "tests/unit/selfHealingContract.test.ts"
+    "src/platform/Supervisor/selfHealingLearning.ts",
+    "tests/unit/selfHealingLearning.test.ts"
   ],
   "learningPattern": {
     "id": "POST_MERGE_WORK_CLAIM_RELEASE_V1",
@@ -40,11 +40,19 @@
     }
   },
   "invariants": [
+    "The productive self-healing remediation contract remains self-healing-contract/1.2.0 while this learning process has fewer than three distinct positive validations.",
     "No autonomous work-claim mutation while the target remediation action is HELD.",
     "Promotion requires at least three distinct positive validations.",
     "Promotion eligibility never self-enables the action; an explicit Human/CODEOWNER-merged contract change remains required.",
     "Release is bounded to status=released and exclusive=false for claims whose associated work is terminal and evidence-correlated.",
     "Ambiguous terminal identity, stale evidence, failed checks, unresolved production identity, ownership conflict or contradiction fails closed."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd",
+  "rootCauseFix": {
+    "observedFailureClass": "SELF_HEALING_CONTRACT_CONSUMER_VERSION_DRIFT",
+    "repair": "Separate learning evidence from the productive remediation contract until the 3/3 promotion gate is satisfied.",
+    "governanceFailureClass": "PR_V18_PRIORITY_METADATA_MISSING",
+    "governanceRepair": "Delegate deterministic metadata repair to the existing single PR-body reconciler; do not create a second writer."
+  }
 }
