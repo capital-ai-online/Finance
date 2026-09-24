@@ -6,10 +6,22 @@ const read = (path: string) => fs.readFileSync(path, 'utf8');
 describe('LF-02 authenticated landing profile projection', () => {
   it('keeps root public while projecting an established registered session', () => {
     const routes = read('src/app/routing/AppRoutes.tsx');
-    expect(routes).toContain("if (userSession?.type === 'registered')");
-    expect(routes).toContain('authenticatedProfile={{');
-    expect(routes).toContain('subscriptionTier: userSession.subscriptionTier');
-    expect(routes).toContain('<LandingPage onLoginNavigate={clearJustLoggedOut} />');
+    const rootStart = routes.indexOf("if (currentPath === '/')");
+    const loginStart = routes.indexOf("if (currentPath === '/login')", rootStart);
+    expect(rootStart).toBeGreaterThanOrEqual(0);
+    expect(loginStart).toBeGreaterThan(rootStart);
+
+    const rootRoute = routes.slice(rootStart, loginStart);
+    expect(rootRoute).toContain("if (userSession?.type === 'registered')");
+    expect(rootRoute).toContain('authenticatedProfile={{');
+    expect(rootRoute).toContain('subscriptionTier: userSession.subscriptionTier');
+    expect(rootRoute).toContain('onNavigate={navigatePublicRoute}');
+
+    const publicFallbackProps =
+      rootRoute.match(/return <LandingPage\s+([^>]+)\/>;/)?.[1] ?? '';
+    expect(publicFallbackProps).toContain('onLoginNavigate={clearJustLoggedOut}');
+    expect(publicFallbackProps).toContain('onNavigate={navigatePublicRoute}');
+    expect(publicFallbackProps).not.toContain('authenticatedProfile');
   });
 
   it('converges authenticated /login back to the canonical root', () => {
@@ -23,14 +35,20 @@ describe('LF-02 authenticated landing profile projection', () => {
     const landing = read('src/features/public/ui/LandingPage.tsx');
     const context = read('src/features/public/ui/LandingSessionContext.tsx');
     const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
+    const referenceApp = read('src/features/public/ui/frontend-port/ReferenceApp.tsx');
     const badge = read('src/features/public/ui/SubscriptionStatusBadge.tsx');
 
     expect(landing).toContain('<LandingSessionProvider profile={authenticatedProfile} onLogout={onLogout}>');
     expect(header).toContain('useLandingSessionProfile()');
     expect(header).toContain('useLandingSessionLogout()');
     expect(header).toContain('data-authenticated-sideboard-profile="true"');
-    expect(header).not.toContain('SubscriptionStatusBadge');
+    expect(header).toContain('SubscriptionStatusBadge');
+    expect(header).toContain('tier={authenticatedProfile.subscriptionTier} compact');
     expect(header).toContain("onNavigate?.('/profile')");
+    expect(landing).toContain('<ReferenceApp onNavigate={onNavigate} />');
+    expect(referenceApp).toContain('if (onNavigate)');
+    expect(referenceApp).toContain('onNavigate={navigate}');
+    expect(referenceApp).not.toContain("onNavigate={(path) => window.location.assign(path)}");
     expect(context).not.toContain('supabase');
     expect(header).not.toContain("authFetch('/api/stripe/user-subscription')");
     expect(badge).not.toContain('supabase');
@@ -43,5 +61,6 @@ describe('LF-02 authenticated landing profile projection', () => {
     expect(badge).toContain('/brand/subscriptions/enterprise.webp');
     expect(badge).toContain('/brand/subscriptions/founder.webp');
     expect(badge).toContain('FREE · ABONNEMENT');
+    expect(badge).toContain('compact = false');
   });
 });

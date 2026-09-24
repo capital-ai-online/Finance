@@ -7,6 +7,7 @@ interface LandingPageProps {
   onLoginNavigate?: () => void;
   onLogout?: () => void | Promise<void>;
   authenticatedProfile?: AuthenticatedLandingProfile | null;
+  onNavigate?: (path: string) => void;
 }
 
 /**
@@ -25,7 +26,7 @@ interface LandingPageProps {
  * Mobile remains the source presentation baseline. The Finance-owned responsive adapter activates
  * the website desktop canvas at >=1024px, with a 960–1023px browser desktop-site compatibility bridge, without changing the pinned FRONTEND component tree.
  */
-export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPageProps) {
+export function LandingPage({ authenticatedProfile = null, onLogout, onNavigate }: LandingPageProps) {
   return (
     <LandingSessionProvider profile={authenticatedProfile} onLogout={onLogout}>
       <section
@@ -39,7 +40,7 @@ export function LandingPage({ authenticatedProfile = null, onLogout }: LandingPa
       data-market-data-binding="verified-on-selection"
       data-landing-scorer-gate="FIN-LF-01"
     >
-        <ReferenceApp />
+        <ReferenceApp onNavigate={onNavigate} />
       </section>
     </LandingSessionProvider>
   );
