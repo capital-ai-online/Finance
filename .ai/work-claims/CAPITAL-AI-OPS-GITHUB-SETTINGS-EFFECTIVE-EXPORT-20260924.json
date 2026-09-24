@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -48,5 +48,11 @@
     "Targeted unit and workflow security checks pass on exact head.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no provider permission, settings, billing or deployment mutation is authorized by this claim."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no provider permission, settings, billing or deployment mutation is authorized by this claim.",
+  "releaseEvidence": {
+    "reason": "PR #1393 merged; the original branch claim reached its release condition.",
+    "pullRequest": 1393,
+    "mergeCommitSha": "d1d083437f8bb041870112580989a662f60ac0e1",
+    "mergedAt": "2026-09-24T09:03:16Z"
+  }
 }
