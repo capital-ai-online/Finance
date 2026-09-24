@@ -486,9 +486,9 @@ test('classifies exact TS2322 string-to-literal-union widening as blocked Self-H
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
     logText: [
-      'src/features/public/ui/runtime/MarketSentimentPresentation.tsx(42,7): error TS2322: Type \\'string | undefined\\' is not assignable to type \\'"down" | "neutral" | "up" | undefined\\'.',
-      'Type \\'string\\' is not assignable to type \\'"down" | "neutral" | "up" | undefined\\'.',
-    ].join('\\n'),
+      `src/features/public/ui/runtime/MarketSentimentPresentation.tsx(42,7): error TS2322: Type 'string | undefined' is not assignable to type '"down" | "neutral" | "up" | undefined'.`,
+      `Type 'string' is not assignable to type '"down" | "neutral" | "up" | undefined'.`,
+    ].join('\n'),
   });
 
   assert.equal(result.classification, 'TYPESCRIPT_LITERAL_UNION_DRIFT');
@@ -503,7 +503,7 @@ test('classifies exact TS2322 string-to-literal-union widening as blocked Self-H
 test('unrelated TypeScript compiler failures remain blocked as unknown', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',
-    logText: 'src/example.ts(1,1): error TS2345: Argument of type \\'number\\' is not assignable to parameter of type \\'string\\'.',
+    logText: `src/example.ts(1,1): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.`,
   });
 
   assert.equal(result.classification, 'UNKNOWN_FAILURE');
