@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-RELEASE-GATE-ARCHIVE-MIRROR-DRIFT-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-06",
+    "PVC-07"
+  ],
+  "priority": "P0",
+  "branchName": "operations/release-gate-archive-mirror-drift-20260924",
+  "baseBranch": "main",
+  "baseSha": "c06a907ab42bb118133951a27e77f154c8c4cba0",
+  "workItem": "Repair stale Release Version Gate mirror state and materialize the cadence-required strict next PATCH 0.6.2.",
+  "approvedScope": "Remove intentionally archived docs/API.md from current Release mutation; align Release contract/tests; materialize package.json and governed current mirrors to 0.6.2. Never reactivate archived API evidence.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-RELEASE-GATE-ARCHIVE-MIRROR-DRIFT-20260924.json",
+    "src/platform/Release/Services/releaseVersionGate.ts",
+    "tests/unit/releaseVersionGate.test.ts",
+    "tests/unit/deterministicVersionMaterialization.test.ts",
+    "src/platform/Release/README.md",
+    "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md",
+    "package.json",
+    "package-lock.json",
+    "metadata.json",
+    "docs/code-quality/CODE_QUALITY_STANDARDS.md",
+    "docs/ceo/EXECUTIVE_SUMMARY.md",
+    "index.html",
+    "README.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "CURRENT_MAIN c06a907ab42bb118133951a27e77f154c8c4cba0",
+    "PR #1363 MERGE_CADENCE_PATCH_V1 failure at mergeOrdinal=19",
+    "docs/architecture/LEGACY_DOCUMENTATION_CONSOLIDATION_2026-08-09.md"
+  ],
+  "exitEvidence": [
+    "Release Gate contains no current docs/API.md dependency.",
+    "Archived API snapshot remains untouched historical evidence.",
+    "Regression proves archive is outside mutable mirror set.",
+    "Strict next PATCH 0.6.2 is atomically materialized on this OPS branch.",
+    "Exact-head required checks pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "recorrelatedAt": "2026-09-24"
+}
