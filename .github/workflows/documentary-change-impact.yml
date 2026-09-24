@@ -186,7 +186,7 @@ jobs:
             echo "- Trigger model: `MAIN_PUSH_EVENT_DRIVEN`"
             echo "- Stale-main policy: `ABORT_AND_RESTART_ON_NEXT_MAIN_PUSH`"
             echo "- Concurrency: `documentary-change-impact-main / cancel-in-progress=true`"
-            echo "- Branch collision: `IDEMPOTENT_REUSE`"
+            echo "- Branch collision: `IDEMPOTENT_REUSE_AFTER_EXACT_TREE_AND_CLAIM_VERIFICATION`"
             echo
             echo "WP-06 evidence is subordinate to SH-02 and does not create Finding/Action/Budget authority. AUTO_SYNC may enter only the validated isolated-branch lane. Semantic maintenance remains bound to Supervisor -> Platform Director APPROVED -> Agent IAM."
           } >> "$GITHUB_STEP_SUMMARY"
@@ -253,13 +253,138 @@ jobs:
             }
 
             const branch = `agent/documentary-autosync-${sourceSha.slice(0, 12)}`;
+            const claimId = `DOCUMENTARY-AUTOSYNC-${sourceSha.slice(0, 12).toUpperCase()}`;
+            const claimPath = `.ai/work-claims/${claimId}.json`;
+            const expectedChangedPaths = [...plan.patches.map(patch => patch.path), claimPath].sort();
+            const sameStrings = (left, right) =>
+              JSON.stringify([...(Array.isArray(left) ? left : [])].map(String).sort()) ===
+              JSON.stringify([...(Array.isArray(right) ? right : [])].map(String).sort());
+
+            let existingRef = null;
             try {
-              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
-              core.notice(`AUTO_SYNC branch already exists: ${branch}; idempotent reuse.`);
-              core.setOutput('branch', branch);
-              return;
+              const { data: ref } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+              existingRef = ref;
             } catch (error) {
               if (error.status !== 404) throw error;
+            }
+
+            if (existingRef) {
+              const existingSha = String(existingRef.object?.sha || '').toLowerCase();
+              if (!/^[0-9a-f]{40}$/.test(existingSha)) {
+                throw new Error('Existing AUTO_SYNC branch resolved to an invalid commit SHA.');
+              }
+
+              const { data: existingCommit } = await github.rest.git.getCommit({
+                owner,
+                repo,
+                commit_sha: existingSha,
+              });
+              const parents = Array.isArray(existingCommit.parents)
+                ? existingCommit.parents.map(parent => String(parent.sha || '').toLowerCase())
+                : [];
+              if (parents.length !== 1 || parents[0] !== sourceSha) {
+                throw new Error('Existing AUTO_SYNC branch is not a single commit over exact source SHA.');
+              }
+
+              const { data: comparison } = await github.request(
+                'GET /repos/{owner}/{repo}/compare/{basehead}',
+                { owner, repo, basehead: `${sourceSha}...${existingSha}` },
+              );
+              if (
+                comparison.status !== 'ahead' ||
+                Number(comparison.ahead_by) !== 1 ||
+                Number(comparison.behind_by) !== 0
+              ) {
+                throw new Error('Existing AUTO_SYNC branch is not an exact one-commit descendant of CURRENT_MAIN.');
+              }
+              const observedChangedPaths = (comparison.files || [])
+                .map(file => String(file.filename || ''))
+                .filter(Boolean)
+                .sort();
+              if (!sameStrings(observedChangedPaths, expectedChangedPaths)) {
+                throw new Error(
+                  `Existing AUTO_SYNC branch changed-file set does not match the fresh plan: expected=${expectedChangedPaths.join(',')} observed=${observedChangedPaths.join(',')}`,
+                );
+              }
+
+              for (const patch of plan.patches) {
+                if (!allowed.has(patch.path)) {
+                  throw new Error(`AUTO_SYNC path is not allowlisted: ${patch.path}`);
+                }
+                const { data: sourceFile } = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: patch.path,
+                  ref: sourceSha,
+                });
+                if (Array.isArray(sourceFile) || sourceFile.type !== 'file' || !sourceFile.content) {
+                  throw new Error(`AUTO_SYNC source is not a regular repository file: ${patch.path}`);
+                }
+                const sourceContent = Buffer.from(
+                  sourceFile.content,
+                  sourceFile.encoding || 'base64',
+                ).toString('utf8');
+                if (sha256(sourceContent) !== patch.previousSha256) {
+                  throw new Error(`Source hash drift: ${patch.path}`);
+                }
+                if (sha256(patch.proposedContent) !== patch.proposedSha256) {
+                  throw new Error(`Proposed hash mismatch: ${patch.path}`);
+                }
+
+                const { data: branchFile } = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: patch.path,
+                  ref: existingSha,
+                });
+                if (Array.isArray(branchFile) || branchFile.type !== 'file' || !branchFile.content) {
+                  throw new Error(`Existing AUTO_SYNC target is not a regular repository file: ${patch.path}`);
+                }
+                const branchContent = Buffer.from(
+                  branchFile.content,
+                  branchFile.encoding || 'base64',
+                ).toString('utf8');
+                if (sha256(branchContent) !== patch.proposedSha256) {
+                  throw new Error(`Existing AUTO_SYNC branch patch content mismatch: ${patch.path}`);
+                }
+              }
+
+              const { data: claimFile } = await github.rest.repos.getContent({
+                owner,
+                repo,
+                path: claimPath,
+                ref: existingSha,
+              });
+              if (Array.isArray(claimFile) || claimFile.type !== 'file' || !claimFile.content) {
+                throw new Error('Existing AUTO_SYNC branch is missing its exact work claim.');
+              }
+              const existingClaim = JSON.parse(
+                Buffer.from(claimFile.content, claimFile.encoding || 'base64').toString('utf8'),
+              );
+              const claimMatches =
+                existingClaim.claimId === claimId &&
+                existingClaim.status === 'active' &&
+                existingClaim.exclusive === true &&
+                existingClaim.branch === branch &&
+                existingClaim.projectId === 'CAPITAL-AI-DOC' &&
+                existingClaim.projectFolder === 'docs/projects/documentary/' &&
+                String(existingClaim.baseSha || '').toLowerCase() === sourceSha &&
+                sameStrings(existingClaim.claimedPaths, expectedChangedPaths) &&
+                sameStrings(existingClaim.semanticPatchCandidates, handoff.semanticPatchPaths || []) &&
+                sameStrings(existingClaim.reviewRequiredPaths, handoff.reviewRequiredPaths || []) &&
+                existingClaim.maintenanceHandoff?.version === handoff.handoffVersion &&
+                existingClaim.maintenanceHandoff?.state === handoff.state &&
+                existingClaim.maintenanceHandoff?.correlationId === handoff.correlationId;
+              if (!claimMatches) {
+                throw new Error('Existing AUTO_SYNC branch claim mismatch against the fresh maintenance handoff.');
+              }
+
+              core.notice(
+                `AUTO_SYNC branch already exists and matches the fresh plan: ${branch}; verified idempotent reuse.`,
+              );
+              core.setOutput('branch', branch);
+              core.setOutput('commit', existingSha);
+              return;
             }
 
             const { data: sourceCommit } = await github.rest.git.getCommit({ owner, repo, commit_sha: sourceSha });
@@ -283,8 +408,6 @@ jobs:
               claimedPaths.push(patch.path);
             }
 
-            const claimId = `DOCUMENTARY-AUTOSYNC-${sourceSha.slice(0, 12).toUpperCase()}`;
-            const claimPath = `.ai/work-claims/${claimId}.json`;
             const claim = {
               schemaVersion: '1.0.0',
               claimId,
