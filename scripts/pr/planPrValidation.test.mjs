@@ -8,6 +8,7 @@ import { describe, it } from 'node:test';
 import { classifyChangedFiles } from './classifyPrScope.mjs';
 import {
   findRuntimeConsumedPaths,
+  findRuntimeConsumerFiles,
   parseChangedFilesJson,
   planChangedFiles,
 } from './planPrValidation.mjs';
@@ -53,7 +54,9 @@ describe('planChangedFiles', () => {
       execFileSync('git', ['commit', '-m', 'base'], { cwd: repository, stdio: 'ignore' });
       const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
 
+      const runtimeConsumerFiles = findRuntimeConsumerFiles([artifact], 'HEAD', { cwd: repository });
       const runtimeConsumedPaths = findRuntimeConsumedPaths([artifact], 'HEAD', { cwd: repository });
+      assert.deepEqual(runtimeConsumerFiles, { [artifact]: ['src/consumer.ts'] });
       assert.deepEqual(runtimeConsumedPaths, [artifact]);
       assert.equal(planChangedFiles([artifact], { runtimeConsumedPaths }).validation_profile, 'full');
       assert.equal(classifyChangedFiles([artifact], { runtimeConsumedPaths }).class, 'C');
@@ -106,6 +109,47 @@ describe('planChangedFiles', () => {
     assert.equal(plan.codeql_mode, 'targeted');
     assert.equal(plan.codeql_languages, 'javascript-typescript');
     assert.equal(plan.automated_code_review_mode, 'targeted');
+  });
+
+  it('uses changed Vitest for ordinary operations tooling instead of the full suite', () => {
+    const plan = planChangedFiles(['scripts/operations/renderManagementAdapter.mjs']);
+    assert.equal(plan.validation_profile, 'focused');
+    assert.equal(plan.vitest_mode, 'changed');
+    assert.equal(plan.codeql_mode, 'targeted');
+    assert.equal(plan.automated_code_review_mode, 'targeted');
+    assert.match(plan.reason, /ordinary-operations-tooling/);
+  });
+
+  it('runs only direct Vitest consumers for test-consumed documentary snapshots', () => {
+    const path = 'docs/frontend/upstream-source/SvenKulessa-FRONTEND/manifest.json';
+    const plan = planChangedFiles([path], {
+      runtimeConsumedPaths: [path],
+      runtimeConsumerFiles: {
+        [path]: ['tests/unit/frontendExtendedWebdesign.test.ts'],
+      },
+    });
+    assert.equal(plan.validation_profile, 'focused');
+    assert.equal(plan.vitest_mode, 'changed');
+    assert.equal(plan.codeql_mode, 'none');
+    assert.equal(plan.automated_code_review_mode, 'none');
+    assert.deepEqual(
+      JSON.parse(plan.direct_vitest_tests_json),
+      ['tests/unit/frontendExtendedWebdesign.test.ts'],
+    );
+    assert.match(plan.reason, /test-consumed-documentary-artifact/);
+  });
+
+  it('keeps documentary artifacts FULL when any consumer is runtime code', () => {
+    const path = 'docs/contracts/runtime-policy.md';
+    const plan = planChangedFiles([path], {
+      runtimeConsumedPaths: [path],
+      runtimeConsumerFiles: {
+        [path]: ['src/consumer.ts', 'tests/unit/consumer.test.ts'],
+      },
+    });
+    assert.equal(plan.validation_profile, 'full');
+    assert.equal(plan.vitest_mode, 'full');
+    assert.equal(plan.codeql_mode, 'full');
   });
 
   it('forces FULL tests/review for security-sensitive source', () => {

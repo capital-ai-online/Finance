@@ -18,20 +18,34 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import {
   findRuntimeConsumedPaths,
+  findRuntimeConsumerFiles,
   isDocsPath,
   normalizePath,
 } from './runtimeConsumedArtifacts.mjs';
 
-export { findRuntimeConsumedPaths, isDocsPath, normalizePath };
+export { findRuntimeConsumedPaths, findRuntimeConsumerFiles, isDocsPath, normalizePath };
 
 export function isWorkflowPath(filePath) {
   const p = normalizePath(filePath);
   return p.startsWith('.github/workflows/');
 }
 
+export function isOperationsReleaseControlPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('scripts/deployment/')
+    || (p.startsWith('scripts/operations/')
+      && /(^|\/)(mergeCadence|[^/]*(deploy|release|production|cadence)[^/]*)\.(mjs|cjs|js|ts)$/i.test(p));
+}
+
+export function isOrdinaryOperationsToolingPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('scripts/operations/') && !isOperationsReleaseControlPath(p);
+}
+
 export function isRuntimeDeployPath(filePath) {
   const p = normalizePath(filePath);
   if (
+    isOperationsReleaseControlPath(p) ||
     p === 'Dockerfile' ||
     p === '.dockerignore' ||
     p === 'package.json' ||
@@ -58,13 +72,20 @@ export function isKnownNonProductionValidationPath(filePath) {
   if (p.startsWith('tests/')) return true;
   if (p.startsWith('scripts/pr/')) return true;
   if (p.startsWith('scripts/governance/')) return true;
+  if (isOrdinaryOperationsToolingPath(p)) return true;
   if (p.startsWith('.github/') && !isRuntimeDeployPath(p)) return true;
   return false;
 }
 
 
 
-/** @param {string[]} files @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[] }} [options] */
+export function isTestConsumerPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('tests/')
+    || /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(p);
+}
+
+/** @param {string[]} files @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[], runtimeConsumerFiles?: Record<string, string[]> }} [options] */
 export function classifyChangedFiles(files, options = {}) {
   const integrity = true;
 
@@ -72,19 +93,26 @@ export function classifyChangedFiles(files, options = {}) {
     return {
       class: 'R', production_impact: true, node: true, lint: true, unit: true,
       build: true, audit: true, predeploy: true, docker: true, docker_image: true,
-      workflow_security: true, integrity, npm_advisory: true, consumer_escalation: false,
+      workflow_security: true, integrity, npm_advisory: true, consumer_escalation: false, consumer_test_only: false,
     };
   }
 
   const normalized = (files || []).map(normalizePath).filter(Boolean);
   const runtimeConsumed = new Set((options.runtimeConsumedPaths || []).map(normalizePath));
   const consumerEscalation = normalized.some((file) => runtimeConsumed.has(file));
+  const runtimeConsumerFiles = Object.values(options.runtimeConsumerFiles || {})
+    .flat()
+    .map(normalizePath)
+    .filter(Boolean);
+  const consumerTestOnly = consumerEscalation
+    && runtimeConsumerFiles.length > 0
+    && runtimeConsumerFiles.every(isTestConsumerPath);
 
   if (normalized.length === 0) {
     return {
       class: 'D', production_impact: false, node: false, lint: false, unit: false,
       build: false, audit: false, predeploy: false, docker: false, docker_image: false,
-      workflow_security: false, integrity, npm_advisory: false, consumer_escalation: false,
+      workflow_security: false, integrity, npm_advisory: false, consumer_escalation: false, consumer_test_only: false,
     };
   }
 
@@ -139,7 +167,7 @@ export function classifyChangedFiles(files, options = {}) {
   }
 
   const onlyNonProductionValidation = normalized.every(isKnownNonProductionValidationPath);
-  if (klass === 'C' && onlyNonProductionValidation && !hasRuntime && !consumerEscalation) {
+  if (klass === 'C' && onlyNonProductionValidation && !hasRuntime && (!consumerEscalation || consumerTestOnly)) {
     productionImpact = false;
     build = false;
     predeploy = false;
@@ -177,6 +205,7 @@ export function classifyChangedFiles(files, options = {}) {
     hasAppOrTest,
     hasScriptOnly,
     consumer_escalation: consumerEscalation,
+    consumer_test_only: consumerTestOnly,
   };
 }
 
@@ -205,6 +234,7 @@ export function writeGithubOutput(scope) {
     `integrity=${scope.integrity}`,
     `npm_advisory=${scope.npm_advisory}`,
     `consumer_escalation=${scope.consumer_escalation === true}`,
+    `consumer_test_only=${scope.consumer_test_only === true}`,
     `full=${scope.node && scope.unit && scope.build}`,
   ];
   const text = `${lines.join('\n')}\n`;
@@ -217,16 +247,18 @@ function main() {
 
   let files = [];
   let runtimeConsumedPaths = [];
+  let runtimeConsumerFiles = {};
   if (!forceFull) {
     const base = process.env.PR_BASE_SHA || process.env.BASE_SHA || '';
     const head = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
     if (base) files = listChangedFiles(base, head);
     else if (process.env.CHANGED_FILES) files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
-    runtimeConsumedPaths = findRuntimeConsumedPaths(files, head);
+    runtimeConsumerFiles = findRuntimeConsumerFiles(files, head);
+    runtimeConsumedPaths = Object.keys(runtimeConsumerFiles).sort();
   }
 
-  const scope = classifyChangedFiles(files, { forceFull, runtimeConsumedPaths });
-  console.log(`[classifyPrScope] class=${scope.class} production_impact=${scope.production_impact} consumer_escalation=${scope.consumer_escalation} files=${forceFull ? '(force-full)' : files.length}`);
+  const scope = classifyChangedFiles(files, { forceFull, runtimeConsumedPaths, runtimeConsumerFiles });
+  console.log(`[classifyPrScope] class=${scope.class} production_impact=${scope.production_impact} consumer_escalation=${scope.consumer_escalation} consumer_test_only=${scope.consumer_test_only} files=${forceFull ? '(force-full)' : files.length}`);
   if (runtimeConsumedPaths.length > 0) console.log(`[classifyPrScope] runtime-consumed changed artifacts: ${runtimeConsumedPaths.join(', ')}`);
   console.log(JSON.stringify(scope, null, 2));
   writeGithubOutput(scope);
