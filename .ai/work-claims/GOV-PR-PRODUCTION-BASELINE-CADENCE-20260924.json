@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-PRODUCTION-BASELINE-CADENCE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Converge the canonical PR Decision Evidence Production Baseline gate with the Human-merged 5/10 cadence semantics so verified DEPLOYMENT_QUEUED ancestry passes without weakening true production-drift blocking.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "sourceIssue": 1350,
+  "startedAt": "2026-09-24T02:44:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "lastSyncedMainSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "branch": "governance/pr-production-baseline-cadence-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-PRODUCTION-BASELINE-CADENCE-20260924.json",
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs"
+  ],
+  "dependencies": [
+    "Human-merged cadence authority in /AGENTS.md@CURRENT_MAIN",
+    "Canonical scripts/operations/mergeCadence.mjs shared cadence semantics"
+  ],
+  "exitEvidence": [
+    "Exact Production == CURRENT_MAIN remains PASS.",
+    "Healthy canonical ancestor Production below a due deployment boundary passes through shared cadence semantics as DEPLOYMENT_QUEUED.",
+    "DEPLOYMENT_DUE, unhealthy, wrong repository, divergent or unverifiable Production remains BLOCKED.",
+    "Regression coverage proves queued-lag PASS and true-drift BLOCKED.",
+    "No second cadence controller or PR-body writer is introduced."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
