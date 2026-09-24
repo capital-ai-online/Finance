@@ -7,7 +7,7 @@
 **Frontend role:** presentation/recovery consumer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
-**Correlation baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`  
+**Correlation baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`  
 **Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.2.0`
 
 ## 1. Goal
@@ -242,6 +242,66 @@ PR terminal state is also a hard generation boundary. PR #1380 demonstrated the 
 This rule creates no new remediation action, finding namespace, writer, scheduler or workflow. It does not activate SH-02.12. Project/PVC ownership, protected provider boundaries, Security/Compliance/QM independence and the current merge-authority contract remain unchanged.
 
 Implementation planning and observed evidence are captured in `docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md`. PRs #1377/#1378/#1380 are terminal merged evidence and no longer active writers. Closed/unmerged #1379 remains historical evidence only.
+
+### 9.2 Post-Merge Roadmap closure correlation — SH-02.13
+
+After a Human/CODEOWNER merge, Roadmap/work-package closure is part of convergence rather than a separate lifecycle. The existing post-merge path must re-read exact `CURRENT_MAIN`, prove the merged commit is contained by that generation, resolve canonical Project/Owner/PVC and bind the merge to the canonical Roadmap/work-package identity before any completion state is derived.
+
+Completion is evidence-bound:
+
+- `DONE_MAIN / TERMINAL` requires every explicit exit criterion of the canonical work package to be satisfied by the merged/current-main generation;
+- `MERGED_MAIN / EVIDENCE_GATE` is used when repository integration is complete but an explicit downstream Production/runtime/Security/QM/Compliance/domain criterion remains open;
+- `PARTIAL_MAIN / ACTIVE` preserves a package whose merged PR completed only a bounded child slice;
+- missing/ambiguous identity, stale generation, contradictory Owner/PVC or incomplete evidence fails closed as `BLOCKED_CORRELATION`.
+
+The immediate public/live Roadmap state may be derived read-only from the verified CURRENT_MAIN generation. Persistent changes to canonical Roadmap/work-package Markdown or associated work-claim state remain repository mutations and therefore use the existing branch-only repository-projection reconciliation lane; they never write directly to `main` and remain Human/CODEOWNER-merge gated.
+
+The closure generation is idempotent on `(mergedPrNumber, mergeCommitSha, workPackageId, exitEvidenceDigest)`. Replaying the same fingerprint is a no-op. A metadata-only Roadmap closure synchronization PR cannot recursively create a productive work item or trigger another closure mutation for the same fingerprint.
+
+This capability must reuse current Post-Merge Production Correlation, Project/Owner/PVC resolution, `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, work-claim/overlap semantics and the exact-CURRENT_MAIN live Roadmap projection. It creates no second Roadmap registry, scheduler, queue, Supervisor, writer family, merge authority or direct-main exception. Foreign-owner closure findings are handed to the canonical owner rather than mutated by OPS.
+
+Detailed planning and acceptance evidence: `docs/projects/operations/work-packages/OPS_SH02_POST_MERGE_ROADMAP_CLOSURE_2026-09-24.md`.
+
+#### PR evidence/bootstrap projection drift
+
+Post-merge and pre-merge convergence share one invariant: a missing or stale
+machine-readable PR projection is not evidence that the underlying build/test
+failed. The Self-Healing layer must first classify the failing gate by evidence
+source and owner.
+
+For the observed PR #1403 failure, exact-head `build-and-test`, GitGuardian,
+license and container gates were successful while PR Governance failed because
+the v1.8 PR body had an allowlisted marker-free Production-Baseline `NOT_RUN`
+sentinel. The canonical Production preflight produced a valid baseline, but the
+Governance structure pre-check rejected the marker-free state before the
+existing baseline specialist could materialize it.
+
+This drift class is handled as follows:
+
+1. distinguish implementation/test failure from Governance projection failure;
+2. preserve the existing single PR Decision Evidence Reconciler as the only
+   mutable PR-body convergence chain;
+3. permit deterministic repair only for an already allowlisted, exact structural
+   state; arbitrary marker-free content remains fail-closed;
+4. route the productive repair to the canonical foreign Owner when the defect
+   belongs to GOV rather than OPS;
+5. after the owner-correct repair merges, re-read `CURRENT_MAIN`, rebind the
+   affected PR exact head, and require fresh Governance evidence before closure;
+6. never mark a Roadmap/work package complete from a green build alone when its
+   required Governance/evidence projection is still blocked.
+
+The corresponding owner-correct GOV repair is tracked by Issue #1405 and its
+bounded work package. SH-02.13 consumes the resulting verified evidence; it does
+not duplicate the GOV PR-body writer or baseline repairer.
+
+A second independent validation failure observed while repairing this chain was
+`CURRENT_STATE_PROJECTION_BASELINE_STALE` on
+`docs/projects/governance/ROADMAP.md`: the projection still referenced an older
+main generation. When an owner-correct slice already touches such a current-state
+projection, the same bounded convergence must refresh its baseline to the exact
+`CURRENT_MAIN` before declaring validation success. This is projection
+reconciliation, not a reason to suppress `governanceControlPlane.test.ts` or
+relax freshness validation.
 
 ## 10. Rollout
 

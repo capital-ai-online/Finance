@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@58ac24731bf597e9356788d0293d6c733337b364`
+**Baseline:** `main@12f002fff4af85071a224a49a30e3bce90831c3c`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-24 — cadence activation is merged through PR #1336; ordinal-10 PR #1349 materialized platform version 0.6.1; fresh Owner direction adds the exact-CURRENT_MAIN live Roadmap state projection without activating held SH-2/SH-3 actions.
+**Reconciliation:** 2026-09-24 — fresh CURRENT_MAIN correlation includes the exact-CURRENT_MAIN live Roadmap projection and Owner-directed SH-02.13 planning for evidence-bound post-merge work-package closure; held SH-2/SH-3 actions remain unchanged.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -117,6 +117,25 @@ Still not present and therefore not claimed as active:
 - no new repairer, writer or protected provider capability.
 
 Any later SH-02.12 execution capability still requires fresh CURRENT_MAIN + canonical Owner/PVC + reproducible repository evidence, bounded branch-only remediation, exact-head verification, protected-mutation exclusion and Human/CODEOWNER merge authority.
+
+### SH-02.13 — Post-Merge Roadmap Closure Correlation
+
+**State:** `PLANNED / OWNER-DIRECTED / IMPLEMENTATION_NOT_STARTED`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-18`  
+**Source package:** `work-packages/OPS_SH02_POST_MERGE_ROADMAP_CLOSURE_2026-09-24.md`
+
+After each Human/CODEOWNER merge, the existing post-merge convergence path shall
+re-read exact `CURRENT_MAIN`, bind the merged PR to its canonical Roadmap/work
+package and verify the package exit evidence. Fully proven packages become
+`DONE_MAIN / TERMINAL`; partial or downstream-evidence-gated packages remain
+open. The live Roadmap may project the verified state immediately, while any
+persistent Markdown/work-claim terminalization remains branch-only and requires
+ordinary Human/CODEOWNER merge. No second Roadmap writer, scheduler, registry or
+direct-main mutation path is introduced.
+
+**Exit:** deterministic tests cover full/partial/ambiguous/foreign/evidence-gated
+closure, idempotent replay and recursion prevention; persistent reconciliation
+reuses the canonical repository-projection lane and remains Human-merge gated.
 
 ### OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01 — Supabase Auth control recovery
 
