@@ -71,6 +71,11 @@ const EXACT_SELF_HEALING_NEXT_SLICE_TEST =
 const EXACT_SELF_HEALING_NEXT_SLICE_LITERAL =
   /expected[^\n]*to contain '\*\*Next functional slice:\*\* \`SH-02\.\d+[A-Z]?\`'/i;
 
+const PR_GOVERNANCE_READY_EVENT_SIGNATURE = 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1';
+const EXACT_PR_GOVERNANCE_READY_EVENT_TEST =
+  /FAIL\s+tests\/unit\/prReadyForReviewPipelineGate\.test\.ts\s*>\s*PR Draft -> Ready pipeline gate\s*>\s*runs governance only for non-draft pull requests including ready_for_review/i;
+const EXACT_PR_GOVERNANCE_READY_EVENT_STALE_EXPECTATION =
+  /types: \[opened, reopened, synchronize, ready_for_review, edited\]/i;
 const TEMPLATE_DELEGATION_PATTERNS = [
   /verwendet keinen unterstützten PR-Vorlagenmarker/i,
   /enthält nicht alle Pflichtabschnitte der kanonischen Vorlage:/i,
@@ -256,6 +261,44 @@ export function classifyPrAutofixFailure(
     }
   }
 
+  if (
+    source === '.github/workflows/ci.yml' &&
+    EXACT_PR_GOVERNANCE_READY_EVENT_TEST.test(log) &&
+    EXACT_PR_GOVERNANCE_READY_EVENT_STALE_EXPECTATION.test(log)
+  ) {
+    const failureSignature = PR_GOVERNANCE_READY_EVENT_SIGNATURE;
+    if (failureSignature === String(previousAutofixSignature || '').trim()) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX,
+        reason: 'same-autofix-signature-repeated-on-autofix-head',
+        failureSignature,
+      });
+    }
+
+    const repair = resolveRegisteredPrAutofixRepair(
+      { sourceWorkflow: source, signature: failureSignature, evidenceText: log },
+      registry,
+    );
+    if (!repair.registered) {
+      return result({
+        classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+        decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+        reason: repair.reason,
+        failureSignature,
+      });
+    }
+
+    return result({
+      classification: 'DETERMINISTIC_TEST_EXPECTATION_DRIFT',
+      decision: PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR,
+      reason: repair.reason,
+      failureSignature,
+      repairerId: repair.repairerId,
+      repairerPath: repair.repairerPath,
+      allowedPaths: repair.allowedPaths,
+    });
+  }
   if (
     source === '.github/workflows/ci.yml' &&
     EXACT_SELF_HEALING_NEXT_SLICE_TEST.test(log) &&
