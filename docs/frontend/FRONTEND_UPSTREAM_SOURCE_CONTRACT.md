@@ -134,5 +134,5 @@ Before productive Price-Alert promotion, the applicable owner must provide one c
 5. idempotent trigger/delivery behavior and explicit lifecycle;
 6. read/create/update/disable operations required by the FE presentation.
 
-Until that contract is Human/CODEOWNER merged, the new upstream Price Alert modal/toast/context remains unmounted from productive runtime. Frontend may prepare presentation adapters, but it must not invent persistence, price truth, trigger state or sentiment/scoring authority.
+Handover correlation: `FE-PRICE-ALERT-BACKEND-HANDOVER-20260924`.\n\nUntil that contract is Human/CODEOWNER merged, the new upstream Price Alert modal/toast/context remains unmounted from productive runtime. Frontend may prepare presentation adapters, but it must not invent persistence, price truth, trigger state or sentiment/scoring authority.
 
