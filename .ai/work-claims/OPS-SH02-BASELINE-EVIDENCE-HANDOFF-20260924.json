@@ -15,7 +15,7 @@
   "priority": "P1",
   "branchName": "operations/sh02-baseline-evidence-handoff-20260924",
   "baseBranch": "main",
-  "baseSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "baseSha": "46a3339c3447470cfe2ee741960023643997505e",
   "workItem": "Harden the existing SH-02 Current-State Baseline Autofix failure-evidence handoff for Issue #1357 without creating a second writer or controller.",
   "approvedScope": "Use stable completed-run step metadata plus trusted repository freshness reproduction; preserve exact docs/projects current-state path allowlist, bounded mutation, exact-head revalidation and Human/CODEOWNER merge authority.",
   "claimedPaths": [
@@ -30,13 +30,15 @@
     "scripts/pr/classifyPrAutofixFailure.test.mjs",
     "docs/projects/operations/work-packages/OPS_SH02_BASELINE_EVIDENCE_HANDOFF_01_2026-09-24.md",
     "docs/projects/operations/evidence/SH_02_BASELINE_EVIDENCE_HANDOFF_2026-09-24.md",
-    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md"
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "tests/unit/ciCostControl.test.ts"
   ],
   "dependencies": [
     "/AGENTS.md@CURRENT_MAIN",
     "Issue #1357 READY_FOR_PROJECT_EXECUTION",
     "Existing RECONCILE_REPOSITORY_PROJECTION SH-1 action",
-    "Existing Current-State Baseline Autofix writer"
+    "Existing Current-State Baseline Autofix writer",
+    "CURRENT_MAIN 46a3339c3447470cfe2ee741960023643997505e after PR #1356 merge"
   ],
   "exitEvidence": [
     "Repository-evidence detector regression suite passes.",
