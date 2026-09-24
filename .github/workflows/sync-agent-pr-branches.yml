@@ -132,7 +132,28 @@ jobs:
             # PR-native events are always exact-PR transitions.
             prs="$(pr_snapshot "$EVENT_PR_NUMBER" | jq -c '[.]')"
           elif [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -n "${DISPATCH_PR_NUMBER:-}" ]; then
-            if ! printf '%s' "$DISPATCH_PR_NUMBER" | grep -Eq '^[1-9][0-9]*
+            if ! printf '%s' "$DISPATCH_PR_NUMBER" | grep -Eq '^[1-9][0-9]*$'; then
+              echo "workflow_dispatch pr_number muss eine positive PR-Nummer sein." >&2
+              exit 1
+            fi
+            prs="$(pr_snapshot "$DISPATCH_PR_NUMBER" | jq -c '[.]')"
+          else
+            prs="$(gh api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --slurp \
+              | jq -c '[.[][] | {
+                  number: .number,
+                  headRefName: .head.ref,
+                  headRefOid: .head.sha,
+                  headRepositoryFullName: (.head.repo.full_name // ""),
+                  baseRefName: .base.ref,
+                  isCrossRepository: ((.head.repo.full_name // "") != (.base.repo.full_name // "")),
+                  isDraft: (.draft // false),
+                  state: ((.state // "") | ascii_upcase),
+                  author: { login: (.user.login // "") },
+                  authorAssociation: (.author_association // ""),
+                  title: (.title // ""),
+                  labels: [(.labels // [])[] | .name]
+                }]')"
+          fi
 
           sequential_lane='false'
           if [ "$EVENT_NAME" = 'workflow_run' ] || { [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -z "${DISPATCH_PR_NUMBER:-}" ]; }; then
@@ -262,195 +283,6 @@ jobs:
                [ "$live_head_repo" != "$REPO" ] || [ "$live_cross" = 'true' ] || \
                [ "$(echo "$live_trust" | jq -r '.allowed')" != 'true' ] || [ "$live_trust_key" != "$trust_key" ] || \
                [ "$live_generation" != "$generation" ]; then
-              echo "PR #$number ($head): Continuation Generation drifted before mutation; expected=$generation observed=$live_generation. Fail-closed." >&2
-              exit 1
-            fi
-
-            lineage_status="$(gh api "repos/$REPO/compare/$current_main_sha...$head_sha" --jq '.status')"
-            if [ "$lineage_status" = 'ahead' ] || [ "$lineage_status" = 'identical' ]; then
-              echo "PR #$number ($head): generation=$generation enthaelt CURRENT_MAIN bereits; kein Branch-Write erforderlich."
-              [ "$sequential_lane" = 'true' ] && break
-              continue
-            fi
-
-            if [ "$EVENT_NAME" = 'workflow_run' ]; then
-              echo "Post-Korrelation: PR #$number ($head) ist der naechste eligible FIFO-PR; generation=$generation wird atomar synchronisiert."
-            fi
-            if gh api --method PUT \
-              -H 'Accept: application/vnd.github+json' \
-              "repos/$REPO/pulls/$number/update-branch" \
-              -f "expected_head_sha=$head_sha" >/dev/null 2>err.log; then
-              echo "PR #$number ($head): Update-Branch angestossen."
-              if [ "$sequential_lane" = 'true' ]; then
-                rm -f err.log
-                break
-              fi
-            elif grep -q '"status": *"422"' err.log 2>/dev/null || grep -qi '422' err.log 2>/dev/null; then
-              # 422 is ambiguous: accept it only after exact CURRENT_MAIN ancestry readback.
-              after_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
-              after_head_sha="$(gh pr view "$number" --repo "$REPO" --json headRefOid --jq '.headRefOid')"
-              after_lineage='unknown'
-              if [ "$after_main_sha" = "$current_main_sha" ]; then
-                after_lineage="$(gh api "repos/$REPO/compare/$current_main_sha...$after_head_sha" --jq '.status')"
-              fi
-              if [ "$after_main_sha" = "$current_main_sha" ] && { [ "$after_lineage" = 'ahead' ] || [ "$after_lineage" = 'identical' ]; }; then
-                echo "PR #$number ($head): 422, aber Readback beweist Konvergenz: main=$current_main_sha head=$after_head_sha lineage=$after_lineage."
-                if [ "$sequential_lane" = 'true' ]; then
-                  rm -f err.log
-                  break
-                fi
-              else
-                echo "PR #$number ($head): 422 ohne beweisbare Konvergenz; main=$after_main_sha head=$after_head_sha lineage=$after_lineage. Fail-closed." >&2
-                cat err.log
-                rm -f err.log
-                exit 1
-              fi
-            elif grep -qi "Updating a stacked PR's branch via this endpoint is not supported" err.log 2>/dev/null \
-              && grep -qi '403' err.log 2>/dev/null; then
-              # GitHub intentionally refuses update-branch while the PR is still represented as a stack.
-              # This is not a permission failure and must not masquerade as a broken baseline. We also do
-              # not invent a second merge/rebase path here: ADR-0036 remains the final current-main gate.
-              echo "PR #$number ($head): Stacked PR erkannt; GitHub update-branch ist fuer diesen Zustand nicht unterstuetzt (403). Kein Auto-Sync ausgefuehrt; current-main ancestry bleibt vor Merge durch die bestehende PR-Governance fail-closed erzwungen."
-              if [ "$sequential_lane" = 'true' ]; then
-                rm -f err.log
-                echo "Sequentielle Korrelation stoppt fail-closed beim ausgewaehlten PR; kein spaeterer PR wird uebersprungen."
-                exit 0
-              fi
-            else
-              echo "PR #$number ($head): Sync fehlgeschlagen:"
-              cat err.log
-              rm -f err.log
-              exit 1
-            fi
-            rm -f err.log
-          done < <(echo "$prs" | jq -c '.[]')
-; then
-              echo "workflow_dispatch pr_number muss eine positive PR-Nummer sein." >&2
-              exit 1
-            fi
-            prs="$(pr_snapshot "$DISPATCH_PR_NUMBER" | jq -c '[.]')"
-          else
-            prs="$(gh api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --slurp \
-              | jq -c '[.[][] | {
-                  number: .number,
-                  headRefName: .head.ref,
-                  headRefOid: .head.sha,
-                  headRepositoryFullName: (.head.repo.full_name // ""),
-                  baseRefName: .base.ref,
-                  isCrossRepository: ((.head.repo.full_name // "") != (.base.repo.full_name // "")),
-                  isDraft: (.draft // false),
-                  state: ((.state // "") | ascii_upcase),
-                  author: { login: (.user.login // "") },
-                  authorAssociation: (.author_association // ""),
-                  title: (.title // ""),
-                  labels: [(.labels // [])[] | .name]
-                }]')"
-          fi
-
-          sequential_lane='false'
-          if [ "$EVENT_NAME" = 'workflow_run' ] || { [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -z "${DISPATCH_PR_NUMBER:-}" ]; }; then
-            sequential_lane='true'
-            prs="$(echo "$prs" | jq -c 'sort_by(.number)')"
-          fi
-
-          current_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
-          policy_main_sha="$(git -C policy rev-parse HEAD)"
-          if ! printf '%s' "$current_main_sha" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "CURRENT_MAIN liefert keinen gueltigen SHA." >&2
-            exit 1
-          fi
-          if [ "$policy_main_sha" != "$current_main_sha" ]; then
-            echo "Trusted-main Policy ist stale: policy=$policy_main_sha current_main=$current_main_sha" >&2
-            exit 1
-          fi
-
-          if [ "$EVENT_NAME" = 'workflow_run' ]; then
-            if ! printf '%s' "$SOURCE_MAIN_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
-              echo "Post-Merge-Korrelation liefert keinen gueltigen Source-main-SHA." >&2
-              exit 1
-            fi
-            if [ "$current_main_sha" != "$SOURCE_MAIN_SHA" ]; then
-              echo "Korrelations-Run fuer $SOURCE_MAIN_SHA ist stale; CURRENT_MAIN ist $current_main_sha. Kein PR wird synchronisiert."
-              exit 0
-            fi
-          fi
-
-          generation_for() {
-            local number="$1" head_sha="$2" main_sha="$3"
-            local output="$RUNNER_TEMP/pr-generation-$number.out"
-            : > "$output"
-            REPOSITORY="$REPO" PR_NUMBER="$number" HEAD_SHA="$head_sha" BASE_SHA="$main_sha" \
-              CURRENT_MAIN_SHA="$main_sha" AGENTS_PATH="policy/AGENTS.md" GITHUB_OUTPUT="$output" \
-              node policy/scripts/pr/prConvergenceGeneration.mjs >/dev/null
-            sed -n 's/^generation_id=//p' "$output" | tail -n 1
-          }
-
-          count="$(echo "$prs" | jq 'length')"
-          repo_owner="${REPO%%/*}"
-          echo "Zu bewertende PRs: $count (event=$EVENT_NAME, repo_owner=$repo_owner)"
-
-          while read -r pr; do
-            number="$(echo "$pr" | jq -r '.number')"
-            head="$(echo "$pr" | jq -r '.headRefName')"
-            head_sha="$(echo "$pr" | jq -r '.headRefOid')"
-            base="$(echo "$pr" | jq -r '.baseRefName')"
-            cross="$(echo "$pr" | jq -r '.isCrossRepository')"
-            draft="$(echo "$pr" | jq -r '.isDraft')"
-            author="$(echo "$pr" | jq -r '.author.login // ""')"
-
-            if [ "$base" != 'main' ]; then
-              echo "PR #$number ($head): Base ist $base statt main, uebersprungen."
-              continue
-            fi
-
-            if [ "$cross" = 'true' ]; then
-              echo "PR #$number ($head): Fork-PR, kein Auto-Sync moeglich."
-              continue
-            fi
-
-            case "$head" in
-              agent/*|claude/*|grok/*|ai/*)
-                ;;
-              feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*)
-                if [ "$author" != "$repo_owner" ]; then
-                  echo "PR #$number ($head): konventioneller Work-Branch, aber Autor $author ist nicht Repository-Owner $repo_owner; fail-closed uebersprungen."
-                  continue
-                fi
-                ;;
-              *)
-                echo "PR #$number ($head): weder aktiver Provider-Branch noch Owner-erstellter Standard-Work-Branch, uebersprungen."
-                continue
-                ;;
-            esac
-
-            if [ "$EVENT_NAME" = 'workflow_run' ] && [ "$draft" = 'true' ]; then
-              echo "PR #$number ($head): Draft bleibt nach Post-Merge-Korrelation bewusst unsynchronisiert."
-              continue
-            fi
-
-            if { [ "$EVENT_NAME" = 'pull_request' ] || [ "$EVENT_NAME" = 'pull_request_review' ]; } && [ "$draft" = 'true' ]; then
-              echo "PR #$number ($head): ready_for_review Event meldet weiterhin Draft; fail-closed uebersprungen."
-              continue
-            fi
-
-            if ! printf '%s' "$head_sha" | grep -Eq '^[0-9a-f]{40}$'; then
-              echo "PR #$number ($head): ungueltiger Head-SHA, fail-closed uebersprungen."
-              continue
-            fi
-
-            generation="$(generation_for "$number" "$head_sha" "$current_main_sha")"
-            live_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
-            live_pr="$(gh pr view "$number" --repo "$REPO" --json state,headRefName,headRefOid,baseRefName,isCrossRepository)"
-            live_head="$(echo "$live_pr" | jq -r '.headRefName')"
-            live_head_sha="$(echo "$live_pr" | jq -r '.headRefOid')"
-            live_base="$(echo "$live_pr" | jq -r '.baseRefName')"
-            live_state="$(echo "$live_pr" | jq -r '.state')"
-            live_cross="$(echo "$live_pr" | jq -r '.isCrossRepository')"
-            live_generation="$(generation_for "$number" "$live_head_sha" "$live_main_sha")"
-
-            if [ "$live_main_sha" != "$current_main_sha" ] || [ "$live_head_sha" != "$head_sha" ] || \
-               [ "$live_head" != "$head" ] || [ "$live_base" != 'main' ] || [ "$live_state" != 'OPEN' ] || \
-               [ "$live_cross" = 'true' ] || [ "$live_generation" != "$generation" ]; then
               echo "PR #$number ($head): Continuation Generation drifted before mutation; expected=$generation observed=$live_generation. Fail-closed." >&2
               exit 1
             fi

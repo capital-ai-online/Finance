@@ -33,3 +33,11 @@ Immediately before `update-branch`, the workflow re-reads the full trust snapsho
 - existing 422/stacked-PR/current-main generation controls preserved;
 - Workflow Security + exact-head CI/Governance PASS;
 - Human/CODEOWNER merge.
+
+## Self-healing incident during implementation
+
+- **Root-Cause-ID:** `WORKFLOW_TEXT_REPLACEMENT_TOKEN_CORRUPTION`
+- **Observed:** the first branch push produced a workflow startup failure with zero jobs.
+- **Cause:** JavaScript `String.replace(source, replacementString)` interpreted the shell-regex suffix `$'` as a replacement token and injected the unmatched source suffix into the generated workflow.
+- **Repair:** regenerate from clean CURRENT_MAIN and use callback replacements so replacement content is always literal.
+- **Preventive rule:** workflow/text generators must use callback/literal-safe replacement whenever target content may contain `$&`, `$'`, `$`` or `$n`.

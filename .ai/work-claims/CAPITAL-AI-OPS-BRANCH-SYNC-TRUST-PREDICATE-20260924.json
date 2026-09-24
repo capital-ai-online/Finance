@@ -39,5 +39,13 @@
     "Human/CODEOWNER merge."
   ],
   "issue": 1434,
-  "releaseCondition": "Release on Human/CODEOWNER merge, issue closure, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, issue closure, supersession or abandonment.",
+  "evidence": {
+    "implementationIncident": {
+      "rootCauseId": "WORKFLOW_TEXT_REPLACEMENT_TOKEN_CORRUPTION",
+      "failedRun": 36053719099,
+      "symptom": "workflow startup failure; jobs=0",
+      "repair": "regenerate from CURRENT_MAIN using callback replacements"
+    }
+  }
 }
