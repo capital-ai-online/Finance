@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-02",
+    "PVC-04",
+    "PVC-06",
+    "PVC-07",
+    "PVC-08",
+    "PVC-18"
+  ],
+  "priority": "P1",
+  "branchName": "operations/auth-migration-version-alignment-20260924",
+  "baseBranch": "main",
+  "baseSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
+  "workItem": "Align the canonical auth-registration migration filename with the verified Supabase remote migration history version created by the authorized production application.",
+  "approvedScope": "Rename only the already-applied idempotent migration from 20260923193000 to the observed remote version 20260924011545 and preserve byte-identical SQL; add this bounded work claim.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-AUTH-MIGRATION-VERSION-ALIGNMENT-20260924.json",
+    "supabase/migrations/20260923193000_auth_registration_profile_convergence.sql",
+    "supabase/migrations/20260924011545_auth_registration_profile_convergence.sql"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Human Owner direction in current interaction",
+    "Supabase migration history readback version 20260924011545",
+    "CURRENT_MAIN 9b049c52041a48827e11bdaa58c2eb8154811799"
+  ],
+  "exitEvidence": [
+    "New migration path exists with byte-identical SQL.",
+    "Old migration path is removed.",
+    "Repository migration version matches remote schema_migrations history.",
+    "Exact-head CI/Governance/Security checks complete truthfully.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "authority": "/AGENTS.md@CURRENT_MAIN",
+  "executionSurface": "ChatGPT GitHub Connector",
+  "recorrelatedAt": "2026-09-24"
+}
