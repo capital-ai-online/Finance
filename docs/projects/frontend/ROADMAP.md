@@ -5,7 +5,7 @@
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
 **Reconciliation:** 2026-09-24 — Owner-directed Roadmap presentation migration from the historical dashboard shell to the current productive Landingpage profile; no productive domain ownership changes  
-**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`  
+**Baseline:** `main@0d63fb5b92934753440d77bcf04057adb2dd6734`
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
