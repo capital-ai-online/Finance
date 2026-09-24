@@ -148,8 +148,20 @@ function updateMirror(relativePath: string, content: string, currentVersion: str
       return replaceRequired(content, new RegExp(current, 'g'), targetVersion, relativePath);
     case 'docs/ceo/EXECUTIVE_SUMMARY.md':
       return replaceRequired(content, new RegExp(`(\\*\\*Version:\\*\\*\\s*)${current}`), `$1${targetVersion}`, relativePath);
-    case 'index.html':
-      return replaceRequired(content, new RegExp(`Version ${current}`, 'g'), `Version ${targetVersion}`, relativePath);
+    case 'index.html': {
+      const withVisibleVersion = replaceRequired(
+        content,
+        new RegExp(`Version ${current}`, 'g'),
+        `Version ${targetVersion}`,
+        `${relativePath} visible version`,
+      );
+      return replaceRequired(
+        withVisibleVersion,
+        new RegExp(`("softwareVersion"\\s*:\\s*)"${current}"`),
+        `$1"${targetVersion}"`,
+        `${relativePath} SoftwareApplication.softwareVersion`,
+      );
+    }
     default:
       throw new Error(`Nicht governte Mirror-Datei: ${relativePath}`);
   }

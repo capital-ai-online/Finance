@@ -30,7 +30,11 @@ function createFixture(): string {
   write(root, 'docs/code-quality/CODE_QUALITY_STANDARDS.md', '**Version:** 0.6.0\nPinned to **Version 0.6.0**.');
   write(root, 'docs/ceo/EXECUTIVE_SUMMARY.md', '**Version:** 0.6.0 (Beta-Phase)');
   write(root, 'docs/archive/raw-materials/API.md', '*Historical snapshot under CAPITAL-AI Platform Specification Version 0.6.0.*');
-  write(root, 'index.html', '<meta name="description" content="CAPITAL-AI (Version 0.6.0)">');
+  write(
+    root,
+    'index.html',
+    '<meta name="description" content="CAPITAL-AI (Version 0.6.0)"><script type="application/ld+json">{"@type":"SoftwareApplication","softwareVersion":"0.6.0"}</script>',
+  );
   return root;
 }
 
@@ -101,7 +105,9 @@ describe('ADR-0030 release version gate', () => {
     expect(fs.readFileSync(path.join(root, 'README.md'), 'utf8')).toBe(originalReadme);
     expect(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8')).toBe(originalAgents);
     expect(fs.readFileSync(archivedApiPath, 'utf8')).toBe(originalArchivedApi);
-    expect(fs.readFileSync(path.join(root, 'index.html'), 'utf8')).toContain('Version 0.7.0');
+    const updatedIndex = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    expect(updatedIndex).toContain('Version 0.7.0');
+    expect(updatedIndex).toContain('"softwareVersion":"0.7.0"');
 
     restoreReleaseVersionFiles(root, originals);
     expect(JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version).toBe('0.6.0');
