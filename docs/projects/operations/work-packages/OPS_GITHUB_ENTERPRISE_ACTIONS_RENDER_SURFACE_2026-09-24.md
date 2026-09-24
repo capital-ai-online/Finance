@@ -3,7 +3,7 @@
 **Project:** `CAPITAL-AI-OPS`  
 **Primary PVC:** `PVC-02 — Controlled Implementation`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Fresh baseline:** `main@53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07`  
+**Fresh baseline:** `main@b1d78a51cd7e833a0cc7b1d3ae288593e70eb6cd`  
 **Branch:** `agent/operations-github-enterprise-actions-render-surface-20260924`  
 **Status:** `IMPLEMENTED_ON_MAIN / RUNTIME_DEPLOYMENT_PENDING`  
 **Merge authority:** `IMPLEMENTATION_MERGED / POST_MERGE_RECONCILIATION_PENDING`
