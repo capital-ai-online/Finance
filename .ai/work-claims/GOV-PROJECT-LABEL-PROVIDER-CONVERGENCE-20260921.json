@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PROJECT-LABEL-PROVIDER-CONVERGENCE-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -144,5 +144,10 @@
     "reconcilerRun": 35653871371,
     "reconcilerState": "changed=false / decision-section-boundary-ambiguous",
     "target": "Route bounded current-v1.8 structural drift to the existing Decision Evidence Reconciler and let that single writer bootstrap through trusted-main renderPullRequestBody.mjs before live Evidence/Decision reconciliation."
-  }
+  },
+  "releasedAt": "2026-09-24T20:46:00+02:00",
+  "releaseReason": "Terminal coordination lease: PR #1224 was Human/CODEOWNER-merged. Per /AGENTS.md@CURRENT_MAIN, merged historical claims must not remain active/exclusive; this release changes coordination metadata only and does not assert provider-label/work-package convergence.",
+  "terminalPullRequest": 1224,
+  "terminalMergeSha": "a54f54c43fd7e33e9a77b61542f75947e6deb23c",
+  "lastSyncedMainSha": "55688d034ce06f6ee18573f1f9ac7c0cfefaf4ae"
 }
