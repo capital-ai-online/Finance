@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-24`  
-**Baseline:** `main@aaaa38480d8204d053cb4fcbaec8c872b403be02`  
+**Baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -69,7 +69,7 @@ Current projection drift is a bounded Self-Healing finding. Repository-owned det
 
 ## Live Security state — `CAPITAL-AI-SEC`
 
-**Correlation:** `main@8f5fff57613f183e0e1a2a8c8b41017338e63491` on 2026-09-23  
+**Correlation:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad` on 2026-09-24  
 **Relationship:** cross-cutting Security; no productive `PVC-*` ownership  
 **Direction:** `SECURITY_FOUNDATION_FIRST`  
 **Current status source:** this Live Roadmap; public projection: `/roadmap`
@@ -84,14 +84,16 @@ Security owns threat/risk/control definition, finding lifecycle, Security test r
 
 | Phase | Priority | Live state | Primary implementation return | Exit gate |
 |---|---:|---|---|---|
-| `SEC-WEB-00` | P0 | `READY` | SEC correlation + owner readbacks | every current P0/P1 finding has evidence, owner and verification gate |
-| `SEC-WEB-10` | P0 | `READY` | OPS / PVC-07 + PVC-08 | signed/attested/deployed artifact identity converges |
+| `SEC-WEB-00` | P0 | `BASELINE_COMPLETE / EVIDENCE_READY` | SEC correlation + owner readbacks | current F01..F30 dispositions, owners and verification gates are materialized for CURRENT_MAIN |
+| `SEC-WEB-10` | P0 | `READY / F01+F16 VERIFIED / F15 OWNER_RETURN_OPEN` | OPS / PVC-07 + PVC-08 | deploy the already scanned/signed GHCR digest; existing OPS-07-A + OPS-08-A remain the owner-correct return path |
 | `SEC-WEB-20` | P1 | `HELD / READY_AFTER_P0` | FE + OPS | strict route-minimal browser isolation/CSP verified |
 | `SEC-WEB-30` | P1 | `HELD / READY_AFTER_P0` | OPS + CLIENT/FE + affected owner | AuthN/AuthZ/input/method/abuse negative evidence |
 | `SEC-WEB-40` | P1 | `HELD / READY_AFTER_P0` | OPS / PVC-04/07/08 | readiness/rollback/runtime identity proven |
 | `SEC-WEB-50` | P1 | `QUEUED / IMPLEMENTATION_RETURN` | SEC + QM, OPS target | current runtime/DAST/transport evidence; no unresolved CRITICAL/HIGH finding |
 
-**Immediate dependency chain:** `SEC-WEB-00 → F01/F16 artifact-digest convergence → F15 exact verified artifact deployment → F23 secret-exposure gate → F10 OAuth/session negative-security baseline → production/open-writer re-correlation`.
+**Immediate dependency chain:** `SEC-WEB-00 ✅ → F01/F16 ✅ → F15 OPEN (OPS-07-A + OPS-08-A) → F23 → F10 → production/open-writer re-correlation`.
+
+**Current SEC-WEB-00 evidence:** `docs/projects/security/evidence/SEC_WEB_00_CURRENT_ATTACK_SURFACE_BASELINE_2026-09-24.md`. Exact CURRENT_MAIN Container Security run `35957793419` published and independently pulled `ghcr.io/capital-ai-online/finance@sha256:a793cf5d0259d7a529213cf437a77a8f92940a45bcb85463b77223722be18306` with verified Cosign signature, SLSA provenance and CycloneDX SBOM attestation. The remaining P0 release gap is F15: `ci.yml` still triggers Render from `ref=main` rather than deploying that verified digest.
 
 ### Terminal / superseded SEC work
 
