@@ -297,6 +297,58 @@ function replaceRow(body, label, value) {
   return body.replace(expression, `| ${label} | ${compactCell(value)} |`);
 }
 
+function removeDuplicateCadencePresentation(bodyText) {
+  const original = String(bodyText || '');
+  const summaryPattern =
+    /^> 📦 \*\*package\.json:\*\*[^\n]*🚀 \*\*Render Production:\*\*[^\n]*⏳ \*\*Auto-Deploy:\*\*[^\n]*$/gm;
+  const summaryMatches = [...original.matchAll(summaryPattern)];
+  if (summaryMatches.length > 1) return null;
+
+  let body = summaryMatches.length === 1 ? original.replace(summaryPattern, '') : original;
+  const heading = '### 🚀 Production & Cadence';
+  const headingCount = body.split(heading).length - 1;
+  if (headingCount > 1) return null;
+  if (headingCount === 0) return body;
+
+  const decisionTableHeader = '| Frage | Ergebnis |';
+  const sectionStart = body.indexOf(heading);
+  const decisionTableIndex = body.indexOf(decisionTableHeader, sectionStart + heading.length);
+  if (sectionStart < 0 || decisionTableIndex < 0) return null;
+
+  const candidateLines = body
+    .slice(sectionStart, decisionTableIndex)
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const expectedLabels = [
+    'CURRENT_MAIN',
+    'Live Production',
+    'Render Production PR',
+    'Deploy-Cadence',
+    'Nächstes Deploy-Ziel',
+    'Plattformversion',
+    'Version-Cadence',
+    'Nächstes PATCH-Ziel',
+  ];
+  if (
+    candidateLines.length !== 3 + expectedLabels.length ||
+    candidateLines[0] !== heading ||
+    candidateLines[1] !== '| Production-Signal | Zustand |' ||
+    candidateLines[2] !== '|---|---|' ||
+    candidateLines.slice(3).some((line) => !/^\|.*\|$/.test(line))
+  ) {
+    return null;
+  }
+
+  const observedLabels = candidateLines.slice(3).map((line) => line.split('|')[1]?.trim() || '');
+  if (observedLabels.some((label, index) => label !== expectedLabels[index])) return null;
+
+  const before = body.slice(0, sectionStart).replace(/\s+$/, '');
+  const after = body.slice(decisionTableIndex).replace(/^\s+/, '');
+  return before + '\n\n' + after;
+}
+
 function canonicalEvidenceTable(gates, details = {}) {
   return [
     '| Gate | Status | Warum offen / blockiert | Nächster verifizierbarer Schritt |',
@@ -559,7 +611,12 @@ export function reconcileDecisionBody(bodyText, gates, details = {}) {
   }
 
   const decisionStatus = deriveDecisionStatus(gates);
-  let body = ensureDecisionStatusLine(contract.body, decisionStatus);
+  let body = removeDuplicateCadencePresentation(contract.body);
+  if (body == null) {
+    return { eligible: false, changed: false, reason: 'duplicate-cadence-presentation-boundary-ambiguous', body: original };
+  }
+
+  body = ensureDecisionStatusLine(body, decisionStatus);
   if (body == null) {
     return { eligible: false, changed: false, reason: 'decision-status-boundary-ambiguous', body: original };
   }

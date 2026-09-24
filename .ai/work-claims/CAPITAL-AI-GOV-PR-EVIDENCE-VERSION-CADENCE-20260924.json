@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-PR-EVIDENCE-VERSION-CADENCE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -58,5 +58,12 @@
     "Live reconciliation updates the row after CURRENT_MAIN/Production movement.",
     "No changed-file overlap remains with open writers."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "releasedAt": "2026-09-24T03:22:43Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1372; merge commit b2eb210a7310da170db75f3065513522a224337e. Successor work uses a new claim and does not revive this terminal slice.",
+  "terminalEvidence": {
+    "pullRequest": 1372,
+    "mergeCommit": "b2eb210a7310da170db75f3065513522a224337e",
+    "outcome": "DONE_MAIN / TERMINAL"
+  }
 }
