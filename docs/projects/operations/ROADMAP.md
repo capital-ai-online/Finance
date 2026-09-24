@@ -33,6 +33,18 @@ Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
+### SH-02 Issue #1355 — TypeScript literal-union drift intake
+
+**State:** `IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18`
+
+The existing PR Autofix classifier recognizes the exact PR #1352 `TS2322`
+literal-union widening family without enabling generic code mutation.
+Disposition is `BLOCKED_NOT_PROVEN` / `OBSERVE_ONLY`; all unknown TypeScript
+failures stay blocked. Human/CODEOWNER merge remains required before this
+classifier extension becomes current-main behavior.
+
+
 ### SH-02.11 activation update — 2026-09-23
 
 **State:** `ACTIVE / RETRY_SAFE_OPERATION_ENABLED`  
