@@ -3,7 +3,7 @@
 **Owner:** CAPITAL-AI-OPS  
 **PVC:** PVC-02 / PVC-08  
 **Baseline:** `main@fdc6c2f1ad831bbd7fe7f9078231b855a744adc7`  
-**State:** PRODUCTION_RUNTIME_RECOVERED / AUTH_CONTROL_HOST_IMPLEMENTING
+**State:** PRODUCTION_RUNTIME_RECOVERED / AUTH_CONTROL_PLAN_CONSTRAINT_REMEDIATION
 
 ## Observed production drift
 
@@ -48,3 +48,19 @@ After exact Production ↔ CURRENT_MAIN convergence on `ba3e69c364627fd5c36faf65
 The fixed command `/supabase-auth-registration-config` executes the existing canonical `scripts/operations/supabaseAuthRegistrationControl.mjs` with the already-established GitHub secret contract `CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN`. It accepts no caller-supplied config payload, performs a Management API post-write readback, and publishes only config-key names/counts to the control issue. A missing credential or readback mismatch fails closed.
 
 Database migration remains sequenced after this verified provider-config gate.
+
+## Free/Base plan-aware Auth control recovery
+
+The first protected Auth-control execution after PR #1347 merge ran as workflow run `35934754957`. Management credential preflight passed, proving the GitHub secret is present and usable, but the canonical Auth controller failed closed with `SUPABASE_MANAGEMENT_HTTP_402`.
+
+Current Supabase documentation and accepted ADR-0031 agree that native leaked-password protection (`password_hibp_enabled`) is available on Pro and above only. The active Free/Base plan therefore cannot satisfy that one desired key. This is an existing `PLAN-CONSTRAINED / ACCEPTED RISK`, not a remediated security control.
+
+The bounded remediation keeps all available Auth controls mandatory and isolates `password_hibp_enabled` into a separate Management API attempt:
+- baseline Auth configuration is patched and read back independently;
+- `password_hibp_enabled=true` is then attempted separately;
+- HTTP 402 is accepted only as explicit `UNAVAILABLE_BY_PLAN / ADR-0031` evidence;
+- any other HTTP failure, baseline mismatch, or post-write mismatch remains fatal;
+- after a future plan upgrade, the same controller will enable and verify the native control automatically;
+- no billing/plan mutation and no custom HIBP imitation is introduced.
+
+The database migration remains sequenced after a successful plan-aware provider-config run.

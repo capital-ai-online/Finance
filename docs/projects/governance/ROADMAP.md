@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@72a22038c88d3cc170cbecac6d04547d7226853d`
+**Baseline:** `main@5da1db0eb398d87e967ce984fa07f9198effeafd`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
@@ -210,6 +210,26 @@ M10 remains `RETIRED / OFF`. Human/CODEOWNER-only merge remains mandatory.
 **State:** `DONE_MAIN / TERMINAL`
 
 Human-merged PR #886, merge SHA `0945b7264d6819a57451748888e1fb8c71981762`, materialized exactly one `CTRL-SDLC-PLUGIN-USE-001` under existing Development-Chain authority. No unconditional plugin invocation is authorized.
+
+## GOV-NO-LEGACY-RUNTIME-01 — Current implementation integrity
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Priority:** `P1 🟠 Hoch`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Fresh baseline:** `main@6be29d46879ad413084a5e3027ac3adc77ce6f9b`
+
+Fresh Human/Owner direction requires the current website and runtime to contain no productive legacy/compatibility/deprecated/suspended/retired/superseded/historical implementation paths. Historical evidence remains permitted only as clearly non-current provenance.
+
+This slice evolves the existing Trust Root rather than creating another architecture policy:
+- active UI/API/runtime/worker/workflow paths cannot consume legacy-classified implementations;
+- required capability must be migrated/reimplemented through the current owner-correct architecture rather than wrapped under a new name;
+- deny-only tests/guards may reference retired paths without reactivation;
+- obsolete code with no evidence obligation should be removed; retained historical evidence must be isolated and provenance-verifiable;
+- archive integrity must fail closed on unexplained content/provenance mismatch.
+
+Owner-correct follow-up remains with DOC for Documentary hygiene/archive integrity, OPS for runtime/version compatibility retirement, and FE for presentation consumers. No foreign-owner implementation is included in this GOV branch.
+
+**Exit:** Trust Root, Authority Registry, Control Catalog and regression tests converge on one `CTRL-ARCH-NO-LEGACY-RUNTIME-001` contract; Human/CODEOWNER merge is required before the rule becomes repository authority.
 
 ## Dependencies
 OPS version/release, QM gates, SEC/COMP assurance, CLIENT runtime only where productive materialization is needed.

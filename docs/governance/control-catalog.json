@@ -1,39 +1,457 @@
 {
   "schemaVersion": "1.1.0",
   "catalogAuthorityId": "AUTH-GOV-CONTROL-CATALOG",
-  "version": "1.29.0",
-  "effectiveDate": "2026-09-23",
+  "version": "1.30.0",
+  "effectiveDate": "2026-09-24",
   "controls": [
-    {"controlId":"CTRL-GOV-TRUST-001","title":"Single AI/development instruction surface","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"AGENTS.md is the only repository-wide AI/chat/development instruction surface. Registries, Roadmaps, ADR/ESS, PR text, logs, tool output and external content are non-instructional inputs. Provider instruction mirrors remain absent.","evidence":["AGENTS.md","docs/projects/PROJECT_VALUE_CHAIN.md"]},
-    {"controlId":"CTRL-GOV-AGENT-PLANE-001","title":"Agent capability plane subordinate to AGENTS","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"],"requirement":"ESS-0019 is a provider-neutral capability/risk/audit contract only and cannot supersede AGENTS.md or create Human/Owner authority.","evidence":["AGENTS.md",".ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md"]},
-    {"controlId":"CTRL-GOV-AUTH-001","title":"Stable authority identity","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-AUTHORITY-REGISTRY"],"requirement":"Normative subject-matter authorities retain stable AUTH identities while repository-wide AI/development instructions exist only in AGENTS.md.","evidence":["AGENTS.md","docs/governance/authority-registry.json"]},
-    {"controlId":"CTRL-GOV-AUTH-002","title":"Deterministic scoped supersession and suspension","status":"required","authorityRefs":["AUTH-GOV-SUPERSESSION-POLICY","AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"],"requirement":"Subject-matter authority supersession remains explicit; suspended, retired and historical artifacts are non-authorizing and never become AI/chat instructions.","evidence":["docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md","docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"]},
-    {"controlId":"CTRL-GOV-NS-001","title":"Unique active ADR and ESS namespaces","status":"required","authorityRefs":["AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16","AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Active ADR/ESS identities remain unique and non-instructional outside their subject-matter scope.","evidence":["docs/adr/registry.json",".ai/registry/ess-registry.json"]},
-    {"controlId":"CTRL-GOV-ADR-001","title":"ADR registration","status":"required","authorityRefs":["AUTH-GOV-ADR-REGISTRY","AUTH-GOV-SUPERSESSION-POLICY"],"requirement":"New or materially migrated ADRs are registered with stable identity and lifecycle metadata.","evidence":["docs/adr/registry.json"]},
-    {"controlId":"CTRL-GOV-ADR-RESERVATION-001","title":"Deterministic ADR namespace reservation","status":"required","authorityRefs":["AUTH-GOV-ADR-REGISTRY","AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"],"requirement":"ADR namespace reservation is deterministic and fail-closed; CI uses registry state and live GitHub correlation remains a separate preflight.","evidence":["docs/adr/registry.json","scripts/governance/validateGovernanceControlPlane.mjs"]},
-    {"controlId":"CTRL-GOV-DOC-001","title":"Canonical document placement and lifecycle","status":"required","authorityRefs":["AUTH-GOV-DOCUMENT-LIFECYCLE","AUTH-ESS-DOCUMENTATION-GOVERNANCE"],"requirement":"Governance/architecture/compliance/runbook/roadmap/evidence documents use canonical lifecycle placement; they do not create a second AI instruction surface.","evidence":["docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md","docs/governance/document-registry.json"]},
-    {"controlId":"CTRL-GOV-DOC-ROLE-001","title":"Document roles and projection boundaries","status":"required","authorityRefs":["AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],"requirement":"Inventory and roadmap artifacts are non-normative; projections cannot create repository-wide AI/development instruction authority.","evidence":["docs/governance/document-registry.json","docs/frontend/FRONTEND_ARCH.md","docs/frontend/COMPONENT_INVENTORY.md","docs/frontend/FRONTEND_ROADMAP.md"]},
-    {"controlId":"CTRL-GOV-DOC-HYGIENE-001","title":"Documentation hygiene is read-only","status":"required","authorityRefs":["AUTH-ESS-DOCUMENTATION-GOVERNANCE","AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"],"requirement":"Documentation hygiene is a read-only Documentary validation service and cannot become repository-wide authorization or AI instruction authority.","evidence":["src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts","scripts/automation/validateDocumentationHygiene.ts"]},
-    {"controlId":"CTRL-GOV-VERSION-001","title":"Single platform-version authority","status":"required","authorityRefs":["AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"],"requirement":"package.json#version is the sole platform-version authority; AGENTS.md Control Plane Version is separate governance metadata.","evidence":["package.json","README.md","src/platform/Release/Services/platformVersionControlPlane.ts"]},
-    {"controlId":"CTRL-GOV-VERSION-002","title":"Deterministic version decision","status":"required","authorityRefs":["AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11","AUTH-GOV-DETERMINISTIC-VERSIONING-RULE-CONTRACT","AUTH-ADR-PLATFORM-VERSION-RELEASE-LIFECYCLE-0030"],"requirement":"Ordinary automatic platform-version materialization is cadence-bound: every tenth merged Pull Request after the active cadence epoch or last merged version transition receives exactly the next PATCH version on its candidate branch through the existing Release Version Gate. package.json remains the sole authority and root package-lock mirrors must match. Semantic PATCH/MINOR/MAJOR classification remains release-impact evidence and cannot independently create an automatic between-cadence version mutation; direct main mutation, merge, release acceptance and deployment authority remain separate.","evidence":["AGENTS.md","docs/adr/ADR-0105-deterministic-autonomous-versioning.md","docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json"]},
-    {"controlId":"CTRL-GOV-HIST-001","title":"Historical evidence is non-authorizing","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Historical/suspended/superseded material remains evidence only and cannot silently regain AI/chat/development authority.","evidence":["AGENTS.md","docs/adr/suspended/ADR-0004-branding-and-panel-removal.md"]},
-    {"controlId":"CTRL-GOV-FEATURE-001","title":"Governance integrity before feature readiness","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-CONTROL-PLANE-ROADMAP"],"requirement":"Critical authority or control-plane conflicts fail closed; planning surfaces remain non-authorizing.","evidence":["AGENTS.md","docs/projects/PROJECT_VALUE_CHAIN.md"]},
-    {"controlId":"CTRL-GOV-OPS-FOREIGN-EXEC-001","title":"Historical foreign-execution identity","status":"informational","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION"],"requirement":"The former standalone GOV/OPS foreign-execution policy is removed. Current cross-project scope and owner-correct handover behavior is defined only in AGENTS.md.","evidence":["AGENTS.md","docs/projects/PROJECT_VALUE_CHAIN.md"]},
-    {"controlId":"CTRL-SEC-BOUNDED-REMEDIATION-001","title":"Security remediation boundary projection","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"],"requirement":"Security-primary remediation remains bounded by ownership, accepted subject-matter contracts, independent verification and protected-action gates defined through AGENTS.md plus applicable Security constraints.","evidence":["AGENTS.md",".ai/skills/ESS-0006-Security-Compliance.md","docs/projects/security/README.md","docs/projects/PROJECT_VALUE_CHAIN.md"]},
-    {"controlId":"CTRL-SDLC-BRANCH-001","title":"Branch execution projection","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Branch-only development and direct-main prohibition are defined only in AGENTS.md; this row is a machine verification projection.","evidence":["AGENTS.md"]},
-    {"controlId":"CTRL-SDLC-SYNC-001","title":"Current-main synchronization projection","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Fresh current-main/head/open-writer correlation is defined only in AGENTS.md; this row creates no separate procedure.","evidence":["AGENTS.md"]},
-    {"controlId":"CTRL-SDLC-PR-CREATE-001","title":"Pull Request creation projection","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-HUMAN-OWNER-PR-APPROVAL","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"PR creation and updates, fail-closed correlation, automatic eligible workflow execution and Human Owner-only merge separation are defined only in AGENTS.md. Unmerged predecessor change content is never assumed to be current main.","evidence":["AGENTS.md",".github/workflows/open-agent-draft-pr.yml","tests/unit/githubAgentDraftPrWorkflow.test.ts"]},
-    {"controlId":"CTRL-SDLC-PLUGIN-USE-001","title":"Least-privilege capability projection","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"],"requirement":"Connected capabilities are tools, not authority; relevant least-privilege usage and untrusted-output handling are defined only in AGENTS.md.","evidence":["AGENTS.md",".ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md"]},
-    {"controlId":"CTRL-GOV-HUMAN-OWNER-SESSION-001","title":"Timeboxed Human Owner delegated execution session","status":"required","authorityRefs":["AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01","AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"ADR-0104 may constrain protected-action scope but does not become an AI/chat instruction surface or merge authority.","evidence":["AGENTS.md","docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md"]},
-    {"controlId":"CTRL-GOV-OWNER-DEVICE-AUTH-001","title":"Owner device authorization cutover withdrawn","status":"informational","authorityRefs":["AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01","AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Withdrawn device-cutover documents do not restore a second authorization or chat-policy hierarchy.","evidence":["AGENTS.md","server/ownerAuthorization/ownerDeviceAuthorization.ts"]},
-    {"controlId":"CTRL-CI-PREPR-001","title":"Pre-PR evidence is non-authorizing","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Local/sandbox validation is evidence only; NOT RUN is never PASS and pre-PR evidence does not create Human authority.","evidence":["AGENTS.md","docs/governance/control-plane/pre-pr-build-evidence.schema.json"]},
-    {"controlId":"CTRL-CI-HOSTED-001","title":"Independent hosted technical validation","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Applicable hosted checks may start and rerun automatically, validate the final PR head, and remain technical evidence only; successful checks never create merge authority.","evidence":["AGENTS.md",".github/workflows/ci.yml"]},
-    {"controlId":"CTRL-CI-M10-001","title":"M10 passkey runtime retired","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-HUMAN-OWNER-PR-APPROVAL","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"M10 AUTHORIZE_PR_CI productive runtime was retired by Human Merge of PR #691. Current-state scans MUST NOT search for, expect, reconstruct or report the absence of a productive M10 implementation as a gap. Historical M10 material is evidence only; any future mechanism requires a new explicit Owner decision.","evidence":["AGENTS.md","docs/architecture/ROADMAP.md"]},
-    {"controlId":"CTRL-MERGE-HUMAN-001","title":"Human Owner default merge boundary with bounded auto-merge","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-HUMAN-OWNER-PR-APPROVAL","AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01"],"requirement":"Main merges remain Human Owner decisions by default. Direct agent or automation self-merge remains prohibited. Provider-managed auto-merge is permitted only for explicitly AUTO_MERGE_ELIGIBLE Pull Requests that satisfy the fail-closed Auto-Merge Safety Contract in AGENTS.md; protected classes remain HUMAN_MERGE_REQUIRED.","evidence":["AGENTS.md","docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md"]},
-    {"controlId":"CTRL-DEPLOY-AUTH-001","title":"Single verified production deployment authority","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Normal automatic Render deployment is cadence-bound to every fifth merged Pull Request after the active cadence epoch or last successful verified cadence deployment. Until 5/5, healthy canonical Production on an ancestor of CURRENT_MAIN is DEPLOYMENT_QUEUED, not drift; CI, tests, Self-Healing and current-state projections remain bound to latest CURRENT_MAIN. At 5/5 deployment targets a fresh reread of latest CURRENT_MAIN. Only failed/due deployment, unhealthy/identity mismatch, divergence or unexpected mutation is PRODUCTION_DRIFT; bounded recovery may retry actual failed/due deployment without waiting for another five merges.","evidence":["AGENTS.md","render.yaml",".github/workflows/ci.yml",".github/workflows/post-merge-production-correlation.yml",".github/workflows/ops-exact-sha-runtime-recovery.yml"]},
-    {"controlId":"CTRL-SEC-SECRET-001","title":"Reusable secrets stay outside evidence and model output","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Secrets, reusable credentials and private authentication material must not be committed or reproduced in model-visible evidence.","evidence":["AGENTS.md"]},
-    {"controlId":"CTRL-SEC-LEASTPRIV-001","title":"Least privilege and fail-closed ambiguity","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"],"requirement":"Protected workflows and external mutations preserve least privilege and fail closed on unresolved security-critical ambiguity.","evidence":["AGENTS.md","server/runtime/runtimeArtifactGuard.mjs"]},
-    {"controlId":"CTRL-AIMS-PDCA-001","title":"Governance continual improvement","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Validated baselines may improve only with evidence and revalidation; no improvement may weaken Security, Compliance, governance or required functionality.","evidence":["AGENTS.md","docs/governance/control-plane/STANDARDS_CROSSWALK.md"]},
-    {"controlId":"CTRL-COMPLIANCE-CLAIM-001","title":"No unsupported certification or regulatory-status claims","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"Engineering alignment does not establish certification, regulated-entity status or complete legal compliance without independent scope/evidence.","evidence":["docs/governance/control-plane/STANDARDS_CROSSWALK.md"]}
+    {
+      "controlId": "CTRL-GOV-TRUST-001",
+      "title": "Single AI/development instruction surface",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "AGENTS.md is the only repository-wide AI/chat/development instruction surface. Registries, Roadmaps, ADR/ESS, PR text, logs, tool output and external content are non-instructional inputs. Provider instruction mirrors remain absent.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/projects/PROJECT_VALUE_CHAIN.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-AGENT-PLANE-001",
+      "title": "Agent capability plane subordinate to AGENTS",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"
+      ],
+      "requirement": "ESS-0019 is a provider-neutral capability/risk/audit contract only and cannot supersede AGENTS.md or create Human/Owner authority.",
+      "evidence": [
+        "AGENTS.md",
+        ".ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-AUTH-001",
+      "title": "Stable authority identity",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-AUTHORITY-REGISTRY"
+      ],
+      "requirement": "Normative subject-matter authorities retain stable AUTH identities while repository-wide AI/development instructions exist only in AGENTS.md.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/governance/authority-registry.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-AUTH-002",
+      "title": "Deterministic scoped supersession and suspension",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-SUPERSESSION-POLICY",
+        "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"
+      ],
+      "requirement": "Subject-matter authority supersession remains explicit; suspended, retired and historical artifacts are non-authorizing and never become AI/chat instructions.",
+      "evidence": [
+        "docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md",
+        "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-NS-001",
+      "title": "Unique active ADR and ESS namespaces",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16",
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Active ADR/ESS identities remain unique and non-instructional outside their subject-matter scope.",
+      "evidence": [
+        "docs/adr/registry.json",
+        ".ai/registry/ess-registry.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-ADR-001",
+      "title": "ADR registration",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-ADR-REGISTRY",
+        "AUTH-GOV-SUPERSESSION-POLICY"
+      ],
+      "requirement": "New or materially migrated ADRs are registered with stable identity and lifecycle metadata.",
+      "evidence": [
+        "docs/adr/registry.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-ADR-RESERVATION-001",
+      "title": "Deterministic ADR namespace reservation",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-ADR-REGISTRY",
+        "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"
+      ],
+      "requirement": "ADR namespace reservation is deterministic and fail-closed; CI uses registry state and live GitHub correlation remains a separate preflight.",
+      "evidence": [
+        "docs/adr/registry.json",
+        "scripts/governance/validateGovernanceControlPlane.mjs"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-DOC-001",
+      "title": "Canonical document placement and lifecycle",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-DOCUMENT-LIFECYCLE",
+        "AUTH-ESS-DOCUMENTATION-GOVERNANCE"
+      ],
+      "requirement": "Governance/architecture/compliance/runbook/roadmap/evidence documents use canonical lifecycle placement; they do not create a second AI instruction surface.",
+      "evidence": [
+        "docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md",
+        "docs/governance/document-registry.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-DOC-ROLE-001",
+      "title": "Document roles and projection boundaries",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19",
+        "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"
+      ],
+      "requirement": "Inventory and roadmap artifacts are non-normative; projections cannot create repository-wide AI/development instruction authority.",
+      "evidence": [
+        "docs/governance/document-registry.json",
+        "docs/frontend/FRONTEND_ARCH.md",
+        "docs/frontend/COMPONENT_INVENTORY.md",
+        "docs/frontend/FRONTEND_ROADMAP.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-DOC-HYGIENE-001",
+      "title": "Documentation hygiene is read-only",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ESS-DOCUMENTATION-GOVERNANCE",
+        "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"
+      ],
+      "requirement": "Documentation hygiene is a read-only Documentary validation service and cannot become repository-wide authorization or AI instruction authority.",
+      "evidence": [
+        "src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts",
+        "scripts/automation/validateDocumentationHygiene.ts"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-VERSION-001",
+      "title": "Single platform-version authority",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19"
+      ],
+      "requirement": "package.json#version is the sole platform-version authority; AGENTS.md Control Plane Version is separate governance metadata.",
+      "evidence": [
+        "package.json",
+        "README.md",
+        "src/platform/Release/Services/platformVersionControlPlane.ts"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-VERSION-002",
+      "title": "Deterministic version decision",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11",
+        "AUTH-GOV-DETERMINISTIC-VERSIONING-RULE-CONTRACT",
+        "AUTH-ADR-PLATFORM-VERSION-RELEASE-LIFECYCLE-0030"
+      ],
+      "requirement": "Ordinary automatic platform-version materialization is cadence-bound: every tenth merged Pull Request after the active cadence epoch or last merged version transition receives exactly the next PATCH version on its candidate branch through the existing Release Version Gate. package.json remains the sole authority and root package-lock mirrors must match. Semantic PATCH/MINOR/MAJOR classification remains release-impact evidence and cannot independently create an automatic between-cadence version mutation; direct main mutation, merge, release acceptance and deployment authority remain separate.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/adr/ADR-0105-deterministic-autonomous-versioning.md",
+        "docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-HIST-001",
+      "title": "Historical evidence is non-authorizing",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Historical/suspended/superseded material remains evidence only and cannot silently regain AI/chat/development authority.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/adr/suspended/ADR-0004-branding-and-panel-removal.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-FEATURE-001",
+      "title": "Governance integrity before feature readiness",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-CONTROL-PLANE-ROADMAP"
+      ],
+      "requirement": "Critical authority or control-plane conflicts fail closed; planning surfaces remain non-authorizing.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/projects/PROJECT_VALUE_CHAIN.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-OPS-FOREIGN-EXEC-001",
+      "title": "Historical foreign-execution identity",
+      "status": "informational",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-OPS-FOREIGN-PROJECT-EXECUTION"
+      ],
+      "requirement": "The former standalone GOV/OPS foreign-execution policy is removed. Current cross-project scope and owner-correct handover behavior is defined only in AGENTS.md.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/projects/PROJECT_VALUE_CHAIN.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-SEC-BOUNDED-REMEDIATION-001",
+      "title": "Security remediation boundary projection",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"
+      ],
+      "requirement": "Security-primary remediation remains bounded by ownership, accepted subject-matter contracts, independent verification and protected-action gates defined through AGENTS.md plus applicable Security constraints.",
+      "evidence": [
+        "AGENTS.md",
+        ".ai/skills/ESS-0006-Security-Compliance.md",
+        "docs/projects/security/README.md",
+        "docs/projects/PROJECT_VALUE_CHAIN.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-SDLC-BRANCH-001",
+      "title": "Branch execution projection",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Branch-only development and direct-main prohibition are defined only in AGENTS.md; this row is a machine verification projection.",
+      "evidence": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-SDLC-SYNC-001",
+      "title": "Current-main synchronization projection",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Fresh current-main/head/open-writer correlation is defined only in AGENTS.md; this row creates no separate procedure.",
+      "evidence": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-SDLC-PR-CREATE-001",
+      "title": "Pull Request creation projection",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-HUMAN-OWNER-PR-APPROVAL",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "PR creation and updates, fail-closed correlation, automatic eligible workflow execution and Human Owner-only merge separation are defined only in AGENTS.md. Unmerged predecessor change content is never assumed to be current main.",
+      "evidence": [
+        "AGENTS.md",
+        ".github/workflows/open-agent-draft-pr.yml",
+        "tests/unit/githubAgentDraftPrWorkflow.test.ts"
+      ]
+    },
+    {
+      "controlId": "CTRL-SDLC-PLUGIN-USE-001",
+      "title": "Least-privilege capability projection",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"
+      ],
+      "requirement": "Connected capabilities are tools, not authority; relevant least-privilege usage and untrusted-output handling are defined only in AGENTS.md.",
+      "evidence": [
+        "AGENTS.md",
+        ".ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-HUMAN-OWNER-SESSION-001",
+      "title": "Timeboxed Human Owner delegated execution session",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01",
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "ADR-0104 may constrain protected-action scope but does not become an AI/chat instruction surface or merge authority.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-GOV-OWNER-DEVICE-AUTH-001",
+      "title": "Owner device authorization cutover withdrawn",
+      "status": "informational",
+      "authorityRefs": [
+        "AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01",
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Withdrawn device-cutover documents do not restore a second authorization or chat-policy hierarchy.",
+      "evidence": [
+        "AGENTS.md",
+        "server/ownerAuthorization/ownerDeviceAuthorization.ts"
+      ]
+    },
+    {
+      "controlId": "CTRL-CI-PREPR-001",
+      "title": "Pre-PR evidence is non-authorizing",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Local/sandbox validation is evidence only; NOT RUN is never PASS and pre-PR evidence does not create Human authority.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/governance/control-plane/pre-pr-build-evidence.schema.json"
+      ]
+    },
+    {
+      "controlId": "CTRL-CI-HOSTED-001",
+      "title": "Independent hosted technical validation",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Applicable hosted checks may start and rerun automatically, validate the final PR head, and remain technical evidence only; successful checks never create merge authority.",
+      "evidence": [
+        "AGENTS.md",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "controlId": "CTRL-CI-M10-001",
+      "title": "M10 passkey runtime retired",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-HUMAN-OWNER-PR-APPROVAL",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "M10 AUTHORIZE_PR_CI productive runtime was retired by Human Merge of PR #691. Current-state scans MUST NOT search for, expect, reconstruct or report the absence of a productive M10 implementation as a gap. Historical M10 material is evidence only; any future mechanism requires a new explicit Owner decision.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/architecture/ROADMAP.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-MERGE-HUMAN-001",
+      "title": "Human Owner default merge boundary with bounded auto-merge",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-HUMAN-OWNER-PR-APPROVAL",
+        "AUTH-ADR-HUMAN-OWNER-TIMEBOXED-EXECUTION-2026-09-01"
+      ],
+      "requirement": "Main merges remain Human Owner decisions by default. Direct agent or automation self-merge remains prohibited. Provider-managed auto-merge is permitted only for explicitly AUTO_MERGE_ELIGIBLE Pull Requests that satisfy the fail-closed Auto-Merge Safety Contract in AGENTS.md; protected classes remain HUMAN_MERGE_REQUIRED.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/adr/ADR-0104-timeboxed-human-owner-execution-session.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-DEPLOY-AUTH-001",
+      "title": "Single verified production deployment authority",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Normal automatic Render deployment is cadence-bound to every fifth merged Pull Request after the active cadence epoch or last successful verified cadence deployment. Until 5/5, healthy canonical Production on an ancestor of CURRENT_MAIN is DEPLOYMENT_QUEUED, not drift; CI, tests, Self-Healing and current-state projections remain bound to latest CURRENT_MAIN. At 5/5 deployment targets a fresh reread of latest CURRENT_MAIN. Only failed/due deployment, unhealthy/identity mismatch, divergence or unexpected mutation is PRODUCTION_DRIFT; bounded recovery may retry actual failed/due deployment without waiting for another five merges.",
+      "evidence": [
+        "AGENTS.md",
+        "render.yaml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/post-merge-production-correlation.yml",
+        ".github/workflows/ops-exact-sha-runtime-recovery.yml"
+      ]
+    },
+    {
+      "controlId": "CTRL-SEC-SECRET-001",
+      "title": "Reusable secrets stay outside evidence and model output",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Secrets, reusable credentials and private authentication material must not be committed or reproduced in model-visible evidence.",
+      "evidence": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-SEC-LEASTPRIV-001",
+      "title": "Least privilege and fail-closed ambiguity",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT",
+        "AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION"
+      ],
+      "requirement": "Protected workflows and external mutations preserve least privilege and fail closed on unresolved security-critical ambiguity.",
+      "evidence": [
+        "AGENTS.md",
+        "server/runtime/runtimeArtifactGuard.mjs"
+      ]
+    },
+    {
+      "controlId": "CTRL-AIMS-PDCA-001",
+      "title": "Governance continual improvement",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Validated baselines may improve only with evidence and revalidation; no improvement may weaken Security, Compliance, governance or required functionality.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/governance/control-plane/STANDARDS_CROSSWALK.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-COMPLIANCE-CLAIM-001",
+      "title": "No unsupported certification or regulatory-status claims",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Engineering alignment does not establish certification, regulated-entity status or complete legal compliance without independent scope/evidence.",
+      "evidence": [
+        "docs/governance/control-plane/STANDARDS_CROSSWALK.md"
+      ]
+    },
+    {
+      "controlId": "CTRL-ARCH-NO-LEGACY-RUNTIME-001",
+      "title": "No legacy implementation in current runtime or UI",
+      "status": "required",
+      "authorityRefs": [
+        "AUTH-GOV-AGENT-TRUST-ROOT"
+      ],
+      "requirement": "Active website, API, runtime, worker, workflow and user/admin UI paths must not consume implementations classified legacy, compatibility, deprecated, suspended, retired, superseded or historical. Required capability must be migrated or reimplemented through the current canonical owner architecture; historical material is evidence-only and archive retention must preserve verifiable provenance.",
+      "evidence": [
+        "AGENTS.md"
+      ]
+    }
   ]
 }
