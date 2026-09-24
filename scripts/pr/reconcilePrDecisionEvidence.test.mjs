@@ -501,6 +501,8 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /PR-v1\.8-Struktur und exakten Bootstrap-Snapshot binden/);
   assert.match(workflow, /PR_CADENCE_REPO_ROOT: \.\.\/candidate/);
   assert.match(workflow, /bootstrap_required/);
+  assert.ok(workflow.includes(String.raw`const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\s*1\.8\.0/.test(body);`));
+  assert.ok(!workflow.includes(String.raw`CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*1\\.8\\.0`));
   assert.match(workflow, /technicalDetailsSummary = '<summary>Technische Details & Traceability<\/summary>'/);
   assert.match(workflow, /machineBaselineSummary = '<summary>🤖 Maschinenlesbare Produktions-Baseline<\/summary>'/);
   assert.match(workflow, /occurrenceCount\(technicalDetailsSummary\) === 1/);
