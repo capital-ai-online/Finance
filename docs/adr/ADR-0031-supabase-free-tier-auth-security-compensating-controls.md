@@ -3,7 +3,8 @@
 - **Status:** Accepted
 - **Date:** 2026-08-02
 - **Scope:** CAPITAL-AI Production Authentication / Supabase Auth
-- **Platform Version:** `0.6.0`
+- **Platform Version:** `0.6.4`
+- **Amended:** 2026-09-24 — application-level breached-password screening verified in Production
 - **Governance ID:** `SEC-AUTH-SUPABASE-001`
 - **Related:** ADR-0003.5, ADR-0008, ADR-0030
 - **Security Advisor Target:** `SUPABASE_SECURITY_ZERO_ACTIONABLE_WARNINGS`
@@ -23,11 +24,13 @@ The advisor additionally reports `rls_enabled_no_policy` for `public.screening_s
 CAPITAL-AI formally adopts the following security state for the Supabase Free Tier:
 
 1. Native leaked-password protection remains unavailable while the project is on the Free Tier.
-2. The advisor warning is classified as **PLAN-CONSTRAINED / ACCEPTED RISK**, not as a remediated control.
-3. The target production status is `SUPABASE_SECURITY_ZERO_ACTIONABLE_WARNINGS`, not `ZERO_WARN`, because plan-constrained warnings and intentional INFO findings are distinguished from actionable security defects.
-4. The risk acceptance is temporary and automatically expires as soon as the project is upgraded to Supabase Pro or above.
-5. On any plan upgrade to Pro or above, enabling leaked-password protection becomes a mandatory Production Release Gate before the next release may be marked accepted.
-6. No SQL workaround, custom database function, copied breach corpus, or client-side imitation may be represented as equivalent to Supabase native leaked-password protection.
+2. The advisor warning remains **PLAN-CONSTRAINED / ACCEPTED RISK** for the native provider control only; it is not relabeled as a Supabase remediation.
+3. CAPITAL-AI's application password boundaries use the production backend adapter in `server/security/passwordSecurity.ts` to screen new or changed passwords against HIBP Pwned Passwords before the Supabase Auth mutation.
+4. The adapter is an application-level compensating control, not a claim that Supabase's native setting is enabled or that the Advisor warning is cleared.
+5. The target production status is `SUPABASE_SECURITY_ZERO_ACTIONABLE_WARNINGS`, not `ZERO_WARN`, because plan-constrained warnings and intentional INFO findings are distinguished from actionable security defects.
+6. The native-control risk acceptance is temporary and automatically expires as soon as the project is upgraded to Supabase Pro or above.
+7. On any plan upgrade to Pro or above, enabling native leaked-password protection becomes a mandatory Production Release Gate before the next release may be marked accepted.
+8. No SQL workaround, copied breach corpus, or client-side imitation may be represented as equivalent to Supabase native leaked-password protection.
 
 ## 3. Compensating controls on Free Tier
 
@@ -43,20 +46,37 @@ While the native leaked-password control is unavailable, CAPITAL-AI must maintai
 - All exposed application tables remain protected by RLS according to their intended access model.
 - Service-role/secret keys remain server-side only and must never be shipped to browser bundles.
 - Password reset and signup redirect URLs must remain explicit production allowlist entries; wildcard production redirects are prohibited.
+- Every application-owned password registration or password-change boundary must call the server-side breached-password adapter before invoking the corresponding Supabase Auth mutation.
 
 ### 3.2 Password policy baseline
 
-Where the current Supabase Free Tier UI permits configuration, the production password policy should use:
+The application password boundary enforces:
 
-- minimum length: **12 characters preferred**, never below 8;
-- require lowercase characters;
-- require uppercase characters;
-- require digits;
-- require symbols.
+- minimum length: **14 characters**;
+- at least one lowercase character;
+- at least one uppercase character;
+- at least one digit;
+- at least one symbol;
+- server-side HIBP Pwned Passwords screening before an application-owned signup or password update proceeds.
 
-These settings are compensating controls only. They do not make a claim that the password has been checked against a known-compromised-password corpus.
+Supabase Free-Tier password-policy settings remain defense in depth. The application adapter provides breached-password screening independently and does not make a claim that the native Supabase control is enabled.
 
-### 3.3 Additional controls requiring explicit implementation/configuration
+### 3.3 Backend breached-password adapter
+
+The production adapter uses the HIBP range API with k-anonymity:
+
+- SHA-1 is computed only inside the backend process;
+- only the first five hexadecimal hash characters are transmitted;
+- the complete digest and plaintext password never leave the backend and are never logged or persisted;
+- `Add-Padding: true` is used to reduce response-size correlation;
+- the Pwned Passwords range API requires no API key, so no additional credential is introduced;
+- a five-second timeout and upstream errors fail closed with HTTP 503;
+- a positive breach match is rejected with HTTP 422;
+- `/api/auth/password-security/check` is first-party, `no-store`, length-bounded and rate-limited.
+
+The primary browser login currently uses backend Google OAuth and does not expose a CAPITAL-AI password. The adapter remains mandatory for the backend registration/password-update routes and for any future password UI.
+
+### 3.4 Additional controls requiring explicit implementation/configuration
 
 CAPTCHA/bot protection may be introduced only together with the corresponding frontend token flow and provider configuration. It must not be enabled server-side without the application flow supplying valid CAPTCHA tokens.
 
@@ -71,7 +91,8 @@ ADR-0030 remains the governing version/release lifecycle. This ADR adds the foll
 A release may pass the Supabase security gate when all of the following are true:
 
 - Security Advisor contains no unresolved actionable database/auth warnings available to the current plan.
-- `auth_leaked_password_protection` is the only remaining WARN and is documented as plan-constrained.
+- `auth_leaked_password_protection` is the only remaining WARN and is documented as plan-constrained for the native provider control.
+- the backend breached-password adapter, its rate limit and fail-closed behavior remain covered by build/deployment invariants while application password routes exist.
 - Intentional `rls_enabled_no_policy` findings are traceable to a server-only/fail-closed access decision.
 - No new WARN is silently accepted without a dedicated security review.
 
@@ -111,7 +132,9 @@ The current decision is grounded in:
 - production Supabase Security Advisor output;
 - Supabase documentation stating leaked-password protection is available on Pro Plan and above;
 - production confirmation that the project is operated under the Free Tier;
-- prior remediation of all actionable `function_search_path_mutable` warnings affecting the `stripe` schema.
+- prior remediation of all actionable `function_search_path_mutable` warnings affecting the `stripe` schema;
+- identical adapter blobs in current `main` and the live production commit `fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74`;
+- unit coverage in `tests/unit/serverPasswordSecurity.test.ts` and the deployment invariant in `scripts/security/verifyPasswordSecurityBoundary.ts`.
 
 The Security Advisor must be rerun after every relevant auth/database hardening change and before production acceptance when the release touches authentication, RLS, database functions, or privileged data paths.
 
@@ -126,11 +149,12 @@ The Security Advisor must be rerun after every relevant auth/database hardening 
 
 ### Negative / residual risk
 
-- Supabase Auth cannot natively reject passwords solely because they are present in a known breached-password corpus while the project remains on Free Tier.
-- Strong password composition, TOTP step-up, rate limiting and email verification reduce but do not eliminate credential-reuse/credential-stuffing risk.
+- Supabase Auth cannot natively reject breached passwords while the project remains on Free Tier, so the Advisor warning remains visible.
+- The application adapter protects CAPITAL-AI-owned password creation/change paths, but it cannot change provider-side flows that bypass the application boundary.
+- HIBP availability is an external dependency; the application fails closed rather than accepting an unchecked new password.
 
 ## 8. Final decision
 
-For the active Supabase Free Tier, the remaining leaked-password warning is accepted only as a documented plan constraint with compensating controls and a mandatory upgrade-triggered remediation gate.
+For the active Supabase Free Tier, the remaining Advisor warning is accepted only for the unavailable native provider control. Application-owned password creation and change paths are actively protected by the verified backend HIBP adapter, with a mandatory native-control remediation gate after plan upgrade.
 
 **Accepted security target:** `SUPABASE_SECURITY_ZERO_ACTIONABLE_WARNINGS`
