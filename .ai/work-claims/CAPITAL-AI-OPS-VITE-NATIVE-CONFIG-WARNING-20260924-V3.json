@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-VITE-NATIVE-CONFIG-WARNING-20260924-V3",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Remove the remaining Vite native config loader warning from the production build without suppressing the warning.",
+  "workItemDE": "Verbleibende Vite-Native-Config-Loader-Warnung im Produktions-Build ursächlich beheben, ohne die Warnung zu unterdrücken.",
+  "priority": "P2",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "baseBranch": "main",
+  "baseSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+  "lastSyncedMainSha": "53f1cb04bf20efb2d7a0bd4524dc5fea2be8aa07",
+  "branch": "agent/operations-vite-native-config-warning-20260924-v3",
+  "claimedPaths": [
+    "vite.config.ts",
+    "tests/unit/viteNativeConfigWarningHygiene.test.ts",
+    ".ai/work-claims/CAPITAL-AI-OPS-VITE-NATIVE-CONFIG-WARNING-20260924-V3.json"
+  ],
+  "scopeBoundary": [
+    "No VITE_CONFIG_NATIVE_IGNORE_WARNING suppression.",
+    "No merge-cadence/runtime behavior change; the prior CJS import.meta issue is already resolved on CURRENT_MAIN.",
+    "No Render configuration, deployment, credential, IAM, billing or production mutation.",
+    "Human/CODEOWNER merge required."
+  ],
+  "exitEvidence": [
+    "vite.config.ts contains zero __dirname references and exactly three import.meta.dirname references.",
+    "Focused regression test prevents __dirname and warning-suppression regression.",
+    "Exact-head build emits no Vite native config loader warning for __dirname.",
+    "Required exact-head Governance/build/security checks pass before merge."
+  ],
+  "acceptanceCriteria": [
+    "Path resolution semantics remain unchanged except use of native-loader-compatible import.meta.dirname.",
+    "No changed-file overlap exists with current open writers at final pre-create correlation.",
+    "The existing CJS mergeCadence fix remains untouched.",
+    "No direct main mutation or self-merge."
+  ],
+  "observedEvidence": {
+    "previousWorkflowRun": 36004225901,
+    "previousFailure": "stale branch head rejected by productionPreflight",
+    "agentLaneAtRebind": "FREE",
+    "cjsImportMetaStatus": "DONE_MAIN"
+  },
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
