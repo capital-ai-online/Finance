@@ -8,7 +8,7 @@ WORKDIR /app
 # only the completed venv and does not resolve Python packages at request time.
 RUN apk add --no-cache python3 py3-pip \
   && python3 -m venv /opt/ga4-mcp \
-  && /opt/ga4-mcp/bin/pip install --no-cache-dir analytics-mcp==0.7.0 \
+  && /opt/ga4-mcp/bin/pip install --no-cache-dir analytics-mcp==0.7.0 msgpack==1.2.1 setuptools==78.1.1 \
   && test -x /opt/ga4-mcp/bin/analytics-mcp \
   && /opt/ga4-mcp/bin/python -c "import analytics_mcp; import google.analytics.admin_v1beta; import google.analytics.data_v1beta" \
   && rm -rf /root/.cache \

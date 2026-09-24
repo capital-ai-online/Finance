@@ -190,6 +190,8 @@ describe('GA4 Render MCP readback', () => {
     expect(clientSource).toContain("GOOGLE_PROJECT_ID: projectId");
     expect(clientSource).not.toContain('private_key:');
     expect(dockerSource).toContain('analytics-mcp==0.7.0');
+    expect(dockerSource).toContain('msgpack==1.2.1');
+    expect(dockerSource).toContain('setuptools==78.1.1');
     expect(renderSource).toContain('GA4_MCP_SERVICE_ACCOUNT_KEY_JSON');
     expect(renderSource).toContain('GA4_MCP_PROJECT_ID');
     expect(renderSource).toContain('GA4_PID');
