@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-test('Required PR Governance uses stable-contract validation without dynamic Evidence coupling', () => {
+test('Required PR Governance uses stable-contract validation with a bounded trusted-main bootstrap fallback', () => {
   const validator = fs.readFileSync('scripts/pr/validatePrBody.mjs', 'utf8');
   const workflow = fs.readFileSync('.github/workflows/pr-governance.yml', 'utf8');
 
@@ -26,6 +26,10 @@ test('Required PR Governance uses stable-contract validation without dynamic Evi
   assert.match(workflow, /PR_BODY_VALIDATION_MODE: static-contract/);
   assert.doesNotMatch(workflow, /types: \[[^\]]*edited/);
   assert.doesNotMatch(workflow, /run: node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
+  assert.match(workflow, /if grep -q 'PR_BODY_VALIDATION_MODE' "\$validator"; then/);
+  assert.match(workflow, /Bootstrap: trusted main unterstützt static-contract noch nicht/);
+  assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
+  assert.match(workflow, /node "\$validator"/);
   assert.match(
     workflow,
     /format\('pr-governance-pr-\{0\}-\{1\}-\{2\}', github\.event\.pull_request\.number, github\.event\.pull_request\.head\.sha, github\.event\.pull_request\.base\.sha\)/,

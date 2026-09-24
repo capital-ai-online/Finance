@@ -72,14 +72,18 @@ describe('P1 PR governance runner consolidation', () => {
     expect(yaml).toContain('PR_HEAD_REF: HEAD');
   });
 
-  it('validates only the stable PR contract and leaves dynamic Production/Dashboard Evidence to the reconciler', () => {
+  it('uses the stable PR contract and keeps a bounded bootstrap only for a trusted-main validator without static-contract support', () => {
     const yaml = workflow();
     const bodyStep = workflowStep(yaml, 'Stabilen PR-Vertrag fail-closed prüfen');
     const liveSnapshotGuard = "if: steps.snapshot.outputs.current_snapshot == 'true'";
 
     expect(yaml).not.toContain('name: Produktions-Baseline über trusted-main Policy erzeugen');
     expect(yaml).not.toContain('run: node ../policy/scripts/pr/productionPreflight.mjs');
-    expect(bodyStep).toContain('run: node ../policy/scripts/pr/validatePrBody.mjs');
+    expect(bodyStep).toContain("validator='../policy/scripts/pr/validatePrBody.mjs'");
+    expect(bodyStep).toContain("if grep -q 'PR_BODY_VALIDATION_MODE' \"$validator\"; then");
+    expect(bodyStep).toContain('node "$validator"');
+    expect(bodyStep).toContain('node ../policy/scripts/pr/productionPreflight.mjs');
+    expect(bodyStep).toContain('Bootstrap: trusted main unterstützt static-contract noch nicht');
     expect(bodyStep).toContain('PR_BODY_VALIDATION_MODE: static-contract');
     expect(bodyStep).not.toContain('PR_BASELINE_OUTPUT');
     expect(bodyStep).toContain(liveSnapshotGuard);

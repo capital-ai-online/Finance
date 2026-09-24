@@ -251,4 +251,14 @@ jobs:
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
           PR_BODY_VALIDATION_MODE: static-contract
-        run: node ../policy/scripts/pr/validatePrBody.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          validator='../policy/scripts/pr/validatePrBody.mjs'
+          if grep -q 'PR_BODY_VALIDATION_MODE' "$validator"; then
+            node "$validator"
+          else
+            echo 'Bootstrap: trusted main unterstützt static-contract noch nicht; einmalig Production-Baseline für den alten fail-closed Vertrag erzeugen.'
+            node ../policy/scripts/pr/productionPreflight.mjs
+            node "$validator"
+          fi
