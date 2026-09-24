@@ -55,6 +55,8 @@ jobs:
           echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
 
       - name: Read-only Enterprise Billing Inventory
+        id: enterprise_billing
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
@@ -62,6 +64,8 @@ jobs:
         run: node scripts/operations/runPrivateGitHubBillingRead.mjs
 
       - name: Read-only Organization and Finance Repository Billing
+        id: organization_billing
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
@@ -70,6 +74,8 @@ jobs:
         run: node scripts/operations/runPrivateGitHubOrganizationBillingRead.mjs
 
       - name: Read-only Enterprise License Usage Attribution
+        id: enterprise_license
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
@@ -78,6 +84,8 @@ jobs:
         run: node scripts/operations/runPrivateGitHubLicenseUsageRead.mjs
 
       - name: Read-only GitHub Actions Variable Evidence
+        id: actions_variable
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
@@ -87,6 +95,8 @@ jobs:
         run: node scripts/operations/runPrivateGitHubVariablesRead.mjs
 
       - name: Read-only GitHub Settings and Retention Inventory
+        id: settings_inventory
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
@@ -110,11 +120,46 @@ jobs:
           fi
 
       - name: Zero-cost Storage Capability korrelieren
+        id: storage_capability
+        continue-on-error: true
         env:
           CAPITAL_AI_GITHUB_BILLING_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-billing-evidence.json
           CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/capital-ai-github-settings-evidence.json
         run: node scripts/operations/runPrivateGitHubStorageCapabilityReport.mjs
 
+      - name: Read-only Evidence Completion Gate
+        if: always()
+        shell: bash
+        env:
+          ENTERPRISE_BILLING_OUTCOME: ${{ steps.enterprise_billing.outcome }}
+          ORGANIZATION_BILLING_OUTCOME: ${{ steps.organization_billing.outcome }}
+          ENTERPRISE_LICENSE_OUTCOME: ${{ steps.enterprise_license.outcome }}
+          ACTIONS_VARIABLE_OUTCOME: ${{ steps.actions_variable.outcome }}
+          SETTINGS_INVENTORY_OUTCOME: ${{ steps.settings_inventory.outcome }}
+          STORAGE_CAPABILITY_OUTCOME: ${{ steps.storage_capability.outcome }}
+        run: |
+          set -euo pipefail
+
+          failures=()
+          check_outcome() {
+            local label="$1"
+            local outcome="$2"
+            if [[ "${outcome}" != "success" ]]; then
+              failures+=("${label}=${outcome}")
+            fi
+          }
+
+          check_outcome "enterprise-billing" "${ENTERPRISE_BILLING_OUTCOME}"
+          check_outcome "organization-billing" "${ORGANIZATION_BILLING_OUTCOME}"
+          check_outcome "enterprise-license" "${ENTERPRISE_LICENSE_OUTCOME}"
+          check_outcome "actions-variable" "${ACTIONS_VARIABLE_OUTCOME}"
+          check_outcome "settings-inventory" "${SETTINGS_INVENTORY_OUTCOME}"
+          check_outcome "storage-capability" "${STORAGE_CAPABILITY_OUTCOME}"
+
+          if (( ${#failures[@]} > 0 )); then
+            printf '::error::Read-only evidence stages failed independently: %s\n' "${failures[*]}"
+            exit 1
+          fi
       - name: Private Key aus Runner-Dateisystem entfernen
         if: always()
         shell: bash
