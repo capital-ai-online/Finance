@@ -625,11 +625,15 @@ backendAuthRouter.post('/login/totp/verify', AUTH_CREDENTIAL_RATE_LIMIT, async (
     const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId });
     if (challengeError || !challenge?.id) throw challengeError || new Error('TOTP_CHALLENGE_FAILED');
     const { data, error } = await client.auth.mfa.verify({ factorId, challengeId: challenge.id, code });
-    if (error || !data.session) {
+    if (error || !data) {
       res.status(422).json({ error: 'Der Authenticator-Code ist ungültig oder abgelaufen.' });
       return;
     }
-    persistBackendAuthSession(req, res, data.session);
+    const { data: verifiedSession, error: verifiedSessionError } = await client.auth.getSession();
+    if (verifiedSessionError || !verifiedSession.session) {
+      throw verifiedSessionError || new Error('TOTP_VERIFIED_SESSION_MISSING');
+    }
+    persistBackendAuthSession(req, res, verifiedSession.session);
     res.status(200).json({ authenticated: true });
   } catch (error) {
     authLogger.error('TOTP primary login verification failed', {
