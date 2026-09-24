@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@db5c673502c6ae62547371d7bd6c58d42460be25`
+**Baseline:** `main@bac6f4224cdb4f570c415c1310a264b3081756e6`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -32,6 +32,18 @@ Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
 **Exit:** dual-mode implementation is Human-merged and verified before GOV #1336 activation; no second controller/registry exists; FE can consume the read-only /api/roadmap/cadence projection in an owner-correct successor.
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
+
+### SH-02 Issue #1355 — TypeScript literal-union drift intake
+
+**State:** `IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18`
+
+The existing PR Autofix classifier recognizes the exact PR #1352 `TS2322`
+literal-union widening family without enabling generic code mutation.
+Disposition is `BLOCKED_NOT_PROVEN` / `OBSERVE_ONLY`; all unknown TypeScript
+failures stay blocked. Human/CODEOWNER merge remains required before this
+classifier extension becomes current-main behavior.
+
 
 ### SH-02.11 activation update — 2026-09-23
 

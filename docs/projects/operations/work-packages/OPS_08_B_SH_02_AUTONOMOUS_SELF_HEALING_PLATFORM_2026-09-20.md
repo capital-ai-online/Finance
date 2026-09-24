@@ -413,6 +413,23 @@ Each tier has an independent kill switch.
 - Supervisor `capabilities.selfHealing` now derives from `dependencyResilience.automaticGenericRetryEnabled`; it does not imply SH-2/SH-3 capability.
 - `QUARANTINE_WORK_ITEM`, `RUNTIME_PROCESS_RECYCLE`, `REDEPLOY_EXACT_SHA` and `PROTECTED_ROLLBACK_RESTORE` remain `HELD`.
 
+### SH-02.12A — deterministic TypeScript literal-union intake (#1355)
+
+**State:** `IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY / NO_REPAIR_AUTHORITY`
+
+Issue #1355 adds one bounded classifier-only extension to the existing
+`repository.pr.autofix` path. Exact CI evidence for TypeScript `TS2322` where
+`string | undefined` widens beyond an explicit string-literal union is projected
+as `REPOSITORY_TYPESCRIPT_LITERAL_UNION_DRIFT`.
+
+The action remains `OBSERVE_ONLY` and returns
+`BLOCKED_NOT_PROVEN` with signature
+`TS2322_LITERAL_UNION_WIDENING_V1`. No source rewrite, dependency change,
+provider mutation, repair registry entry or generic compiler autofix is created.
+Unknown TypeScript diagnostics remain `UNKNOWN_FAILURE / BLOCKED_UNKNOWN`.
+A later automatic repair would require a separately registered exact repair
+contract, changed-path allowlist and ordinary exact-head validation.
+
 ### SH-02.12 routed Issue Auto-Fix — HELD follow-up
 
 The repository already has safe Issue routing/dispatch plus SH-0 verification and a one-attempt `repository.pr.autofix` specialist for allowlisted repository-projection drift. It does **not** yet have a generic Issue-derived code-remediation executor. This is intentionally not inferred from `READY_FOR_PROJECT_EXECUTION`.
