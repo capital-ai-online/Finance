@@ -38,6 +38,10 @@ Phone OTP is provider- and cost-dependent. `CAPITAL_AI_PHONE_AUTH_ENABLED=false`
 5. Registration, Google, username, passkey and TOTP user tests run against Production.
 6. Phone recovery remains unavailable until provider/cost approval and `CAPITAL_AI_PHONE_AUTH_ENABLED=true` are both confirmed.
 
+## CI reconciliation convergence
+
+The migration-ledger validator is bound to the ledger's explicit provider readback cardinality instead of a historical hard-coded remote count. The regression suite also verifies that the checked-in remote snapshot, summary, and provider readback remain equal and fails closed on any mismatch. This keeps the gate strict while allowing an evidence-backed remote ledger to grow without manual validator constants.
+
 ## Exit evidence
 
 1. E-mail and username password login both establish the same backend-owned session.
