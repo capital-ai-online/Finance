@@ -71,7 +71,8 @@ describe('Roadmap project routing and parallel worker projection', () => {
       routes,
     );
 
-    expect(lanes).toHaveLength(8);
+    expect(lanes).toHaveLength(7);
+    expect(lanes.some((lane) => lane.id === 'FE-ROADMAP-LIVE')).toBe(false);
 
     const sec = lanes.find((lane) => lane.id === 'SEC-WEB-HARDENING-01');
     expect(sec?.itemIds).toEqual(

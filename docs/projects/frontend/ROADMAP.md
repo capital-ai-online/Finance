@@ -4,8 +4,8 @@
 **Folder:** `docs/projects/frontend/`  
 **Role:** cross-cutting Frontend architecture, presentation and UX execution  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-24 — Owner-directed Roadmap presentation migration from the historical dashboard shell to the current productive Landingpage profile; no productive domain ownership changes  
-**Baseline:** `main@b0b6985a4786961f3a3125619566fa02003552d4`
+**Reconciliation:** 2026-09-24 — FE Roadmap/Landingpage presentation is merged and live; stale FE self-writer/Production-blocked projections are converged against exact CURRENT_MAIN without changing foreign-owner task state
+**Baseline:** `main@e80c7872d27221b01316a407990194e03caa7a28`
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
 ## Reconciliation rule
@@ -32,7 +32,7 @@ This FE projection is re-correlated to `main@426a98d4703271e438cbc6df4b1442fb3a9
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** Frontend presentation + canonical Branding Kit only; no productive PVC ownership  
 **Status:** `DONE_MAIN / TERMINAL`  
-**Baseline:** `main@b0b6985a4786961f3a3125619566fa02003552d4`
+**Baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`
 
 Fresh Owner direction replaces the historical dashboard-style template used by `/roadmap` with one reusable public-site template derived from the current productive Landingpage.
 
@@ -52,9 +52,9 @@ Implementation boundary:
 **Canonical identity:** `FE-ROADMAP-LIVE-01`  
 **Resolved Owner:** `CAPITAL-AI-FE`  
 **Scope:** read-only presentation/aggregation of canonical current-state evidence; no productive PVC ownership  
-**Status:** `IN_PROGRESS / SEO_PRODUCTION_CONVERGENCE_BRANCH`  
-**Fresh baseline:** `main@426a98d4703271e438cbc6df4b1442fb3a9b032d`  
-**Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/shared/branding/CapitalAiLogo.tsx`, `src/shared/ui/Card.tsx`
+**Status:** `DONE_MAIN / TERMINAL`  
+**Fresh baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`  
+**Branding contracts:** `docs/frontend/brandmark.json`, `docs/frontend/design-tokens.json`, `src/features/public/ui/frontend-port/components/BrandLogo.tsx`, `src/features/public/ui/LandingPageTemplate.tsx`, `src/features/public/ui/frontend-port/frontend-port.css`
 
 Fresh Human/Owner direction requests a real `/roadmap` page that projects the current Roadmap and all actively processed work packages. The implementation remains a non-authorizing derived view:
 
@@ -68,6 +68,8 @@ Fresh Human/Owner direction requests a real `/roadmap` page that projects the cu
 - the current `/universe` mismatch is represented as **retirement work**, never as authority to restore the removed Client route.
 
 **Exit:** exact-head FE tests/build are green; `/roadmap` continues to resolve through the existing client/server path; current-main/open-writer correlation remains PASS; the integration ledger matches the correlated repository/Production evidence; Human/CODEOWNER merge remains required.
+
+**Terminal evidence:** PR #1335 merged as `8f5fff57613f183e0e1a2a8c8b41017338e63491`; the Landingpage-template chain #1374/#1376 is merged. Render deploy `dep-daqa9sh42hec738ulhcg` is live on `d28eff774f24ceab05c1d18268c9b12749a09fe5`; after Governance-only #1377, CURRENT_MAIN is `adcd5609b0db58627fb2d89e58d32f7054baf918` and Production remains a healthy cadence-conformant ancestor until the next 5-merge boundary. The historical exclusive FE claim is stale and is released by this bounded post-merge convergence slice; foreign-owner Roadmap states remain unchanged.
 
 ### FE-ROADMAP-LIVE-01 — SEO / Production convergence slice — 2026-09-23
 

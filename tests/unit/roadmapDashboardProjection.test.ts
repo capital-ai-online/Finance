@@ -9,14 +9,20 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 describe('Roadmap dashboard projection', () => {
   it('binds the projection to the freshly correlated main baseline without claiming runtime identity', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha).toBe(
-      'fdc6c2f1ad831bbd7fe7f9078231b855a744adc7',
+      'adcd5609b0db58627fb2d89e58d32f7054baf918',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha).toBe(
       ROADMAP_DASHBOARD_SNAPSHOT.correlatedMainSha,
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.role).toBe('NON_AUTHORIZING_DERIVED_UI_PROJECTION');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.classification).toBe(
-      'LIVE_HEALTHZ_REQUIRED_FOR_CURRENT_MAIN',
+      'DEPLOYMENT_QUEUED_ANCESTOR',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.observedCommitSha).toBe(
+      'd28eff774f24ceab05c1d18268c9b12749a09fe5',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.deployId).toBe(
+      'dep-daqa9sh42hec738ulhcg',
     );
     expect(ROADMAP_DASHBOARD_SNAPSHOT.productionAudit.previousFailedDeployId).toBe(
       'dep-daq378mk1f9s738adt70',
@@ -36,6 +42,17 @@ describe('Roadmap dashboard projection', () => {
           stalePrNumbers.has(item.prNumber),
       ),
     ).toBe(false);
+
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.some(
+        (item) => item.id === 'FE-ROADMAP-LIVE-01',
+      ),
+    ).toBe(false);
+    expect(
+      ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.find(
+        (item) => item.id === 'FE-ROADMAP-LIVE-01',
+      )?.state,
+    ).toBe('production-covered');
 
     const retrySafe = ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.find(
       (item) => item.id === 'SH-02.11',
@@ -146,9 +163,10 @@ describe('Roadmap dashboard projection', () => {
     expect(integration('PRICING-ARCHIVE-PUBLIC-VISIBILITY')?.state).toBe(
       'production-covered',
     );
-    expect(integration('AUTH-REGISTRATION-PROFILE')?.state).toBe('main-only');
-    expect(integration('OPS-DEPLOY-426A98')?.state).toBe('main-only');
-    expect(integration('OPS-DEPLOY-426A98')?.detail).toContain(
+    expect(integration('AUTH-REGISTRATION-PROFILE')?.state).toBe('production-covered');
+    expect(integration('OPS-DEPLOY-426A98')?.state).toBe('repository-integrated');
+    expect(integration('OPS-DEPLOY-426A98')?.stateLabel).toContain('SUPERSEDED');
+    expect(integration('AUTH-REGISTRATION-PROFILE')?.detail).toContain(
       'SUPABASE_MANAGEMENT_ACCESS_TOKEN_MISSING',
     );
   });

@@ -1,6 +1,6 @@
 # 👔 Executive Summary & Strategic Vision (CEO Perspective)
 **Project: CAPITAL-AI**  
-**Version:** 0.6.3 (Beta-Phase)  
+**Version:** 0.6.4 (Beta-Phase)
 **Classification:** Confidential / Board Approved  
 
 ---
