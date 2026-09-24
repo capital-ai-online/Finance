@@ -12,7 +12,7 @@
   "startedAt": "2026-09-24T08:50:00+02:00",
   "baseBranch": "main",
   "baseSha": "c19f4ed64ecf815c8226e49cc1ad2e48a35eeeac",
-  "lastSyncedMainSha": "c19f4ed64ecf815c8226e49cc1ad2e48a35eeeac",
+  "lastSyncedMainSha": "b33fe5bb4782a3bd8d1d5c9da64f9182b85c62b7",
   "branch": "operations/sh02-12b-routed-issue-repair-eligibility-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -36,7 +36,7 @@
     "Human/CODEOWNER merge authority unchanged."
   ],
   "dependencies": [
-    "/AGENTS.md@c19f4ed64ecf815c8226e49cc1ad2e48a35eeeac",
+    "/AGENTS.md@CURRENT_MAIN",
     "Human-merged SH-02.9A Issue Intake & Project Dispatch",
     "Human-merged repository.pr.autofix repair registry",
     "SH-02.12A terminal via PR #1380"
@@ -51,7 +51,7 @@
     "No Issue content becomes executable authority.",
     "No duplicate router/repair registry/writer is introduced.",
     "Regression tests pass on exact head.",
-    "No overlap with open PR #1390.",
+    "No changed-file overlap with current open PRs.",
     "Human/CODEOWNER merge remains required if repository policy classifies the Self-Healing contract change as protected."
   ],
   "releaseCondition": "Release claim on Human/CODEOWNER merge, close, supersession or abandonment."
