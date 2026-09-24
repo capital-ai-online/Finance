@@ -1,7 +1,7 @@
 # CAPITAL-AI Agent Trust Root
 
 **Authority ID:** `AUTH-GOV-AGENT-TRUST-ROOT`  
-**Control Plane Version:** `4.10.0`  
+**Control Plane Version:** `4.11.0`  
 **Status:** OWNER-DIRECTED — effective after Human Owner merge  
 **Effective date:** 2026-09-24  
 **Repository:** `capital-ai-online/Finance`
@@ -281,7 +281,17 @@ Preserved visual conventions include:
 - `👷 AKTIVE CHAT-WORKER` status presentation when relevant;
 - project symbol/color in Pull Request presentation while textual Project/Owner/PVC identity remains primary.
 
-Color is never the sole semantic cue. Presentation MUST NOT determine work selection, item limits, triggers, waiting, ownership, approval, PR authority or gate results.
+### Project-folder chat progress visibility and bounded-stall rule
+
+This rule applies repository-wide to interactive ChatGPT/agent conversations executing work inside any canonical project-folder context. It controls human-visible progress presentation and bounded chat stalling only; it does not create a second task, approval, ownership, dependency, deployment or merge authority.
+
+1. `🧭 NÄCHSTE SCHRITTE` MUST be rendered as one copyable fenced plaintext snippet whenever next work, a blocker or a Human Owner boundary is presented. When a `👋 HUMAN OWNER AKTION` is shown, the completed-history portion immediately before that Human Owner action MUST contain no more than the two most recently completed `✅` steps. Older completed steps are omitted from that snippet. Current active, validation, dependency or blocker state MAY still be shown when required to make the boundary intelligible.
+2. While an interactive chat/agent is actively implementing work, it MUST keep a human-readable fenced plaintext work-status snippet visible that states the current work item and the concrete implementation/sub-step being handled. Prefer high-level implementation state and evidence over raw tool logs or private reasoning.
+3. If active implementation continues for approximately 30 seconds without a newly visible implementation/work-state or completed execution point, the chat MUST emit another plaintext work-status snippet. That update MUST either provide materially more specific detail about the current work or show a truthful progress percentage for the current bounded task. A percentage MAY be shown only when observable sub-steps or evidence make it calculable; otherwise descriptive status is mandatory. Fabricated percentages or fabricated completion are prohibited.
+4. If the same implementation point remains unchanged for 5 minutes without a completed sub-step or observable state transition, the chat MUST pause further work in that conversation and surface a plaintext stall snapshot containing the current work item, observed status/evidence, completed scope, remaining scope, blocker or unresolved hypothesis when known, and the exact resume point. It MUST NOT report PASS/completion, invent evidence or silently continue the stalled point.
+5. The 30-second and 5-minute thresholds are interaction-visibility/stall thresholds only. They MUST NOT create artificial sleeps, polling loops, workflow retries, provider timers, dependency timers, ownership transfer, approval bypass or external mutation authority. Existing CURRENT_MAIN, Project/Owner/PVC, Security/Compliance, validation and Human/CODEOWNER gates remain unchanged.
+
+Color is never the sole semantic cue. Presentation MUST NOT determine work selection, item limits, task selection authority, dependency truth, ownership, approval, PR authority or gate results.
 
 ## 11. Governance terminology
 
