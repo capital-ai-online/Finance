@@ -1,5 +1,7 @@
 <!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->
 `CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`
+> 📦 **package.json:** `{{CURRENT_PACKAGE_VERSION}}` · 🚀 **Render Production:** PR #{{DEPLOYED_PR_NUMBER}} · ⏳ **Auto-Deploy:** noch `{{DEPLOY_REMAINING}}` PR-Merge(s)
+
 # {{WORK_ITEM}}
 
 > 🧭 **Entscheidungsstatus: {{DECISION_STATUS}}**  
@@ -21,6 +23,7 @@
 |---|---|
 | CURRENT_MAIN | `{{CURRENT_MAIN_SHA}}` |
 | Live Production | `{{PRODUCTION_VERSION}}` · `{{PRODUCTION_SHA}}` |
+| Render Production PR | `#{{DEPLOYED_PR_NUMBER}}` |
 | Deploy-Cadence | `{{DEPLOYMENT_STATE}}` · `{{DEPLOY_PROGRESS}}/5` · noch `{{DEPLOY_REMAINING}}` Merge(s) |
 | Nächstes Deploy-Ziel | `{{NEXT_DEPLOY_TARGET_SHA}}` |
 | Plattformversion | `{{CURRENT_PACKAGE_VERSION}}` |

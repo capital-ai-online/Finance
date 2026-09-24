@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-TEMPLATE-RENDER-DEPLOY-SUMMARY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Expose the current package.json version, the Pull Request deployed in Render Production, and remaining Pull Request merges until the next automatic deploy at the top of every rendered PR body.",
+  "workItemDE": "PR-Vorlage oben um package.json-Version, Render-Production-PR und verbleibende Auto-Deploy-Merges ergänzen",
+  "startedAt": "2026-09-24T00:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+  "lastSyncedMainSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+  "branch": "governance/pr-template-render-deploy-summary-20260924",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 · Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "priorityReason": "Die Merge-Entscheidung soll die produktive Render-PR und die verbleibende 5er-Deploy-Cadence ohne Navigation im PR-Kopf zeigen.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-LIVE-PR-CADENCE-DISPLAY-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-TEMPLATE-RENDER-DEPLOY-SUMMARY-20260924.json",
+    ".github/pull_request_template.md",
+    "scripts/pr/renderPullRequestBody.mjs",
+    "scripts/operations/mergeCadence.mjs",
+    "tests/unit/mergeCadence.test.ts",
+    "scripts/pr/prBodySectionContract.test.mjs"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-GOV / PVC-05 PR presentation and read-only cadence projection only.",
+    "The production PR number is derived from the immutable Production SHA by the existing merge-cadence resolver.",
+    "No new workflow, cadence controller, Render mutation, deployment trigger, version mutation, package.json edit or direct-main mutation.",
+    "Human/CODEOWNER merge authority remains unchanged."
+  ],
+  "dependencies": [
+    "/AGENTS.md@8a173021a03d6776fa7323523c1e2acd713c3c5b",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "scripts/operations/mergeCadence.mjs@CURRENT_MAIN",
+    "PR #1359 Human/CODEOWNER-merged live cadence display"
+  ],
+  "exitEvidence": [
+    "The first visible PR-body line shows current package.json version, Render Production PR and remaining PR merges until auto-deploy.",
+    "Render Production PR is deterministically parsed from the immutable production commit merge subject.",
+    "The existing 5/10 cadence resolver remains the single source of truth.",
+    "Unit and PR-body contract tests cover canonical merge subjects and header placement.",
+    "Hosted exact-head CI, Governance and Container Security pass."
+  ],
+  "acceptanceCriteria": [
+    "Template remains v1.8.0 for compatibility.",
+    "All added placeholders are rendered by the existing PR renderer.",
+    "Current package version is read from package.json at the bound base ref.",
+    "Invalid or non-merge production SHAs render N/A instead of fabricating a PR number.",
+    "Human/CODEOWNER merge remains the protected final boundary."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
