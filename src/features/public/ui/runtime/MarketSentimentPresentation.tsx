@@ -100,16 +100,20 @@ function parseFintechSentimentProjection(body: unknown): MarketSentimentProjecti
       })
     : [];
 
-  const drivers = Array.isArray(value.drivers)
-    ? value.drivers.flatMap((driver) => {
+  const drivers: MarketSentimentDriver[] = Array.isArray(value.drivers)
+    ? value.drivers.flatMap((driver): MarketSentimentDriver[] => {
         if (!driver || typeof driver !== 'object') return [];
         const candidate = driver as Record<string, unknown>;
         if (typeof candidate.title !== 'string' || typeof candidate.description !== 'string') return [];
-        const direction = candidate.direction;
+        const rawDirection = candidate.direction;
+        const direction: MarketSentimentDriver['direction'] =
+          rawDirection === 'up' || rawDirection === 'down' || rawDirection === 'neutral'
+            ? rawDirection
+            : undefined;
         return [{
           title: candidate.title,
           description: candidate.description,
-          direction: direction === 'up' || direction === 'down' || direction === 'neutral' ? direction : undefined,
+          direction,
         }];
       })
     : [];
