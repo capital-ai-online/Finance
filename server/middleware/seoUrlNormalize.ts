@@ -23,6 +23,8 @@ export const PUBLIC_SPA_PATHS = new Set([
  */
 export const APPLICATION_SPA_PATHS = new Set([
   '/login',
+  '/profile',
+  '/account/update-password',
   '/dashboard',
   '/media-studio',
   '/roadmap',
