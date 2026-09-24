@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SEC-WEB-00-CURRENT-BASELINE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "project": "CAPITAL-AI-SEC",
+  "projectFolder": "docs/projects/security/",
+  "owner": "CAPITAL-AI-SEC",
+  "primaryProductivePvc": [],
+  "baseBranch": "main",
+  "baseSha": "67f9be45e41d78ca5d5c58f9be860d1887e4afad",
+  "lastSyncedMainSha": "67f9be45e41d78ca5d5c58f9be860d1887e4afad",
+  "branchName": "security/sec-web-00-current-baseline-20260924",
+  "workItem": "SEC-WEB-00 — correlate CURRENT_MAIN attack surface and controls, disposition F01..F30, close exact current digest semantics where proven, and route remaining productive remediation to canonical owners.",
+  "priority": "P0",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SEC-WEB-00-CURRENT-BASELINE-20260924.json",
+    "docs/architecture/ROADMAP.md",
+    "docs/projects/security/evidence/SEC_WEB_00_CURRENT_ATTACK_SURFACE_BASELINE_2026-09-24.md",
+    "docs/projects/security/evidence/SEC_WEB_HARDENING_01_PUBLIC_WEBSITE_SECURE_DEPLOYMENT.md",
+    "tests/unit/securityWebBaselineProjection.test.ts"
+  ],
+  "foreignOwnerReturns": [
+    {
+      "finding": "SEC-WEB-F15",
+      "owner": "CAPITAL-AI-OPS",
+      "pvc": [
+        "PVC-07",
+        "PVC-08"
+      ],
+      "canonicalPackages": [
+        "OPS-07-A",
+        "OPS-08-A"
+      ]
+    },
+    {
+      "finding": "SEC-WEB-F23",
+      "owner": "CAPITAL-AI-OPS",
+      "pvc": [
+        "PVC-02",
+        "PVC-07"
+      ],
+      "state": "HELD_BEHIND_F15"
+    },
+    {
+      "finding": "SEC-WEB-F10",
+      "owner": "CAPITAL-AI-OPS",
+      "dependencies": [
+        "CAPITAL-AI-CLIENT",
+        "CAPITAL-AI-FE"
+      ],
+      "state": "HELD_BEHIND_F23"
+    }
+  ],
+  "exactEvidence": {
+    "containerSecurityRun": 35957793419,
+    "hardenedImageJob": 107499695661,
+    "signedGhcrJob": 107500154419,
+    "ghcrDigest": "sha256:a793cf5d0259d7a529213cf437a77a8f92940a45bcb85463b77223722be18306",
+    "ghcrEvidenceArtifactId": 10790897202,
+    "mainCiRun": 35957793425,
+    "mainCiResult": "PASS",
+    "deploymentJob": "SKIPPED_BY_CADENCE"
+  },
+  "acceptanceCriteria": [
+    "Every SEC-WEB F01..F30 item has a CURRENT_MAIN disposition, owner/return and verification gate.",
+    "F01 and F16 are marked verified only from exact CURRENT_MAIN GHCR registry/pull/signature/attestation evidence.",
+    "F15 remains open while CI deploys Render from ref=main rather than the already verified GHCR digest.",
+    "No duplicate OPS Release/Production backlog or deployment architecture is created.",
+    "Later F23/F10 execution remains dependency-held.",
+    "No open FE Roadmap UI writer path is modified."
+  ],
+  "startedAt": "2026-09-24T06:47:00+02:00",
+  "recorrelatedAt": "2026-09-24T07:01:30+02:00",
+  "authority": "/AGENTS.md@CURRENT_MAIN"
+}

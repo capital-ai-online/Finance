@@ -1,4 +1,6 @@
 > **Live-status supersession — 2026-09-23:** This document preserves the threat model, finding catalog, owner-return boundaries and verification/exit contracts for provenance. It is not an independent work-package queue. Current state and sequencing are maintained in the repository Live Roadmap.
+>
+> **Current SEC-WEB-00 baseline — 2026-09-24:** `docs/projects/security/evidence/SEC_WEB_00_CURRENT_ATTACK_SURFACE_BASELINE_2026-09-24.md` supersedes the materialization-time observations below for current status.
 
 # SEC-WEB-HARDENING-01 — Security Program Detail & Evidence Contract
 
@@ -37,7 +39,7 @@ Finding → Work Package → Remediation → Verification → Convergence
 
 Security implementation evidence never self-promotes to VERIFIED. EVIDENCE_READY != VERIFIED.
 
-## 2. Current-main observed baseline
+## 2. Historical materialization baseline
 
 At materialization time:
 
