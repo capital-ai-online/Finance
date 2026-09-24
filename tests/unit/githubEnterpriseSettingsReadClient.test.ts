@@ -46,6 +46,18 @@ describe('GitHub enterprise settings read client', () => {
             can_approve_pull_request_reviews: false,
           });
         }
+        if (parsed.pathname === `/enterprises/${ENTERPRISE}/actions/permissions/organizations`) {
+          return jsonResponse({ total_count: 1, organizations: [{ login: 'capital-ai-online' }] });
+        }
+        if (parsed.pathname === `/enterprises/${ENTERPRISE}/code-security/configurations`) {
+          return jsonResponse([{ id: 1, target_type: 'global', enforcement: 'enforced' }]);
+        }
+        if (parsed.pathname === `/enterprises/${ENTERPRISE}/actions/runner-groups`) {
+          return jsonResponse({ total_count: 1, groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
+        }
+        if (parsed.pathname === `/enterprises/${ENTERPRISE}/actions/runners`) {
+          return jsonResponse({ total_count: 1, runners: [{ id: 1, name: 'runner', status: 'online', busy: false }] });
+        }
         throw new Error(`unexpected request: ${method} ${parsed.pathname}`);
       }) as typeof fetch,
     });
@@ -54,7 +66,7 @@ describe('GitHub enterprise settings read client', () => {
       await client.read(capability);
     }
 
-    expect(calls).toHaveLength(3);
+    expect(calls).toHaveLength(Object.keys(GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES).length);
     expect(calls.every((call) => call.method === 'GET')).toBe(true);
     expect(calls.every((call) => call.authorization === `Bearer ${TOKEN}`)).toBe(true);
   });

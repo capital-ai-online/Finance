@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the canonical GitHub settings inventory into one read-only management adapter with explicit Enterprise, Organization, Repository and User scopes and machine-readable coverage gaps.",
+  "workItemDE": "Das kanonische GitHub-Settings-Inventar zu einem read-only Management-Adapter mit expliziten Enterprise-, Organization-, Repository- und User-Scopes sowie maschinenlesbaren Coverage-Lücken erweitern.",
+  "priority": "P0",
+  "priorityReason": "Fresh Human Owner direction requires a scope-complete readback surface before settings are reviewed one-by-one in chat.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T12:55:00Z",
+  "baseBranch": "main",
+  "baseSha": "58ac24731bf597e9356788d0293d6c733337b364",
+  "lastSyncedMainSha": "58ac24731bf597e9356788d0293d6c733337b364",
+  "branch": "operations/github-management-settings-inventory-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-ENTERPRISE-WORKFLOW-PERMISSIONS-WRITER-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-20260924.json",
+    ".github/workflows/private-github-billing-read.yml",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md",
+    "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
+    "scripts/operations/githubManagementSettingsScopeAdapter.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "scripts/operations/githubUserSettingsReadClient.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts",
+    "tests/unit/githubManagementSettingsScopeAdapter.test.ts",
+    "tests/unit/githubSettingsInventoryProjection.test.ts",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "tests/unit/githubUserSettingsReadClient.test.ts"
+  ],
+  "scopeBoundary": [
+    "Read-only inventory only; no GitHub provider settings mutation.",
+    "Enterprise, Organization, Repository and User remain distinct authorization scopes.",
+    "Existing Enterprise PAT and GitHub App installation clients are reused; no second settings authority is created.",
+    "User scope may use a dedicated read token when configured, otherwise the existing Enterprise PAT is reused only for whatever authenticated-user reads its scopes permit.",
+    "Every unsupported or insufficiently authorized capability is surfaced as NOT_OBSERVABLE with its required permission; coverage gaps are never treated as defaults.",
+    "Secrets, PATs, private keys, raw key material, raw email addresses and reviewer identities are never exported."
+  ],
+  "exitEvidence": [
+    "Composite adapter exposes four scopes and cannot route a capability to the wrong scope.",
+    "Existing Enterprise/Organization/Repository settings remain backward-compatible in the flat entries projection.",
+    "User account inventory redacts email addresses and cryptographic key material.",
+    "Additional runner/security/custom-property settings are bounded GET-only capabilities.",
+    "Output reports per-scope PASS/PARTIAL_COVERAGE plus explicit notObservable capabilities.",
+    "Targeted tests prove scope routing and redaction.",
+    "Exact-head CI/Security/Governance checks pass; Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

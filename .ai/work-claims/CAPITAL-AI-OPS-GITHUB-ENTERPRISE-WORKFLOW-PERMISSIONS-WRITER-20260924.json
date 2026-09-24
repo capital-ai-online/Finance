@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-GITHUB-ENTERPRISE-WORKFLOW-PERMISSIONS-WRITER-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -18,7 +18,7 @@
   "startedAt": "2026-09-24T12:34:00Z",
   "baseBranch": "main",
   "baseSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
-  "lastSyncedMainSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
+  "lastSyncedMainSha": "58ac24731bf597e9356788d0293d6c733337b364",
   "branch": "operations/github-enterprise-workflow-permissions-writer-20260924",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-ENTERPRISE-403-DIAGNOSTICS-20260924.json",
@@ -48,5 +48,12 @@
     "Required exact-head CI/Security/Governance checks pass.",
     "Human/CODEOWNER merge remains mandatory before provider mutation capability can exist on main."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "reason": "PR #1398 merged by Human/CODEOWNER; bounded writer is now materialized on CURRENT_MAIN.",
+    "pullRequest": 1398,
+    "mergeCommitSha": "58ac24731bf597e9356788d0293d6c733337b364",
+    "mergedAt": "2026-09-24T12:51:09Z",
+    "providerMutationExecuted": false
+  }
 }

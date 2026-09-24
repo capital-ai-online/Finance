@@ -8,6 +8,16 @@ import {
   projectCodeSecurityConfiguration,
   projectEffectiveSettingsPolicy,
   projectCapturedSetting,
+  projectCodeSecurityConfigurationCatalog,
+  projectCustomPropertySchema,
+  projectOrganizationSettings,
+  projectRulesetInventory,
+  projectRunnerGroupInventory,
+  projectRunnerInventory,
+  projectSelectedAccountInventory,
+  projectUserEmailInventory,
+  projectUserKeyInventory,
+  projectUserProfile,
 } from '../../scripts/operations/githubSettingsInventoryProjection.mjs';
 
 describe('GitHub settings storage projection', () => {
@@ -61,6 +71,196 @@ describe('GitHub settings storage projection', () => {
   });
 });
 
+
+describe('GitHub multi-scope settings projections', () => {
+  it('projects organization policy fields while redacting contact addresses', () => {
+    expect(projectOrganizationSettings({
+      login: 'capital-ai-online',
+      default_repository_permission: 'read',
+      members_can_create_repositories: false,
+      members_can_create_public_repositories: false,
+      members_can_create_private_repositories: true,
+      members_can_create_internal_repositories: false,
+      members_can_fork_private_repositories: false,
+      members_can_create_pages: false,
+      web_commit_signoff_required: true,
+      two_factor_requirement_enabled: true,
+      email: 'private@example.test',
+      billing_email: 'billing@example.test',
+    })).toEqual({
+      login: 'capital-ai-online',
+      defaultRepositoryPermission: 'read',
+      membersCanCreateRepositories: false,
+      membersCanCreatePublicRepositories: false,
+      membersCanCreatePrivateRepositories: true,
+      membersCanCreateInternalRepositories: false,
+      membersCanForkPrivateRepositories: false,
+      membersCanCreatePages: false,
+      webCommitSignoffRequired: true,
+      twoFactorRequirementEnabled: true,
+      emailRedacted: true,
+      billingEmailRedacted: true,
+    });
+  });
+
+  it('projects selected-account, runner and runner-group inventory without identities', () => {
+    expect(projectSelectedAccountInventory({
+      total_count: 2,
+      items: [{ login: 'one' }, { login: 'two' }],
+    })).toEqual({
+      totalCount: 2,
+      observedCount: 2,
+      identitiesRedacted: true,
+    });
+
+    expect(projectRunnerInventory({
+      total_count: 2,
+      items: [
+        { name: 'one', status: 'online', busy: true, labels: [{ name: 'prod' }] },
+        { name: 'two', status: 'offline', busy: false },
+      ],
+    })).toEqual({
+      totalCount: 2,
+      observedCount: 2,
+      statuses: ['offline', 'online'],
+      busyCount: 1,
+      offlineCount: 1,
+      namesRedacted: true,
+      labelsRedacted: true,
+      identitiesRedacted: true,
+    });
+
+    expect(projectRunnerGroupInventory({
+      total_count: 1,
+      items: [{ name: 'prod', visibility: 'selected', allows_public_repositories: false }],
+    })).toEqual({
+      totalCount: 1,
+      observedCount: 1,
+      visibilities: ['selected'],
+      allowsPublicRepositories: false,
+      namesRedacted: true,
+      selectedRepositoryIdentitiesRedacted: true,
+      selectedWorkflowIdentitiesRedacted: true,
+    });
+  });
+
+  it('projects security configuration catalogs and property schemas without protected values', () => {
+    expect(projectCodeSecurityConfigurationCatalog({
+      total_count: 1,
+      items: [{
+        id: 44,
+        name: 'enterprise-default',
+        target_type: 'global',
+        enforcement: 'enforced',
+        advanced_security: 'disabled',
+        code_scanning_default_setup: 'disabled',
+        secret_scanning: 'disabled',
+        secret_scanning_push_protection: 'disabled',
+      }],
+    })).toEqual({
+      totalCount: 1,
+      observedCount: 1,
+      targetTypes: ['global'],
+      enforcementStates: ['enforced'],
+      advancedSecurityStates: ['disabled'],
+      codeScanningDefaultSetupStates: ['disabled'],
+      secretScanningStates: ['disabled'],
+      secretScanningPushProtectionStates: ['disabled'],
+      configurationIdentitiesRedacted: true,
+    });
+
+    expect(projectCustomPropertySchema([
+      {
+        property_name: 'environment',
+        value_type: 'single_select',
+        required: true,
+        allowed_values: ['production'],
+        default_value: 'production',
+      },
+    ])).toEqual({
+      propertyCount: 1,
+      propertyNames: ['environment'],
+      valueTypes: ['single_select'],
+      requiredCount: 1,
+      allowedValuesRedacted: true,
+      defaultValuesRedacted: true,
+    });
+  });
+
+  it('redacts user contact and cryptographic identity material', () => {
+    expect(projectUserProfile({
+      login: 'owner',
+      type: 'User',
+      site_admin: false,
+      two_factor_authentication: true,
+      email: 'private@example.test',
+      name: 'Private Name',
+      company: 'Private Co',
+      location: 'Private City',
+      plan: { name: 'free' },
+      total_private_repos: 4,
+      owned_private_repos: 3,
+    })).toEqual({
+      login: 'owner',
+      accountType: 'User',
+      siteAdmin: false,
+      twoFactorAuthentication: true,
+      planName: 'free',
+      privateRepos: 4,
+      ownedPrivateRepos: 3,
+      emailRedacted: true,
+      nameRedacted: true,
+      companyRedacted: true,
+      locationRedacted: true,
+    });
+
+    expect(projectUserEmailInventory([
+      { email: 'one@example.test', primary: true, verified: true, visibility: 'private' },
+      { email: 'two@example.test', primary: false, verified: false, visibility: null },
+    ])).toEqual({
+      totalCount: 2,
+      primaryCount: 1,
+      verifiedCount: 1,
+      visibilities: ['private'],
+      addressesRedacted: true,
+    });
+
+    const projectedKeys = projectUserKeyInventory([
+      {
+        title: 'private-title',
+        key: 'ssh-ed25519 SECRET',
+        raw_key: 'GPG_SECRET',
+        expired: false,
+        can_sign: true,
+        emails: [{ email: 'private@example.test' }],
+      },
+    ]);
+    expect(projectedKeys).toEqual({
+      totalCount: 1,
+      expiredCount: 0,
+      signingCapableCount: 1,
+      keyMaterialRedacted: true,
+      titlesRedacted: true,
+      emailsRedacted: true,
+      identitiesRedacted: true,
+    });
+    expect(JSON.stringify(projectedKeys)).not.toContain('SECRET');
+    expect(JSON.stringify(projectedKeys)).not.toContain('private@example.test');
+  });
+
+  it('accepts paginated ruleset envelopes without exposing ruleset identity', () => {
+    expect(projectRulesetInventory({
+      total_count: 1,
+      items: [{ id: 1, name: 'protect-main', target: 'branch', enforcement: 'active' }],
+    })).toEqual({
+      rulesetCount: 1,
+      targets: ['branch'],
+      enforcementStates: ['active'],
+      namesRedacted: true,
+      bypassActorsRedacted: true,
+    });
+  });
+});
 
 describe('GitHub settings effective policy projection', () => {
 
