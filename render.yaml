@@ -91,6 +91,12 @@ services:
         sync: false
       - key: METRICS_TOKEN
         sync: false
+      # Server-only GitHub Enterprise Actions settings readback. The PAT value is
+      # configured in Render and is never committed or exposed to the frontend.
+      - key: CAPITAL_AI_GITHUB_ENTERPRISE_SLUG
+        value: "capital-ai-online"
+      - key: CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT
+        sync: false
       - key: YOUTUBE_CLIENT_SECRET
         sync: false
       - key: TIKTOK_CLIENT_SECRET
