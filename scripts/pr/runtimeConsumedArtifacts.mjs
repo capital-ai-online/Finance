@@ -14,16 +14,16 @@ export function isDocsPath(filePath) {
 }
 
 /**
- * Resolve documentary artifacts that are consumed by executable, test or workflow
- * surfaces. Unexpected git failures throw so callers fail closed.
+ * Resolve documentary artifacts to the exact executable/test/workflow files
+ * that consume them. Unexpected git failures throw so callers fail closed.
  *
  * @param {string[]} files
  * @param {string} headRef
  * @param {{ cwd?: string }} options
  */
-export function findRuntimeConsumedPaths(files, headRef = 'HEAD', options = {}) {
+export function findRuntimeConsumerFiles(files, headRef = 'HEAD', options = {}) {
   const roots = ['src', 'server', 'scripts', '.github/workflows', 'tests'];
-  const consumed = [];
+  const consumers = {};
 
   for (const rawFile of files || []) {
     const file = normalizePath(rawFile);
@@ -38,12 +38,23 @@ export function findRuntimeConsumedPaths(files, headRef = 'HEAD', options = {}) 
           stdio: ['ignore', 'pipe', 'pipe'],
         },
       ).trim();
-      if (out) consumed.push(file);
+      if (!out) continue;
+      const prefix = `${headRef}:`;
+      const matches = out
+        .split(/\r?\n/)
+        .map((value) => value.startsWith(prefix) ? value.slice(prefix.length) : value)
+        .map(normalizePath)
+        .filter(Boolean);
+      if (matches.length > 0) consumers[file] = Array.from(new Set(matches)).sort();
     } catch (error) {
       if (error && typeof error === 'object' && 'status' in error && error.status === 1) continue;
       throw error;
     }
   }
 
-  return Array.from(new Set(consumed));
+  return consumers;
+}
+
+export function findRuntimeConsumedPaths(files, headRef = 'HEAD', options = {}) {
+  return Object.keys(findRuntimeConsumerFiles(files, headRef, options)).sort();
 }
