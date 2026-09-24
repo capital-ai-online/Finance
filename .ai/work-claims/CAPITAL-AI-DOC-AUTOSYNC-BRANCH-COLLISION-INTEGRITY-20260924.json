@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-DOC-AUTOSYNC-BRANCH-COLLISION-INTEGRITY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Harden Documentary AUTO_SYNC branch collision handling so an existing deterministic branch is reused only after exact source ancestry, changed-file, patch-hash and work-claim/handoff verification.",
+  "workItemDE": "Documentary AUTO_SYNC Branch-Reuse gegen stale oder manipulierte Kollisionszustände fail-closed härten.",
+  "startedAt": "2026-09-24T19:01:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
+  "lastSyncedMainSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
+  "branch": "agent/documentary-wp06-branch-collision-integrity-20260924",
+  "projectId": "CAPITAL-AI-DOC",
+  "projectFolder": "docs/projects/documentary/",
+  "projectStage": "PVC-03 · Documentary Engine",
+  "priority": "P1",
+  "priorityReason": "A trusted-main AUTO_SYNC handoff must never accept branch existence as proof that the branch still equals the fresh deterministic plan.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-DOC-AUTOSYNC-BRANCH-COLLISION-INTEGRITY-20260924.json",
+    ".github/workflows/documentary-change-impact.yml",
+    "docs/projects/documentary/work-packages/DOC_AUTOSYNC_BRANCH_COLLISION_INTEGRITY_01_2026-09-24.md",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs"
+  ],
+  "dependencies": [
+    "/AGENTS.md@881ac00bddc21d79c2a2356628971026d7f9b574",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "OPS-08-B-SH-02 parent Self-Healing contract",
+    ".github/workflows/open-agent-draft-pr.yml@CURRENT_MAIN"
+  ],
+  "scopeBoundary": [
+    "CAPITAL-AI-DOC / PVC-03 AUTO_SYNC integrity only.",
+    "No second workflow/controller/registry/authority.",
+    "No direct main, Production, provider, IAM, billing, secret or destructive-data mutation.",
+    "Foreign OPS legacy-runtime finding is handover evidence only."
+  ],
+  "exitEvidence": [
+    "Existing AUTO_SYNC branch has exactly one parent equal to fresh source SHA before reuse.",
+    "Existing branch changed-file set exactly equals fresh plan patch paths plus expected claim path.",
+    "Fresh previous/proposed hashes and existing branch patch contents match.",
+    "Existing work claim matches project/base/branch/paths and fresh maintenance handoff identity.",
+    "Any mismatch fails closed before Draft-PR handoff.",
+    "Focused regression and required hosted checks pass."
+  ],
+  "acceptanceCriteria": [
+    "Blind branch-exists reuse is absent.",
+    "Verified identical replay remains idempotent.",
+    "Stale-main and workflow concurrency protections remain unchanged.",
+    "No changed-file overlap exists at PR creation.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "foreignOwnerHandover": {
+    "id": "DOC-TO-OPS-LEGACY-HYGIENE-RUNTIME-RETIREMENT-20260924",
+    "projectId": "CAPITAL-AI-OPS",
+    "pvc": "PVC-02",
+    "finding": "Current server runtime still imports/mounts the Documentary Roadmap-classified legacy documentHygiene/documentSanitizer surface.",
+    "exitCondition": "OPS migrates/retires productive runtime consumers; DOC source removal becomes eligible only after consumer count reaches zero."
+  },
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
