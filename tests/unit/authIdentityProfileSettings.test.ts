@@ -43,7 +43,7 @@ describe('account identity and settings convergence', () => {
   });
 
   it('ships the versioned profile schema and trigger without public function access', () => {
-    const migration = read('supabase/migrations/20260924070530_profile_identity_settings.sql');
+    const migration = read('supabase/migrations/20260924161429_profile_identity_settings.sql');
 
     expect(migration).toContain('profiles_username_lower_unique_idx');
     expect(migration).toContain('favorite_cryptocurrencies text[]');

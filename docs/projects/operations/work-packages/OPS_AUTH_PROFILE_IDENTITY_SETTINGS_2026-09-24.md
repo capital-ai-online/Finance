@@ -5,7 +5,7 @@
 **PVC:** `PVC-02` controlled implementation; supporting `PVC-08` production operations  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Base:** `main@206fc5f5ff200cd2929be067b5e555f9927bfacc`  
-**Status:** `IN_PROGRESS / OWNER_DIRECTED`
+**Status:** `IMPLEMENTED_ON_MAIN / LEDGER_RECONCILIATION_PROPOSED`
 
 ## Human Owner outcome
 
@@ -32,8 +32,8 @@ Phone OTP is provider- and cost-dependent. `CAPITAL_AI_PHONE_AUTH_ENABLED=false`
 ## Protected rollout order
 
 1. Human/CODEOWNER merges the PR after exact-head checks.
-2. Canonical migration workflow applies `20260924070530_profile_identity_settings.sql` and reads back schema, constraints, FK, private avatar bucket and RLS.
-3. Canonical Supabase Auth controller is rerun and Security/Performance Advisors are reviewed.
+2. Canonical migration workflow applies `20260924161429_profile_identity_settings.sql` and reads back schema, constraints, FK, private avatar bucket and RLS.
+3. Supabase recorded the applied migration as `20260924161429_profile_identity_settings`; the repository filename is reconciled to that exact ledger identity. Security/Performance Advisors were reviewed.
 4. Render deploys code only after migration evidence is green.
 5. Registration, Google, username, passkey and TOTP user tests run against Production.
 6. Phone recovery remains unavailable until provider/cost approval and `CAPITAL_AI_PHONE_AUTH_ENABLED=true` are both confirmed.
