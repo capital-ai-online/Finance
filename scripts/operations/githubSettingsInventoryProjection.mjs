@@ -316,6 +316,8 @@ export function projectEffectiveSettingsPolicy({
     .map((value) => value?.defaultWorkflowPermissions);
   const approvalValues = [enterpriseWorkflow, organizationWorkflow, repositoryWorkflow]
     .map((value) => value?.canApprovePullRequestReviews);
+  const defaultWorkflowPermissions = mostRestrictiveWorkflowPermission(workflowValues);
+  const canApprovePullRequestReviews = conservativeApproval(approvalValues);
 
   let actionsExecution = 'UNKNOWN';
   if (enterpriseActions?.enabledOrganizations === 'none') actionsExecution = 'BLOCKED_BY_ENTERPRISE';
@@ -335,6 +337,67 @@ export function projectEffectiveSettingsPolicy({
     repositoryActions,
     repositoryWorkflow,
   ];
+
+  const improvementFindings = [];
+  if (shaPinningRequired !== true) {
+    improvementFindings.push(Object.freeze({
+      id: 'ACTIONS_FULL_SHA_PINNING',
+      severity: 'HIGH',
+      state: shaPinningRequired === false ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Require actions to be pinned to a full-length commit SHA at the highest enforceable scope.',
+      protectedMutation: true,
+    }));
+  }
+  if (defaultWorkflowPermissions !== 'read') {
+    improvementFindings.push(Object.freeze({
+      id: 'DEFAULT_GITHUB_TOKEN_READ_ONLY',
+      severity: 'HIGH',
+      state: defaultWorkflowPermissions === 'write' ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Use read-only as the default GITHUB_TOKEN permission and grant write only per job.',
+      protectedMutation: true,
+    }));
+  }
+  if (canApprovePullRequestReviews !== false) {
+    improvementFindings.push(Object.freeze({
+      id: 'ACTIONS_PR_REVIEW_APPROVAL',
+      severity: 'HIGH',
+      state: canApprovePullRequestReviews === true ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Keep GitHub Actions unable to approve pull request reviews unless an explicit governance contract requires it.',
+      protectedMutation: true,
+    }));
+  }
+  if (!selectedConstraintsComplete) {
+    improvementFindings.push(Object.freeze({
+      id: 'SELECTED_ACTIONS_OBSERVABILITY',
+      severity: 'MEDIUM',
+      state: 'NOT_OBSERVABLE',
+      recommendation: 'Restore read-only selected-actions visibility at every scope using selected mode before diagnosing workflow startup failures.',
+      protectedMutation: false,
+    }));
+  }
+  const blanketVerifiedScopes = Object.entries(selectedLevels)
+    .filter(([, selected]) => selected?.verifiedAllowed === true)
+    .map(([scope]) => scope);
+  if (blanketVerifiedScopes.length > 0) {
+    improvementFindings.push(Object.freeze({
+      id: 'VERIFIED_MARKETPLACE_BLANKET_ALLOW',
+      severity: 'MEDIUM',
+      state: 'REVIEW_RECOMMENDED',
+      scopes: Object.freeze(blanketVerifiedScopes),
+      recommendation: 'Review replacing blanket verified-Marketplace allowance with the smallest explicit SHA-pinned action allowlist required by CURRENT_MAIN.',
+      protectedMutation: true,
+    }));
+  }
+  if (codeSecurityConfiguration?.codeScanningDefaultSetup === 'disabled') {
+    improvementFindings.push(Object.freeze({
+      id: 'CODE_SCANNING_DEFAULT_SETUP_DISABLED',
+      severity: 'MEDIUM',
+      state: 'REVIEW_RECOMMENDED',
+      recommendation: 'Review CodeQL/default setup against current entitlement and existing selective CodeQL architecture before any provider change.',
+      protectedMutation: true,
+    }));
+  }
+
   return Object.freeze({
     status: knownCore.every(Boolean) && selectedConstraintsComplete
       ? 'PASS'
@@ -344,13 +407,14 @@ export function projectEffectiveSettingsPolicy({
     actions: Object.freeze({
       execution: actionsExecution,
       shaPinningRequired,
-      defaultWorkflowPermissions: mostRestrictiveWorkflowPermission(workflowValues),
-      canApprovePullRequestReviews: conservativeApproval(approvalValues),
+      defaultWorkflowPermissions,
+      canApprovePullRequestReviews,
       selectedConstraintsComplete,
       levels: actionLevels,
       selectedActions: selectedLevels,
     }),
     deploymentEnvironments: environmentInventory,
     codeSecurity: codeSecurityConfiguration,
+    improvementFindings: Object.freeze(improvementFindings),
   });
 }

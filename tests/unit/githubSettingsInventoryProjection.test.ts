@@ -193,5 +193,51 @@ describe('GitHub settings effective policy projection', () => {
     expect(effective.actions.canApprovePullRequestReviews).toBe(false);
     expect(effective.actions.selectedConstraintsComplete).toBe(true);
     expect(effective.lowerScopesCannotBroadenParentPolicy).toBe(true);
+    expect(effective.improvementFindings).toEqual([
+      expect.objectContaining({
+        id: 'VERIFIED_MARKETPLACE_BLANKET_ALLOW',
+        state: 'REVIEW_RECOMMENDED',
+      }),
+    ]);
+  });
+
+  it('emits fail-closed improvement findings for weak or unobservable policy ceilings', () => {
+    const effective = projectEffectiveSettingsPolicy({
+      enterpriseActions: {
+        enabledOrganizations: 'all',
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      enterpriseWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+      organizationActions: {
+        enabledRepositories: 'all',
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      organizationWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+      repositoryActions: {
+        enabled: true,
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      repositoryWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+    });
+
+    expect(effective.status).toBe('PARTIAL_COVERAGE');
+    expect(effective.improvementFindings.map((finding) => finding.id)).toEqual(expect.arrayContaining([
+      'ACTIONS_FULL_SHA_PINNING',
+      'DEFAULT_GITHUB_TOKEN_READ_ONLY',
+      'ACTIONS_PR_REVIEW_APPROVAL',
+      'SELECTED_ACTIONS_OBSERVABILITY',
+    ]));
   });
 });
