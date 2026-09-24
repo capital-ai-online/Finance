@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GA4-RENDER-READBACK-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Host the existing pinned Google Analytics MCP read plane inside the Finance Render runtime and expose only an owner-only cached read projection, without Codex or GitHub runner execution.",
+  "workItemDE": "Die bestehende gepinnte Google-Analytics-MCP-Read-Plane innerhalb der Finance-Render-Runtime hosten und ausschließlich als Owner-only gecachte Read-Projektion bereitstellen, ohne Codex- oder GitHub-Runner-Ausführung.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T16:58:00Z",
+  "baseBranch": "main",
+  "baseSha": "6c11bdfce02430846466540a311d9f46a7f3818c",
+  "lastSyncedMainSha": "73e8e85ada62ca67dfbc0c546c921048b7355923",
+  "branch": "agent/operations-ga4-render-readback-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GA4-RENDER-READBACK-20260924.json",
+    "docs/projects/operations/work-packages/OPS_GA4_RENDER_READBACK_2026-09-24.md",
+    "docs/projects/operations/work-packages/README.md",
+    "Dockerfile",
+    "server/googleAnalyticsMcpClient.ts",
+    "server/googleAnalyticsReadProjection.ts",
+    "server/routes/googleAnalyticsReadRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "render.yaml",
+    "tests/unit/googleAnalyticsRenderReadProjection.test.ts",
+    "tests/unit/adminRouterBypassAudit.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse analytics-mcp==0.7.0 as the sole GA4 MCP provider implementation; do not create a second Google Analytics API client or write plane.",
+    "Run analytics-mcp as an internal stdio child process of the existing Finance Render runtime; do not expose a public raw MCP endpoint.",
+    "Allow only get_account_summaries, get_property_details, run_realtime_report and run_report.",
+    "Owner-only HTTP projection protected by the existing checkAdminAccess IAM boundary.",
+    "Service-account JSON stays server-side, is materialized only into the runtime-private temp directory with mode 0600 and is never returned or logged.",
+    "Provider projection is cached for five minutes and performs no Google Analytics mutation.",
+    "Codex and GitHub Actions are not execution hosts for GA4 after Render cutover."
+  ],
+  "exitEvidence": [
+    "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
+    "Focused tests prove allowlisted MCP calls, property binding, cache behavior, owner-only route wiring and secret non-projection.",
+    "Production Docker image contains the pinned analytics-mcp==0.7.0 runtime and no runtime package download is required.",
+    "Render manifest declares only GA4 secret/config key names and never credential values.",
+    "No unresolved writer/file/semantic overlap remains before PR creation.",
+    "Human/CODEOWNER merge remains required for the production-runtime/container change."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
