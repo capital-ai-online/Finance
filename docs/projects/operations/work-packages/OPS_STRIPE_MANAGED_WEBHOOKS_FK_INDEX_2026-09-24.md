@@ -6,8 +6,8 @@
 - **Owner / PVC:** PVC-02 with PVC-08 support
 - **Priority:** P2
 - **PR class:** R
-- **State:** DRAFT / DEPENDENCY BLOCKED
-- **Dependency:** PR #1416 must merge first and this branch must then be correlated against the new `main`.
+- **State:** EXACT_HEAD_VALIDATION
+- **Dependency:** SATISFIED — PR #1416 merged as `29cd7b339be0aca587549f3a27a3658ea16fa59c`; branch correlated against that `main`.
 
 ## Provider evidence
 
@@ -36,10 +36,11 @@ No Stripe webhook, function, constraint, row, secret or existing index is change
 
 ## Release gate
 
-1. Merge PR #1416.
-2. Rebase/correlate this branch against the resulting `main`.
-3. Pass exact-head repository checks.
-4. Human/CODEOWNER merge.
-5. Apply through the canonical Supabase migration workflow.
-6. Read back `pg_indexes`, rerun Performance Advisor and confirm `unindexed_foreign_keys = 0`.
-7. Do not remove the 81 `unused_index` findings merely to silence INFO; index removal needs workload evidence.
+1. ✅ PR #1416 merged as `29cd7b339be0aca587549f3a27a3658ea16fa59c`.
+2. ✅ Branch correlated against that `main`.
+3. Reconcile repository migration ledger: 61 local / 10 local-only while provider snapshot remains 78 remote.
+4. Pass exact-head repository checks.
+5. Human/CODEOWNER merge.
+6. Apply through the canonical Supabase migration workflow.
+7. Read back `pg_indexes`, rerun Performance Advisor and confirm `unindexed_foreign_keys = 0`.
+8. Do not remove the 81 `unused_index` findings merely to silence INFO; index removal needs workload evidence.
