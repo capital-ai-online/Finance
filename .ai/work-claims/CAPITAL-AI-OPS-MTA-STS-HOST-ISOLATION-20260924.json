@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-MTA-STS-HOST-ISOLATION-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -40,5 +40,18 @@
     "capital-ai.online normal root routing remains unaffected.",
     "Focused tests and required exact-head Governance/build/security checks pass before merge."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T16:01:00Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1408 completed the claimed implementation; post-merge CURRENT_MAIN readback confirms the merge remains an ancestor of CURRENT_MAIN.",
+  "mergedPullRequest": 1408,
+  "mergedHeadSha": "97885eefc4631822e2cfb6d422a437ef75d28809",
+  "mergeCommitSha": "cc8398e40019459653403272749f3c6fc756f1aa",
+  "postMergeCurrentMainSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "postMergeValidation": {
+    "repository": "PASS",
+    "exactHeadRequiredChecks": "PASS",
+    "focusedMtaStsTests": "3/3 PASS",
+    "productionDeployment": "PENDING",
+    "observedRenderProductionSha": "fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74"
+  }
 }
