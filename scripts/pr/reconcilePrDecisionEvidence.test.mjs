@@ -487,6 +487,7 @@ test('a blocked gate dominates the human decision state', () => {
 
 test('workflow uses trusted completion events and the shared PR writer lease', () => {
   const workflow = fs.readFileSync('.github/workflows/pr-decision-reconciler.yml', 'utf8');
+  const createWorkflow = fs.readFileSync('.github/workflows/open-agent-draft-pr.yml', 'utf8');
   assert.match(workflow, /workflow_run:/);
   assert.match(workflow, /workflows: \[CI, PR Governance, Container Security\]/);
   assert.match(workflow, /check_run:/);
@@ -511,6 +512,15 @@ test('workflow uses trusted completion events and the shared PR writer lease', (
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/productionPreflight\.mjs/);
   assert.match(workflow, /node \.\.\/policy\/scripts\/pr\/renderPullRequestBody\.mjs/);
+  const bootstrapRenderBlock = workflow
+    .split('      - name: Kanonischen v1.8-Body ausschließlich mit Trusted-Main-Renderer erzeugen\n')[1]
+    .split('\n      - name: Evidence → Decision gegen Live-State reconciliieren\n')[0];
+  assert.match(bootstrapRenderBlock, /PR_ALLOW_CLAIMLESS: 'true'/);
+  assert.match(
+    bootstrapRenderBlock,
+    /Existing PRs may predate work-claim enforcement/,
+  );
+  assert.doesNotMatch(createWorkflow, /PR_ALLOW_CLAIMLESS:\s*['"]?true/);
   assert.match(workflow, /PR_CANONICAL_BOOTSTRAP_BODY: \.\.\/candidate\/artifacts\/pr\/decision-reconciler-bootstrap-body\.md/);
 
   assert.doesNotMatch(workflow, /pull_request_target:/);
