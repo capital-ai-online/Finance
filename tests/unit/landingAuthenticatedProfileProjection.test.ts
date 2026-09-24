@@ -23,14 +23,20 @@ describe('LF-02 authenticated landing profile projection', () => {
     const landing = read('src/features/public/ui/LandingPage.tsx');
     const context = read('src/features/public/ui/LandingSessionContext.tsx');
     const header = read('src/features/public/ui/frontend-port/components/Header.tsx');
+    const referenceApp = read('src/features/public/ui/frontend-port/ReferenceApp.tsx');
     const badge = read('src/features/public/ui/SubscriptionStatusBadge.tsx');
 
     expect(landing).toContain('<LandingSessionProvider profile={authenticatedProfile} onLogout={onLogout}>');
     expect(header).toContain('useLandingSessionProfile()');
     expect(header).toContain('useLandingSessionLogout()');
     expect(header).toContain('data-authenticated-sideboard-profile="true"');
-    expect(header).not.toContain('SubscriptionStatusBadge');
+    expect(header).toContain('SubscriptionStatusBadge');
+    expect(header).toContain('tier={authenticatedProfile.subscriptionTier} compact');
     expect(header).toContain("onNavigate?.('/profile')");
+    expect(landing).toContain('<ReferenceApp onNavigate={onNavigate} />');
+    expect(referenceApp).toContain('if (onNavigate)');
+    expect(referenceApp).toContain('onNavigate={navigate}');
+    expect(referenceApp).not.toContain("onNavigate={(path) => window.location.assign(path)}");
     expect(context).not.toContain('supabase');
     expect(header).not.toContain("authFetch('/api/stripe/user-subscription')");
     expect(badge).not.toContain('supabase');
@@ -43,5 +49,6 @@ describe('LF-02 authenticated landing profile projection', () => {
     expect(badge).toContain('/brand/subscriptions/enterprise.webp');
     expect(badge).toContain('/brand/subscriptions/founder.webp');
     expect(badge).toContain('FREE · ABONNEMENT');
+    expect(badge).toContain('compact = false');
   });
 });

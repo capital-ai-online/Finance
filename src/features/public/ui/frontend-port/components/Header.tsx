@@ -25,6 +25,7 @@ import { ASSET_CLASSES } from '../data/mockData';
 import { MainCategory, AssetSubclass } from '../types';
 import { trackLoginClick } from '../utils/analytics';
 import { useLandingSessionLogout, useLandingSessionProfile } from '../../LandingSessionContext';
+import { SubscriptionStatusBadge } from '../../SubscriptionStatusBadge';
 import { CAPITAL_AI_VERSION_LABEL } from '../../../../../platform/Release/clientVersion';
 
 interface HeaderProps {
@@ -127,6 +128,9 @@ export const Header: React.FC<HeaderProps> = ({
                 {authenticatedProfile.name}
               </span>
             </button>
+            <div className="w-[72px] shrink-0" aria-label={`Aktuelles Abonnement: ${authenticatedProfile.subscriptionTier}`}>
+              <SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} compact />
+            </div>
             <button
               id="header-logout-btn"
               type="button"
@@ -212,6 +216,9 @@ export const Header: React.FC<HeaderProps> = ({
                       <p className="mt-1 truncate text-sm font-semibold text-white">
                         {authenticatedProfile.name}
                       </p>
+                      <div className="mt-3 max-w-[220px]">
+                        <SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} />
+                      </div>
                       <button
                         id="drawer-profile-btn"
                         type="button"
