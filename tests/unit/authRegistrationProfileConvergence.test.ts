@@ -37,15 +37,23 @@ describe('registration and profile convergence', () => {
     expect(migration).toContain('drop table public.users');
   });
 
-  it('provides backend-owned TOTP enrollment while keeping passkey behind the user-test gate', () => {
-    const route = read('server/routes/accountSecurityRoutes.ts');
-    const panel = read('src/components/SecuritySettingsPanel.tsx');
-    const render = read('render.yaml');
-    expect(route).toContain("'/security/totp/enroll'");
-    expect(route).toContain("'/security/totp/verify'");
-    expect(route).toContain("releaseGate: 'USER_TEST_REQUIRED'");
-    expect(panel).toContain('Freigabe nach erfolgreichem Benutzertest');
-    expect(render).toMatch(/VITE_NATIVE_PASSKEY_LOGIN_ENABLED\s+value: "false"/);
+  it('provides backend-owned TOTP and primary-login passkey contracts without conflating MFA', () => {
+    const accountRoute = read('server/routes/accountSecurityRoutes.ts');
+    const loginRoute = read('server/routes/backendAuthRoutes.ts');
+    const backend = read('server/auth/backendAuth.ts');
+    const control = read('scripts/operations/supabaseAuthRegistrationControl.mjs');
+
+    expect(accountRoute).toContain("'/security/totp/enroll'");
+    expect(accountRoute).toContain("'/security/totp/verify'");
+    expect(accountRoute).toContain("'/security/passkeys/registration/start'");
+    expect(accountRoute).toContain("'/security/passkeys/registration/verify'");
+    expect(loginRoute).toContain("'/login/passkey/start'");
+    expect(loginRoute).toContain("'/login/passkey/verify'");
+    expect(backend).toContain("experimental: { passkey: true }");
+    expect(control).toContain('passkey_enabled: true');
+    expect(control).toContain("webauthn_rp_id: 'capital-ai.online'");
+    expect(control).toContain("mfa_web_authn_enroll_enabled: false");
+    expect(control).toContain("mfa_web_authn_verify_enabled: false");
   });
 
   it('configures branded token-hash mail flows and removes the retired vendor from the tree contract', () => {
