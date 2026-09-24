@@ -153,6 +153,28 @@ test('delegates an exact stale production baseline before broad protected-provid
   assert.equal(result.reason, 'single-pr-body-convergence-reconciler-owned');
 });
 
+test('PR #1364 structure drift and later Production-generation drift stay on one Self-Healing action', () => {
+  const structure = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1364 enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ## 1. 🧭 Entscheidung, ## 2. ✅ Evidence, ## 3. 🔍 Technical Evidence',
+    prMetadataShape: 'CURRENT_V18_OTHER',
+  });
+  const productionGeneration = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/pr-governance.yml',
+    logText: 'Error: PR #1364 enthält eine veraltete oder inkonsistent korrelierte Produktions-Baseline. Erwartete aktuelle Baseline-ID: sha256:45628ef9381b8f6827d00c50b33d19da7a31d46ed032cfc040158f783319c2aa.',
+    prMetadataShape: 'CURRENT_V18_CANONICAL',
+  });
+
+  assert.equal(structure.classification, 'PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(productionGeneration.classification, 'PR_PRODUCTION_BASELINE_DRIFT');
+  assert.equal(structure.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(productionGeneration.decision, PR_AUTOFIX_DECISIONS.DELEGATE_PR_DECISION_EVIDENCE);
+  assert.equal(structure.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(productionGeneration.findingClass, 'REPOSITORY_PR_DECISION_EVIDENCE_DRIFT');
+  assert.equal(structure.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+  assert.equal(productionGeneration.actionId, 'RECONCILE_PR_DECISION_EVIDENCE');
+});
+
 test('delegates the exact observed v1.8 P0-HIGHEST priority drift only for canonical bodies', () => {
   const logText =
     'Error: PR #1147 enthält keine gültige Prioritätsbewertung (P0–P3) der Vorlage v1.8.0.';
