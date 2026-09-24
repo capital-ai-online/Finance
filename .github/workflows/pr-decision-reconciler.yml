@@ -257,7 +257,45 @@ jobs:
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
+      - name: Main-Ancestry vor Production-Preflight prüfen
+        id: bootstrap_lineage
+        working-directory: candidate
+        env:
+          EXPECTED_MAIN_SHA: ${{ steps.bootstrap_snapshot.outputs.main_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git merge-base --is-ancestor "$EXPECTED_MAIN_SHA" HEAD; then
+            echo "branch_sync_required=false" >> "$GITHUB_OUTPUT"
+            echo "PR-Head enthält CURRENT_MAIN $EXPECTED_MAIN_SHA; Production-Preflight ist zulässig."
+          else
+            echo "branch_sync_required=true" >> "$GITHUB_OUTPUT"
+            echo "PR-Head enthält CURRENT_MAIN $EXPECTED_MAIN_SHA noch nicht; Preflight wird übersprungen und kanonischer Branch-Sync delegiert."
+          fi
+
+      - name: Stale Head vor Preflight an kanonischen Branch-Sync delegieren
+        if: steps.bootstrap_lineage.outputs.branch_sync_required == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        with:
+          script: |
+            const prNumber = String(process.env.PR_NUMBER || '').trim();
+            if (!/^\d+$/.test(prNumber)) {
+              core.setFailed('Branch-Sync dispatch requires an exact numeric PR number.');
+              return;
+            }
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-agent-pr-branches.yml',
+              ref: 'main',
+              inputs: { pr_number: prNumber },
+            });
+            core.info(`PR #${prNumber}: stale generation delegated to canonical branch-sync before Production-Preflight.`);
+
       - name: PR-Scope mit trusted-main Klassifikator bestimmen
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true'
         id: body_scope
         working-directory: candidate
         env:
@@ -267,6 +305,7 @@ jobs:
         run: node ../policy/scripts/pr/classifyPrScope.mjs
 
       - name: Produktionsbaseline aus Trusted Main für die führende PR-Convergence erzeugen
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -279,7 +318,7 @@ jobs:
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
       - name: Kanonischen v1.8-Body ausschließlich mit Trusted-Main-Renderer erzeugen
-        if: steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true' && steps.bootstrap_snapshot.outputs.bootstrap_required == 'true'
         working-directory: candidate
         env:
           PR_BASE_REF: origin/main
@@ -292,6 +331,7 @@ jobs:
         run: node ../policy/scripts/pr/renderPullRequestBody.mjs
 
       - name: Evidence → Decision gegen Live-State reconciliieren
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true'
         id: reconcile
         working-directory: policy
         env:
@@ -305,7 +345,7 @@ jobs:
         run: node scripts/pr/reconcilePrDecisionEvidence.mjs
 
       - name: Main-Drift an kanonischen Branch-Sync delegieren
-        if: steps.reconcile.outputs.branch_sync_required == 'true'
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true' && steps.reconcile.outputs.branch_sync_required == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           PR_NUMBER: ${{ matrix.pr_number }}
@@ -326,6 +366,7 @@ jobs:
             core.info(`PR #${prNumber}: canonical branch-sync workflow dispatched.`);
 
       - name: Decision-State ausgeben
+        if: steps.bootstrap_lineage.outputs.branch_sync_required != 'true'
         env:
           PR_NUMBER: ${{ matrix.pr_number }}
           DECISION_STATUS: ${{ steps.reconcile.outputs.decision_status }}
