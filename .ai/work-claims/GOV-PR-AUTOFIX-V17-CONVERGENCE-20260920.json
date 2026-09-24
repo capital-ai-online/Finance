@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-AUTOFIX-V17-CONVERGENCE-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -33,5 +33,7 @@
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
   "scopeNote": "No new mutation authority. Existing PR Production Baseline Auto-Refresh remains the sole PR-body/baseline specialist writer. Unknown v1.7 shapes remain fail-closed.",
   "correlationNote": "Fresh CURRENT_MAIN e379d64075e34f713743c6c4cfe259d9da30d0e7. Open PR #1142 is synchronized to that base and changes only its v1.7 template cleanup claim/template/test paths; no changed-file overlap with this control-plane patch. Semantic dependency is compatible: this patch consumes the canonical v1.7 contract and does not rewrite PR #1142 branch content.",
-  "validationState": "TARGETED_TESTS_PENDING_HOSTED_CI"
+  "validationState": "TARGETED_TESTS_PENDING_HOSTED_CI",
+  "releaseReason": "Historical branch no longer exists; released when overlapping path was touched under /AGENTS.md current-main stale-claim invariant.",
+  "releasedAt": "2026-09-24T14:34:00Z"
 }
