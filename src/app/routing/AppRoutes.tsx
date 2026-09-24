@@ -265,6 +265,7 @@ export function AppRoutes({
       return (
         <LandingPage
           onLoginNavigate={clearJustLoggedOut}
+          onNavigate={navigatePublicRoute}
           onLogout={async () => {
             await handleLogout();
             if (typeof window !== 'undefined') window.location.replace('/');
@@ -278,7 +279,7 @@ export function AppRoutes({
       );
     }
 
-    return <LandingPage onLoginNavigate={clearJustLoggedOut} />;
+    return <LandingPage onLoginNavigate={clearJustLoggedOut} onNavigate={navigatePublicRoute} />;
   }
 
   if (currentPath === '/login') {

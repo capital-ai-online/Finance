@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-PR-V18-CLAIMLESS-BOOTSTRAP-SELF-HEALING-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -55,5 +55,10 @@
     "Exact-head CI and Governance pass.",
     "No second PR-body writer, version authority or merge authority is introduced."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T21:21:00+02:00",
+  "releaseReason": "Terminal coordination lease: PR #1428 was Human/CODEOWNER-merged as 16aa907dac52e7bd0f8cdd413f1b297f6bf84f91. Follow-up evidence proved that project/PVC metadata still had to be bound for historical claimless PR bootstrap; this historical claim must not remain the active writer.",
+  "terminalPullRequest": 1428,
+  "terminalMergeSha": "16aa907dac52e7bd0f8cdd413f1b297f6bf84f91",
+  "lastSyncedMainSha": "90522e3241c650aeec73096e1871373bb83643cc"
 }
