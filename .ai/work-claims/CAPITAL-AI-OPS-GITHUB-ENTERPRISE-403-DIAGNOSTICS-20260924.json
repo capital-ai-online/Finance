@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-ENTERPRISE-403-DIAGNOSTICS-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Add bounded, redacted GitHub Enterprise HTTP 403 diagnostics to the existing read-only settings inventory without exposing credentials, SSO authorization URLs or raw provider headers.",
+  "workItemDE": "Begrenzte und redigierte GitHub-Enterprise-HTTP-403-Diagnostik in das bestehende read-only Settings-Inventar integrieren, ohne Credentials, SSO-Autorisierungs-URLs oder rohe Provider-Header offenzulegen.",
+  "priority": "P1",
+  "priorityReason": "Run #35992205549 proved the three Enterprise Actions policy reads still return HTTP 403 even though the configured token is a classic PAT with admin:enterprise according to current Human Owner evidence.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T11:38:00Z",
+  "baseBranch": "main",
+  "baseSha": "57ccdfeeedd6fb16212d9c55699fe77745900dc3",
+  "lastSyncedMainSha": "57ccdfeeedd6fb16212d9c55699fe77745900dc3",
+  "branch": "operations/github-enterprise-403-diagnostics-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-READ-FAILURE-ISOLATION-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-ENTERPRISE-403-DIAGNOSTICS-20260924.json",
+    "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryProjection.test.ts",
+    "docs/projects/operations/work-packages/OPS_GITHUB_SETTINGS_EFFECTIVE_EXPORT_01_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "Read-only Enterprise settings diagnostics only; no GitHub provider setting mutation.",
+    "Only bounded OAuth-scope names, accepted-scope names, SSO-presence boolean, rate-limit counters/resource and a sanitized provider reason may cross the evidence boundary.",
+    "The X-GitHub-SSO header value, SSO authorization URL, Authorization header, PAT value, GitHub App private key and unknown/raw headers must never be logged, persisted or exported.",
+    "No PAT scope, IAM, Enterprise policy, billing, repository permission, workflow permission or deployment mutation is authorized."
+  ],
+  "exitEvidence": [
+    "HTTP 403/404 failures expose a bounded providerDiagnostics object without raw headers.",
+    "SSO is represented only as ssoRequired=true/false; the X-GitHub-SSO value is discarded.",
+    "OAuth and accepted OAuth scopes are allow-pattern filtered and deduplicated.",
+    "Rate-limit evidence is restricted to numeric limit/remaining/reset and a bounded resource name.",
+    "Provider message URLs and token-like values are redacted before projection and re-redacted at the evidence boundary.",
+    "Targeted unit tests cover diagnostics and redaction.",
+    "Exact-head repository checks remain truthful; Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
