@@ -1,6 +1,6 @@
 # 💻 Code Quality Standards & Architecture Directives
 **Project: CAPITAL-AI**  
-**Version:** 0.6.0 (Beta-Phase)  
+**Version:** 0.6.1 (Beta-Phase)  
 **Standard:** TypeScript Strict Mode (`strict: true`)  
 
 ---
@@ -10,7 +10,7 @@ CAPITAL-AI maintains strict quality standards to ensure enterprise-level perform
 
 1. **Strict Type-Safety**: Avoid using `any`. Explicitly declare TypeScript interfaces and models for all parameters, components, and API responses.
 2. **Defensive API Contracts**: All API responses must be validated upon receipt. Never assume any response is an array or object of correct shape without checking `Array.isArray()` or proper structural type guards. Handle exceptions gracefully without crashing components.
-3. **No Legacy Versioning**: All references to deprecated version numbers are omitted. The entire platform is strictly pinned to **Version 0.6.0** (Beta-Phase) representing the current unified release.
+3. **No Legacy Versioning**: All references to deprecated version numbers are omitted. The entire platform is strictly pinned to **Version 0.6.1** (Beta-Phase) representing the current unified release.
 
 ---
 
