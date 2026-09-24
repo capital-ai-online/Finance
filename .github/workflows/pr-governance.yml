@@ -7,8 +7,8 @@ run-name: >-
 on:
   pull_request:
     branches: [main]
-    # `edited` re-runs the complete template/baseline contract after body fixes.
-    types: [opened, reopened, synchronize, ready_for_review, edited]
+    # Body-only Evidence/Dashboard updates are projection events, not validation inputs.
+    types: [opened, reopened, synchronize, ready_for_review]
   merge_group:
     types: [checks_requested]
 
@@ -16,15 +16,18 @@ permissions:
   contents: read
 
 concurrency:
-  # Event action is part of the key so a body-only `edited` run cannot cancel code-validation for the same snapshot.
+  # One exact code snapshot owns one Governance run. Body-only Evidence projection
+  # updates do not create a second runner lifecycle.
   group: >-
     ${{ github.event_name == 'pull_request'
-        && format('pr-governance-pr-{0}-{1}-{2}-{3}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha, github.event.action)
+        && format('pr-governance-pr-{0}-{1}-{2}', github.event.pull_request.number, github.event.pull_request.head.sha, github.event.pull_request.base.sha)
         || format('pr-governance-{0}', github.ref) }}
   cancel-in-progress: true
 
 # Kostenrichtlinie:
 # - Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
+# - Live Dashboard / Decision Evidence / Production-Baseline sind read-only Projektionen des
+#   PR Decision Evidence Reconciler und keine Eingaben dieses Required Governance Checks.
 # - Governance-/Template-/Workflow-Security-/Google-Wiring-Prüfungen teilen sich einen Ubuntu-Runner,
 #   damit GitHub Actions kurze Einzeljobs nicht separat auf volle billable minutes aufrunden muss.
 # - Das 3000-Minuten-Gate steuert ausschließlich das optionale Repository-Advisory und erzeugt
@@ -130,7 +133,7 @@ jobs:
 
       - name: PR-Scope mit trusted-main Klassifikator bestimmen
         id: scope
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         env:
           EVENT_NAME: pull_request
@@ -153,7 +156,7 @@ jobs:
 
       - name: Kosten-Gate für optionales Repository-Advisory prüfen
         id: cost_gate
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         env:
           BUDGET_MINUTES: '3000'
@@ -186,11 +189,11 @@ jobs:
             core.setOutput('gate_active', usedMinutes >= budgetMinutes ? 'true' : 'false');
 
       - name: Keine Workflow-Änderung — Workflow-Security entfällt
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.scope.outputs.workflow_security != 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.scope.outputs.workflow_security != 'true'
         run: echo "Keine .github/workflows/**-Änderung im Diff — Workflow-Security-Validierung ist nicht erforderlich."
 
       - name: Sicherheit geänderter Workflows gegen trusted main validieren
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.scope.outputs.workflow_security == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.scope.outputs.workflow_security == 'true'
         working-directory: candidate
         env:
           POLICY_ROOT: ../policy
@@ -199,7 +202,7 @@ jobs:
         run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
 
       - name: Google-Marketing Schutzverdrahtung im bestehenden Governance-Runner prüfen
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited'
+        if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         env:
           PR_BASE_REF: origin/main
@@ -214,15 +217,15 @@ jobs:
           fi
 
       - name: Repository-Konventionen — Advisory wegen Kostenpolicy überspringen
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.cost_gate.outputs.gate_active == 'true'
         run: echo "Repository-Advisory ist durch die bestehende Kostenpolicy pausiert; Pflicht-Governance und build-and-test bleiben unberührt."
 
       - name: Repository-Konventionen — Docs-/No-App-Fast-Path
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
         run: 'echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."'
 
       - name: Repository-Advisory Abhängigkeiten installieren
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ''
@@ -230,7 +233,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Repository-Konventionen beratend prüfen
-        if: steps.snapshot.outputs.current_snapshot == 'true' && github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        if: steps.snapshot.outputs.current_snapshot == 'true' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
         working-directory: candidate
         continue-on-error: true
         env:
@@ -238,7 +241,7 @@ jobs:
           GH_TOKEN: ''
         run: npm run repository:validate:advisory
 
-      - name: Produktions-Baseline über trusted-main Policy erzeugen
+      - name: Stabilen PR-Vertrag fail-closed prüfen
         if: steps.snapshot.outputs.current_snapshot == 'true'
         working-directory: candidate
         env:
@@ -247,18 +250,15 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
-        run: node ../policy/scripts/pr/productionPreflight.mjs
-
-      - name: Kanonische PR-Vorlage fail-closed prüfen
-        if: steps.snapshot.outputs.current_snapshot == 'true'
-        working-directory: candidate
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-        run: node ../policy/scripts/pr/validatePrBody.mjs
+          PR_BODY_VALIDATION_MODE: static-contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          validator='../policy/scripts/pr/validatePrBody.mjs'
+          if grep -q 'PR_BODY_VALIDATION_MODE' "$validator"; then
+            node "$validator"
+          else
+            echo 'Bootstrap: trusted main unterstützt static-contract noch nicht; einmalig Production-Baseline für den alten fail-closed Vertrag erzeugen.'
+            node ../policy/scripts/pr/productionPreflight.mjs
+            node "$validator"
+          fi

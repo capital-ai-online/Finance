@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "HOSTED-GITHUB-VALIDATION-COST-S0-S6-2026-08-21",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -43,7 +43,9 @@
   ],
   "correlation": {
     "currentMainAtImplementationStart": "7d173d3239fdbe31216354fc848f948d517069f6",
-    "mergedPullRequests": [469],
+    "mergedPullRequests": [
+      469
+    ],
     "openPullRequestsAtImplementationStart": [],
     "directPathOverlap": [],
     "replacesUnmergedWorkingBranch": "agent/hosted-validation-cost-supersession-2026-08-21",
@@ -65,5 +67,7 @@
   },
   "externalMutationScope": "none",
   "activationState": "S5_MERGE_CANDIDATE_S4_S6_SHADOW_ONLY",
-  "releaseCondition": "Release claim after merge, closure, supersession or abandonment. Any deterministic hosted-validation replacement or trusted signer provisioning requires separate real shadow evidence and explicit Owner cutover."
+  "releaseCondition": "Release claim after merge, closure, supersession or abandonment. Any deterministic hosted-validation replacement or trusted signer provisioning requires separate real shadow evidence and explicit Owner cutover.",
+  "releasedAt": "2026-09-24T17:34:00+02:00",
+  "releaseReason": "Historical claim has no active owner-correct writer on CURRENT_MAIN; fresh Owner direction supersedes stale coordination metadata for PR Governance Evidence/Dashboard decoupling."
 }
