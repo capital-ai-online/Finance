@@ -28,6 +28,7 @@ const GUARDED_MOUNTS: readonly GuardedMount[] = [
   { mountPrefix: '/api/admin', routerFile: 'src/platform/VersionManager/versionManager.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/diagnostics', routerFile: 'server/adminDiagnostics.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/quality-center', routerFile: 'server/qualityCenter.ts', expectedGuard: 'checkAdminAccess' },
+  { mountPrefix: '/api/admin/github-enterprise', routerFile: 'server/routes/githubEnterpriseActionsPolicyRoutes.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/supervisor', routerFile: 'server/supervisorRouter.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/agent-evaluation', routerFile: 'server/agentEvaluationRouter.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/internal/systemadmin-execution', routerFile: 'server/systemadmin/systemadminExecutionBrokerRouter.ts', expectedGuard: 'verifyGitHubActionsOidcToken' },
