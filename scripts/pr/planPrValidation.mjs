@@ -343,7 +343,8 @@ export function planChangedFiles(files, options = {}) {
               : onlyFocusedNodeValidation ? 'focused-node-validation'
                 : onlyNonDeployWorkflow ? 'workflow-only'
                   : dependencyOnly ? 'dependency-only'
-                    : 'selective-source-change',
+                    : onlyOrdinaryOperationsTooling ? 'ordinary-operations-tooling'
+                      : 'selective-source-change',
       normalized,
     ),
   };
