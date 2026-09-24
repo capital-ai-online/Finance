@@ -29,7 +29,7 @@ const NOW = '2026-09-25T00:32:00.123Z';
 function tick(index = 0): MarketDataFanoutTick {
   return {
     contractVersion: MARKET_DATA_FANOUT_CONTRACT_VERSION,
-    topic: 'market:crypto:BTC',
+    topic: 'asset:crypto:BTC',
     symbol: 'BTC',
     assetClass: 'crypto',
     provider: 'binance-public',
@@ -75,8 +75,8 @@ describe('Tier 3 market-data cache and fan-out', () => {
     const ring = new MarketDataRingBuffer();
     for (let index = 0; index < 250; index += 1) ring.append(tick(index));
 
-    expect(ring.size('market:crypto:BTC')).toBe(200);
-    const replay = ring.recent('market:crypto:BTC', 200);
+    expect(ring.size('asset:crypto:BTC')).toBe(200);
+    const replay = ring.recent('asset:crypto:BTC', 200);
     expect(replay).toHaveLength(200);
     expect(replay[0].price).toBe(tick(50).price);
     expect(replay.at(-1)?.price).toBe(tick(249).price);
@@ -107,9 +107,9 @@ describe('Tier 3 market-data cache and fan-out', () => {
       close: () => { closed += 1; },
     };
     const mux = new MarketDataWebSocketRoomMultiplexer({ maxBufferedBytes: 1024, maxSlowSkips: 2 });
-    mux.subscribe(client, 'market:crypto:BTC', [tick(0)]);
+    mux.subscribe(client, 'asset:crypto:BTC', [tick(0)]);
     const before = sent.length;
-    mux.publish({ ...tick(1), topic: 'market:stock:AAPL', symbol: 'AAPL', assetClass: 'stock' });
+    mux.publish({ ...tick(1), topic: 'asset:stock:AAPL', symbol: 'AAPL', assetClass: 'stock' });
     expect(sent).toHaveLength(before);
 
     mux.publish(tick(1));
@@ -190,8 +190,8 @@ describe('Tier 3 market-data cache and fan-out', () => {
 
     const hub = new MarketDataFanoutHub();
     hub.publish(snapshot({ evidenceId: null }));
-    expect(hub.ringBuffer.size('market:crypto:BTC')).toBe(0);
+    expect(hub.ringBuffer.size('asset:crypto:BTC')).toBe(0);
     hub.publish(snapshot());
-    expect(hub.ringBuffer.size('market:crypto:BTC')).toBe(1);
+    expect(hub.ringBuffer.size('asset:crypto:BTC')).toBe(1);
   });
 });
