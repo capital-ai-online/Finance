@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@adcd5609b0db58627fb2d89e58d32f7054baf918`
+**Baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
@@ -74,6 +74,26 @@ The following Pull Requests are terminal evidence/prerequisites, not active work
 6. `SH-02.9 — Observability/SLO/incident convergence`: `IMPLEMENTED_ON_MAIN` through merged OPS PR #1262. Open OPS PR #1271 owns the post-merge projection/convergence readback and does not overlap this GOV roadmap reconciliation.
 7. `SH-02.10 — Fault injection/convergence suite`: remains dependency-held until the owner-correct SH-02.9 post-merge projection in PR #1271 reaches verified terminal evidence.
 8. `SH-02.11 — Staged production activation`: dependency-held until the enabled preceding tiers are verified.
+
+### GOV-PR-DECISION-V18-MARKERFREE-BASELINE-01 — Issue #1405
+
+**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Source Issue:** `#1405`
+
+The leading PR Decision Evidence Reconciler already owns the only mutable PR-body
+convergence chain and `productionBaselineBody.mjs` already allowlists the exact
+v1.8 marker-free `NOT_RUN` machine-baseline sentinel. A structure pre-check
+currently rejects that same state before the specialist baseline repair can run.
+
+The bounded repair makes the exact three-section v1.8 + machine-details +
+allowlisted sentinel shape structurally admissible, while arbitrary marker-free
+content remains fail-closed. No second PR-body writer or baseline authority is
+introduced.
+
+**Exit:** regression tests reproduce PR #1403, prove one atomic baseline block is
+materialized by the existing specialist, and prove non-allowlisted marker-free
+content remains blocked. PR #1403 must then re-correlate on a fresh exact head.
 
 ### GOV-PR-DECISION-BOOTSTRAP-REGEX-01 — Issue #1366
 

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-SH-V3-02-PR-BASE-ANCESTRY-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -37,5 +37,7 @@
     "Hosted repository checks validate the exact branch head"
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; automation has no merge authority.",
-  "validationState": "TARGETED_REGRESSION_ADDED_HOSTED_CI_PENDING"
+  "validationState": "TARGETED_REGRESSION_ADDED_HOSTED_CI_PENDING",
+  "releaseReason": "Historical branch no longer exists; released when overlapping path was touched under /AGENTS.md current-main stale-claim invariant.",
+  "releasedAt": "2026-09-24T14:34:00Z"
 }

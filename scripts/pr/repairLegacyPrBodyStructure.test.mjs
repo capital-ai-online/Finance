@@ -530,6 +530,78 @@ test('canonical current v1.8 Human Decision + Live Dashboard body is left unchan
   assert.equal(result.body, body);
 });
 
+test('current v1.8 marker-free NOT_RUN baseline sentinel is structurally accepted for specialist refresh', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Marker-free baseline bootstrap',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    '',
+    '## 1. 🧭 Entscheidung',
+    '| Frage | Ergebnis |',
+    '|---|---|',
+    '| Owner-Aktion | Human/CODEOWNER Merge erforderlich |',
+    '',
+    '## 2. ✅ Evidence',
+    '| Gate | Status |',
+    '|---|---|',
+    '| Current Main | 🟢 PASS |',
+    '',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Priorität:** P1 🟠 Hoch',
+    '- **Versionsimpact:** PATCH 🩹',
+    '- **Version-Manager-Check:** NOT_RUN — fixture.',
+    '- **PR-Klasse:** C',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    'NOT_RUN — wird durch die kanonische PR-Evidence-Automation gegen Exact Head erzeugt.',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'already-canonical');
+  assert.equal(result.body, body);
+});
+
+test('current v1.8 marker-free baseline keeps non-allowlisted content fail-closed', () => {
+  const body = [
+    '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
+    '`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0`',
+    '# Marker-free baseline bootstrap',
+    '',
+    '> 🧭 **Entscheidungsstatus: EVIDENCE_PENDING**',
+    '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    '## 1. 🧭 Entscheidung',
+    '## 2. ✅ Evidence',
+    '## 3. 🔍 Technical Evidence',
+    '<details>',
+    '<summary>Technische Details & Traceability</summary>',
+    '- **Priorität:** P1 🟠 Hoch',
+    '- **Versionsimpact:** PATCH 🩹',
+    '- **Version-Manager-Check:** NOT_RUN — fixture.',
+    '- **PR-Klasse:** C',
+    '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+    '</details>',
+    '<details>',
+    '<summary>🤖 Maschinenlesbare Produktions-Baseline</summary>',
+    'manuell behauptete Baseline',
+    '</details>',
+  ].join('\n');
+
+  const result = repairLegacyPrBodyStructure(body, { prClass: 'C' });
+  assert.equal(result.eligible, false);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, 'current-v1.8-marker-free-baseline-content-unresolved');
+});
+
 test('canonical current v1.8 auto-merge gate stays single-valued during structure repair', () => {
   const body = [
     '<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.8.0 -->',
