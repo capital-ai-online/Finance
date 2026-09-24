@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-SIDEBOARD-RUNTIME-TRUTH-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Project the canonical web-application version in the public mobile sideboard and replace unsupported realtime-latency/security marketing claims with evidence-backed current-main status wording.",
+  "workItemDE": "Kanonische Webanwendungsversion im öffentlichen Sideboard anzeigen und unbelegte Echtzeit-Latenz-/Sicherheitsangaben durch belegbare Current-Main-Angaben ersetzen.",
+  "startedAt": "2026-09-24T01:30:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "branch": "agent/frontend-sideboard-runtime-truth-20260924",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "primaryOwner": "CAPITAL-AI-FE",
+  "priority": "P2",
+  "priorityReason": "Public footer currently exposes a hard-coded latency promise and conflates transport security with MiCA; the Owner requested current-version visibility and factual current-main correlation.",
+  "productionBaseline": {
+    "checkedAt": "2026-09-24T01:40:00+02:00",
+    "version": "0.6.0",
+    "commitSha": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-SIDEBOARD-RUNTIME-TRUTH-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-FE-LF02-AUTH-PROFILE-SIDEBOARD-20260922.json",
+    ".ai/work-claims/CAPITAL-AI-FE-MARKET-VOCABULARY-CBC5580-20260922.json",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "tests/unit/clientPlatformVersionProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Version authority remains package.json#version and is projected through Release/clientVersion.ts; no second version literal is introduced.",
+    "No market-data provider, entitlement, scoring, licensing, security-control, compliance authority, Render configuration or production deployment is changed.",
+    "The sideboard does not claim guaranteed realtime or sub-45ms latency without dataset/provider entitlement evidence.",
+    "MiCA remains a regulatory/governance guideline and is not presented as a transport security standard.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "acceptanceCriteria": [
+    "Webanwendung version appears immediately above the market-data feed row and derives from CAPITAL_AI_VERSION_LABEL.",
+    "The public sideboard contains no Sub-45ms latency guarantee and no 'SSL 256-Bit • MiCA' security-standard claim.",
+    "Feed wording is provider-dependent, security wording reflects HTTPS/CSP, and MiCA is clearly separated as regulatory guidance.",
+    "Focused version-projection regression test and required exact-head checks pass.",
+    "No changed-file or advisory-claim overlap exists with open PRs."
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "lastSyncedMainSha": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+  "evidence": {
+    "currentMainAtFinalCorrelation": "6be29d46879ad413084a5e3027ac3adc77ce6f9b",
+    "productionRenderDeploy": "dep-daq5um6gekts73bnebvg",
+    "productionCommit": "ba3e69c364627fd5c36faf650cd58ffa160a02c5",
+    "openWriterOverlap": "PASS — merged PR #1347 moved main only in OPS Auth-Control paths; no changed-file overlap with this FE slice.",
+    "feedTruth": "CURRENT_MAIN requires provider/licensing entitlement evidence for realtime claims; no guaranteed sub-45ms SLO found.",
+    "securityTruth": "CURRENT_MAIN implements CSP; public transport is HTTPS. MiCA is modeled as regulatory/governance guidance, not as a transport security standard."
+  }
+}
