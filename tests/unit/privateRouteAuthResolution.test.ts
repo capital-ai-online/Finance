@@ -17,13 +17,16 @@ describe('backend-session private-route auth resolution', () => {
 
   it('holds protected routes until backend session resolution completes', () => {
     expect(routes).toContain('authBootstrapPending: boolean;');
-    expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution />;');
+    expect(routes).toContain('if (authBootstrapPending) return <AuthRouteResolution onRetry={refreshSession} />;');
     expect(routes).toContain('return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;');
   });
 
-  it('uses no artificial auth timer or spinner', () => {
-    expect(session).not.toContain('setTimeout');
+  it('uses a bounded backend-session abort budget with explicit retry UI', () => {
+    expect(session).toContain('const controller = new AbortController();');
+    expect(session).toContain('window.setTimeout(() => controller.abort(), 10_000)');
+    expect(session).toContain('window.clearTimeout(timeout)');
     expect(session).not.toContain('Promise.race');
-    expect(routes).not.toContain('animate-spin');
+    expect(routes).toContain('onRetry={refreshSession}');
+    expect(routes).toContain('Sitzung erneut prüfen');
   });
 });
