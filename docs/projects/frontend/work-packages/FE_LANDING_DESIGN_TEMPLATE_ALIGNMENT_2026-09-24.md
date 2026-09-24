@@ -2,11 +2,11 @@
 
 **Project:** `CAPITAL-AI-FE`  
 **Owner relationship:** cross-cutting Frontend; no productive PVC  
-**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`  
+**Baseline:** `main@cb0012e7f38452eb638ed2e3affe5e74f0b44ed6`  
 **Priority:** P1  
-**Status:** IN_PROGRESS  
+**Status:** DONE_MAIN / TERMINAL  
 **Dependency:** current productive Landingpage presentation + canonical Branding Kit  
-**Open-writer correlation:** PR #1367 modifies Dashboard runtime/performance files only; no changed-file overlap with this package.
+**Open-writer correlation:** Fresh post-merge readback finds only open PR #1375 (CAPITAL-AI-DOC); no changed-file overlap with this FE package.
 
 ## Scope
 
@@ -34,3 +34,11 @@ Synchronized to `main@b2eb210a7310da170db75f3065513522a224337e` after CURRENT_MA
 ## Latest current-main re-correlation
 
 Synchronized to `main@b2eb210a7310da170db75f3065513522a224337e` after merged PR #1372. The intervening delta is Governance PR-evidence/template scoped and has no path overlap with this FE slice.
+
+
+## Post-merge reconciliation
+
+- PR #1374 merged into `main` as `cb0012e7f38452eb638ed2e3affe5e74f0b44ed6`.
+- Exact-head Governance, CI/build, Container Security and Project Execution Directive checks completed successfully before merge.
+- The implementation exit criteria are satisfied; this package is terminal and must not be selected as active work again.
+- Coordination claim `CAPITAL-AI-FE-LANDING-DESIGN-ROADMAP-TEMPLATE-20260924` is released in the same reconciliation slice.
