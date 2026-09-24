@@ -136,7 +136,7 @@ describe('artifact version inventory VAI-01', () => {
   it('records escaped workflow contract-version literals without turning the consumer into an authority', () => {
     const root = createFixture({
       '.github/workflows/pr-consumer.yml':
-        "name: PR consumer\nsteps:\n  - run: node -e \\"const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\\\s*1\\\\.8\\\\.0/.test(body)\\"\n",
+        "name: PR consumer\nsteps:\n  - run: 'const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\s*1\\.8\\.0/.test(body)'\n",
     });
     const inventory = buildArtifactVersionInventory(root);
     const consumer = byPath(inventory.entries, '.github/workflows/pr-consumer.yml');
