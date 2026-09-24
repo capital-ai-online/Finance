@@ -34,11 +34,13 @@ function tick(index = 0): MarketDataFanoutTick {
     receivedAt: new Date(Date.parse(NOW) + index * 100 + 6).toISOString(),
     freshnessMs: 6,
     qualityState: 'LIVE',
+    eventKind: 'bbo',
     correlationId: 'tier1:btc:stable-correlation',
     evidenceId: 'binance:BTCUSDT:stable-evidence',
     price: 112345.67 + index / 100,
     bid: 112345.66 + index / 100,
     ask: 112345.68 + index / 100,
+    vwap: 112345.67 + index / 100,
   };
 }
 
