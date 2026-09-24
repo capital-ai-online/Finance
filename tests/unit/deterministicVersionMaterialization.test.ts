@@ -30,8 +30,8 @@ function createFixture(): string {
   write(root, 'README.md', '[![Version](Version-0.6.0_Beta)]');
   write(root, 'docs/code-quality/CODE_QUALITY_STANDARDS.md', '**Version:** 0.6.0');
   write(root, 'docs/ceo/EXECUTIVE_SUMMARY.md', '**Version:** 0.6.0 (Beta-Phase)');
-  write(root, 'docs/API.md', '*Verified under CAPITAL-AI Platform Specification Version 0.6.0.*');
-  write(root, 'index.html', '<meta name="description" content="CAPITAL-AI (Version 0.6.0)">');
+  write(root, 'docs/archive/raw-materials/API.md', '*Historical snapshot under CAPITAL-AI Platform Specification Version 0.6.0.*');
+  write(root, 'index.html', '<meta name="description" content="CAPITAL-AI (Version 0.6.0)"><script type="application/ld+json">{"@type":"SoftwareApplication","softwareVersion":"0.6.0"}</script>');
   write(root, 'docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json', JSON.stringify({
     schemaVersion: '1.0.0',
     authorityId: DETERMINISTIC_RULE_CONTRACT_AUTHORITY,
