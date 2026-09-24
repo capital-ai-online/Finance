@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
+import { startAuthentication } from '@simplewebauthn/browser';
 import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
   Eye,
   EyeOff,
+  Fingerprint,
   Lock,
   LogIn,
   Mail,
@@ -130,6 +132,41 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     } catch (error) {
       console.warn('[AuthUI] Email login failed:', error);
       setFormError('Anmeldung ist derzeit nicht verfügbar.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    resetFeedback();
+    setIsLoading(true);
+
+    try {
+      const startResult = await postAuthJson('/api/auth/login/passkey/start', {});
+      if (!startResult.ok) {
+        setFormError(providerMessage(startResult.body, 'Passkey-Anmeldung konnte nicht gestartet werden.'));
+        return;
+      }
+      if (typeof startResult.body?.challengeId !== 'string' || !startResult.body?.options) {
+        setFormError('Die Passkey-Challenge des Servers ist ungültig.');
+        return;
+      }
+
+      const credential = await startAuthentication({ optionsJSON: startResult.body.options });
+      const verifyResult = await postAuthJson('/api/auth/login/passkey/verify', {
+        challengeId: startResult.body.challengeId,
+        credential,
+      });
+      if (!verifyResult.ok) {
+        setFormError(providerMessage(verifyResult.body, 'Passkey-Anmeldung konnte nicht verifiziert werden.'));
+        return;
+      }
+
+      setStatusMessage('Passkey bestätigt. Die sichere Sitzung wird geladen.');
+      if (typeof window !== 'undefined') window.location.replace('/');
+    } catch (error) {
+      console.warn('[AuthUI] Passkey login failed:', error);
+      setFormError(error instanceof Error ? error.message : 'Passkey-Anmeldung ist derzeit nicht verfügbar.');
     } finally {
       setIsLoading(false);
     }
@@ -659,6 +696,20 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
             </svg>
             <span>Mit Google fortfahren</span>
           </a>
+
+          {authMode === 'login' && (
+            <button
+              id="backend-passkey-login"
+              type="button"
+              disabled={isLoading}
+              onClick={() => void handlePasskeyLogin()}
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-3 rounded-xl border border-cyan-400/20 bg-cyan-400/5 px-4 py-2.5 text-xs font-semibold text-cyan-100 shadow-sm transition hover:border-cyan-300/35 hover:bg-cyan-400/10 disabled:opacity-50"
+              aria-label="Mit Passkey anmelden"
+            >
+              <Fingerprint className="h-4 w-4 text-cyan-300" />
+              <span>Mit Passkey anmelden</span>
+            </button>
+          )}
 
           <div className="mt-5 text-center text-xs text-slate-400">
             {authMode === 'login' ? (

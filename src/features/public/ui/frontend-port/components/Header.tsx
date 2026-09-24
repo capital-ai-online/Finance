@@ -24,7 +24,6 @@ import { ASSET_CLASSES } from '../data/mockData';
 import { MainCategory, AssetSubclass } from '../types';
 import { trackLoginClick } from '../utils/analytics';
 import { useLandingSessionLogout, useLandingSessionProfile } from '../../LandingSessionContext';
-import { SubscriptionStatusBadge } from '../../SubscriptionStatusBadge';
 import { CAPITAL_AI_VERSION_LABEL } from '../../../../../platform/Release/clientVersion';
 
 interface HeaderProps {
@@ -116,13 +115,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-session-btn"
               type="button"
-              onClick={() => onNavigate?.('/dashboard')}
+              onClick={() => onNavigate?.('/profile')}
               className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-400/30 hover:border-emerald-300/50 text-emerald-200 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
-              aria-label={`Angemeldet als ${authenticatedProfile.name}. Zum Dashboard`}
-              title="Angemeldet · Zum Dashboard"
+              aria-label={`Angemeldet als ${authenticatedProfile.name}. Profil öffnen`}
+              title="Angemeldet · Profil öffnen"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Angemeldet</span>
+              <span>Profil</span>
               <span className="hidden md:inline max-w-28 truncate text-white/70">
                 {authenticatedProfile.name}
               </span>
@@ -198,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 </div>
 
-                {/* Mobile Drawer auth/subscription projection */}
+                {/* Mobile Drawer authenticated account projection */}
                 <div className="mt-4">
                   {authenticatedProfile ? (
                     <div
@@ -212,19 +211,16 @@ export const Header: React.FC<HeaderProps> = ({
                       <p className="mt-1 truncate text-sm font-semibold text-white">
                         {authenticatedProfile.name}
                       </p>
-                      <div className="mt-3">
-                        <SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} />
-                      </div>
                       <button
-                        id="drawer-dashboard-btn"
+                        id="drawer-profile-btn"
                         type="button"
                         onClick={() => {
                           setIsMenuOpen(false);
-                          onNavigate?.('/dashboard');
+                          onNavigate?.('/profile');
                         }}
                         className="mt-3 w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all"
                       >
-                        <span>Zum Dashboard</span>
+                        <span>Profil &amp; Sicherheit</span>
                         <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
                       </button>
                       <button

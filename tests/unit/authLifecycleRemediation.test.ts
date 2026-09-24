@@ -24,10 +24,12 @@ describe('backend auth lifecycle remediation', () => {
     expect(session).not.toContain('supabase');
   });
 
-  it('keeps unauthenticated root public and /dashboard protected', () => {
+  it('keeps unauthenticated root public, protects /profile and retires dashboard account entry', () => {
     expect(routes).toContain('<LandingPage');
-    expect(routes).toContain("if (currentPath === '/dashboard')");
+    expect(routes).toContain("if (currentPath === '/profile')");
     expect(routes).toContain('<RouteRedirect to="/login"');
+    expect(routes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
+    expect(routes).not.toContain("import('../dashboard/Dashboard')");
   });
 
   it('delegates local/global logout to the backend and exposes visible landing logout', () => {

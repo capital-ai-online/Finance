@@ -29,7 +29,8 @@ describe('LF-02 authenticated landing profile projection', () => {
     expect(header).toContain('useLandingSessionProfile()');
     expect(header).toContain('useLandingSessionLogout()');
     expect(header).toContain('data-authenticated-sideboard-profile="true"');
-    expect(header).toContain('<SubscriptionStatusBadge tier={authenticatedProfile.subscriptionTier} />');
+    expect(header).not.toContain('SubscriptionStatusBadge');
+    expect(header).toContain("onNavigate?.('/profile')");
     expect(context).not.toContain('supabase');
     expect(header).not.toContain("authFetch('/api/stripe/user-subscription')");
     expect(badge).not.toContain('supabase');
