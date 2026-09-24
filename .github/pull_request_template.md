@@ -50,6 +50,17 @@
 | Security / Compliance | {{DECISION_SECURITY}} | {{DECISION_SECURITY_REASON}} | {{DECISION_SECURITY_NEXT}} |
 | Production / Deploy Cadence | {{DECISION_BASELINE}} | {{DECISION_BASELINE_REASON}} | {{DECISION_BASELINE_NEXT}} |
 
+<!-- CAPITAL_AI_VERSION_CADENCE_EVIDENCE_START -->
+### 📦 Version & Deploy Cadence
+
+| Live Evidence | Wert |
+|---|---|
+| Aktuelle Version | `{{CURRENT_PACKAGE_VERSION}}` |
+| Deploy-Zyklus bis nächste Version | `{{VERSION_DEPLOY_PROGRESS}}/{{VERSION_DEPLOY_TOTAL}}` · noch `{{VERSION_DEPLOY_REMAINING}}` Deploy-Grenze(n) |
+| Merge-Fortschritt bis nächste Version | `{{VERSION_PROGRESS}}/10` · noch `{{VERSION_REMAINING}}` Merge(s) |
+| Nächstes PATCH | `{{NEXT_PATCH_VERSION}}` |
+<!-- CAPITAL_AI_VERSION_CADENCE_EVIDENCE_END -->
+
 ## 3. 🔍 Technical Evidence
 
 <details>
