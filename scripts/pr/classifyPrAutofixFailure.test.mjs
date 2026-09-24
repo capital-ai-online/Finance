@@ -445,3 +445,16 @@ test('routes the exact merge-cadence PATCH signature only through the registered
 test('default repair registry remains valid after adding merge cadence PATCH repair', () => {
   assert.doesNotThrow(() => validatePrAutofixRepairRegistry());
 });
+
+
+test('empty completed-run failure evidence is explicit fail-closed, not UNKNOWN_FAILURE', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: '',
+  });
+  assert.equal(result.classification, 'FAILURE_EVIDENCE_UNAVAILABLE');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'source-failure-evidence-unavailable');
+  assert.equal(result.findingClass, 'REPOSITORY_FAILURE_EVIDENCE_UNAVAILABLE');
+  assert.equal(result.actionId, 'OBSERVE_ONLY');
+});
