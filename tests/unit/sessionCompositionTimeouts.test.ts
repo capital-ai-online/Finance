@@ -8,14 +8,16 @@ const source = fs.readFileSync(
 );
 
 describe('SessionComposition backend-first zero-blocking shell', () => {
-  it('contains no legacy browser Supabase lifecycle or auth watchdog', () => {
+  it('contains no legacy browser Supabase lifecycle and only a bounded fetch abort budget', () => {
     expect(source).not.toContain('supabase');
     expect(source).not.toContain('onAuthStateChange');
     expect(source).not.toContain('getSession()');
     expect(source).not.toContain('LoginStepUpGate');
     expect(source).not.toContain('RegistrationCompletionGate');
     expect(source).not.toContain('localStorage');
-    expect(source).not.toContain('setTimeout(');
+    expect(source).toContain('const controller = new AbortController();');
+    expect(source).toContain('window.setTimeout(() => controller.abort(), 10_000)');
+    expect(source).toContain('window.clearTimeout(timeout)');
     expect(source).not.toContain('Promise.race([');
   });
 
