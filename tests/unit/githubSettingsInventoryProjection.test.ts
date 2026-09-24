@@ -7,6 +7,7 @@ import {
   projectEnvironmentInventory,
   projectCodeSecurityConfiguration,
   projectEffectiveSettingsPolicy,
+  projectCapturedSetting,
 } from '../../scripts/operations/githubSettingsInventoryProjection.mjs';
 
 describe('GitHub settings storage projection', () => {
@@ -62,6 +63,56 @@ describe('GitHub settings storage projection', () => {
 
 
 describe('GitHub settings effective policy projection', () => {
+
+  it('keeps only bounded provider diagnostics and re-redacts unsafe diagnostic text', () => {
+    const projected = projectCapturedSetting({
+      status: 'NOT_OBSERVABLE',
+      requiredPermission: 'Enterprise administration: read',
+      providerStatus: 403,
+      reason: 'bounded read rejected',
+      providerDiagnostics: {
+        classification: 'FORBIDDEN',
+        oauthScopes: ['read:enterprise', 'admin:enterprise', 'admin:enterprise', 'bad scope value'],
+        acceptedOauthScopes: ['admin:enterprise'],
+        ssoRequired: false,
+        rateLimit: {
+          limit: 5000,
+          remaining: 4999,
+          resetEpochSeconds: 1760000000,
+          resource: 'core',
+          rawHeader: 'must-not-pass',
+        },
+        providerReason: 'Denied https://example.test/sso?secret=1 ghp_projection_leak_123',
+        rawHeaders: {
+          authorization: 'Bearer secret',
+        },
+      },
+    }, (value) => value);
+
+    expect(projected).toEqual({
+      status: 'NOT_OBSERVABLE',
+      requiredPermission: 'Enterprise administration: read',
+      providerStatus: 403,
+      reason: 'bounded read rejected',
+      providerDiagnostics: {
+        classification: 'FORBIDDEN',
+        oauthScopes: ['admin:enterprise', 'read:enterprise'],
+        acceptedOauthScopes: ['admin:enterprise'],
+        ssoRequired: false,
+        rateLimit: {
+          limit: 5000,
+          remaining: 4999,
+          resetEpochSeconds: 1760000000,
+          resource: 'core',
+        },
+        providerReason: 'Denied [REDACTED_URL] [REDACTED_TOKEN]',
+      },
+    });
+    expect(JSON.stringify(projected)).not.toContain('rawHeaders');
+    expect(JSON.stringify(projected)).not.toContain('rawHeader');
+    expect(JSON.stringify(projected)).not.toContain('ghp_projection_leak_123');
+  });
+
   it('projects selected action constraints without broadening parent policy', () => {
     expect(projectSelectedActions({
       github_owned_allowed: true,
