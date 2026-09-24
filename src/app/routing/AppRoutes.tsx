@@ -299,7 +299,7 @@ export function AppRoutes({
 
   if (currentPath === '/media-studio') {
     if (!userSession) {
-      if (authBootstrapPending) return <AuthRouteResolution />;
+      if (authBootstrapPending) return <AuthRouteResolution onRetry={refreshSession} />;
       return <RouteRedirect to="/login" label="Weiter zur Anmeldung" />;
     }
 
@@ -330,7 +330,7 @@ export function AppRoutes({
   }
 
   if (authBootstrapPending) {
-    return <AuthRouteResolution />;
+    return <AuthRouteResolution onRetry={refreshSession} />;
   }
 
   return <RouteRedirect to="/" label="Zur Landingpage" />;
