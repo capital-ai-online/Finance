@@ -490,7 +490,12 @@ export function createGitHubSettingsInventoryReadClient({
     },
 
     async listRepositoryRulesets({ repository } = {}) {
-      const payload = await this.read('repository.rulesets.list', { repository });
+      assertRepository(repository, organization);
+      const descriptor = GITHUB_SETTINGS_READ_CAPABILITIES['repository.rulesets.list'];
+      const payload = await readPaginatedCollection(
+        descriptor.path(context(repository)),
+        descriptor.pagination,
+      );
       return Object.freeze(payload.items);
     },
 
