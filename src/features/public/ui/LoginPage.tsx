@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 import {
   AlertCircle,
@@ -14,6 +14,8 @@ import {
   Sparkles,
   User,
   UserPlus,
+  AtSign,
+  Phone,
 } from 'lucide-react';
 import { BrandLogo } from './frontend-port/components/BrandLogo';
 
@@ -79,7 +81,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [regName, setRegName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -88,10 +92,18 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryMethod, setRecoveryMethod] = useState<'email' | 'phone'>('email');
+  const [recoveryPhone, setRecoveryPhone] = useState('');
+  const [recoveryPhoneCode, setRecoveryPhoneCode] = useState('');
+  const [recoveryPhonePending, setRecoveryPhonePending] = useState(false);
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(() => {
+    return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mfa_required') === '1';
+  });
+  const [mfaCode, setMfaCode] = useState('');
 
   const authError = useMemo(() => {
     if (typeof window === 'undefined') return null;
@@ -99,6 +111,24 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     if (!code) return null;
     return AUTH_ERROR_MESSAGES[code] ?? 'Die Anmeldung konnte nicht abgeschlossen werden.';
   }, []);
+
+  useEffect(() => {
+    if (mfaRequired) return;
+    const controller = new AbortController();
+    void fetch('/api/auth/session', {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!controller.signal.aborted && payload?.mfaRequired === true) setMfaRequired(true);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [mfaRequired]);
 
   const resetFeedback = () => {
     setStatusMessage(null);
@@ -108,6 +138,8 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
   const selectMode = (mode: AuthMode) => {
     setAuthMode(mode);
     setRecoveryOpen(false);
+    setMfaRequired(false);
+    setMfaCode('');
     resetFeedback();
   };
 
@@ -118,12 +150,18 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
 
     try {
       const result = await postAuthJson('/api/auth/login/email', {
-        email: loginEmail,
+        identifier: loginEmail,
         password: loginPassword,
       });
 
       if (!result.ok) {
         setFormError(providerMessage(result.body, 'Anmeldung fehlgeschlagen.'));
+        return;
+      }
+
+      if (result.body?.mfaRequired === true) {
+        setMfaRequired(true);
+        setStatusMessage('Bitte die Anmeldung mit deiner Authenticator-App bestätigen.');
         return;
       }
 
@@ -162,6 +200,12 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
         return;
       }
 
+      if (verifyResult.body?.mfaRequired === true) {
+        setMfaRequired(true);
+        setStatusMessage('Passkey bestätigt. Bitte zusätzlich den Authenticator-Code eingeben.');
+        return;
+      }
+
       setStatusMessage('Passkey bestätigt. Die sichere Sitzung wird geladen.');
       if (typeof window !== 'undefined') window.location.replace('/');
     } catch (error) {
@@ -189,7 +233,9 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     try {
       const result = await postAuthJson('/api/auth/register', {
         name: regName,
+        username: regUsername,
         email: regEmail,
+        phoneNumber: regPhone || undefined,
         password: regPassword,
         termsAccepted: acceptTerms,
         privacyAcknowledged: acknowledgePrivacy,
@@ -222,19 +268,23 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      const result = await postAuthJson('/api/auth/password/forgot', {
-        email: recoveryEmail || loginEmail,
-      });
+      const result = recoveryMethod === 'email'
+        ? await postAuthJson('/api/auth/password/forgot', { email: recoveryEmail || loginEmail })
+        : await postAuthJson('/api/auth/password/phone/start', { phone: recoveryPhone });
 
       if (!result.ok) {
-        setFormError(providerMessage(result.body, 'Passwort-Reset-Mail konnte nicht angefordert werden.'));
+        setFormError(providerMessage(result.body, recoveryMethod === 'email' ? 'Passwort-Reset-Mail konnte nicht angefordert werden.' : 'SMS-Code konnte nicht angefordert werden.'));
         return;
       }
+
+      if (recoveryMethod === 'phone') setRecoveryPhonePending(true);
 
       setStatusMessage(
         providerMessage(
           result.body,
-          'Wenn ein Konto für diese Adresse existiert, wurde eine Passwort-Reset-Mail angefordert.',
+          recoveryMethod === 'email'
+            ? 'Wenn ein Konto für diese Adresse existiert, wurde eine Passwort-Reset-Mail angefordert.'
+            : 'Wenn eine bestätigte Telefonnummer hinterlegt ist, wurde ein SMS-Code angefordert.',
         ),
       );
     } catch (error) {
@@ -242,6 +292,64 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
       setFormError('Passwort-Reset-Mail konnte nicht angefordert werden.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePhoneRecoveryVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetFeedback();
+    setIsLoading(true);
+    try {
+      const result = await postAuthJson('/api/auth/password/phone/verify', {
+        phone: recoveryPhone,
+        token: recoveryPhoneCode,
+      });
+      if (!result.ok) {
+        setFormError(providerMessage(result.body, 'SMS-Code konnte nicht verifiziert werden.'));
+        return;
+      }
+      if (typeof window !== 'undefined') window.location.replace('/account/update-password');
+    } catch (error) {
+      console.warn('[AuthUI] Phone recovery verification failed:', error);
+      setFormError('SMS-Code konnte nicht verifiziert werden.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMfaLoginVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetFeedback();
+    setIsLoading(true);
+    try {
+      const result = await postAuthJson('/api/auth/login/totp/verify', { code: mfaCode });
+      if (!result.ok) {
+        setFormError(providerMessage(result.body, 'Authenticator-Code konnte nicht verifiziert werden.'));
+        return;
+      }
+      setStatusMessage('Zwei-Faktor-Anmeldung erfolgreich.');
+      if (typeof window !== 'undefined') window.location.replace('/');
+    } catch (error) {
+      console.warn('[AuthUI] TOTP login verification failed:', error);
+      setFormError('Authenticator-Code konnte nicht verifiziert werden.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const restartMfaLogin = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'local' }),
+      });
+    } finally {
+      setMfaRequired(false);
+      setMfaCode('');
+      resetFeedback();
+      if (typeof window !== 'undefined') window.history.replaceState({}, '', '/login');
     }
   };
 
@@ -392,35 +500,44 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
           )}
 
           {authMode === 'login' ? (
-            recoveryOpen ? (
-              <form id="password-recovery-form" onSubmit={handlePasswordRecovery} className="space-y-4">
-                <div>
-                  <label htmlFor="recovery-email" className="mb-1.5 block text-xs font-medium text-slate-300">
-                    E-Mail-Adresse
-                  </label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                    <input
-                      id="recovery-email"
-                      type="email"
-                      required
-                      autoComplete="email"
-                      value={recoveryEmail}
-                      onChange={(event) => setRecoveryEmail(event.target.value)}
-                      placeholder="name@beispiel.de"
-                      className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                    />
-                  </div>
+            mfaRequired ? (
+              <form id="totp-login-form" onSubmit={handleMfaLoginVerify} className="space-y-4">
+                <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4 text-xs leading-relaxed text-cyan-100">
+                  Öffne deine Authenticator-App und gib den aktuellen sechsstelligen Code ein.
                 </div>
-                <button
-                  id="password-recovery-submit-btn"
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-emerald-400 px-4 py-3 text-sm font-extrabold text-black transition hover:opacity-95 disabled:opacity-60"
-                >
-                  <Mail className="h-4 w-4" />
-                  Reset-Link anfordern
+                <input value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required placeholder="000000" aria-label="Sechsstelliger Authenticator-Code" className="w-full rounded-xl border border-cyan-400/25 bg-black/50 px-4 py-3 text-center font-mono text-lg tracking-[0.4em] text-white focus:border-cyan-300 focus:outline-none" />
+                <button type="submit" disabled={isLoading || mfaCode.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-emerald-400 px-4 py-3 text-sm font-extrabold text-black disabled:opacity-60">
+                  <ShieldCheck className="h-4 w-4" /> 2FA-Anmeldung bestätigen
                 </button>
+                <button type="button" onClick={() => void restartMfaLogin()} className="w-full text-xs font-semibold text-slate-400 hover:text-white">Anmeldung neu starten</button>
+              </form>
+            ) : recoveryOpen ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/40 p-1">
+                  <button type="button" onClick={() => { setRecoveryMethod('email'); setRecoveryPhonePending(false); resetFeedback(); }} className={`rounded-lg px-3 py-2 text-xs font-bold ${recoveryMethod === 'email' ? 'bg-amber-400 text-black' : 'text-slate-400'}`}>E-Mail</button>
+                  <button type="button" onClick={() => { setRecoveryMethod('phone'); resetFeedback(); }} className={`rounded-lg px-3 py-2 text-xs font-bold ${recoveryMethod === 'phone' ? 'bg-emerald-400 text-black' : 'text-slate-400'}`}>Telefon</button>
+                </div>
+                {recoveryMethod === 'phone' && recoveryPhonePending ? (
+                  <form id="phone-recovery-verify-form" onSubmit={handlePhoneRecoveryVerify} className="space-y-4">
+                    <label htmlFor="recovery-phone-code" className="block text-xs font-medium text-slate-300">Sechsstelliger SMS-Code</label>
+                    <input id="recovery-phone-code" value={recoveryPhoneCode} onChange={(event) => setRecoveryPhoneCode(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required placeholder="000000" className="w-full rounded-xl border border-slate-700/80 bg-black/50 px-4 py-3 text-center font-mono tracking-[0.35em] text-white focus:border-emerald-400 focus:outline-none" />
+                    <button type="submit" disabled={isLoading || recoveryPhoneCode.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-extrabold text-black disabled:opacity-60">Code bestätigen</button>
+                  </form>
+                ) : (
+                  <form id="password-recovery-form" onSubmit={handlePasswordRecovery} className="space-y-4">
+                    <div>
+                      <label htmlFor={recoveryMethod === 'email' ? 'recovery-email' : 'recovery-phone'} className="mb-1.5 block text-xs font-medium text-slate-300">{recoveryMethod === 'email' ? 'E-Mail-Adresse' : 'Verifizierte Telefonnummer'}</label>
+                      <div className="relative">
+                        {recoveryMethod === 'email' ? <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /> : <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />}
+                        <input id={recoveryMethod === 'email' ? 'recovery-email' : 'recovery-phone'} type={recoveryMethod === 'email' ? 'email' : 'tel'} required autoComplete={recoveryMethod === 'email' ? 'email' : 'tel'} value={recoveryMethod === 'email' ? recoveryEmail : recoveryPhone} onChange={(event) => recoveryMethod === 'email' ? setRecoveryEmail(event.target.value) : setRecoveryPhone(event.target.value)} placeholder={recoveryMethod === 'email' ? 'name@beispiel.de' : '+491701234567'} className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                      </div>
+                    </div>
+                    <button id="password-recovery-submit-btn" type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-emerald-400 px-4 py-3 text-sm font-extrabold text-black transition hover:opacity-95 disabled:opacity-60">
+                      {recoveryMethod === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                      {recoveryMethod === 'email' ? 'Reset-Link anfordern' : 'SMS-Code anfordern'}
+                    </button>
+                  </form>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -431,23 +548,23 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                 >
                   Zurück zur Anmeldung
                 </button>
-              </form>
+              </div>
             ) : (
               <form id="email-login-form" onSubmit={handleEmailLogin} className="space-y-4">
                 <div>
                   <label htmlFor="login-email" className="mb-1.5 block text-xs font-medium text-slate-300">
-                    E-Mail-Adresse
+                    E-Mail-Adresse oder Benutzername
                   </label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                     <input
                       id="login-email"
-                      type="email"
+                      type="text"
                       required
-                      autoComplete="email"
+                      autoComplete="username"
                       value={loginEmail}
                       onChange={(event) => setLoginEmail(event.target.value)}
-                      placeholder="name@beispiel.de"
+                      placeholder="name@beispiel.de oder username"
                       className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
                     />
                   </div>
@@ -529,6 +646,29 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
               </div>
 
               <div>
+                <label htmlFor="reg-username" className="mb-1 block text-xs font-medium text-slate-300">
+                  Benutzername
+                </label>
+                <div className="relative">
+                  <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    id="reg-username"
+                    type="text"
+                    required
+                    minLength={3}
+                    maxLength={32}
+                    pattern="[a-z0-9][a-z0-9._-]{2,31}"
+                    autoComplete="username"
+                    value={regUsername}
+                    onChange={(event) => setRegUsername(event.target.value.toLowerCase())}
+                    placeholder="max.mustermann"
+                    className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#FF2E93] focus:outline-none focus:ring-1 focus:ring-[#FF2E93]"
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500">3–32 Zeichen: Kleinbuchstaben, Ziffern, Punkt, Minus oder Unterstrich.</p>
+              </div>
+
+              <div>
                 <label htmlFor="reg-email" className="mb-1 block text-xs font-medium text-slate-300">
                   E-Mail-Adresse
                 </label>
@@ -545,6 +685,17 @@ export function LoginPage({ justLoggedOut = false }: LoginPageProps) {
                     className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#FF2E93] focus:outline-none focus:ring-1 focus:ring-[#FF2E93]"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="reg-phone" className="mb-1 block text-xs font-medium text-slate-300">
+                  Telefonnummer <span className="text-slate-500">(optional)</span>
+                </label>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input id="reg-phone" type="tel" autoComplete="tel" value={regPhone} onChange={(event) => setRegPhone(event.target.value)} placeholder="+491701234567" className="w-full rounded-xl border border-slate-700/80 bg-black/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#44DE88] focus:outline-none focus:ring-1 focus:ring-[#44DE88]" />
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500">Die Nummer wird erst nach späterer SMS-Verifizierung für Recovery genutzt.</p>
               </div>
 
               <div>

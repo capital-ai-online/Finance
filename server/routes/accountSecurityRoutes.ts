@@ -49,15 +49,34 @@ const RISK_PROFILES = new Set([
   'Hochfrequenz-Trading',
 ]);
 const AVATAR_IDS = new Set(['1', '2', '3', '4', '5']);
+const INVESTMENT_HORIZONS = new Set(['Kurzfristig', 'Mittelfristig', 'Langfristig']);
+const EXPERIENCE_LEVELS = new Set(['Einsteiger', 'Fortgeschritten', 'Erfahren', 'Professionell']);
+const PREFERRED_CURRENCIES = new Set(['EUR', 'USD', 'CHF', 'GBP']);
+const USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{2,31}$/;
+const E164_PHONE_PATTERN = /^\+[1-9]\d{7,14}$/;
+const ASSET_SYMBOL_PATTERN = /^[A-Z0-9][A-Z0-9.-]{0,14}$/;
+
+function isPhoneAuthEnabled(): boolean {
+  return process.env.CAPITAL_AI_PHONE_AUTH_ENABLED === 'true';
+}
 
 type ProfileRow = {
   full_name: string | null;
+  username: string | null;
+  phone_number: string | null;
+  phone_verified: boolean | null;
   avatar_url: string | null;
   avatar_id: string | null;
   avatar_color: string | null;
   preferred_asset_class: string | null;
   risk_profile: string | null;
   investment_capital: number | string | null;
+  favorite_cryptocurrencies: string[] | null;
+  favorite_stocks: string[] | null;
+  portfolio_assets: string[] | null;
+  investment_horizon: string | null;
+  experience_level: string | null;
+  preferred_currency: string | null;
 };
 
 function cleanName(value: unknown): string | null {
@@ -77,31 +96,67 @@ function cleanCapital(value: unknown): number | null {
     : null;
 }
 
+function cleanUsername(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const username = value.trim().toLowerCase();
+  return USERNAME_PATTERN.test(username) ? username : null;
+}
+
+function cleanPhone(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const phone = value.replace(/[\s()-]/g, '');
+  return E164_PHONE_PATTERN.test(phone) ? phone : null;
+}
+
+function cleanAssetSymbols(value: unknown, maxItems: number): string[] | null {
+  if (!Array.isArray(value) || value.length > maxItems) return null;
+  const symbols = [...new Set(value.map((entry) => String(entry).trim().toUpperCase()))];
+  return symbols.every((symbol) => ASSET_SYMBOL_PATTERN.test(symbol)) ? symbols : null;
+}
+
 export async function readAccountProfile(userId: string): Promise<{
   name: string | null;
+  username: string;
+  phoneNumber: string | null;
+  phoneVerified: boolean;
   avatarId: string;
   avatarColor: string;
   preferredAssetClass: string;
   riskProfile: string;
   capital: number;
   customAvatarUrl: string | null;
+  favoriteCryptocurrencies: string[];
+  favoriteStocks: string[];
+  portfolioAssets: string[];
+  investmentHorizon: string;
+  experienceLevel: string;
+  preferredCurrency: string;
 }> {
   const supabase = getPrivilegedServerSupabase();
   const { data, error } = await supabase
     .from('profiles')
-    .select('full_name,avatar_url,avatar_id,avatar_color,preferred_asset_class,risk_profile,investment_capital')
+    .select('full_name,username,phone_number,phone_verified,avatar_url,avatar_id,avatar_color,preferred_asset_class,risk_profile,investment_capital,favorite_cryptocurrencies,favorite_stocks,portfolio_assets,investment_horizon,experience_level,preferred_currency')
     .eq('id', userId)
     .single();
   if (error || !data) throw new Error('PROFILE_READ_FAILED');
   const row = data as ProfileRow;
   return {
     name: row.full_name,
+    username: row.username || '',
+    phoneNumber: row.phone_number,
+    phoneVerified: row.phone_verified === true,
     avatarId: row.avatar_id || '1',
     avatarColor: row.avatar_color || 'from-brand-primary to-brand-primary',
     preferredAssetClass: row.preferred_asset_class || 'Crypto',
     riskProfile: row.risk_profile || 'Ausgewogen',
     capital: Number(row.investment_capital || 0),
     customAvatarUrl: row.avatar_url ? '/api/auth/profile/avatar' : null,
+    favoriteCryptocurrencies: Array.isArray(row.favorite_cryptocurrencies) ? row.favorite_cryptocurrencies : [],
+    favoriteStocks: Array.isArray(row.favorite_stocks) ? row.favorite_stocks : [],
+    portfolioAssets: Array.isArray(row.portfolio_assets) ? row.portfolio_assets : [],
+    investmentHorizon: row.investment_horizon || 'Langfristig',
+    experienceLevel: row.experience_level || 'Einsteiger',
+    preferredCurrency: row.preferred_currency || 'EUR',
   };
 }
 
@@ -121,6 +176,8 @@ accountSecurityRouter.patch('/profile', ACCOUNT_RATE_LIMIT, async (req, res) => 
   if (!verified) return;
 
   const fullName = cleanName(req.body?.name);
+  const username = cleanUsername(req.body?.username);
+  const phoneNumber = req.body?.phoneNumber ? cleanPhone(req.body.phoneNumber) : null;
   const avatarId = cleanEnum(req.body?.avatarId, AVATAR_IDS);
   const avatarColor = typeof req.body?.avatarColor === 'string'
     ? req.body.avatarColor.trim().slice(0, 120)
@@ -128,8 +185,29 @@ accountSecurityRouter.patch('/profile', ACCOUNT_RATE_LIMIT, async (req, res) => 
   const preferredAssetClass = cleanEnum(req.body?.preferredAssetClass, ASSET_CLASSES);
   const riskProfile = cleanEnum(req.body?.riskProfile, RISK_PROFILES);
   const capital = cleanCapital(req.body?.capital);
+  const favoriteCryptocurrencies = cleanAssetSymbols(req.body?.favoriteCryptocurrencies, 20);
+  const favoriteStocks = cleanAssetSymbols(req.body?.favoriteStocks, 20);
+  const portfolioAssets = cleanAssetSymbols(req.body?.portfolioAssets, 50);
+  const investmentHorizon = cleanEnum(req.body?.investmentHorizon, INVESTMENT_HORIZONS);
+  const experienceLevel = cleanEnum(req.body?.experienceLevel, EXPERIENCE_LEVELS);
+  const preferredCurrency = cleanEnum(req.body?.preferredCurrency, PREFERRED_CURRENCIES);
 
-  if (!fullName || !avatarId || !avatarColor || !preferredAssetClass || !riskProfile || capital === null) {
+  if (
+    !fullName
+    || !username
+    || (req.body?.phoneNumber && !phoneNumber)
+    || !avatarId
+    || !avatarColor
+    || !preferredAssetClass
+    || !riskProfile
+    || capital === null
+    || !favoriteCryptocurrencies
+    || !favoriteStocks
+    || !portfolioAssets
+    || !investmentHorizon
+    || !experienceLevel
+    || !preferredCurrency
+  ) {
     res.status(400).json({ error: 'Die Profilangaben sind unvollständig oder ungültig.' });
     return;
   }
@@ -138,17 +216,30 @@ accountSecurityRouter.patch('/profile', ACCOUNT_RATE_LIMIT, async (req, res) => 
     const supabase = getPrivilegedServerSupabase();
     const { error } = await supabase.from('profiles').update({
       full_name: fullName,
+      username,
+      phone_number: phoneNumber,
+      phone_verified: phoneNumber === verified.user.phone && Boolean(verified.user.phone_confirmed_at),
       avatar_id: avatarId,
       avatar_color: avatarColor,
       preferred_asset_class: preferredAssetClass,
       risk_profile: riskProfile,
       investment_capital: capital,
+      favorite_cryptocurrencies: favoriteCryptocurrencies,
+      favorite_stocks: favoriteStocks,
+      portfolio_assets: portfolioAssets,
+      investment_horizon: investmentHorizon,
+      experience_level: experienceLevel,
+      preferred_currency: preferredCurrency,
       updated_at: new Date().toISOString(),
     }).eq('id', verified.user.id);
+    if (error?.code === '23505') {
+      res.status(409).json({ error: 'Dieser Benutzername ist nicht verfügbar.' });
+      return;
+    }
     if (error) throw error;
 
     const { error: metadataError } = await supabase.auth.admin.updateUserById(verified.user.id, {
-      user_metadata: { ...verified.user.user_metadata, full_name: fullName },
+      user_metadata: { ...verified.user.user_metadata, full_name: fullName, username },
     });
     if (metadataError) throw metadataError;
 
@@ -309,6 +400,13 @@ accountSecurityRouter.get('/security/methods', MFA_RATE_LIMIT, async (req, res) 
     res.status(200).json({
       methods: {
         password: { active: true },
+        phone: {
+          active: Boolean(verified.user.phone_confirmed_at),
+          available: isPhoneAuthEnabled(),
+          maskedNumber: verified.user.phone
+            ? `${verified.user.phone.slice(0, 3)}••••${verified.user.phone.slice(-3)}`
+            : null,
+        },
         totp: {
           active: factors.totp.some((factor) => factor.status === 'verified'),
           factors: factors.totp
@@ -334,6 +432,82 @@ accountSecurityRouter.get('/security/methods', MFA_RATE_LIMIT, async (req, res) 
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(503).json({ error: 'Authentifizierungsmethoden konnten nicht geladen werden.' });
+  }
+});
+
+accountSecurityRouter.post('/security/phone/start', MFA_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  if (!isPhoneAuthEnabled()) {
+    res.status(503).json({
+      error: 'Telefon-Verifizierung wird nach Freigabe des SMS-Providers verfügbar.',
+      code: 'PHONE_AUTH_PROVIDER_PENDING',
+    });
+    return;
+  }
+  const phone = cleanPhone(req.body?.phoneNumber);
+  if (!phone) {
+    res.status(400).json({ error: 'Bitte eine gültige Telefonnummer im internationalen Format angeben.' });
+    return;
+  }
+
+  try {
+    const client = await createAuthenticatedBackendAuthClient(req, res, verified);
+    const { error } = await client.auth.updateUser({ phone });
+    if (error) throw error;
+    res.status(202).json({ accepted: true, message: 'Bestätigungscode wurde per SMS angefordert.' });
+  } catch (error) {
+    accountLogger.error('Phone verification start failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Telefon-Verifizierung konnte derzeit nicht gestartet werden.' });
+  }
+});
+
+accountSecurityRouter.post('/security/phone/verify', MFA_RATE_LIMIT, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const verified = await requireAccount(req, res);
+  if (!verified) return;
+  if (!isPhoneAuthEnabled()) {
+    res.status(503).json({
+      error: 'Telefon-Verifizierung wird nach Freigabe des SMS-Providers verfügbar.',
+      code: 'PHONE_AUTH_PROVIDER_PENDING',
+    });
+    return;
+  }
+  const phone = cleanPhone(req.body?.phoneNumber);
+  const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  if (!phone || !/^\d{6}$/.test(token)) {
+    res.status(400).json({ error: 'Bitte Telefonnummer und sechsstelligen SMS-Code vollständig angeben.' });
+    return;
+  }
+
+  try {
+    const client = await createAuthenticatedBackendAuthClient(req, res, verified);
+    const { data, error } = await client.auth.verifyOtp({ phone, token, type: 'phone_change' });
+    if (error || !data.user || data.user.id !== verified.user.id) {
+      res.status(422).json({ error: 'Der SMS-Code ist ungültig oder abgelaufen.' });
+      return;
+    }
+    if (data.session) persistBackendAuthSession(req, res, data.session);
+    const supabase = getPrivilegedServerSupabase();
+    const { error: updateError } = await supabase.from('profiles').update({
+      phone_number: phone,
+      phone_verified: true,
+      updated_at: new Date().toISOString(),
+    }).eq('id', verified.user.id);
+    if (updateError) throw updateError;
+    res.status(200).json({ verified: true });
+  } catch (error) {
+    accountLogger.error('Phone verification failed', {
+      requestId: req.requestId,
+      userId: verified.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({ error: 'Telefonnummer konnte derzeit nicht verifiziert werden.' });
   }
 });
 

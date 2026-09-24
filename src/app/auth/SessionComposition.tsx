@@ -41,12 +41,15 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
   const refreshSession = useCallback(async () => {
     setAuthBootstrapPending(true);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10_000);
     try {
       const response = await fetch('/api/auth/session', {
         method: 'GET',
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { Accept: 'application/json' },
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -78,6 +81,9 @@ export function SessionComposition({ children }: SessionCompositionProps) {
         id: user.id,
         name: user.name,
         email: user.email,
+        username: typeof user.username === 'string' ? user.username : '',
+        phoneNumber: typeof user.phoneNumber === 'string' ? user.phoneNumber : undefined,
+        phoneVerified: user.phoneVerified === true,
         subscriptionTier: user.subscriptionTier,
         avatarId: typeof user.avatarId === 'string' ? user.avatarId : '1',
         avatarColor: typeof user.avatarColor === 'string' ? user.avatarColor : 'from-brand-primary to-brand-primary',
@@ -89,12 +95,25 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           : 'Ausgewogen',
         capital: typeof user.capital === 'number' && Number.isFinite(user.capital) ? user.capital : 0,
         customAvatarUrl: typeof user.customAvatarUrl === 'string' ? user.customAvatarUrl : undefined,
+        favoriteCryptocurrencies: Array.isArray(user.favoriteCryptocurrencies) ? user.favoriteCryptocurrencies : [],
+        favoriteStocks: Array.isArray(user.favoriteStocks) ? user.favoriteStocks : [],
+        portfolioAssets: Array.isArray(user.portfolioAssets) ? user.portfolioAssets : [],
+        investmentHorizon: ['Kurzfristig', 'Mittelfristig', 'Langfristig'].includes(user.investmentHorizon)
+          ? user.investmentHorizon
+          : 'Langfristig',
+        experienceLevel: ['Einsteiger', 'Fortgeschritten', 'Erfahren', 'Professionell'].includes(user.experienceLevel)
+          ? user.experienceLevel
+          : 'Einsteiger',
+        preferredCurrency: ['EUR', 'USD', 'CHF', 'GBP'].includes(user.preferredCurrency)
+          ? user.preferredCurrency
+          : 'EUR',
       });
       setJustLoggedOut(false);
     } catch (error) {
       console.warn('[Auth] Backend session readback failed:', error);
       setUserSession(null);
     } finally {
+      window.clearTimeout(timeout);
       setAuthBootstrapPending(false);
     }
   }, []);

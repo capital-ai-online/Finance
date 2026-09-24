@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ACCOUNT-SECURITY-PASSKEY-20260924",
-  "status": "active",
+  "status": "released",
   "exclusive": false,
   "agent": {
     "provider": "OpenAI",
@@ -52,5 +52,8 @@
     "Focused and required checks pass.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-24T07:25:00Z",
+  "releaseReason": "PR #1373 merged; this follow-up releases the terminal security/passkey claim before touching its paths.",
+  "releasedMainSha": "0d63fb5b92934753440d77bcf04057adb2dd6734"
 }

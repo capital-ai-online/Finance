@@ -19,11 +19,17 @@ import {
   Download,
   ShieldCheck,
   KeyRound,
+  AtSign,
+  Phone,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface UserProfile {
   name: string;
   email: string;
+  username: string;
+  phoneNumber: string;
+  phoneVerified: boolean;
   avatarId: string;
   avatarColor: string;
   preferredAssetClass: 'Crypto' | 'Stocks' | 'Commodities' | 'Forex';
@@ -31,6 +37,12 @@ export interface UserProfile {
   capital: number;
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   customAvatarUrl?: string;
+  favoriteCryptocurrencies: string[];
+  favoriteStocks: string[];
+  portfolioAssets: string[];
+  investmentHorizon: 'Kurzfristig' | 'Mittelfristig' | 'Langfristig';
+  experienceLevel: 'Einsteiger' | 'Fortgeschritten' | 'Erfahren' | 'Professionell';
+  preferredCurrency: 'EUR' | 'USD' | 'CHF' | 'GBP';
   id?: string;
 }
 
@@ -47,17 +59,52 @@ const AVATARS = [
   { id: '5', label: 'Arbitrage', icon: Target, color: 'from-brand-accent to-brand-accent' },
 ];
 
+const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'AVAX'];
+const STOCK_ASSETS = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'TSLA'];
+const PORTFOLIO_ASSETS = [...CRYPTO_ASSETS, ...STOCK_ASSETS, 'EUR', 'USD', 'XAU'];
+
+function AssetSelection({ label, options, selected, onChange }: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-[10px] font-bold uppercase tracking-widest text-white/55">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((symbol) => {
+          const active = selected.includes(symbol);
+          return (
+            <button key={symbol} type="button" aria-pressed={active} onClick={() => onChange(active ? selected.filter((value) => value !== symbol) : [...selected, symbol])} className={`rounded-full border px-3 py-1.5 text-[11px] font-black transition ${active ? 'border-brand-cyan/50 bg-brand-cyan/15 text-brand-cyan' : 'border-white/10 bg-white/5 text-white/50 hover:text-white'}`}>
+              {symbol}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const [name, setName] = useState(profile.name);
   const [email] = useState(profile.email);
+  const [username, setUsername] = useState(profile.username);
+  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber);
   const [preferredAssetClass, setPreferredAssetClass] = useState(profile.preferredAssetClass);
   const [riskProfile, setRiskProfile] = useState(profile.riskProfile);
   const [capital, setCapital] = useState(profile.capital);
   const [avatarId, setAvatarId] = useState(profile.avatarId);
   const [customAvatarUrl, setCustomAvatarUrl] = useState(profile.customAvatarUrl || '');
+  const [favoriteCryptocurrencies, setFavoriteCryptocurrencies] = useState(profile.favoriteCryptocurrencies);
+  const [favoriteStocks, setFavoriteStocks] = useState(profile.favoriteStocks);
+  const [portfolioAssets, setPortfolioAssets] = useState(profile.portfolioAssets);
+  const [investmentHorizon, setInvestmentHorizon] = useState(profile.investmentHorizon);
+  const [experienceLevel, setExperienceLevel] = useState(profile.experienceLevel);
+  const [preferredCurrency, setPreferredCurrency] = useState(profile.preferredCurrency);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
@@ -80,6 +127,9 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
       const nextProfile: UserProfile = {
         name,
         email: profile.email,
+        username,
+        phoneNumber,
+        phoneVerified: profile.phoneVerified && phoneNumber === profile.phoneNumber,
         avatarId,
         avatarColor: activeAvatar.color,
         preferredAssetClass,
@@ -87,6 +137,12 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         capital,
         subscriptionTier: profile.subscriptionTier,
         customAvatarUrl,
+        favoriteCryptocurrencies,
+        favoriteStocks,
+        portfolioAssets,
+        investmentHorizon,
+        experienceLevel,
+        preferredCurrency,
         id: profile.id,
       };
       const response = await authFetch('/api/auth/profile', {
@@ -162,12 +218,21 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
           id: profile.id ?? null,
           name: profile.name,
           email: profile.email,
+          username,
+          phone_number: phoneNumber || null,
+          phone_verified: profile.phoneVerified,
           preferred_asset_class: preferredAssetClass,
           risk_profile: riskProfile,
           allocated_capital_usd: capital,
           avatar_id: avatarId,
           avatar_style: activeAvatar.label,
           has_custom_avatar: Boolean(customAvatarUrl),
+          favorite_cryptocurrencies: favoriteCryptocurrencies,
+          favorite_stocks: favoriteStocks,
+          portfolio_assets: portfolioAssets,
+          investment_horizon: investmentHorizon,
+          experience_level: experienceLevel,
+          preferred_currency: preferredCurrency,
         },
       };
 
@@ -196,8 +261,8 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         <button type="button" role="tab" aria-selected={activeTab === 'profile'} onClick={() => setActiveTab('profile')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition ${activeTab === 'profile' ? 'bg-brand-primary text-black' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
           <User size={15} /> Profil
         </button>
-        <button type="button" role="tab" aria-selected={activeTab === 'security'} onClick={() => setActiveTab('security')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition ${activeTab === 'security' ? 'bg-brand-cyan text-black' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
-          <KeyRound size={15} /> Sicherheit
+        <button type="button" role="tab" aria-selected={activeTab === 'settings'} onClick={() => setActiveTab('settings')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition ${activeTab === 'settings' ? 'bg-brand-cyan text-black' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
+          <KeyRound size={15} /> Einstellungen
         </button>
       </div>
 
@@ -339,6 +404,24 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label htmlFor="profile-username-input" className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Benutzername</label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input id="profile-username-input" type="text" required minLength={3} maxLength={32} pattern="[a-z0-9][a-z0-9._-]{2,31}" value={username} onChange={(event) => setUsername(event.target.value.toLowerCase())} autoComplete="username" className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-primary" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="profile-phone-input" className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Telefonnummer (optional)</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input id="profile-phone-input" type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} autoComplete="tel" placeholder="+491701234567" className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-primary" />
+                  </div>
+                  <p className={`text-[10px] ${profile.phoneVerified && phoneNumber === profile.phoneNumber ? 'text-emerald-300' : 'text-white/35'}`}>{profile.phoneVerified && phoneNumber === profile.phoneNumber ? 'Verifiziert und für Recovery nutzbar' : 'Nach dem Speichern unter Einstellungen per SMS verifizieren'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
                   <label htmlFor="profile-asset-select" className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Bevorzugte Assetklasse</label>
                   <select
                     id="profile-asset-select"
@@ -383,6 +466,25 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                     className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-3">
+                <label className="space-y-1.5 text-[10px] font-bold uppercase tracking-widest text-white/55">Anlagehorizont
+                  <select value={investmentHorizon} onChange={(event) => setInvestmentHorizon(event.target.value as UserProfile['investmentHorizon'])} className="mt-1 w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2.5 text-sm normal-case text-white"><option>Kurzfristig</option><option>Mittelfristig</option><option>Langfristig</option></select>
+                </label>
+                <label className="space-y-1.5 text-[10px] font-bold uppercase tracking-widest text-white/55">Erfahrung
+                  <select value={experienceLevel} onChange={(event) => setExperienceLevel(event.target.value as UserProfile['experienceLevel'])} className="mt-1 w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2.5 text-sm normal-case text-white"><option>Einsteiger</option><option>Fortgeschritten</option><option>Erfahren</option><option>Professionell</option></select>
+                </label>
+                <label className="space-y-1.5 text-[10px] font-bold uppercase tracking-widest text-white/55">Referenzwährung
+                  <select value={preferredCurrency} onChange={(event) => setPreferredCurrency(event.target.value as UserProfile['preferredCurrency'])} className="mt-1 w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2.5 text-sm normal-case text-white"><option>EUR</option><option>USD</option><option>CHF</option><option>GBP</option></select>
+                </label>
+              </div>
+
+              <div className="space-y-5 rounded-xl border border-brand-cyan/15 bg-brand-cyan/[0.03] p-4">
+                <div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-brand-cyan" /><h3 className="text-xs font-black uppercase tracking-wider text-white">Watchlist &amp; Portfolio</h3></div>
+                <AssetSelection label="Lieblings-Kryptowährungen" options={CRYPTO_ASSETS} selected={favoriteCryptocurrencies} onChange={setFavoriteCryptocurrencies} />
+                <AssetSelection label="Lieblings-Aktien" options={STOCK_ASSETS} selected={favoriteStocks} onChange={setFavoriteStocks} />
+                <AssetSelection label="Aktuelles Portfolio" options={PORTFOLIO_ASSETS} selected={portfolioAssets} onChange={setPortfolioAssets} />
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
@@ -469,7 +571,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
 
       </div>
 
-      {activeTab === 'security' && <SecuritySettingsPanel />}
+      {activeTab === 'settings' && <SecuritySettingsPanel phoneNumber={phoneNumber} phoneVerified={profile.phoneVerified && phoneNumber === profile.phoneNumber} />}
     </div>
   );
 }

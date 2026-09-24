@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-PROFILE-IDENTITY-SETTINGS-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5 Codex",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "OPS-AUTH-PROFILE-IDENTITY-SETTINGS-01 — username login, passkey/TOTP login, phone recovery and branded fintech profile settings.",
+  "workItemDE": "OPS-AUTH-PROFILE-IDENTITY-SETTINGS-01 — Benutzername-Login, Passkey/TOTP-Anmeldung, Telefon-Recovery und gebrandete Fintech-Profileinstellungen.",
+  "startedAt": "2026-09-24T07:25:00Z",
+  "baseBranch": "main",
+  "baseSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+  "lastSyncedMainSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+  "branch": "operations/auth-profile-identity-settings-convergence-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 controlled implementation; supporting PVC-08 production operations",
+  "priority": "P1",
+  "priorityReason": "The signed-in profile route can stall and the Owner requires username, passkey, TOTP and recovery methods on the productive account surface.",
+  "claimedPaths": [
+    ".env.example",
+    ".ai/work-claims/CAPITAL-AI-FE-PROFILE-ACCOUNT-SURFACE-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-ACCOUNT-SECURITY-PASSKEY-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-PROFILE-IDENTITY-SETTINGS-20260924.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_PROFILE_IDENTITY_SETTINGS_2026-09-24.md",
+    "server/auth/backendAuth.ts",
+    "server/routes/backendAuthRoutes.ts",
+    "server/routes/accountSecurityRoutes.ts",
+    "src/app/auth/SessionComposition.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "src/app/types/UserSession.ts",
+    "src/components/ProfilePage.tsx",
+    "src/components/SecuritySettingsPanel.tsx",
+    "src/features/public/ui/LoginPage.tsx",
+    "supabase/migrations/20260924070530_profile_identity_settings.sql",
+    "tests/unit/accountSecurityPasskeyBackend.test.ts",
+    "tests/unit/authIdentityProfileSettings.test.ts",
+    "tests/unit/authPrimaryLoginRegression.test.ts",
+    "tests/unit/profileAccountSurface.test.ts"
+  ],
+  "scopeBoundary": [
+    "Browser remains tokenless; Supabase access and refresh tokens stay in backend HttpOnly cookies.",
+    "SMS verification and recovery fail closed until CAPITAL_AI_PHONE_AUTH_ENABLED=true after provider, abuse and cost approval.",
+    "HIBP remains exclusively ADR-0031 PLAN-CONSTRAINED; this slice does not activate or relabel it.",
+    "No direct main, Production, Render or protected Supabase schema/config mutation.",
+    "Versioned migration applies only through the canonical post-merge migration workflow.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "evidence": {
+    "currentMain": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+    "openWriterOverlap": "PASS: no open pull requests at final pre-branch correlation.",
+    "providerDocs": "Supabase passkeys, TOTP and phone OTP use current server-side APIs; phone OTP requires an external paid SMS provider."
+  },
+  "acceptanceCriteria": [
+    "Password login accepts normalized e-mail or username through the backend boundary.",
+    "Passkey and password primary login require verified TOTP when an AAL2 factor is enrolled.",
+    "OAuth callback self-heals a missing profile and leaves MFA-pending sessions unusable until verification.",
+    "Profile and Einstellungen tabs use the website brand and session bootstrap cannot hang indefinitely.",
+    "Profile stores avatar plus bounded fintech preferences and selections.",
+    "Phone verification/recovery is implemented but explicitly provider-gated.",
+    "Versioned migration and focused regression evidence pass.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+}

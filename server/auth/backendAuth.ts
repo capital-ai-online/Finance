@@ -18,6 +18,7 @@ interface StoredBackendSession {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  mfaPending?: boolean;
 }
 
 export interface VerifiedBackendAuth {
@@ -26,6 +27,7 @@ export interface VerifiedBackendAuth {
   refreshToken: string;
   expiresAt: number;
   refreshed: boolean;
+  mfaPending: boolean;
 }
 
 function getSupabaseUrl(): string {
@@ -131,7 +133,7 @@ function readSessionCookie(req: Request): StoredBackendSession | null {
   return decodeStoredSession(encoded);
 }
 
-function writeSessionCookie(req: Request, res: Response, session: Session): void {
+function writeSessionCookie(req: Request, res: Response, session: Session, mfaPending = false): void {
   if (!session.access_token || !session.refresh_token || !session.expires_at) {
     throw new Error('[BackendAuth] Supabase returned an incomplete session.');
   }
@@ -141,6 +143,7 @@ function writeSessionCookie(req: Request, res: Response, session: Session): void
     accessToken: session.access_token,
     refreshToken: session.refresh_token,
     expiresAt: session.expires_at,
+    mfaPending,
   });
   const chunks = encoded.match(new RegExp(`.{1,${SESSION_CHUNK_SIZE}}`, 'g')) ?? [];
   if (chunks.length < 1 || chunks.length > MAX_SESSION_CHUNKS) {
@@ -152,13 +155,14 @@ function writeSessionCookie(req: Request, res: Response, session: Session): void
     MAX_SESSION_CHUNKS,
     Math.max(0, Number.parseInt(existing[SESSION_CHUNK_COUNT_COOKIE] || '0', 10) || 0),
   );
+  const cookieMaxAge = mfaPending ? OAUTH_TRANSIENT_MAX_AGE_SECONDS : SESSION_MAX_AGE_SECONDS;
 
   appendCookie(res, SESSION_CHUNK_COUNT_COOKIE, String(chunks.length), {
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    maxAge: cookieMaxAge,
   });
   chunks.forEach((chunk, index) => {
     appendCookie(res, `${SESSION_COOKIE}_${index}`, chunk, {
-      maxAge: SESSION_MAX_AGE_SECONDS,
+      maxAge: cookieMaxAge,
     });
   });
   for (let index = chunks.length; index < previousCount; index += 1) {
@@ -280,18 +284,26 @@ export function verifyOAuthState(req: Request, providedState: unknown): boolean 
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-export function persistBackendAuthSession(req: Request, res: Response, session: Session): void {
-  writeSessionCookie(req, res, session);
+export function persistBackendAuthSession(
+  req: Request,
+  res: Response,
+  session: Session,
+  options: { mfaPending?: boolean } = {},
+): void {
+  writeSessionCookie(req, res, session, options.mfaPending === true);
   clearCookie(res, PKCE_COOKIE);
   clearCookie(res, STATE_COOKIE);
 }
 
-export async function resolveVerifiedBackendAuth(
+async function resolveBackendAuth(
   req: Request,
   res?: Response,
+  allowMfaPending = false,
 ): Promise<VerifiedBackendAuth | null> {
   const stored = readSessionCookie(req);
   if (!stored) return null;
+  const mfaPending = stored.mfaPending === true;
+  if (mfaPending && !allowMfaPending) return null;
 
   const client = createStatelessAuthClient();
   let accessToken = stored.accessToken;
@@ -321,10 +333,25 @@ export async function resolveVerifiedBackendAuth(
     expiresAt = data.session.expires_at ?? Math.floor(Date.now() / 1000) + data.session.expires_in;
     user = data.user;
     refreshed = true;
-    writeSessionCookie(req, res, data.session);
+    writeSessionCookie(req, res, data.session, mfaPending);
   }
 
-  return { user, accessToken, refreshToken, expiresAt, refreshed };
+  return { user, accessToken, refreshToken, expiresAt, refreshed, mfaPending };
+}
+
+export async function resolveVerifiedBackendAuth(
+  req: Request,
+  res?: Response,
+): Promise<VerifiedBackendAuth | null> {
+  return resolveBackendAuth(req, res, false);
+}
+
+export async function resolvePendingBackendAuth(
+  req: Request,
+  res?: Response,
+): Promise<VerifiedBackendAuth | null> {
+  const verified = await resolveBackendAuth(req, res, true);
+  return verified?.mfaPending ? verified : null;
 }
 
 export async function revokeBackendAuthSession(req: Request, scope: 'local' | 'global'): Promise<void> {

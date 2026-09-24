@@ -28,8 +28,10 @@ describe('authenticated profile account surface', () => {
     expect(profile).toContain("authFetch('/api/auth/profile/avatar'");
     expect(profile).toContain("authFetch('/api/auth/profile/avatar', { method: 'DELETE' })");
     expect(profile).toContain('PNG, JPG, WebP · maximal 2 MB');
-    expect(profile).toContain("<KeyRound size={15} /> Sicherheit");
-    expect(profile).toContain("<SecuritySettingsPanel />");
+    expect(profile).toContain("<KeyRound size={15} /> Einstellungen");
+    expect(profile).toContain('<SecuritySettingsPanel phoneNumber={phoneNumber}');
+    expect(profile).toContain('Lieblings-Kryptowährungen');
+    expect(profile).toContain('Aktuelles Portfolio');
   });
 
   it('does not expose the archived pricing model on the active profile surface', () => {

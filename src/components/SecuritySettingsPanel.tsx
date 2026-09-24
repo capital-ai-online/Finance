@@ -10,6 +10,7 @@ import {
   QrCode,
   ShieldCheck,
   Trash2,
+  Phone,
 } from 'lucide-react';
 import { authFetch } from '../lib/authFetch';
 
@@ -24,6 +25,7 @@ type SecurityMethods = {
   password: { active: boolean };
   totp: { active: boolean; factors: TotpFactor[] };
   passkey: { active: boolean; available: boolean; factors: PasskeyFactor[] };
+  phone: { active: boolean; available: boolean; maskedNumber: string | null };
 };
 
 async function responseMessage(response: Response, fallback: string): Promise<string> {
@@ -31,14 +33,17 @@ async function responseMessage(response: Response, fallback: string): Promise<st
   return typeof body?.error === 'string' ? body.error : fallback;
 }
 
-export function SecuritySettingsPanel() {
+export function SecuritySettingsPanel({ phoneNumber, phoneVerified }: { phoneNumber: string; phoneVerified: boolean }) {
+  const [activeSection, setActiveSection] = useState<'password' | 'authentication'>('password');
   const [methods, setMethods] = useState<SecurityMethods | null>(null);
   const [factorId, setFactorId] = useState('');
   const [qrCode, setQrCode] = useState('');
   const [secret, setSecret] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
-  const [busyAction, setBusyAction] = useState<'password' | 'passkey' | 'totp' | null>(null);
+  const [busyAction, setBusyAction] = useState<'password' | 'passkey' | 'totp' | 'phone' | null>(null);
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneChallengePending, setPhoneChallengePending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -194,6 +199,48 @@ export function SecuritySettingsPanel() {
     }
   };
 
+  const beginPhoneVerification = async () => {
+    setBusyAction('phone');
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await authFetch('/api/auth/security/phone/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      if (!response.ok) throw new Error(await responseMessage(response, 'SMS-Code konnte nicht angefordert werden.'));
+      setPhoneChallengePending(true);
+      setSuccess('SMS-Code angefordert.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'SMS-Code konnte nicht angefordert werden.');
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const verifyPhone = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusyAction('phone');
+    setError(null);
+    try {
+      const response = await authFetch('/api/auth/security/phone/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ phoneNumber, token: phoneCode }),
+      });
+      if (!response.ok) throw new Error(await responseMessage(response, 'Telefonnummer konnte nicht verifiziert werden.'));
+      setPhoneChallengePending(false);
+      setPhoneCode('');
+      setSuccess('Telefonnummer verifiziert und für Recovery freigeschaltet.');
+      await loadMethods();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Telefonnummer konnte nicht verifiziert werden.');
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
@@ -216,8 +263,13 @@ export function SecuritySettingsPanel() {
         </div>
       )}
 
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-black/40 p-1" role="tablist" aria-label="Einstellungen">
+        <button type="button" role="tab" aria-selected={activeSection === 'password'} onClick={() => setActiveSection('password')} className={`rounded-lg px-4 py-3 text-xs font-black uppercase tracking-wider transition ${activeSection === 'password' ? 'bg-brand-primary text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}>Neues Passwort vergeben</button>
+        <button type="button" role="tab" aria-selected={activeSection === 'authentication'} onClick={() => setActiveSection('authentication')} className={`rounded-lg px-4 py-3 text-xs font-black uppercase tracking-wider transition ${activeSection === 'authentication' ? 'bg-brand-cyan text-black' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}>Anmeldung &amp; 2FA</button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+        {activeSection === 'password' && <div className="rounded-2xl border border-white/10 bg-black/40 p-5 md:col-span-2">
           <div className="flex items-start gap-3">
             <LockKeyhole className="mt-0.5 h-5 w-5 text-brand-primary" />
             <div className="min-w-0 flex-1">
@@ -236,9 +288,9 @@ export function SecuritySettingsPanel() {
               </button>
             </div>
           </div>
-        </div>
+        </div>}
 
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+        {activeSection === 'authentication' && <div className="rounded-2xl border border-white/10 bg-black/40 p-5 md:col-span-2">
           <div className="flex items-start gap-3">
             <Fingerprint className="mt-0.5 h-5 w-5 text-brand-cyan" />
             <div className="min-w-0 flex-1">
@@ -253,15 +305,17 @@ export function SecuritySettingsPanel() {
               <p className="mt-1 text-xs leading-relaxed text-white/45">
                 Nutze Gerätebiometrie, PIN oder einen kompatiblen Sicherheitsschlüssel für die passwortlose Anmeldung.
               </p>
-              <button
-                type="button"
+              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-brand-cyan/20 bg-brand-cyan/5 p-3 text-xs font-bold text-white">
+                <input
+                type="checkbox"
+                checked={methods?.passkey.active === true}
                 disabled={busyAction !== null || methods?.passkey.available === false}
-                onClick={() => void beginPasskeyEnrollment()}
-                className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-brand-cyan/30 bg-brand-cyan/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-brand-cyan transition hover:bg-brand-cyan/15 disabled:opacity-50"
-              >
+                onChange={() => { if (!methods?.passkey.active) void beginPasskeyEnrollment(); }}
+                className="h-4 w-4 rounded border-white/20 bg-black text-brand-cyan focus:ring-brand-cyan"
+                />
                 {busyAction === 'passkey' ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                Passkey aktivieren
-              </button>
+                Anmeldung über Passkey aktivieren
+              </label>
             </div>
           </div>
 
@@ -284,10 +338,10 @@ export function SecuritySettingsPanel() {
               ))}
             </div>
           ) : null}
-        </div>
+        </div>}
       </div>
 
-      <div className="rounded-2xl border border-brand-cyan/15 bg-black/40 p-6">
+      {activeSection === 'authentication' && <div className="rounded-2xl border border-brand-cyan/15 bg-black/40 p-6">
         <div className="flex items-start gap-3">
           <QrCode className="mt-0.5 h-5 w-5 text-brand-cyan" />
           <div className="flex-1">
@@ -340,18 +394,45 @@ export function SecuritySettingsPanel() {
                 </div>
               </form>
             ) : (
-              <button
-                type="button"
+              <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border border-brand-cyan/20 bg-brand-cyan/5 p-3 text-xs font-bold text-white">
+                <input
+                type="checkbox"
+                checked={methods?.totp.active === true}
                 disabled={busyAction !== null || loading}
-                onClick={() => void beginTotpEnrollment()}
-                className="mt-5 rounded-xl bg-gradient-to-r from-brand-primary to-brand-cyan px-5 py-3 text-xs font-black uppercase tracking-wider text-black disabled:opacity-50"
-              >
-                Authenticator-App aktivieren
-              </button>
+                onChange={() => void beginTotpEnrollment()}
+                className="h-4 w-4 rounded border-white/20 bg-black text-brand-cyan focus:ring-brand-cyan"
+                />
+                2FA über Authenticator-App aktivieren
+              </label>
             )}
           </div>
         </div>
-      </div>
+      </div>}
+
+      {activeSection === 'authentication' && <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
+        <div className="flex items-start gap-3">
+          <Phone className="mt-0.5 h-5 w-5 text-brand-primary" />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-bold text-white">Telefon-Recovery</h3>
+              {(phoneVerified || methods?.phone.active) && <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold uppercase text-emerald-300">Verifiziert</span>}
+            </div>
+            <p className="mt-1 text-xs text-white/45">Die Telefonnummer wird erst nach SMS-Bestätigung für das Zurücksetzen des Passworts verwendet.</p>
+            {!methods?.phone.available && <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-200">SMS-Provider und Kostenfreigabe stehen produktiv noch aus.</p>}
+            {phoneChallengePending ? (
+              <form onSubmit={verifyPhone} className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <input value={phoneCode} onChange={(event) => setPhoneCode(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}" placeholder="000000" aria-label="Sechsstelliger SMS-Code" className="min-h-11 flex-1 rounded-xl border border-white/20 bg-black/60 px-4 text-center font-mono tracking-[0.35em] text-white" />
+                <button type="submit" disabled={busyAction !== null || phoneCode.length !== 6} className="min-h-11 rounded-xl bg-brand-primary px-5 text-xs font-black uppercase text-black disabled:opacity-50">Telefonnummer bestätigen</button>
+              </form>
+            ) : (
+              <label className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs font-bold text-white">
+                <input type="checkbox" checked={phoneVerified || methods?.phone.active === true} disabled={!phoneNumber || methods?.phone.available === false || busyAction !== null} onChange={() => { if (!phoneVerified && !methods?.phone.active) void beginPhoneVerification(); }} className="h-4 w-4 rounded border-white/20 bg-black text-brand-primary focus:ring-brand-primary" />
+                {phoneNumber ? `${phoneNumber} für Recovery verifizieren` : 'Zuerst im Profil eine Telefonnummer speichern'}
+              </label>
+            )}
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }

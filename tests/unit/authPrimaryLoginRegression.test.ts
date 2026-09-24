@@ -22,6 +22,8 @@ describe('website primary login backend rebuild boundary', () => {
     expect(loginPage).toContain("postAuthJson('/api/auth/login/email'");
     expect(loginPage).toContain("postAuthJson('/api/auth/register'");
     expect(loginPage).toContain("postAuthJson('/api/auth/password/forgot'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/password/phone/start'");
+    expect(loginPage).toContain("postAuthJson('/api/auth/password/phone/verify'");
     expect(loginPage).toContain("postAuthJson('/api/auth/confirmation/resend'");
     expect(loginPage.toLowerCase()).not.toContain(retiredProvider);
     expect(loginPage).not.toContain('captchaToken');
@@ -50,6 +52,7 @@ describe('website primary login backend rebuild boundary', () => {
     expect(sessionComposition).not.toContain('sessionStorage');
     expect(sessionComposition).not.toContain('access_token');
     expect(sessionComposition).not.toContain('refresh_token');
+    expect(sessionComposition).toContain('controller.abort()');
   });
 
   it('keeps privileged server authorization provider-verified', () => {

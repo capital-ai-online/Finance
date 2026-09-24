@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-PROFILE-ACCOUNT-SURFACE-20260924",
-  "status": "active",
+  "status": "released",
   "exclusive": false,
   "agent": {
     "provider": "OpenAI",
@@ -50,5 +50,8 @@
     "Focused regression plus normal required checks pass.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-24T07:25:00Z",
+  "releaseReason": "PR #1371 merged; this follow-up releases the terminal profile-surface claim before touching its paths.",
+  "releasedMainSha": "492ccd9bb2b0ee2e42c02cce86da4aa05e479863"
 }
