@@ -329,6 +329,8 @@ jobs:
               echo 'node_pr_tests=true'
               echo 'node_systemadmin_tests=true'
               echo 'node_security_assessment_tests=true'
+              echo 'node_migration_tests=true'
+              echo 'security_sentinel_tests=true'
               echo 'codeql_mode=full'
               echo 'codeql_languages=actions,javascript-typescript,python'
               echo 'automated_code_review_mode=full'
@@ -416,6 +418,31 @@ jobs:
         run: |
           echo "Klasse D: nur Dokumentation/.ai/Markdown — Software-Build und Tests sind nicht erforderlich."
 
+      - name: Main OIDC/Sigstore-Verfügbarkeit fail-fast prüfen
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
+          separator='?'
+          case "$ACTIONS_ID_TOKEN_REQUEST_URL" in *\?*) separator='&' ;; esac
+          response="$(
+            curl --fail-with-body --silent --show-error --location \
+              --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}${separator}audience=sigstore"
+          )"
+          printf '%s' "$response" | node -e '
+            let data = "";
+            process.stdin.on("data", (chunk) => { data += chunk; });
+            process.stdin.on("end", () => {
+              const payload = JSON.parse(data);
+              if (typeof payload?.value !== "string" || payload.value.split(".").length < 3) {
+                throw new Error("GitHub OIDC response does not contain a JWT value.");
+              }
+            });
+          '
+
       - name: Node.js einrichten
         if: steps.scope.outputs.node == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -431,9 +458,29 @@ jobs:
         if: steps.scope.outputs.audit == 'true'
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Supabase-Migrations-Ledger fail-fast prüfen
+        if: >-
+          steps.scope.outputs.unit == 'true'
+          && steps.validation_plan.outputs.vitest_mode != 'full'
+          && steps.validation_plan.outputs.node_migration_tests == 'true'
+        run: node --test scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs
+
       - name: TypeScript prüfen
         if: steps.scope.outputs.lint == 'true'
         run: npm run lint
+
+      - name: Runtime-/Security-Sentinels gezielt ausführen
+        if: >-
+          steps.scope.outputs.unit == 'true'
+          && steps.validation_plan.outputs.vitest_mode != 'full'
+          && steps.validation_plan.outputs.security_sentinel_tests == 'true'
+        run: >-
+          npx vitest run
+          tests/unit/securityResponse.test.ts
+          tests/unit/securityRouteMatching.test.ts
+          tests/unit/adminRouterBypassAudit.test.ts
+          tests/unit/serverMiddlewareExtraction.test.ts
+          --passWithNoTests
 
       - name: Vollständige Test-Suite ausführen
         if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode == 'full'
@@ -486,6 +533,8 @@ jobs:
           && steps.validation_plan.outputs.node_pr_tests != 'true'
           && steps.validation_plan.outputs.node_systemadmin_tests != 'true'
           && steps.validation_plan.outputs.node_security_assessment_tests != 'true'
+          && steps.validation_plan.outputs.node_migration_tests != 'true'
+          && steps.validation_plan.outputs.security_sentinel_tests != 'true'
         run: echo "Der trusted-base Planner hat für diesen Scope keine Unit-Testgruppe ausgewählt."
 
       - name: Produktions-Build erstellen
