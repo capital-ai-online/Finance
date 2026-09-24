@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-ROADMAP-LIVE-SEO-PRODUCTION-CONVERGENCE-20260923",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -50,5 +50,8 @@
     "Human/CODEOWNER merge remains required.",
     "Documentary correlation is represented without reactivating terminal work: no CAPITAL-AI-DOC active/queued card exists, and the non-active DOC correlation ledger records the terminal state."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; automation has no merge authority.",
+  "releasedAt": "2026-09-24T04:21:28Z",
+  "releaseReason": "PR #1335 merged as 8f5fff57613f183e0e1a2a8c8b41017338e63491; no surviving branch/open FE writer exists. Post-merge correlation at CURRENT_MAIN adcd5609... confirms its release condition fired; current Production d28eff... remains a healthy cadence-conformant ancestor after Governance-only merge #1377.",
+  "releasedMainSha": "adcd5609b0db58627fb2d89e58d32f7054baf918"
 }
