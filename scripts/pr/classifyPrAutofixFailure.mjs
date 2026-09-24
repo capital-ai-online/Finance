@@ -61,6 +61,10 @@ const DECISION_EVIDENCE_DRIFT_PATTERNS = [
   /Error: PR #\d+ muss die maschinenlesbare Baseline in v1\.8\.0 standardmäßig einklappen\./i,
 ];
 
+const TYPESCRIPT_LITERAL_UNION_SIGNATURE = 'TS2322_LITERAL_UNION_WIDENING_V1';
+const EXACT_TYPESCRIPT_LITERAL_UNION_WIDENING =
+  /(?:^|\n)[^\n]*error\s+TS2322:\s*Type 'string \| undefined' is not assignable to type '(?:"[^"\n]+"\s*\|\s*)+"?[^'\n]*\|\s*undefined'\.?/i;
+
 const SELF_HEALING_NEXT_SLICE_SIGNATURE = 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1';
 const EXACT_SELF_HEALING_NEXT_SLICE_TEST =
   /FAIL\s+tests\/unit\/selfHealingSupersession\.test\.ts\s*>\s*self-healing supersession surfaces\s*>\s*releases merged SH-02 claims and advances the canonical work graph/i;
@@ -290,6 +294,20 @@ export function classifyPrAutofixFailure(
       allowedPaths: repair.allowedPaths,
       findingClass: 'REPOSITORY_WORK_GRAPH_EXPECTATION_DRIFT',
       actionId: 'RECONCILE_REPOSITORY_PROJECTION',
+    });
+  }
+
+  if (
+    source === '.github/workflows/ci.yml' &&
+    EXACT_TYPESCRIPT_LITERAL_UNION_WIDENING.test(log)
+  ) {
+    return result({
+      classification: 'TYPESCRIPT_LITERAL_UNION_DRIFT',
+      decision: PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN,
+      reason: 'ts2322-literal-union-widening-repair-not-registered',
+      failureSignature: TYPESCRIPT_LITERAL_UNION_SIGNATURE,
+      findingClass: 'REPOSITORY_TYPESCRIPT_LITERAL_UNION_DRIFT',
+      actionId: 'OBSERVE_ONLY',
     });
   }
 

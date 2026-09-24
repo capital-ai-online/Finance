@@ -480,3 +480,33 @@ test('empty completed-run failure evidence is explicit fail-closed, not UNKNOWN_
   assert.equal(result.findingClass, 'REPOSITORY_FAILURE_EVIDENCE_UNAVAILABLE');
   assert.equal(result.actionId, 'OBSERVE_ONLY');
 });
+
+
+test('classifies exact TS2322 string-to-literal-union widening as blocked Self-Healing evidence', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      `src/features/public/ui/runtime/MarketSentimentPresentation.tsx(42,7): error TS2322: Type 'string | undefined' is not assignable to type '"down" | "neutral" | "up" | undefined'.`,
+      `Type 'string' is not assignable to type '"down" | "neutral" | "up" | undefined'.`,
+    ].join('\n'),
+  });
+
+  assert.equal(result.classification, 'TYPESCRIPT_LITERAL_UNION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'ts2322-literal-union-widening-repair-not-registered');
+  assert.equal(result.failureSignature, 'TS2322_LITERAL_UNION_WIDENING_V1');
+  assert.equal(result.findingClass, 'REPOSITORY_TYPESCRIPT_LITERAL_UNION_DRIFT');
+  assert.equal(result.actionId, 'OBSERVE_ONLY');
+  assert.equal(result.repairerId, '');
+});
+
+test('unrelated TypeScript compiler failures remain blocked as unknown', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: `src/example.ts(1,1): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.`,
+  });
+
+  assert.equal(result.classification, 'UNKNOWN_FAILURE');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN);
+  assert.equal(result.reason, 'no-exact-allowlisted-failure-class');
+});
