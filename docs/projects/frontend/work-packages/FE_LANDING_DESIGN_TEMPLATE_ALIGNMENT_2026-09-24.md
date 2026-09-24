@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-FE`  
 **Owner relationship:** cross-cutting Frontend; no productive PVC  
-**Baseline:** `main@31625df9bf114e689ec359fc5e8aecafc5a7026d`  
+**Baseline:** `main@36edca389a02ca297d00effdd43a3c35418fdaa8`  
 **Priority:** P1  
 **Status:** IN_PROGRESS  
 **Dependency:** current productive Landingpage presentation + canonical Branding Kit  
@@ -24,3 +24,8 @@
 - Frontend architecture documentation identifies the updated canonical presentation values.
 - Focused unit/build validation passes on exact head.
 - Human/CODEOWNER merge remains the final merge authority.
+
+
+## Current-main re-correlation
+
+Synchronized to `main@36edca389a02ca297d00effdd43a3c35418fdaa8` after PR #1369. The intervening main delta was FINTECH-only and had no path overlap with this FE slice. Open FE PR #1371 also has no changed-file overlap with the claimed paths.
