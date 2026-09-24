@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-ENTERPRISE-ACTIONS-RENDER-SURFACE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Expose the existing bounded GitHub Enterprise Actions settings reader through the Finance Render runtime as an owner-only, cached, read-only projection independent of ChatGPT Work/Codex execution limits.",
+  "workItemDE": "Den bestehenden begrenzten GitHub-Enterprise-Actions-Settings-Reader über die Finance-Render-Runtime als Owner-only, gecachte Read-only-Projektion bereitstellen, unabhängig von ChatGPT-Work-/Codex-Ausführungslimits.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T12:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
+  "lastSyncedMainSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
+  "branch": "agent/operations-github-enterprise-actions-render-surface-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-ENTERPRISE-ACTIONS-RENDER-SURFACE-20260924.json",
+    "docs/projects/operations/work-packages/OPS_GITHUB_ENTERPRISE_ACTIONS_RENDER_SURFACE_2026-09-24.md",
+    "docs/projects/operations/work-packages/README.md",
+    "server/githubEnterpriseActionsPolicyProjection.ts",
+    "server/routes/githubEnterpriseActionsPolicyRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "render.yaml",
+    "tests/unit/githubEnterpriseActionsPolicyProjection.test.ts",
+    "tests/unit/adminRouterBypassAudit.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse scripts/operations/githubEnterpriseSettingsReadClient.mjs; do not create a second GitHub Enterprise transport or settings authority.",
+    "GET-only Enterprise Actions policy evidence; no provider mutation and no generic REST proxy.",
+    "Owner-only Finance runtime surface protected by the existing checkAdminAccess IAM boundary.",
+    "The Enterprise PAT remains server-side only and is never returned, logged, committed or exposed to frontend/model context.",
+    "No ChatGPT Work, Codex or chat execution is required for the provider read after deployment."
+  ],
+  "exitEvidence": [
+    "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
+    "Focused tests prove canonical-reader reuse, owner-only route wiring, cache behavior and token non-projection.",
+    "Render manifest declares only the secret key name with sync:false and the Enterprise slug, never a credential value.",
+    "No writer/file/semantic overlap remains before PR creation.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
