@@ -376,6 +376,67 @@ test('repeated same-signature autofix heads are blocked', () => {
   assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX);
 });
 
+test('registers the exact stale PR Governance Ready-Event assertion as a bounded repair', () => {
+  const logText = [
+    'FAIL tests/unit/prReadyForReviewPipelineGate.test.ts > PR Draft -> Ready pipeline gate > runs governance only for non-draft pull requests including ready_for_review',
+    "AssertionError: expected workflow to contain 'types: [opened, reopened, synchronize, ready_for_review, edited]'",
+    'Received workflow contract: types: [opened, reopened, synchronize, ready_for_review]',
+  ].join('\n');
+
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText,
+  });
+
+  assert.equal(result.classification, 'DETERMINISTIC_TEST_EXPECTATION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.REGISTERED_TEST_REPAIR);
+  assert.equal(result.failureSignature, 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1');
+  assert.equal(result.repairerId, 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1');
+  assert.equal(result.repairerPath, 'scripts/pr/repairers/prGovernanceReadyEventContractV1.mjs');
+  assert.deepEqual(result.allowedPaths, ['tests/unit/prReadyForReviewPipelineGate.test.ts']);
+});
+
+test('blocks Ready-Event repair when the current workflow contract is not evidenced', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/prReadyForReviewPipelineGate.test.ts > PR Draft -> Ready pipeline gate > runs governance only for non-draft pull requests including ready_for_review',
+      "AssertionError: expected workflow to contain 'types: [opened, reopened, synchronize, ready_for_review, edited]'",
+    ].join('\n'),
+  });
+
+  assert.equal(result.classification, 'DETERMINISTIC_TEST_EXPECTATION_DRIFT');
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_NOT_PROVEN);
+  assert.equal(result.reason, 'registered-repairer-evidence-not-proven');
+  assert.equal(result.failureSignature, 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1');
+});
+
+test('blocks a repeated Ready-Event repair signature on the autofix head', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/prReadyForReviewPipelineGate.test.ts > PR Draft -> Ready pipeline gate > runs governance only for non-draft pull requests including ready_for_review',
+      "AssertionError: expected workflow to contain 'types: [opened, reopened, synchronize, ready_for_review, edited]'",
+      'Received workflow contract: types: [opened, reopened, synchronize, ready_for_review]',
+    ].join('\n'),
+    previousAutofixSignature: 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1',
+  });
+
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_REPEAT_AUTOFIX);
+});
+
+test('does not generalize a different Ready/Event assertion into the registered repair', () => {
+  const result = classifyPrAutofixFailure({
+    sourceWorkflow: '.github/workflows/ci.yml',
+    logText: [
+      'FAIL tests/unit/prReadyForReviewPipelineGate.test.ts > PR Draft -> Ready pipeline gate > another governance assertion',
+      "AssertionError: expected workflow to contain 'types: [opened, reopened, synchronize, ready_for_review, edited]'",
+      'Received workflow contract: types: [opened, reopened, synchronize, ready_for_review]',
+    ].join('\n'),
+  });
+
+  assert.equal(result.decision, PR_AUTOFIX_DECISIONS.BLOCKED_UNKNOWN);
+});
 test('registers the exact stale Self-Healing next-slice assertion as an invariant repair', () => {
   const result = classifyPrAutofixFailure({
     sourceWorkflow: '.github/workflows/ci.yml',

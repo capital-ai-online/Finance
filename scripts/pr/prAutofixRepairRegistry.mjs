@@ -26,6 +26,23 @@ export const PR_AUTOFIX_REPAIR_REGISTRY = Object.freeze([
     }),
   }),
   Object.freeze({
+    id: 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1',
+    owner: 'CAPITAL-AI-OPS',
+    sourceWorkflow: '.github/workflows/ci.yml',
+    exactSignatures: Object.freeze(['PR_GOVERNANCE_READY_EVENT_CONTRACT_V1']),
+    repairerPath: 'scripts/pr/repairers/prGovernanceReadyEventContractV1.mjs',
+    allowedPaths: Object.freeze(['tests/unit/prReadyForReviewPipelineGate.test.ts']),
+    evidenceBinding: Object.freeze({
+      kind: 'EXACT_LOG_TOKENS_V1',
+      requiredTokens: Object.freeze([
+        'tests/unit/prReadyForReviewPipelineGate.test.ts',
+        'runs governance only for non-draft pull requests including ready_for_review',
+        'types: [opened, reopened, synchronize, ready_for_review, edited]',
+        'types: [opened, reopened, synchronize, ready_for_review]',
+      ]),
+    }),
+  }),
+  Object.freeze({
     id: 'SELF_HEALING_NEXT_SLICE_INVARIANT_V1',
     owner: 'CAPITAL-AI-OPS',
     sourceWorkflow: '.github/workflows/ci.yml',
