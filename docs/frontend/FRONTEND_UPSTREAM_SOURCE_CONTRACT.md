@@ -95,3 +95,44 @@ The promoted overlay is intentionally narrower than the archive:
 - the existing Altcoin Pattern Trooper is not moved in this slice. Its later integration target is the owner-designated leading graphic and must reuse the existing read-only FINTECH contract rather than create a second scoring path.
 
 The pinned SvenKulessa/FRONTEND Git snapshot remains recorded as the base presentation provenance. The owner archive is recorded separately in `source-lock.json.ownerDesignOverlay` so archive-origin deltas are traceable without inventing a Git source commit.
+
+## Runtime-promotion boundary — 4590c18 Alert/Sentiment delta
+
+**Observed presentation source:** `SvenKulessa/FRONTEND@4590c184aa4646e2708076cda05ead2820436a2a`  
+**Execution boundary:** presentation may be adopted; financial truth, persistence, alert triggering and scoring remain Finance-owned.
+
+The newer upstream generation contains useful presentation work, but it also contains browser-side domain behavior. Productive adoption is therefore split explicitly:
+
+### Presentation that may be adapted
+
+- `AssetLogo.tsx`: graphical asset identity treatment only. The existing Finance runtime adapter remains the productive target and does not consume upstream mock prices, scores or ratings.
+- `MarketSentiment.tsx`: visual hierarchy, chart/gauge layout, category navigation and accessible presentation only. Productive values continue to arrive through `MarketSentimentPresentation.tsx` from the FINTECH `market-sentiment-projection/1.0.0` contract.
+- `PriceAlertsModal.tsx` and `PriceAlertToast.tsx`: modal, list, controls, status badges, toast composition and navigation UX only, after a productive price-alert contract exists.
+
+### Source behavior that must not be promoted
+
+- `src/context/PriceAlertsContext.tsx`: no productive `localStorage` alert database, browser interval trigger engine, simulated sentiment transitions or client-owned alert authority.
+- `src/utils/priceAlerts.ts`: no promotion of mock alert defaults or client-owned alert semantics. Pure formatting/audio helpers may be selectively reimplemented only when they remain presentation-only.
+- `src/data/mockData.ts` and `src/data/assets/*`: no market-data, price, score, rating or alert truth.
+- generated/synthetic sentiment history, hard-coded category sentiment values, driver fixtures and score coupling remain prohibited.
+- upstream Analytics/SEO runtime remains intentionally unmirrored and unpromoted.
+
+### Current Finance contract state
+
+Market Sentiment is already owner-correct:
+
+`CAPITAL-AI-FINTECH evidence -> /api/news/sentiment-projection -> MarketSentimentPresentation`.
+
+Price Alerts are not yet equivalent. The current server alert route in `server/alerts.ts` supports score thresholds (`score_above | score_below`, scale 0..10) and must not be misused as a price-threshold API. The current authenticated `src/components/PriceAlert.tsx` uses verified quote evidence but still persists user alert state through `src/lib/alertStore.ts` / browser `localStorage`; that implementation is migration debt, not the target contract for the new graphical alert surface.
+
+Before productive Price-Alert promotion, the applicable owner must provide one canonical server contract for:
+
+1. authenticated/user-bound durable alert persistence;
+2. price-threshold semantics distinct from score-threshold semantics;
+3. verified quote evidence/provider/observation/correlation binding;
+4. fail-closed stale/unavailable/conflicting quote states;
+5. idempotent trigger/delivery behavior and explicit lifecycle;
+6. read/create/update/disable operations required by the FE presentation.
+
+Until that contract is Human/CODEOWNER merged, the new upstream Price Alert modal/toast/context remains unmounted from productive runtime. Frontend may prepare presentation adapters, but it must not invent persistence, price truth, trigger state or sentiment/scoring authority.
+

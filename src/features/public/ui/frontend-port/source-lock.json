@@ -258,6 +258,22 @@
     {
       "sourcePath": "src/data/assets/stockAssets.ts",
       "reason": "FINTECH hold: presentation fixture universe requires owner-correct verified asset/data binding before productive promotion."
+    },
+    {
+      "sourcePath": "src/components/PriceAlertsModal.tsx",
+      "reason": "Presentation-only hold: modal/layout/navigation UX may be adapted only after an owner-correct evidence-backed price-alert backend contract exists. Upstream localStorage, mock market values, simulated triggers and sentiment-score coupling must not be promoted."
+    },
+    {
+      "sourcePath": "src/components/PriceAlertToast.tsx",
+      "reason": "Presentation-only hold: toast visuals may consume only backend-attested alert events. Upstream client-side trigger simulation and mock market state must not become productive alert authority."
+    },
+    {
+      "sourcePath": "src/context/PriceAlertsContext.tsx",
+      "reason": "Do not promote directly: upstream context persists alerts/preferences in localStorage, runs a browser interval engine and can simulate sentiment/price triggers. Productive alert state and triggering require an owner-correct backend contract."
+    },
+    {
+      "sourcePath": "src/utils/priceAlerts.ts",
+      "reason": "Do not promote directly: helper file mixes presentation formatting/audio with mock alert defaults and client-side alert semantics. Pure presentation helpers may be selectively reimplemented behind Finance contracts; the source file is not a productive authority."
     }
   ],
   "ownerDesignOverlay": {

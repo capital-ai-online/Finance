@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-UPSTREAM-RUNTIME-PROMOTION-BOUNDARY-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Separate the newer FRONTEND alert/sentiment presentation from mock, localStorage, simulation and scoring behavior before any productive runtime promotion.",
+  "priority": "P1",
+  "priorityReason": "Direct promotion would introduce a second browser-side alert/persistence/scoring path into the current product; the boundary must fail closed before visual adoption continues.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "startedAt": "2026-09-24T19:18:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
+  "branch": "agent/frontend-runtime-promotion-boundary-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-RUNTIME-PROMOTION-BOUNDARY-20260924.json",
+    "docs/frontend/FRONTEND_UPSTREAM_SOURCE_CONTRACT.md",
+    "docs/projects/frontend/work-packages/FE_UPSTREAM_RUNTIME_PROMOTION_BOUNDARY_2026-09-24.md",
+    "src/features/public/ui/frontend-port/source-lock.json",
+    "tests/unit/frontendUpstreamRuntimePromotionBoundary.test.ts"
+  ],
+  "scopeBoundary": [
+    "No productive runtime component or route mutation.",
+    "No server, Supabase, provider, data, scoring, entitlement, analytics or SEO mutation.",
+    "Market Sentiment remains bound to the merged FINTECH projection.",
+    "New upstream Price Alert context/modal/toast remains unmounted until an owner-correct price-alert backend contract exists.",
+    "Existing score-alert API is not redefined as a price-alert API."
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/projects/README.md@CURRENT_MAIN -> CAPITAL-AI-FE / docs/projects/frontend/",
+    "CAPITAL-AI-FINTECH retains PVC-09..17 productive data/evidence/scoring authority",
+    "market-sentiment-projection/1.0.0 already merged and consumed by FE",
+    "server/alerts.ts remains score-alert authority, not price-threshold authority"
+  ],
+  "handover": {
+    "correlationId": "FE-PRICE-ALERT-BACKEND-HANDOVER-20260924",
+    "sourceOwner": "CAPITAL-AI-FE",
+    "targetOwner": "CAPITAL-AI-FINTECH",
+    "remainingScope": "Provide canonical durable evidence-backed price-threshold alert persistence/trigger API before FE mounts the new alert presentation.",
+    "continuationCondition": "Human/CODEOWNER-merged FINTECH price-alert contract with verified quote evidence and lifecycle semantics."
+  },
+  "exitEvidence": [
+    "source-lock defers upstream PriceAlertsModal/Toast/Context/utils behavior",
+    "source contract records presentation-only and foreign-owner boundaries",
+    "focused Vitest regression passes",
+    "no productive runtime files changed",
+    "required exact-head checks pass before merge"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
