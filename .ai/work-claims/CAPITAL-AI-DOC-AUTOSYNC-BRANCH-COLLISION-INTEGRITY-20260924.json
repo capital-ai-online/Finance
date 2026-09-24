@@ -13,7 +13,7 @@
   "startedAt": "2026-09-24T19:01:00+02:00",
   "baseBranch": "main",
   "baseSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
-  "lastSyncedMainSha": "881ac00bddc21d79c2a2356628971026d7f9b574",
+  "lastSyncedMainSha": "73e8e85ada62ca67dfbc0c546c921048b7355923",
   "branch": "agent/documentary-wp06-branch-collision-integrity-20260924",
   "projectId": "CAPITAL-AI-DOC",
   "projectFolder": "docs/projects/documentary/",
@@ -61,5 +61,7 @@
     "finding": "Current server runtime still imports/mounts the Documentary Roadmap-classified legacy documentHygiene/documentSanitizer surface.",
     "exitCondition": "OPS migrates/retires productive runtime consumers; DOC source removal becomes eligible only after consumer count reaches zero."
   },
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "recorrelatedAt": "2026-09-24T19:18:00+02:00",
+  "recorrelationNote": "Re-correlated after CURRENT_MAIN advanced through merged PR #1424. The intervening FE upstream-sync workflow change has no changed-file or semantic ownership overlap with this CAPITAL-AI-DOC/PVC-03 AUTO_SYNC collision-integrity slice."
 }
