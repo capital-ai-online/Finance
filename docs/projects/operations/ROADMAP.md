@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@86fb86c69df1b65a69c006b4b08eee262c7db40c`
+**Baseline:** `main@5da1db0eb398d87e967ce984fa07f9198effeafd`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — fresh Human/Owner direction activates `OPS-MERGE-CADENCE-01` from current main `86fb86c69df1b65a69c006b4b08eee262c7db40c` after Human-merged PR #1337. The slice prepares the existing deploy/version/Self-Healing chain for GOV PR #1336 without activating SH-02.12 or any held SH-2/SH-3 action.
+**Reconciliation:** 2026-09-24 — cadence activation is merged through PR #1336; ordinal-10 PR #1349 materialized platform version 0.6.1; fresh Owner direction adds the exact-CURRENT_MAIN live Roadmap state projection without activating held SH-2/SH-3 actions.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -18,10 +18,10 @@ This file remains a temporary project execution projection until the separately 
 
 ### OPS-MERGE-CADENCE-01 — Dual-Mode 5-Merge Deploy / 10-Merge Version Runtime
 
-**State:** IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED  
-**Baseline:** main@86fb86c69df1b65a69c006b4b08eee262c7db40c  
-**Owner/PVC:** CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08  
-**Dependency:** Human-merged PR #1337; GOV PR #1336 remains Draft and must activate last.
+**State:** `ACTIVE / CADENCE_5_10 / CURRENT_MAIN_DERIVED`  
+**Baseline:** `cadenceEpoch=PR #1336 / merge f340654adab7198c13fa82cc8f177846c1c66ece`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08`  
+**Dependency:** cadence authority is active on CURRENT_MAIN; live ordinal/deploy/version progress is derived read-only by `/api/roadmap/cadence`.
 
 Fresh Owner direction requires the productive chain to be prepared before the Governance activation merge. This slice therefore makes the existing CI/Post-Merge/Exact-SHA-Recovery/Release-Gate paths dual-mode rather than creating replacements. Pre-v1.1 authority preserves per-main-merge deployment; after the fixed cadence contract becomes CURRENT_MAIN, normal deployment occurs at 5/10/15/... PR-merge ordinals and the next PR at ordinal 9 mod 10 receives the strict next PATCH through the existing registered PR Autofix writer and Release Version Gate.
 
@@ -35,8 +35,8 @@ Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
 
 ### SH-02.11 activation update — 2026-09-23
 
-**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
-**Activation baseline:** `main@e9ed0a0e6b8570b2c853f3054e22acfe6c9e127b` with exact Render Production identity and successful Post-Merge Production Correlation.
+**State:** `ACTIVE / RETRY_SAFE_OPERATION_ENABLED`  
+**Activation evidence:** merged PR #1330 plus independent Security/QM assurance; broader protected SH-2/SH-3 actions remain HELD.
 
 - Security assurance PR #1316 and QM assurance PR #1318 are Human/CODEOWNER-merged and bind the same pre-activation implementation generation.
 - `RETRY_SAFE_OPERATION` transitions from `HELD` to `ENABLED` only for `READ_ONLY` and explicitly `IDEMPOTENT` operations owned by `SUPERVISOR_SAFE_RETRY`.
@@ -61,6 +61,29 @@ Not present and therefore not claimed as active:
 
 Any later SH-02.12 activation must derive executable scope from fresh CURRENT_MAIN + canonical Owner/PVC + reproducible repository evidence, keep Issue text untrusted, use bounded branch-only remediation and exact-head verification, prohibit protected provider mutations, and preserve Human/CODEOWNER merge authority.
 
+### OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01 — Supabase Auth control recovery
+
+**State:** `IN_PROGRESS / AUTH_CONTROL_PLAN_CONSTRAINT_REMEDIATION`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
+**Source package:** `work-packages/OPS_AUTH_RENDER_MANAGEMENT_TOKEN_RECOVERY_2026-09-23.md`
+
+Production runtime recovery and the explicit Management API control host are merged. PR #1349 materialized the plan-aware recovery and platform version 0.6.1. Remaining owner-correct completion is provider readback of the available Auth controls, explicit `UNAVAILABLE_BY_PLAN / ADR-0031` evidence for the Pro-only leaked-password control when applicable, the sequenced database migration/advisors, and the registration user-test handoff. No Billing/plan mutation is implied.
+
+### OPS-RENDER-MCP-AI-DEBUG-01 — Hosted Render MCP build debugging
+
+**State:** `HELD / REPOSITORY_READY / HOST_ASSURANCE_PENDING`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
+**Source package:** `work-packages/OPS_RENDER_MCP_AI_DEBUG_2026-09-24.md`
+
+Repository configuration is merged through PR #1342. Human OAuth plus read-only host/workspace/service readback remains required before external-host assurance can become complete. Repository readiness does not imply provider authorization or mutation authority.
+
+### OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01 — Application-wide CURRENT_MAIN Roadmap projection
+
+**State:** `IN_PROGRESS / READ_ONLY_CURRENT_MAIN_PROJECTION`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
+**Source package:** `work-packages/OPS_LIVE_ROADMAP_CURRENT_MAIN_STATE_2026-09-24.md`
+
+The existing `/api/roadmap` runtime is extended with one exact-SHA-bound current-state projection so the public Roadmap can follow latest CURRENT_MAIN even while healthy Production intentionally lags between five-merge deployment boundaries. Canonical project Roadmaps remain the task sources; this runtime is read-only and non-authorizing.
 
 SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). SH-02.10 is now terminal for implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`: Security PR #1311 and QM PR #1312 independently verified that same generation and are Human/CODEOWNER-merged. Current main `db4ad93bb3bac7d4f31242b7f74f8f300d24e757` completed main CI #5849, Container Security #2851 and Post-Merge Production Correlation #246 successfully, and Render deployment `dep-daptgsad0e5s73acahjg` is live on the same exact SHA. The currently enabled action set is limited to five bounded SH-0/SH-1 actions with one-attempt budgets, kill switches and verification probes; all generic retry/quarantine plus SH-2/SH-3 actions remain HELD. SH-02.11 remains `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`. The current child `SH-02.11A` prepares only `RETRY_SAFE_OPERATION`; it remains `HELD` until fresh independent Security and QM assurance passes for the exact pre-activation generation.
 
