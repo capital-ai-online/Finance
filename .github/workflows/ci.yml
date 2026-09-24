@@ -332,6 +332,7 @@ jobs:
               echo 'codeql_mode=full'
               echo 'codeql_languages=actions,javascript-typescript,python'
               echo 'automated_code_review_mode=full'
+              echo 'direct_vitest_tests_json=[]'
               echo 'reason=bootstrap-base-without-trusted-planner'
             } >> "$GITHUB_OUTPUT"
           fi
@@ -388,6 +389,7 @@ jobs:
           REPORT_CODEQL: ${{ steps.validation_plan.outputs.codeql_mode }}
           REPORT_CODEQL_LANGUAGES: ${{ steps.validation_plan.outputs.codeql_languages }}
           REPORT_REVIEW: ${{ steps.validation_plan.outputs.automated_code_review_mode }}
+          REPORT_DIRECT_VITEST_TESTS: ${{ steps.validation_plan.outputs.direct_vitest_tests_json }}
           REPORT_REASON: ${{ steps.validation_plan.outputs.reason }}
         run: |
           echo "class=$REPORT_CLASS"
@@ -397,6 +399,7 @@ jobs:
           echo "vitest_mode=$REPORT_VITEST"
           echo "codeql_mode=$REPORT_CODEQL codeql_languages=$REPORT_CODEQL_LANGUAGES"
           echo "automated_code_review_mode=$REPORT_REVIEW"
+          echo "direct_vitest_tests=$REPORT_DIRECT_VITEST_TESTS"
           echo "selection_reason=$REPORT_REASON"
           echo "CodeQL/automated-code-review outputs are provider-neutral decisions only; provider execution remains separately governed."
 
@@ -441,6 +444,28 @@ jobs:
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
         run: npx vitest run --changed "$PR_BASE_SHA" --passWithNoTests
+
+      - name: Direkte Vitest-Consumer geänderter Evidence-/Snapshot-Dateien ausführen
+        if: >-
+          steps.scope.outputs.unit == 'true'
+          && steps.validation_plan.outputs.vitest_mode != 'full'
+          && steps.validation_plan.outputs.direct_vitest_tests_json != ''
+          && steps.validation_plan.outputs.direct_vitest_tests_json != '[]'
+        env:
+          DIRECT_VITEST_TESTS_JSON: ${{ steps.validation_plan.outputs.direct_vitest_tests_json }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t direct_tests < <(
+            node -e '
+              const value = JSON.parse(process.env.DIRECT_VITEST_TESTS_JSON || "[]");
+              if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) process.exit(2);
+              for (const entry of value) process.stdout.write(entry + "\n");
+            '
+          )
+          if [ "${#direct_tests[@]}" -gt 0 ]; then
+            npx vitest run "${direct_tests[@]}" --passWithNoTests
+          fi
 
       - name: PR-/CI-Validator-Tests gezielt ausführen
         if: steps.scope.outputs.unit == 'true' && steps.validation_plan.outputs.vitest_mode != 'full' && steps.validation_plan.outputs.node_pr_tests == 'true'
