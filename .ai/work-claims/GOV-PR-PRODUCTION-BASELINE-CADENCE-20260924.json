@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOV-PR-PRODUCTION-BASELINE-CADENCE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -17,7 +17,7 @@
   "startedAt": "2026-09-24T02:44:00+02:00",
   "baseBranch": "main",
   "baseSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
-  "lastSyncedMainSha": "db5c673502c6ae62547371d7bd6c58d42460be25",
+  "lastSyncedMainSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
   "branch": "governance/pr-production-baseline-cadence-20260924",
   "claimedPaths": [
     ".ai/work-claims/GOV-PR-PRODUCTION-BASELINE-CADENCE-20260924.json",
@@ -36,5 +36,14 @@
     "Regression coverage proves queued-lag PASS and true-drift BLOCKED.",
     "No second cadence controller or PR-body writer is introduced."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-24T01:12:56Z",
+  "releaseReason": "Associated PR #1358 merged at 2026-09-24T01:12:56Z (merge 9b049c52041a48827e11bdaa58c2eb8154811799); Issue #1350 is closed and the merged reconciler is live-proven by PR #1361 with Production / Deploy Cadence PASS for cadence-conform DEPLOYMENT_QUEUED ancestry.",
+  "terminalPullRequest": 1358,
+  "terminalMergeSha": "9b049c52041a48827e11bdaa58c2eb8154811799",
+  "postMergeVerification": {
+    "currentMainSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+    "liveProofPullRequest": 1361,
+    "liveProof": "Production / Deploy Cadence PASS for DEPLOYMENT_QUEUED with Production 9b049c52041a48827e11bdaa58c2eb8154811799 and CURRENT_MAIN 8a173021a03d6776fa7323523c1e2acd713c3c5b."
+  }
 }
