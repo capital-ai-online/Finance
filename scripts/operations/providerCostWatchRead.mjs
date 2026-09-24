@@ -33,6 +33,11 @@ function positiveInteger(value, fallback = 1) {
   return Number.isInteger(number) && number > 0 ? number : fallback;
 }
 
+/**
+ * @param {string} url
+ * @param {string} apiKey
+ * @param {(url: string, init?: RequestInit) => Promise<Response>} fetchImpl
+ */
 async function readJson(url, apiKey, fetchImpl) {
   const response = await fetchImpl(url, {
     headers: {
@@ -121,6 +126,14 @@ function buildRenderUnavailableSnapshot({ workspaceId, workspacePlan, status, re
   });
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   workspaceId?: string | null;
+ *   workspacePlan?: string | null;
+ *   fetchImpl?: (url: string, init?: RequestInit) => Promise<Response>;
+ * }} [options]
+ */
 export async function readRenderCostSnapshot({
   apiKey,
   workspaceId,
@@ -206,6 +219,7 @@ function monthlyEquivalentMinor(amountMinor, interval, intervalCount, quantity) 
   return null;
 }
 
+/** @param {any} payload */
 export function normalizeStripeActiveSubscriptions(payload) {
   const subscriptions = Array.isArray(payload?.data) ? payload.data : [];
   const rows = [];
@@ -245,6 +259,7 @@ export function normalizeStripeActiveSubscriptions(payload) {
     }
   }
 
+  /** @type {Record<string, number>} */
   const monthlyEquivalentByCurrency = {};
   for (const row of rows) {
     if (!row.currency || typeof row.monthlyEquivalentMinor !== 'number') continue;
@@ -262,6 +277,12 @@ export function normalizeStripeActiveSubscriptions(payload) {
   });
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   fetchImpl?: (url: string, init?: RequestInit) => Promise<Response>;
+ * }} [options]
+ */
 export async function readStripeSubscriptionSnapshot({
   apiKey,
   fetchImpl = fetch,
