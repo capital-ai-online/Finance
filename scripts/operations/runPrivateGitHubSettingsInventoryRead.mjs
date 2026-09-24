@@ -54,7 +54,7 @@ async function capture(label, requiredPermission, operation) {
         status: 'NOT_OBSERVABLE',
         requiredPermission,
         providerStatus: error.status,
-        reason: `${label} is not readable with the current GitHub App installation permissions`,
+        reason: `${label} is not readable with the currently configured bounded read capability`,
       });
     }
     throw error;
@@ -219,6 +219,14 @@ function renderMarkdownExport(inventory) {
   ];
   for (const [capability, entry] of Object.entries(inventory.entries).sort(([a], [b]) => a.localeCompare(b))) {
     lines.push(`| \`${capability}\` | ${entry.status} |`);
+  }
+  lines.push('', '## Improvement findings', '');
+  if (inventory.effectivePolicy.improvementFindings.length === 0) {
+    lines.push('- No evidence-backed hardening finding in the currently observable policy set.');
+  } else {
+    for (const finding of inventory.effectivePolicy.improvementFindings) {
+      lines.push(`- **${finding.id}** [${finding.severity}/${finding.state}]: ${finding.recommendation}`);
+    }
   }
   lines.push(
     '',
