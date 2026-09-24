@@ -10,11 +10,21 @@ test('OPS/PVC-02 Supabase migration reconciliation classifies the full checked-i
   assert.deepEqual(validateSupabaseMigrationLedgerReconciliation(), []);
 
   const ledger = loadSupabaseMigrationLedger();
-  assert.equal(ledger.summary.remote_total, 77);
-  assert.equal(ledger.summary.exact_match, 18);
-  assert.equal(ledger.summary.timestamp_alias, 32);
-  assert.equal(ledger.summary.remote_only_history, 27);
+  assert.equal(ledger.summary.remote_total, ledger.provider_readback.remote_total);
+  assert.equal(ledger.summary.remote_total, ledger.remote_migrations.length);
+  assert.equal(
+    ledger.summary.exact_match + ledger.summary.timestamp_alias + ledger.summary.remote_only_history,
+    ledger.summary.remote_total,
+  );
   assert.equal(ledger.summary.unknown, 0);
+});
+
+test('Supabase migration reconciliation fails closed when provider readback cardinality disagrees with the snapshot', () => {
+  const ledger = structuredClone(loadSupabaseMigrationLedger());
+  ledger.provider_readback.remote_total += 1;
+
+  const errors = validateSupabaseMigrationLedgerObject(process.cwd(), ledger);
+  assert.ok(errors.some((error) => error.includes('rows from provider readback')));
 });
 
 test('Supabase migration reconciliation fails closed when a remote row is unclassified', () => {

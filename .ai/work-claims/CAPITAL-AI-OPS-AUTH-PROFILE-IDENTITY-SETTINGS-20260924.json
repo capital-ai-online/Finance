@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-PROFILE-IDENTITY-SETTINGS-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5 Codex",
@@ -13,7 +13,7 @@
   "startedAt": "2026-09-24T07:25:00Z",
   "baseBranch": "main",
   "baseSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
-  "lastSyncedMainSha": "d1d083437f8bb041870112580989a662f60ac0e1",
+  "lastSyncedMainSha": "6c11bdfce02430846466540a311d9f46a7f3818c",
   "branch": "operations/auth-profile-identity-settings-convergence-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -37,7 +37,7 @@
     "src/components/ProfilePage.tsx",
     "src/components/SecuritySettingsPanel.tsx",
     "src/features/public/ui/LoginPage.tsx",
-    "supabase/migrations/20260924070530_profile_identity_settings.sql",
+    "supabase/migrations/20260924161429_profile_identity_settings.sql",
     "tests/unit/accountSecurityPasskeyBackend.test.ts",
     "tests/unit/authIdentityProfileSettings.test.ts",
     "tests/unit/authPrimaryLoginRegression.test.ts",
@@ -51,13 +51,16 @@
     "SMS verification and recovery fail closed until CAPITAL_AI_PHONE_AUTH_ENABLED=true after provider, abuse and cost approval.",
     "HIBP remains exclusively ADR-0031 PLAN-CONSTRAINED; this slice does not activate or relabel it.",
     "No direct main, Production, Render or protected Supabase schema/config mutation.",
-    "Versioned migration applies only through the canonical post-merge migration workflow.",
+    "Versioned migration was applied through the protected Supabase migration path and is now reconciled to the exact remote ledger identity.",
     "Human/CODEOWNER merge remains required."
   ],
   "evidence": {
-    "currentMain": "d1d083437f8bb041870112580989a662f60ac0e1",
-    "openWriterOverlap": "PASS: PR #1392 was the sole open writer at CURRENT_MAIN d1d083437f8b correlation; no changed-file overlap with merged PR #1393.",
-    "providerDocs": "Supabase passkeys, TOTP and phone OTP use current server-side APIs; phone OTP requires an external paid SMS provider."
+    "currentMain": "6c11bdfce02430846466540a311d9f46a7f3818c",
+    "openWriterOverlap": "PASS: no open PR changes the migration, ledger reconciliation evidence, work package or auth identity regression test.",
+    "providerDocs": "Supabase passkeys, TOTP and phone OTP use current server-side APIs; phone OTP requires an external paid SMS provider.",
+    "remoteMigrationVersion": "20260924161429",
+    "remoteMigrationName": "profile_identity_settings",
+    "providerReadback": "Supabase list_migrations confirms 20260924161429/profile_identity_settings."
   },
   "acceptanceCriteria": [
     "Password login accepts normalized e-mail or username through the backend boundary.",
@@ -69,5 +72,7 @@
     "Versioned migration and focused regression evidence pass.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation.",
+  "completedAt": "2026-09-24T16:55:00Z",
+  "releaseReason": "PR #1392 is merged and the protected Supabase mutation is applied; repository migration identity is being reconciled to remote ledger version 20260924161429."
 }
