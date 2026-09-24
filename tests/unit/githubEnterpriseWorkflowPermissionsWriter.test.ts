@@ -16,10 +16,14 @@ function response(body: unknown, status = 200) {
 
 describe('GitHub Enterprise Workflow Permissions Writer', () => {
   it('is an idempotent NOOP when the Enterprise is already hardened', async () => {
-    const fetchImpl = vi.fn(async () => response({
-      default_workflow_permissions: 'read',
-      can_approve_pull_request_reviews: false,
-    }));
+    const methods: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      methods.push(String(init?.method || 'GET'));
+      return response({
+        default_workflow_permissions: 'read',
+        can_approve_pull_request_reviews: false,
+      });
+    });
 
     const writer = createGitHubEnterpriseWorkflowPermissionsWriter({
       enterprise: ENTERPRISE,
@@ -35,7 +39,7 @@ describe('GitHub Enterprise Workflow Permissions Writer', () => {
       after: ENTERPRISE_WORKFLOW_PERMISSIONS_TARGET,
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl.mock.calls[0]?.[1]?.method).toBe('GET');
+    expect(methods).toEqual(['GET']);
   });
 
   it('changes only PR-review approval and verifies the exact readback', async () => {
@@ -79,10 +83,14 @@ describe('GitHub Enterprise Workflow Permissions Writer', () => {
   });
 
   it('fails closed without PUT when default workflow permissions unexpectedly differ', async () => {
-    const fetchImpl = vi.fn(async () => response({
-      default_workflow_permissions: 'write',
-      can_approve_pull_request_reviews: true,
-    }));
+    const methods: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      methods.push(String(init?.method || 'GET'));
+      return response({
+        default_workflow_permissions: 'write',
+        can_approve_pull_request_reviews: true,
+      });
+    });
 
     const writer = createGitHubEnterpriseWorkflowPermissionsWriter({
       enterprise: ENTERPRISE,
@@ -92,7 +100,7 @@ describe('GitHub Enterprise Workflow Permissions Writer', () => {
 
     await expect(writer.ensure()).rejects.toThrow(/precondition failed/);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl.mock.calls[0]?.[1]?.method).toBe('GET');
+    expect(methods).toEqual(['GET']);
   });
 
   it('fails if post-write readback does not match the fixed desired state', async () => {
