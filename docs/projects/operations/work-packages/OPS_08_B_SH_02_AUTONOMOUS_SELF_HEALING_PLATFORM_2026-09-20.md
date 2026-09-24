@@ -331,6 +331,37 @@ At minimum simulate:
 
 Evidence: `docs/projects/operations/evidence/SH_02_10_FAULT_INJECTION_CONVERGENCE_2026-09-22.md`.
 
+### SH-02 baseline evidence handoff hardening — Issue #1357
+
+**State:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING`
+
+PR #1353 proved that the already-registered
+`CURRENT_STATE_PROJECTION_BASELINE_STALE -> RECONCILE_REPOSITORY_PROJECTION`
+class could still fail to converge when the privileged listener depended on
+eventual `gh run view --log-failed` materialization. The existing Current-State
+Baseline Autofix remains the only writer; this slice hardens only its evidence
+handoff.
+
+The specialist now requires:
+- a structured completed-run failure on the exact
+  `build-and-test / Vollständige Test-Suite ausführen` step;
+- an exact changed `docs/projects/<project>/(ROADMAP|TASK_REGISTER).md`
+  candidate;
+- trusted-main read-only reproduction of
+  `CURRENT_STATE_PROJECTION_BASELINE_MISSING|STALE` on the exact PR head
+  against exact CURRENT_MAIN.
+
+No matching repository finding means no mutation. Missing candidate evidence
+fails closed explicitly. Empty central autofix log evidence is projected as
+`FAILURE_EVIDENCE_UNAVAILABLE / BLOCKED_NOT_PROVEN`, not
+`UNKNOWN_FAILURE`.
+
+This does not activate SH-02.12, create a generic Issue-to-code executor or
+introduce a second writer/controller.
+
+Evidence:
+`docs/projects/operations/evidence/SH_02_BASELINE_EVIDENCE_HANDOFF_2026-09-24.md`.
+
 ## SH-02.11A — RETRY_SAFE_OPERATION pre-activation
 
 **State:** `ASSURANCE_COMPLETE / ACTIVATION_IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`

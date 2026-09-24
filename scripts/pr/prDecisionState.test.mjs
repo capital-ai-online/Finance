@@ -4,6 +4,7 @@ import {
   decisionEvidenceRows,
   decisionImpactLabel,
   deriveDecisionStatus,
+  deriveProductionCadenceState,
   extractDecisionGates,
   extractDecisionStatus,
   formatDecisionGateState,
@@ -66,6 +67,39 @@ test('presentation and parser preserve canonical gate states', () => {
     baseline: 'PASS',
   });
   assert.equal(formatDecisionGateState('BLOCKED'), '🔴 BLOCKED');
+});
+
+test('legacy Production Baseline row remains parseable while new evidence renders the cadence label', () => {
+  const legacyBody = [
+    '> 🧭 **Entscheidungsstatus: READY_FOR_HUMAN_DECISION**',
+    '| Current Main | 🟢 PASS | ok | none |',
+    '| Scope / Ownership | 🟢 PASS | ok | none |',
+    '| Overlap | 🟢 PASS | ok | none |',
+    '| Required Checks | 🟢 PASS | ok | none |',
+    '| Security / Compliance | 🟢 PASS | ok | none |',
+    '| Production Baseline | 🟢 PASS | legacy alias | none |',
+  ].join('\n');
+  assert.equal(extractDecisionGates(legacyBody).baseline, 'PASS');
+  assert.equal(decisionEvidenceRows(pass).find((row) => row.key === 'baseline')?.label, 'Production / Deploy Cadence');
+});
+
+test('production cadence state distinguishes queued lag, due deploy, convergence and true drift', () => {
+  const productionSha = '1'.repeat(40);
+  const mainSha = '2'.repeat(40);
+  const base = {
+    active: true,
+    deployDue: false,
+    productionRelation: 'ANCESTOR',
+    productionHealthy: true,
+    productionSha,
+    mainSha,
+  };
+  assert.equal(deriveProductionCadenceState(base), 'DEPLOYMENT_QUEUED');
+  assert.equal(deriveProductionCadenceState({ ...base, deployDue: true }), 'DEPLOYMENT_DUE');
+  assert.equal(deriveProductionCadenceState({ ...base, productionRelation: 'CURRENT_MAIN', productionSha: mainSha }), 'CONVERGED');
+  assert.equal(deriveProductionCadenceState({ ...base, productionHealthy: false }), 'PRODUCTION_DRIFT');
+  assert.equal(deriveProductionCadenceState({ ...base, productionRelation: 'DIVERGED' }), 'PRODUCTION_DRIFT');
+  assert.equal(deriveProductionCadenceState({ ...base, active: false }), 'LEGACY_PER_MERGE');
 });
 
 test('evidence rows explain why a gate is blocked and what happens next', () => {
