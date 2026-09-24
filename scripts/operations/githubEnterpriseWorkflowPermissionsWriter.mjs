@@ -69,6 +69,13 @@ async function parseJson(response) {
  * -> GET readback.
  *
  * No arbitrary endpoint, method or body is exposed.
+ *
+ * @param {{
+ *   enterprise?: string;
+ *   enterpriseAdminPat?: string;
+ *   fetchImpl?: typeof fetch;
+ *   apiBaseUrl?: string;
+ * }} [options]
  */
 export function createGitHubEnterpriseWorkflowPermissionsWriter({
   enterprise,
