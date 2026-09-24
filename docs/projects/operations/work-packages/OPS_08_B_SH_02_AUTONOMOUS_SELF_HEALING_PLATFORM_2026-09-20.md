@@ -419,6 +419,20 @@ The repository already has safe Issue routing/dispatch plus SH-0 verification an
 
 A future implementation may introduce a distinct bounded action only after it proves Issue text remains untrusted, root cause is reproducible from authoritative evidence, Project/Owner/PVC and writer overlap are freshly resolved, path scope is allowlisted, protected provider mutation is excluded, exact-head gates pass, and Human/CODEOWNER merge remains final authority.
 
+### PR-body evidence generation drift — PR #1364 regression (2026-09-24)
+
+PR #1364 supplied a real production-generation transition after the independently assured SH-02.10 fault-suite generation:
+
+- Governance #5671 observed current-v1.8 structure/Decision-Evidence drift and routed it through `REPOSITORY_PR_DECISION_EVIDENCE_DRIFT -> RECONCILE_PR_DECISION_EVIDENCE`.
+- PR #1363 had already moved repository main to `06e018a983897494925e70d1987fb0751cc70bb6`, while Render Production still reflected the previous deployment during the first #1364 convergence generation.
+- Render deploy `dep-daq8qkh7lnhs73c453i0` later promoted `06e018a...` from `02:39:14Z` to live at `02:40:41Z`.
+- Governance #5672 therefore observed a **new** stale Production-baseline finding on the unchanged PR code head. This is generation invalidation caused by changed external evidence, not a second PR-body writer and not a repeat of the same immutable remediation attempt.
+- The same `RECONCILE_PR_DECISION_EVIDENCE` action rebound the new Production identity; Governance #5673 then passed.
+
+The architectural rule is therefore explicit: a bounded PR-body remediation is idempotent inside one correlated generation. A material change to generation inputs such as CURRENT_MAIN, PR head/base, Control Plane identity, or trusted Production identity invalidates prior evidence and requires a newly bound generation before the same bounded action may execute again. Same-generation looping remains fail-closed.
+
+Regression coverage lives in `scripts/pr/classifyPrAutofixFailure.test.mjs` and `scripts/pr/reconcilePrDecisionEvidence.test.mjs`. This evidence refinement does **not** change `self-healing-contract/1.2.0`, does not add an eighteenth SH-02.10 scenario, and does not create another writer/action/workflow. Evidence: `docs/projects/operations/evidence/SH_02_PR1364_GOVERNANCE_GENERATION_DRIFT_2026-09-24.md`.
+
 ## Pull Request / merge policy
 
 Repository implementation may be automated and eligible workflows may execute according to the current trust root. The final merge remains Human/CODEOWNER-only. No work-package state may infer merge authority from green checks.
