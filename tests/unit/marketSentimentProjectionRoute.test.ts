@@ -27,9 +27,7 @@ describe('Market sentiment projection route boundary', () => {
   it('keeps partial existing-evidence attestations below the score-candidate gate', () => {
     expect(newsFeatureAdapter).toContain("'news-exact-headline-novelty/1.0.0'");
     expect(newsFeatureAdapter).toContain("'news-evidence-count-24h/1.0.0'");
-    for (const field of ['polarity', 'intensity', 'credibility', 'botProbability', 'sourceWeight', 'regimeAdjustment']) {
-      expect(newsFeatureAdapter).toContain(field);
-    }
+    expect(newsFeatureAdapter).toContain('It does not infer polarity/intensity, source trust/credibility, bot probability or market');
     expect(routes).toContain('A partial vector therefore remains ineligible for scoring.');
   });
 
