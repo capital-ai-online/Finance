@@ -124,14 +124,17 @@ The adapter returns either an explicit no-mutation result or constructs the `Rel
 4. `metadata.json`
 5. `docs/code-quality/CODE_QUALITY_STANDARDS.md`
 6. `docs/ceo/EXECUTIVE_SUMMARY.md`
-7. `docs/API.md`
-8. `index.html`
+7. `index.html`
+
+`docs/archive/raw-materials/API.md` is a historical snapshot and is intentionally excluded from
+the current Release mirror set. Current API architecture lives under `docs/architecture/api/`
+without a duplicated platform-version declaration.
 
 ### Derived projections
 
-9. `README.md`, regenerated through `npm run readme:sync`
-10. `__CAPITAL_AI_VERSION__`, injected by Vite from `package.json#version`
-11. `src/platform/Release/clientVersion.ts`, validated browser-safe projection consumed by UI/PDF code
+8. `README.md`, regenerated through `npm run readme:sync`
+9. `__CAPITAL_AI_VERSION__`, injected by Vite from `package.json#version`
+10. `src/platform/Release/clientVersion.ts`, validated browser-safe projection consumed by UI/PDF code
 
 `README.md` is included in the atomic rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection. Client components are consumers of the injected projection and therefore do not require direct string rewrites during a release.
 

@@ -6,6 +6,7 @@ import {
   isMergeCadenceCliEntry,
   isPullRequestMerge,
   nextPatchVersion,
+  pullRequestNumberFromMergeSubject,
 } from '../../scripts/operations/mergeCadence.mjs';
 
 describe('merge cadence runtime', () => {
@@ -133,6 +134,11 @@ describe('merge cadence runtime', () => {
     expect(isPullRequestMerge('Merge pull request #1400 from capital-ai-online/feature/test', 'a b')).toBe(true);
     expect(isPullRequestMerge('chore: direct commit', 'a')).toBe(false);
     expect(isPullRequestMerge('Merge branch main', 'a b')).toBe(false);
+    expect(pullRequestNumberFromMergeSubject(
+      'Merge pull request #1358 from capital-ai-online/governance/example',
+    )).toBe(1358);
+    expect(pullRequestNumberFromMergeSubject('Merge branch main')).toBeNull();
+    expect(pullRequestNumberFromMergeSubject('chore: direct commit')).toBeNull();
     expect(nextPatchVersion('0.6.0')).toBe('0.6.1');
     expect(nextPatchVersion('2.9.9')).toBe('2.9.10');
   });

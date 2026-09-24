@@ -8,7 +8,8 @@
 - **Governance ID:** `GOV-VER-002`
 - **Builds on:** `GOV-VER-001` / `tests/unit/platformVersionConsistency.test.ts`
 - **Single Source of Truth:** `package.json#version`
-- **Implementation Contract:** `release-version-gate/1.0.0`
+- **Implementation Contract:** `release-version-gate/1.1.0`
+- **Current mirror amendment:** 2026-09-24 — archived `docs/API.md` and independent `AGENTS.md` are excluded from product-version mutation.
 
 ## 1. Context
 
@@ -213,11 +214,15 @@ The release procedure synchronizes at least:
 3. `packages[""]#version` in `package-lock.json`
 4. `metadata.json`
 5. `README.md`
-6. `AGENTS.md`
-7. `docs/code-quality/CODE_QUALITY_STANDARDS.md`
-8. `docs/ceo/EXECUTIVE_SUMMARY.md`
-9. `docs/API.md`
-10. `index.html`
+6. `docs/code-quality/CODE_QUALITY_STANDARDS.md`
+7. `docs/ceo/EXECUTIVE_SUMMARY.md`
+8. `index.html`
+
+`AGENTS.md` carries the independent Governance Control Plane version and is not a product-version
+mirror. The former `docs/API.md` was deliberately consolidated on 2026-08-10 into
+`docs/archive/raw-materials/API.md`; that archived evidence remains immutable historical material
+and must not be reactivated by the Release Gate. Current API architecture is maintained under
+`docs/architecture/api/`.
 
 `tests/unit/platformVersionConsistency.test.ts` remains a mandatory regression gate and must be
 extended whenever another file becomes an official platform-version declaration.
@@ -330,7 +335,7 @@ release will normally qualify as a MINOR increment.
 
 ## 11. Automation Target — Implemented
 
-CAPITAL-AI now provides `release-version-gate/1.0.0` through:
+CAPITAL-AI now provides the current `release-version-gate/1.1.0` through:
 
 - `src/platform/Release/Services/releaseVersionGate.ts`
 - `scripts/automation/releaseVersion.ts`

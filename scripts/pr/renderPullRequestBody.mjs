@@ -282,6 +282,7 @@ const replacements = {
   CURRENT_MAIN_SHA: String(baseline.main.sha).slice(0, 12),
   PRODUCTION_SHA: String(baseline.production.commitSha).slice(0, 12),
   PRODUCTION_VERSION: baseline.production.version,
+  DEPLOYED_PR_NUMBER: mergeCadence.productionPullRequestNumber ?? 'N/A',
   DEPLOYMENT_STATE: deploymentState,
   DEPLOY_PROGRESS: mergeCadence.deployProgress ?? 'N/A',
   DEPLOY_REMAINING: mergeCadence.deployRemaining ?? 'N/A',
