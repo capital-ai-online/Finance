@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Extend the bounded GitHub settings inventory across Enterprise, Organization and Finance repository scopes, resolve effective policy ceilings, and generate versioned redacted JSON/Markdown exports.",
+  "workItemDE": "Begrenztes GitHub-Settings-Inventar auf Enterprise-, Organisations- und Finance-Repository-Scope erweitern, effektive Policy-Grenzen korrelieren und versionierte redigierte JSON-/Markdown-Exporte erzeugen.",
+  "priority": "P1",
+  "priorityReason": "Current GitHub Actions startup failures require provider-policy observability across all three inheritance levels without weakening settings or expanding mutation authority.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-24T08:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+  "lastSyncedMainSha": "206fc5f5ff200cd2929be067b5e555f9927bfacc",
+  "branch": "operations/github-settings-effective-export-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924.json",
+    ".ai/work-claims/OPS-PR900-03D-ZERO-COST-CAPABILITY-20260920.json",
+    ".ai/work-claims/OPS-PR900-03D3-EVIDENCE-STORAGE-20260920.json",
+    "docs/projects/operations/work-packages/OPS_PR900_03D_ZERO_COST_GITHUB_CAPABILITY_CONVERGENCE_2026-09-20.md",
+    "docs/projects/operations/work-packages/OPS_GITHUB_SETTINGS_EFFECTIVE_EXPORT_01_2026-09-24.md",
+    ".github/workflows/private-github-billing-read.yml",
+    "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Read-only settings evidence only; no GitHub provider setting mutation.",
+    "No secret/token value export or persistence.",
+    "No downloadable Actions artifact is enabled until the existing shared-pool/cost gate admits it.",
+    "No overlap with PR #1392 auth/profile scope."
+  ],
+  "exitEvidence": [
+    "Enterprise/Organization/Repository policy reads are bounded and fail closed.",
+    "Effective policy projection never broadens parent controls.",
+    "JSON schema 2.0.0 and Markdown export are produced with sensitive identities redacted.",
+    "Targeted unit and workflow security checks pass on exact head.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no provider permission, settings, billing or deployment mutation is authorized by this claim."
+}
