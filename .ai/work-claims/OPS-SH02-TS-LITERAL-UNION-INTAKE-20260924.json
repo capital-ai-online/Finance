@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-TS-LITERAL-UNION-INTAKE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "owner": "CAPITAL-AI-OPS",
+  "primaryProductivePvc": [
+    "PVC-02",
+    "PVC-04",
+    "PVC-08",
+    "PVC-18"
+  ],
+  "priority": "P1",
+  "branchName": "agent/operations-issue-1355-ts-literal-union-drift-20260924",
+  "baseBranch": "main",
+  "baseSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5",
+  "workItem": "Classify exact TS2322 string-to-literal-union widening as fail-closed SH-02 evidence without enabling code mutation.",
+  "claimedPaths": [
+    "scripts/pr/classifyPrAutofixFailure.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "docs/projects/operations/work-packages/OPS_SH02_TS_LITERAL_UNION_INTAKE_01_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_08_B_SH_02_AUTONOMOUS_SELF_HEALING_PLATFORM_2026-09-20.md",
+    "docs/projects/operations/ROADMAP.md",
+    ".ai/work-claims/OPS-SH02-TS-LITERAL-UNION-INTAKE-20260924.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Issue #1355 READY_FOR_PROJECT_EXECUTION",
+    "existing repository.pr.autofix classifier"
+  ],
+  "exitEvidence": [
+    "Exact PR #1352 TS2322 fixture returns TYPESCRIPT_LITERAL_UNION_DRIFT / BLOCKED_NOT_PROVEN.",
+    "Unknown TypeScript failures remain UNKNOWN_FAILURE / BLOCKED_UNKNOWN.",
+    "No repairer/controller/writer added."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5"
+}
