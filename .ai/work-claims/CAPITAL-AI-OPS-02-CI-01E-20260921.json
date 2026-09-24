@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-02-CI-01E-20260921",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -27,5 +27,7 @@
     "docs/projects/operations/ROADMAP.md",
     "docs/projects/operations/work-packages/OPS_02_CI_01E_CHATGPT_PREFLIGHT_RUNNER_CONVERGENCE_2026-09-21.md"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge.",
+  "releasedAt": "2026-09-24T17:34:00+02:00",
+  "releaseReason": "Historical execution branch operations/ops-02-ci-01e-preflight-telemetry-20260921 no longer exists and PR #1225 is closed; fresh Owner direction on 2026-09-24 re-authorizes successor OPS-CI-VALIDATION-CLASSIFICATION-V2 from CURRENT_MAIN."
 }
