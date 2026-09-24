@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-FE`  
 **Owner relationship:** cross-cutting Frontend; no productive PVC  
-**Baseline:** `main@8050206f6ae58238e88e859b98db62cf04459ff2`  
+**Baseline:** `main@b2eb210a7310da170db75f3065513522a224337e`  
 **Priority:** P1  
 **Status:** IN_PROGRESS  
 **Dependency:** current productive Landingpage presentation + canonical Branding Kit  
@@ -28,4 +28,9 @@
 
 ## Current-main re-correlation
 
-Synchronized to `main@8050206f6ae58238e88e859b98db62cf04459ff2` after CURRENT_MAIN advanced through PR #1370. The intervening delta is OPS-scoped and has no path overlap with this FE slice.
+Synchronized to `main@b2eb210a7310da170db75f3065513522a224337e` after CURRENT_MAIN advanced through PR #1370. The intervening delta is OPS-scoped and has no path overlap with this FE slice.
+
+
+## Latest current-main re-correlation
+
+Synchronized to `main@b2eb210a7310da170db75f3065513522a224337e` after merged PR #1372. The intervening delta is Governance PR-evidence/template scoped and has no path overlap with this FE slice.
