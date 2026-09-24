@@ -44,5 +44,22 @@
   "evidence": {
     "supersedesUnopenedBranch": "operations/artifact-version-inventory-vai02-v2-20260924",
     "currentMainAtRebuild": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd"
+  },
+  "validationEvidence": {
+    "initialHead": "fbce60ddca47b7c5b2172e30c5510777c6eee083",
+    "initialFindings": [
+      {
+        "gate": "build-and-test",
+        "rootCause": "Escaped workflow version literal 1\\.8\\.0 was not normalized before exported *_VERSION consumer matching.",
+        "remediation": "Normalize escaped dots in version-binding evidence before comparing producer semantic version.",
+        "verification": "Second-head TypeScript, changed Vitest, production build and deployment-readiness passed."
+      },
+      {
+        "gate": "PR Governance",
+        "rootCause": "PR v1.8 body lacked required durable Claim path and initially lacked canonical priority/version-impact metadata.",
+        "remediation": "Bind canonical priority/version metadata and exact work-claim path in PR Technical Evidence.",
+        "verification": "Fresh synchronize-triggered Governance run required on this new head."
+      }
+    ]
   }
 }
