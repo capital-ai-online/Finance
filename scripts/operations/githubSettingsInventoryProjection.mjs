@@ -273,6 +273,21 @@ function conservativeApproval(values) {
   return known.length === values.length && known.length > 0 ? true : null;
 }
 
+/**
+ * @param {{
+ *   enterpriseActions?: any;
+ *   enterpriseWorkflow?: any;
+ *   enterpriseSelectedActions?: any;
+ *   organizationActions?: any;
+ *   organizationWorkflow?: any;
+ *   organizationSelectedActions?: any;
+ *   repositoryActions?: any;
+ *   repositoryWorkflow?: any;
+ *   repositorySelectedActions?: any;
+ *   environmentInventory?: any;
+ *   codeSecurityConfiguration?: any;
+ * }} [options]
+ */
 export function projectEffectiveSettingsPolicy({
   enterpriseActions = null,
   enterpriseWorkflow = null,

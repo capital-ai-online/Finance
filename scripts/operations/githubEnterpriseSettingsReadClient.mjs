@@ -58,6 +58,14 @@ async function parseJson(response) {
   }
 }
 
+/**
+ * @param {{
+ *   enterprise?: string;
+ *   enterpriseReadPat?: string;
+ *   fetchImpl?: typeof fetch;
+ *   apiBaseUrl?: string;
+ * }} [options]
+ */
 export function createGitHubEnterpriseSettingsReadClient({
   enterprise,
   enterpriseReadPat,
