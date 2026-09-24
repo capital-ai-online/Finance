@@ -2,8 +2,8 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-export const ARTIFACT_VERSION_INVENTORY_VERSION = 'artifact-version-inventory/1.0.0' as const;
-export const ARTIFACT_VERSION_INVENTORY_SCHEMA_VERSION = '1.0.0' as const;
+export const ARTIFACT_VERSION_INVENTORY_VERSION = 'artifact-version-inventory/1.1.0' as const;
+export const ARTIFACT_VERSION_INVENTORY_SCHEMA_VERSION = '1.1.0' as const;
 export const PLATFORM_VERSION_AUTHORITY_PATH = 'package.json' as const;
 export const PLATFORM_VERSION_MIRROR_PATH = 'package-lock.json' as const;
 
@@ -38,6 +38,29 @@ export interface ArtifactVersionSignal {
   value: string;
 }
 
+export type ArtifactVersionConsumerKind =
+  | 'IMPORT'
+  | 'WORKFLOW_SCRIPT_REFERENCE'
+  | 'VALIDATOR_EXPECTATION'
+  | 'TEST_LITERAL'
+  | 'REGISTRY_REFERENCE'
+  | 'RUNTIME_MANIFEST_DEPENDENCY'
+  | 'PATH_REFERENCE';
+
+export interface ArtifactVersionConsumerEdge {
+  consumerPath: string;
+  producerPath: string;
+  kind: ArtifactVersionConsumerKind;
+  binding: string;
+  producerIdentity: string;
+}
+
+export interface ArtifactVersionConsumerAmbiguity {
+  consumerPath: string;
+  binding: string;
+  candidateProducerPaths: string[];
+}
+
 export interface ArtifactVersionInventoryEntry {
   path: string;
   gitMode: string;
@@ -46,7 +69,7 @@ export interface ArtifactVersionInventoryEntry {
   semanticVersion: string | null;
   declaredVersions: string[];
   signals: ArtifactVersionSignal[];
-  consumerFingerprint: null;
+  consumerFingerprint: string | null;
   classificationReason: string;
 }
 
@@ -61,6 +84,8 @@ export interface ArtifactVersionInventory {
   counts: Record<ArtifactVersionDomain, number>;
   entries: ArtifactVersionInventoryEntry[];
   unclassifiedPaths: string[];
+  consumerEdges: ArtifactVersionConsumerEdge[];
+  consumerGraphAmbiguities: ArtifactVersionConsumerAmbiguity[];
   contentInventoryHash: string;
 }
 
@@ -398,8 +423,7 @@ function classify(repoPath: string, signals: ArtifactVersionSignal[]): {
   };
 }
 
-function buildEntry(repoRoot: string, indexEntry: GitIndexEntry): ArtifactVersionInventoryEntry {
-  const text = readSignalText(repoRoot, indexEntry);
+function buildEntry(indexEntry: GitIndexEntry, text: string | null): ArtifactVersionInventoryEntry {
   const signals = detectSignals(indexEntry.path, text);
   const classification = classify(indexEntry.path, signals);
   return {
@@ -412,6 +436,231 @@ function buildEntry(repoRoot: string, indexEntry: GitIndexEntry): ArtifactVersio
     signals,
     consumerFingerprint: null,
     classificationReason: classification.reason,
+  };
+}
+
+
+function producerIdentity(entry: ArtifactVersionInventoryEntry): string {
+  return sha256(JSON.stringify({
+    path: entry.path,
+    domain: entry.domain,
+    semanticVersion: entry.semanticVersion,
+    blobSha: entry.blobSha,
+  }));
+}
+
+function isConsumerGraphProducer(entry: ArtifactVersionInventoryEntry): boolean {
+  return (
+    entry.domain === 'PLATFORM_VERSION_AUTHORITY' ||
+    entry.domain === 'SEMANTIC_CONTRACT_VERSIONED' ||
+    entry.domain === 'SCHEMA_VERSIONED'
+  );
+}
+
+function classifyConsumerKind(repoPath: string, imported: boolean): ArtifactVersionConsumerKind {
+  if (imported) return 'IMPORT';
+  if (TEST_OR_FIXTURE_PATH.test(repoPath)) return 'TEST_LITERAL';
+  if (/^\.github\/workflows\/.+\.ya?ml$/i.test(repoPath)) return 'WORKFLOW_SCRIPT_REFERENCE';
+  if (/(^|\/)(?:registry|registries)(?:\/|\.)/i.test(repoPath)) return 'REGISTRY_REFERENCE';
+  if (/(^|\/)(?:package(?:-lock)?\.json|manifest\.(?:json|ya?ml))$/i.test(repoPath)) {
+    return 'RUNTIME_MANIFEST_DEPENDENCY';
+  }
+  if (/(?:validator|contract|reconciler|autofix)/i.test(repoPath)) return 'VALIDATOR_EXPECTATION';
+  return 'PATH_REFERENCE';
+}
+
+function resolveTrackedReference(
+  consumerPath: string,
+  specifier: string,
+  tracked: Map<string, ArtifactVersionInventoryEntry>,
+): ArtifactVersionInventoryEntry | null {
+  const normalizedSpecifier = normalizeRepoPath(specifier.trim());
+  if (!normalizedSpecifier || normalizedSpecifier.startsWith('#')) return null;
+
+  const rootCandidate = normalizedSpecifier.replace(/^\.\//, '');
+  const baseCandidate = normalizedSpecifier.startsWith('.')
+    ? path.posix.normalize(path.posix.join(path.posix.dirname(consumerPath), normalizedSpecifier))
+    : rootCandidate;
+
+  const candidates = [
+    baseCandidate,
+    baseCandidate + '.ts',
+    baseCandidate + '.tsx',
+    baseCandidate + '.js',
+    baseCandidate + '.mjs',
+    baseCandidate + '.cjs',
+    baseCandidate + '.json',
+    baseCandidate + '.yml',
+    baseCandidate + '.yaml',
+    baseCandidate + '.md',
+    path.posix.join(baseCandidate, 'index.ts'),
+    path.posix.join(baseCandidate, 'index.tsx'),
+    path.posix.join(baseCandidate, 'index.js'),
+    path.posix.join(baseCandidate, 'index.mjs'),
+  ];
+
+  for (const candidate of candidates) {
+    const resolved = tracked.get(candidate);
+    if (resolved && isConsumerGraphProducer(resolved)) return resolved;
+  }
+  return null;
+}
+
+function importedSpecifiers(text: string): string[] {
+  const values = new Set<string>();
+  const patterns = [
+    /\bfrom\s+['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) values.add(match[1]);
+  }
+  return [...values].sort();
+}
+
+function quotedPathSpecifiers(text: string): string[] {
+  const values = new Set<string>();
+  const pattern = /['"`]([^'"`\r\n]{2,260})['"`]/g;
+  for (const match of text.matchAll(pattern)) {
+    const value = match[1];
+    if (value.includes('/') && !value.includes('://')) values.add(value);
+  }
+  return [...values].sort();
+}
+
+function exportedVersionProducerGroups(
+  entries: ArtifactVersionInventoryEntry[],
+): Map<string, Array<{ entry: ArtifactVersionInventoryEntry; signal: ArtifactVersionSignal }>> {
+  const groups = new Map<string, Array<{ entry: ArtifactVersionInventoryEntry; signal: ArtifactVersionSignal }>>();
+  for (const entry of entries) {
+    if (!isConsumerGraphProducer(entry)) continue;
+    for (const signal of entry.signals) {
+      if (signal.kind !== 'EXPORTED_VERSION_CONSTANT') continue;
+      const key = signal.name.toUpperCase() + '\0' + signal.value;
+      const current = groups.get(key) ?? [];
+      current.push({ entry, signal });
+      groups.set(key, current);
+    }
+  }
+  return groups;
+}
+
+function buildConsumerGraph(
+  entries: ArtifactVersionInventoryEntry[],
+  textByPath: Map<string, string | null>,
+): {
+  edges: ArtifactVersionConsumerEdge[];
+  ambiguities: ArtifactVersionConsumerAmbiguity[];
+} {
+  const tracked = new Map(entries.map((entry) => [entry.path, entry]));
+  const versionGroups = exportedVersionProducerGroups(entries);
+  const edges = new Map<string, ArtifactVersionConsumerEdge>();
+  const ambiguities = new Map<string, ArtifactVersionConsumerAmbiguity>();
+
+  const addEdge = (
+    consumer: ArtifactVersionInventoryEntry,
+    producer: ArtifactVersionInventoryEntry,
+    kind: ArtifactVersionConsumerKind,
+    binding: string,
+  ) => {
+    if (consumer.path === producer.path) return;
+    const edge: ArtifactVersionConsumerEdge = {
+      consumerPath: consumer.path,
+      producerPath: producer.path,
+      kind,
+      binding,
+      producerIdentity: producerIdentity(producer),
+    };
+    const key = [edge.consumerPath, edge.producerPath, edge.kind, edge.binding].join('\0');
+    edges.set(key, edge);
+  };
+
+  for (const consumer of entries) {
+    const text = textByPath.get(consumer.path);
+    if (!text) continue;
+    const versionBindingText = text.replaceAll('\\.', '.');
+
+    for (const specifier of importedSpecifiers(text)) {
+      const producer = resolveTrackedReference(consumer.path, specifier, tracked);
+      if (producer) addEdge(consumer, producer, 'IMPORT', 'import:' + specifier);
+    }
+
+    for (const specifier of quotedPathSpecifiers(text)) {
+      const producer = resolveTrackedReference(consumer.path, specifier, tracked);
+      if (producer) {
+        addEdge(
+          consumer,
+          producer,
+          classifyConsumerKind(consumer.path, false),
+          'path:' + specifier,
+        );
+      }
+    }
+
+    for (const group of versionGroups.values()) {
+      const { signal } = group[0];
+      const aliases = [signal.name, 'CAPITAL_AI_' + signal.name];
+      const alias = aliases.find((candidate) => text.includes(candidate));
+      if (!alias || !versionBindingText.includes(signal.value)) continue;
+
+      const uniqueProducerPaths = [...new Set(group.map(({ entry }) => entry.path))].sort();
+      const binding = 'version:' + alias + '=' + signal.value;
+      if (uniqueProducerPaths.length !== 1) {
+        const key = consumer.path + '\0' + binding;
+        ambiguities.set(key, {
+          consumerPath: consumer.path,
+          binding,
+          candidateProducerPaths: uniqueProducerPaths,
+        });
+        continue;
+      }
+
+      const producer = group[0].entry;
+      addEdge(
+        consumer,
+        producer,
+        classifyConsumerKind(consumer.path, false),
+        binding,
+      );
+    }
+  }
+
+  const sortedEdges = [...edges.values()].sort((left, right) =>
+    [
+      left.consumerPath,
+      left.producerPath,
+      left.kind,
+      left.binding,
+      left.producerIdentity,
+    ].join('\0').localeCompare([
+      right.consumerPath,
+      right.producerPath,
+      right.kind,
+      right.binding,
+      right.producerIdentity,
+    ].join('\0')),
+  );
+
+  for (const entry of entries) {
+    const consumerEdges = sortedEdges
+      .filter((edge) => edge.consumerPath === entry.path)
+      .map((edge) => ({
+        producerPath: edge.producerPath,
+        kind: edge.kind,
+        binding: edge.binding,
+        producerIdentity: edge.producerIdentity,
+      }));
+    entry.consumerFingerprint = consumerEdges.length > 0
+      ? sha256(JSON.stringify(consumerEdges))
+      : null;
+  }
+
+  return {
+    edges: sortedEdges,
+    ambiguities: [...ambiguities.values()].sort((left, right) =>
+      (left.consumerPath + '\0' + left.binding).localeCompare(right.consumerPath + '\0' + right.binding),
+    ),
   };
 }
 
@@ -431,7 +680,14 @@ function buildContentInventoryHash(entries: ArtifactVersionInventoryEntry[]): st
 }
 
 export function buildArtifactVersionInventory(repoRoot: string): ArtifactVersionInventory {
-  const entries = readGitIndex(repoRoot).map((entry) => buildEntry(repoRoot, entry));
+  const indexEntries = readGitIndex(repoRoot);
+  const textByPath = new Map<string, string | null>();
+  for (const indexEntry of indexEntries) {
+    textByPath.set(indexEntry.path, readSignalText(repoRoot, indexEntry));
+  }
+
+  const entries = indexEntries.map((entry) => buildEntry(entry, textByPath.get(entry.path) ?? null));
+  const consumerGraph = buildConsumerGraph(entries, textByPath);
   const counts = emptyCounts();
   for (const entry of entries) counts[entry.domain] += 1;
 
@@ -451,6 +707,8 @@ export function buildArtifactVersionInventory(repoRoot: string): ArtifactVersion
     counts,
     entries,
     unclassifiedPaths,
+    consumerEdges: consumerGraph.edges,
+    consumerGraphAmbiguities: consumerGraph.ambiguities,
     contentInventoryHash: buildContentInventoryHash(entries),
   };
 }

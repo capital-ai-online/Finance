@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI02-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "VAI-02 — build the producer-consumer version/fingerprint graph on the merged artifact inventory.",
+  "startedAt": "2026-09-24T20:50:00Z",
+  "baseBranch": "main",
+  "baseSha": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd",
+  "lastSyncedMainSha": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd",
+  "branch": "operations/artifact-version-inventory-vai02-v3-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-06 Version Management; supporting PVC-04 Supervisor and PVC-07 Release Management",
+  "sourceIssue": "#1429",
+  "dependencyMergedPr": "#1430",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI02-20260924.json",
+    "docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI02_2026-09-24.md",
+    "src/platform/Release/Services/artifactVersionInventory.ts",
+    "tests/unit/artifactVersionInventory.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse the merged VAI-01 inventory; do not create another artifact or platform version authority.",
+    "Represent producer-consumer bindings and deterministic consumer fingerprints only.",
+    "Ambiguous producer resolution is evidence and must not silently select a producer.",
+    "No Self-Healing generation tuple or finding/action registration in VAI-02; those remain VAI-03/VAI-04.",
+    "No provider, database, deployment, merge-authority or direct-main mutation."
+  ],
+  "acceptanceCriteria": [
+    "Known PR-template consumers are represented from repository evidence without a hard-coded consumer path allowlist.",
+    "Relative imports to tracked semantic/schema producers are represented.",
+    "Resolved consumers receive deterministic consumer fingerprints.",
+    "Consumer binding drift changes content inventory identity even when producer blob is unchanged.",
+    "Ambiguous producer graphs fail closed as explicit ambiguity evidence.",
+    "package.json remains the sole PLATFORM_VERSION_AUTHORITY."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "evidence": {
+    "supersedesUnopenedBranch": "operations/artifact-version-inventory-vai02-v2-20260924",
+    "currentMainAtRebuild": "ca0245f4a2b3f6f88c630ef3ace81caeee0e20cd"
+  },
+  "validationEvidence": {
+    "initialHead": "fbce60ddca47b7c5b2172e30c5510777c6eee083",
+    "initialFindings": [
+      {
+        "gate": "build-and-test",
+        "rootCause": "Escaped workflow version literal 1\\.8\\.0 was not normalized before exported *_VERSION consumer matching.",
+        "remediation": "Normalize escaped dots in version-binding evidence before comparing producer semantic version.",
+        "verification": "Second-head TypeScript, changed Vitest, production build and deployment-readiness passed."
+      },
+      {
+        "gate": "PR Governance",
+        "rootCause": "PR v1.8 body lacked required durable Claim path and initially lacked canonical priority/version-impact metadata.",
+        "remediation": "Bind canonical priority/version metadata and exact work-claim path in PR Technical Evidence.",
+        "verification": "Fresh synchronize-triggered Governance run required on this new head."
+      },
+      {
+        "gate": "PR Governance",
+        "rootCause": "PR v1.8 contract also requires the durable exact Human-/CODEOWNER merge-approval token in addition to the Decision Card owner action.",
+        "remediation": "Add the exact Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja evidence line.",
+        "verification": "Fresh synchronize-triggered Governance run required on the resulting head."
+      }
+    ]
+  }
+}

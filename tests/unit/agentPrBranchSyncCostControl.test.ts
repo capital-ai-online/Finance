@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { evaluateBranchSyncTrust } from '../../scripts/pr/branchSyncTrustPredicate.mjs';
 
 const root = path.resolve(__dirname, '../..');
 const workflowPath = path.join(root, '.github/workflows/sync-agent-pr-branches.yml');
+const projectRouting = fs.readFileSync(path.join(root, 'docs/projects/README.md'), 'utf8');
 
 function workflow(): string {
   return fs.readFileSync(workflowPath, 'utf8');
@@ -74,17 +76,22 @@ describe('post-correlation next PR pipeline gate', () => {
   it('scopes ready-for-review to exactly the event PR', () => {
     const yaml = workflow();
     expect(yaml).toContain('EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}');
-    expect(yaml).toContain('gh pr view "$EVENT_PR_NUMBER"');
+    expect(yaml).toContain('pr_snapshot "$EVENT_PR_NUMBER"');
+    expect(yaml).toContain('gh api "repos/$REPO/pulls/$number"');
     expect(yaml).toContain("| jq -c '[.]'");
   });
 
-  it('keeps active provider prefixes and owner-authored conventional work branches', () => {
+  it('keeps provider prefixes and delegates non-provider trust to CURRENT_MAIN project evidence', () => {
     const yaml = workflow();
     expect(yaml).toContain("if [ \"$base\" != 'main' ]; then");
-    expect(yaml).toContain('agent/*|claude/*|grok/*|ai/*');
-    expect(yaml).toContain('feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*');
-    expect(yaml).toContain('repo_owner="${REPO%%/*}"');
-    expect(yaml).toContain('if [ "$author" != "$repo_owner" ]; then');
+    expect(yaml).toContain('branchSyncTrustPredicate.mjs');
+    expect(yaml).toContain('authorAssociation');
+    expect(yaml).toContain('headRepositoryFullName');
+    expect(yaml).toContain('labels');
+    expect(yaml).toContain('title');
+    expect(yaml).toContain('Trust-Predicate DENY');
+    expect(yaml).toContain('live_trust_key');
+    expect(yaml).not.toContain('if [ "$author" != "$repo_owner" ]; then');
     expect(yaml).not.toContain('gemini/*');
     expect(yaml).not.toContain('copilot/*');
   });
@@ -133,7 +140,7 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain("format('capital-ai-pr-writer-{0}', inputs.pr_number)");
     expect(yaml).toContain('DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}');
     expect(yaml).toContain("[ \"$EVENT_NAME\" = 'workflow_dispatch' ] && [ -n \"${DISPATCH_PR_NUMBER:-}\" ]");
-    expect(yaml).toContain('gh pr view \"$DISPATCH_PR_NUMBER\"');
+    expect(yaml).toContain('pr_snapshot "$DISPATCH_PR_NUMBER"');
     expect(yaml).toContain('workflow_dispatch pr_number muss eine positive PR-Nummer sein.');
   });
 
@@ -149,5 +156,93 @@ describe('post-correlation next PR pipeline gate', () => {
     expect(yaml).toContain('permission-pull-requests: write');
     expect(yaml).toContain("(github.event_name == 'workflow_dispatch' && inputs.pr_number != '')");
     expect(yaml).toContain('steps.app_token.outputs.token || github.token');
+  });
+});
+
+
+describe('project-aware branch sync trust predicate', () => {
+  const base = {
+    repository: 'capital-ai-online/Finance',
+    headRepositoryFullName: 'capital-ai-online/Finance',
+    headRefName: 'operations/auth-profile-session-navigation-recovery-20260924',
+    baseRefName: 'main',
+    isCrossRepository: false,
+    authorAssociation: 'MEMBER',
+    title: '[CAPITAL-AI-OPS] [ChatGPT] Profilnavigation reparieren',
+    labels: ['project:CAPITAL-AI-OPS'],
+  };
+
+  it.each(['OWNER', 'MEMBER', 'COLLABORATOR'])(
+    'allows canonical operations namespace for trusted association %s with exact project evidence',
+    (association) => {
+      expect(evaluateBranchSyncTrust({ ...base, authorAssociation: association }, projectRouting)).toMatchObject({
+        allowed: true,
+        reason: 'TRUSTED_PROJECT_NAMESPACE',
+        projectId: 'CAPITAL-AI-OPS',
+        branchSlug: 'operations',
+      });
+    },
+  );
+
+  it.each(['NONE', 'FIRST_TIMER'])(
+    'denies operations namespace for untrusted association %s',
+    (association) => {
+      expect(evaluateBranchSyncTrust({ ...base, authorAssociation: association }, projectRouting)).toMatchObject({
+        allowed: false,
+        reason: 'UNTRUSTED_AUTHOR_ASSOCIATION',
+      });
+    },
+  );
+
+  it('denies forks even with otherwise valid project evidence', () => {
+    expect(evaluateBranchSyncTrust({
+      ...base,
+      isCrossRepository: true,
+      headRepositoryFullName: 'someone/Finance',
+    }, projectRouting)).toMatchObject({ allowed: false });
+  });
+
+  it('denies missing or mismatched project labels', () => {
+    expect(evaluateBranchSyncTrust({ ...base, labels: [] }, projectRouting)).toMatchObject({
+      allowed: false,
+      reason: 'PROJECT_LABEL_MISMATCH',
+    });
+    expect(evaluateBranchSyncTrust({
+      ...base,
+      labels: ['project:CAPITAL-AI-GOV'],
+    }, projectRouting)).toMatchObject({
+      allowed: false,
+      reason: 'PROJECT_LABEL_MISMATCH',
+    });
+  });
+
+  it('denies unknown project namespaces and title-prefix ambiguity', () => {
+    expect(evaluateBranchSyncTrust({
+      ...base,
+      headRefName: 'unknown/work',
+    }, projectRouting)).toMatchObject({
+      allowed: false,
+      reason: 'BRANCH_NAMESPACE_MISMATCH',
+    });
+    expect(evaluateBranchSyncTrust({
+      ...base,
+      title: '[CAPITAL-AI-OPS] [CAPITAL-AI-GOV] ambiguous',
+    }, projectRouting)).toMatchObject({
+      allowed: false,
+      reason: 'PROJECT_TITLE_PREFIX_INVALID',
+    });
+  });
+
+  it('keeps active provider namespaces same-repository/main without projecting collaborator identity', () => {
+    expect(evaluateBranchSyncTrust({
+      ...base,
+      headRefName: 'agent/operations-bounded-fix',
+      authorAssociation: 'NONE',
+      labels: [],
+      title: 'provider branch',
+    }, projectRouting)).toMatchObject({
+      allowed: true,
+      reason: 'TRUSTED_PROVIDER_PREFIX',
+    });
   });
 });

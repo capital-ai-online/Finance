@@ -16,8 +16,10 @@ run-name: >-
 #
 # Trusted work branches are same-repository PRs against main and either:
 # - active provider prefixes agent/*, claude/*, grok/*, ai/*; or
-# - conventional work prefixes created by the repository owner (feat/fix/hotfix/chore/refactor/docs/test/perf/security).
-# This covers ChatGPT-created conventional branches without treating a collaborator-chosen generic prefix as agent identity.
+# - non-provider branches that pass the CURRENT_MAIN-bound project trust predicate:
+#   OWNER/MEMBER/COLLABORATOR association + exact project title/label evidence +
+#   canonical project namespace (or bounded conventional namespace).
+# Prefix alone never grants write authority. Forks and ambiguous project evidence fail closed.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: ['Post-Merge Production Correlation']
@@ -108,23 +110,49 @@ jobs:
         run: |
           set -euo pipefail
 
+          pr_snapshot() {
+            local number="$1"
+            gh api "repos/$REPO/pulls/$number" | jq -c '{
+              number: .number,
+              headRefName: .head.ref,
+              headRefOid: .head.sha,
+              headRepositoryFullName: (.head.repo.full_name // ""),
+              baseRefName: .base.ref,
+              isCrossRepository: ((.head.repo.full_name // "") != (.base.repo.full_name // "")),
+              isDraft: (.draft // false),
+              state: ((.state // "") | ascii_upcase),
+              author: { login: (.user.login // "") },
+              authorAssociation: (.author_association // ""),
+              title: (.title // ""),
+              labels: [(.labels // [])[] | .name]
+            }'
+          }
+
           if [ "$EVENT_NAME" = 'pull_request' ] || [ "$EVENT_NAME" = 'pull_request_review' ]; then
             # PR-native events are always exact-PR transitions.
-            prs="$(gh pr view "$EVENT_PR_NUMBER" --repo "$REPO" \
-              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
-              | jq -c '[.]')"
+            prs="$(pr_snapshot "$EVENT_PR_NUMBER" | jq -c '[.]')"
           elif [ "$EVENT_NAME" = 'workflow_dispatch' ] && [ -n "${DISPATCH_PR_NUMBER:-}" ]; then
             if ! printf '%s' "$DISPATCH_PR_NUMBER" | grep -Eq '^[1-9][0-9]*$'; then
               echo "workflow_dispatch pr_number muss eine positive PR-Nummer sein." >&2
               exit 1
             fi
-            prs="$(gh pr view "$DISPATCH_PR_NUMBER" --repo "$REPO" \
-              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
-              | jq -c '[.]')"
+            prs="$(pr_snapshot "$DISPATCH_PR_NUMBER" | jq -c '[.]')"
           else
-            prs="$(gh pr list --repo "$REPO" --state open \
-              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft,author \
-              --limit 200)"
+            prs="$(gh api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --slurp \
+              | jq -c '[.[][] | {
+                  number: .number,
+                  headRefName: .head.ref,
+                  headRefOid: .head.sha,
+                  headRepositoryFullName: (.head.repo.full_name // ""),
+                  baseRefName: .base.ref,
+                  isCrossRepository: ((.head.repo.full_name // "") != (.base.repo.full_name // "")),
+                  isDraft: (.draft // false),
+                  state: ((.state // "") | ascii_upcase),
+                  author: { login: (.user.login // "") },
+                  authorAssociation: (.author_association // ""),
+                  title: (.title // ""),
+                  labels: [(.labels // [])[] | .name]
+                }]')"
           fi
 
           sequential_lane='false'
@@ -166,8 +194,7 @@ jobs:
           }
 
           count="$(echo "$prs" | jq 'length')"
-          repo_owner="${REPO%%/*}"
-          echo "Zu bewertende PRs: $count (event=$EVENT_NAME, repo_owner=$repo_owner)"
+          echo "Zu bewertende PRs: $count (event=$EVENT_NAME)"
 
           while read -r pr; do
             number="$(echo "$pr" | jq -r '.number')"
@@ -177,6 +204,10 @@ jobs:
             cross="$(echo "$pr" | jq -r '.isCrossRepository')"
             draft="$(echo "$pr" | jq -r '.isDraft')"
             author="$(echo "$pr" | jq -r '.author.login // ""')"
+            head_repo="$(echo "$pr" | jq -r '.headRepositoryFullName // ""')"
+            author_association="$(echo "$pr" | jq -r '.authorAssociation // ""')"
+            title="$(echo "$pr" | jq -r '.title // ""')"
+            labels_json="$(echo "$pr" | jq -c '.labels // []')"
 
             if [ "$base" != 'main' ]; then
               echo "PR #$number ($head): Base ist $base statt main, uebersprungen."
@@ -188,20 +219,23 @@ jobs:
               continue
             fi
 
-            case "$head" in
-              agent/*|claude/*|grok/*|ai/*)
-                ;;
-              feat/*|fix/*|hotfix/*|chore/*|refactor/*|docs/*|test/*|perf/*|security/*)
-                if [ "$author" != "$repo_owner" ]; then
-                  echo "PR #$number ($head): konventioneller Work-Branch, aber Autor $author ist nicht Repository-Owner $repo_owner; fail-closed uebersprungen."
-                  continue
-                fi
-                ;;
-              *)
-                echo "PR #$number ($head): weder aktiver Provider-Branch noch Owner-erstellter Standard-Work-Branch, uebersprungen."
-                continue
-                ;;
-            esac
+            trust_input="$(jq -nc \
+              --arg repository "$REPO" \
+              --arg headRepositoryFullName "$head_repo" \
+              --arg headRefName "$head" \
+              --arg baseRefName "$base" \
+              --arg authorAssociation "$author_association" \
+              --arg title "$title" \
+              --argjson labels "$labels_json" \
+              --argjson isCrossRepository "$cross" \
+              '{repository:$repository,headRepositoryFullName:$headRepositoryFullName,headRefName:$headRefName,baseRefName:$baseRefName,authorAssociation:$authorAssociation,title:$title,labels:$labels,isCrossRepository:$isCrossRepository}')"
+            trust="$(BRANCH_SYNC_PR_JSON="$trust_input" node policy/scripts/pr/branchSyncTrustPredicate.mjs policy/docs/projects/README.md)"
+            if [ "$(echo "$trust" | jq -r '.allowed')" != 'true' ]; then
+              echo "PR #$number ($head): Trust-Predicate DENY reason=$(echo "$trust" | jq -r '.reason'); author=$author association=$author_association, uebersprungen."
+              continue
+            fi
+            trust_key="$(echo "$trust_input" | jq -c '{repository,headRepositoryFullName,headRefName,baseRefName,authorAssociation,title,labels:(.labels|sort),isCrossRepository}')"
+            echo "PR #$number ($head): Trust-Predicate ALLOW reason=$(echo "$trust" | jq -r '.reason') project=$(echo "$trust" | jq -r '.projectId // "provider"')."
 
             if [ "$EVENT_NAME" = 'workflow_run' ] && [ "$draft" = 'true' ]; then
               echo "PR #$number ($head): Draft bleibt nach Post-Merge-Korrelation bewusst unsynchronisiert."
@@ -220,17 +254,35 @@ jobs:
 
             generation="$(generation_for "$number" "$head_sha" "$current_main_sha")"
             live_main_sha="$(gh api "repos/$REPO/branches/main" --jq '.commit.sha')"
-            live_pr="$(gh pr view "$number" --repo "$REPO" --json state,headRefName,headRefOid,baseRefName,isCrossRepository)"
+            live_pr="$(pr_snapshot "$number")"
             live_head="$(echo "$live_pr" | jq -r '.headRefName')"
             live_head_sha="$(echo "$live_pr" | jq -r '.headRefOid')"
+            live_head_repo="$(echo "$live_pr" | jq -r '.headRepositoryFullName // ""')"
             live_base="$(echo "$live_pr" | jq -r '.baseRefName')"
             live_state="$(echo "$live_pr" | jq -r '.state')"
             live_cross="$(echo "$live_pr" | jq -r '.isCrossRepository')"
+            live_author_association="$(echo "$live_pr" | jq -r '.authorAssociation // ""')"
+            live_title="$(echo "$live_pr" | jq -r '.title // ""')"
+            live_labels_json="$(echo "$live_pr" | jq -c '.labels // []')"
+            live_trust_input="$(jq -nc \
+              --arg repository "$REPO" \
+              --arg headRepositoryFullName "$live_head_repo" \
+              --arg headRefName "$live_head" \
+              --arg baseRefName "$live_base" \
+              --arg authorAssociation "$live_author_association" \
+              --arg title "$live_title" \
+              --argjson labels "$live_labels_json" \
+              --argjson isCrossRepository "$live_cross" \
+              '{repository:$repository,headRepositoryFullName:$headRepositoryFullName,headRefName:$headRefName,baseRefName:$baseRefName,authorAssociation:$authorAssociation,title:$title,labels:$labels,isCrossRepository:$isCrossRepository}')"
+            live_trust="$(BRANCH_SYNC_PR_JSON="$live_trust_input" node policy/scripts/pr/branchSyncTrustPredicate.mjs policy/docs/projects/README.md)"
+            live_trust_key="$(echo "$live_trust_input" | jq -c '{repository,headRepositoryFullName,headRefName,baseRefName,authorAssociation,title,labels:(.labels|sort),isCrossRepository}')"
             live_generation="$(generation_for "$number" "$live_head_sha" "$live_main_sha")"
 
             if [ "$live_main_sha" != "$current_main_sha" ] || [ "$live_head_sha" != "$head_sha" ] || \
                [ "$live_head" != "$head" ] || [ "$live_base" != 'main' ] || [ "$live_state" != 'OPEN' ] || \
-               [ "$live_cross" = 'true' ] || [ "$live_generation" != "$generation" ]; then
+               [ "$live_head_repo" != "$REPO" ] || [ "$live_cross" = 'true' ] || \
+               [ "$(echo "$live_trust" | jq -r '.allowed')" != 'true' ] || [ "$live_trust_key" != "$trust_key" ] || \
+               [ "$live_generation" != "$generation" ]; then
               echo "PR #$number ($head): Continuation Generation drifted before mutation; expected=$generation observed=$live_generation. Fail-closed." >&2
               exit 1
             fi

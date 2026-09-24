@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-BRANCH-SYNC-TRUST-PREDICATE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Issue #1434 — repair project-aware trust predicate for canonical branch synchronization.",
+  "workItemDE": "Issue #1434 — projektgebundenes Trust-Predicate der kanonischen Branch-Synchronisation reparieren.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-04 Supervisor",
+  "baseBranch": "main",
+  "baseSha": "ba77d1899d4b739dc495621aa2e86c07a44a19e4",
+  "lastSyncedMainSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "branch": "agent/operations-issue-1434-branch-sync-trust-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-BRANCH-SYNC-TRUST-PREDICATE-20260924.json",
+    ".github/workflows/sync-agent-pr-branches.yml",
+    "scripts/pr/branchSyncTrustPredicate.mjs",
+    "tests/unit/agentPrBranchSyncCostControl.test.ts",
+    "docs/projects/operations/work-packages/OPS_BRANCH_SYNC_TRUST_PREDICATE_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "Keep sync-agent-pr-branches.yml as the sole branch synchronization writer.",
+    "No pull_request_target, no fork writes and no automatic merge authority.",
+    "Trust non-provider branches only from same-repository/main GitHub evidence plus current project routing.",
+    "Preserve exact-head, convergence-generation, 422 and stacked-PR fail-closed controls.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "Behavioral fixtures ALLOW OWNER/MEMBER/COLLABORATOR operations/* with exact OPS title/label evidence.",
+    "Behavioral fixtures DENY NONE/FIRST_TIMER, forks, title/label mismatch and unknown namespaces.",
+    "Workflow Security, Governance and exact-head CI PASS.",
+    "Human/CODEOWNER merge."
+  ],
+  "issue": 1434,
+  "releaseCondition": "Release on Human/CODEOWNER merge, issue closure, supersession or abandonment.",
+  "evidence": {
+    "implementationIncident": {
+      "rootCauseId": "WORKFLOW_TEXT_REPLACEMENT_TOKEN_CORRUPTION",
+      "failedRun": 36053719099,
+      "symptom": "workflow startup failure; jobs=0",
+      "repair": "regenerate from CURRENT_MAIN using callback replacements"
+    },
+    "testContractIncident": {
+      "rootCauseId": "BRANCH_SYNC_SNAPSHOT_TEST_CONTRACT_DRIFT",
+      "failedRun": 36054162718,
+      "failedJob": 107816865294,
+      "symptom": "two stale structural assertions expected gh pr view after canonical snapshot helper migration",
+      "repair": "assert canonical pr_snapshot helper and REST backing read"
+    },
+    "prBodyStaticContractIncident": {
+      "rootCauseId": "PR_BODY_STATIC_CONTRACT_INCOMPLETE",
+      "supersededPr": 1436,
+      "symptom": "structurally canonical v1.8 body omitted mandatory static priority/version-manager metadata",
+      "repair": "close malformed PR; recreate same exact branch/head with complete v1.8 static contract while preserving PR Decision Evidence Reconciler as sole mutable open-body writer"
+    }
+  }
+}
