@@ -13,7 +13,7 @@
   "startedAt": "2026-09-24T00:00:00Z",
   "baseBranch": "main",
   "baseSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
-  "lastSyncedMainSha": "8a173021a03d6776fa7323523c1e2acd713c3c5b",
+  "lastSyncedMainSha": "270a77df514bf44ee4d4c8ca6ba739bc066817e5",
   "branch": "governance/pr-template-render-deploy-summary-20260924",
   "projectId": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
@@ -56,5 +56,6 @@
     "Invalid or non-merge production SHAs render N/A instead of fabricating a PR number.",
     "Human/CODEOWNER merge remains the protected final boundary."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "recorrelatedAt": "2026-09-24"
 }
