@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-UPSTREAM-SOURCE-SYNC-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Refresh the inert SvenKulessa/FRONTEND presentation-source snapshot to 4590c184aa4646e2708076cda05ead2820436a2a, close its allowlisted relative dependency graph, and preserve the no-runtime-promotion boundary.",
+  "startedAt": "2026-09-24T18:46:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "be5f9066d75072da0649c7bfcfb252f9ccfb498e",
+  "branch": "agent/frontend-upstream-source-sync",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "upstreamSnapshot": "SvenKulessa/FRONTEND@4590c184aa4646e2708076cda05ead2820436a2a",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-UPSTREAM-SOURCE-SYNC-20260924.json",
+    ".github/frontend-upstream-sync.json",
+    "scripts/frontend/syncFrontendPresentationSource.mjs",
+    "tests/unit/frontendUpstreamPresentationSync.test.ts",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "docs/frontend/upstream-source/SvenKulessa-FRONTEND/**"
+  ],
+  "scopeBoundary": [
+    "Snapshot remains inert under docs/frontend/upstream-source and is never executed directly.",
+    "No automatic promotion into src/ or transfer of auth, analytics, vocabulary, data, scoring, provider, billing, compliance or security authority.",
+    "Price-alert context/utility is mirrored only as PRESENTATION_INTERACTION_FIXTURE.",
+    "mockData and src/data/assets fixtures remain VISUAL_FIXTURE_ONLY.",
+    "Intentional analytics and Vocabulary dependencies remain unmirrored and explicitly recorded.",
+    "Relative dependency closure fails closed for any future newly referenced local upstream file that is neither mirrored nor explicitly excluded."
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/projects/README.md@CURRENT_MAIN -> CAPITAL-AI-FE / docs/projects/frontend/",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN -> cross-cutting FE, no productive PVC",
+    "SvenKulessa/FRONTEND is presentation source only; productive Finance authorities remain owner-correct"
+  ],
+  "exitEvidence": [
+    "PR head contains CURRENT_MAIN with behind_by=0.",
+    "Upstream manifest pins 4590c184aa4646e2708076cda05ead2820436a2a.",
+    "The seven required Price Alerts / asset fixture dependencies are mirrored with inert roles.",
+    "CI TypeScript, affected Vitest tests and production build succeed on the exact head.",
+    "GitGuardian, OSS PR_FAST and HIGH/CRITICAL container gates succeed where required.",
+    "Canonical PR v1.8 body converges through the existing trusted-main Decision Evidence Reconciler.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
