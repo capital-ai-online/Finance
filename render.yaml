@@ -91,6 +91,14 @@ services:
         sync: false
       - key: METRICS_TOKEN
         sync: false
+      # Server-only Google Analytics MCP readback. The service-account JSON is
+      # materialized only into the runtime-private temp directory and never exposed.
+      - key: GA4_MCP_SERVICE_ACCOUNT_KEY_JSON
+        sync: false
+      - key: GA4_MCP_PROJECT_ID
+        sync: false
+      - key: GA4_PID
+        sync: false
       # Server-only GitHub Enterprise Actions settings readback. The PAT value is
       # configured in Render and is never committed or exposed to the frontend.
       - key: CAPITAL_AI_GITHUB_ENTERPRISE_SLUG
