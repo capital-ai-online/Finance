@@ -133,6 +133,22 @@ describe('artifact version inventory VAI-01', () => {
     expect(byPath(inventory.entries, 'metadata.json').domain).toBe('DERIVED_CONTENT_IDENTITY');
   });
 
+  it('records escaped workflow contract-version literals without turning the consumer into an authority', () => {
+    const root = createFixture({
+      '.github/workflows/pr-consumer.yml':
+        "name: PR consumer\nsteps:\n  - run: node -e \\"const currentV18 = /CAPITAL_AI_PR_TEMPLATE_VERSION:\\\\s*1\\\\.8\\\\.0/.test(body)\\"\n",
+    });
+    const inventory = buildArtifactVersionInventory(root);
+    const consumer = byPath(inventory.entries, '.github/workflows/pr-consumer.yml');
+
+    expect(consumer.domain).toBe('DERIVED_CONTENT_IDENTITY');
+    expect(consumer.signals).toContainEqual({
+      kind: 'WORKFLOW_CONTRACT_VERSION_LITERAL',
+      name: 'CAPITAL_AI_PR_TEMPLATE_VERSION',
+      value: '1.8.0',
+    });
+  });
+
   it('does not treat incidental generated wording inside ordinary source as generated identity', () => {
     const root = createFixture({
       'src/scanner.ts': "export const marker = /generated file|do not edit/;\n",
