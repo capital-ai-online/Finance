@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "OPS-SH02-PR-EVIDENCE-CASCADE-PLANNING-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Integrate the observed PR #1371/#1373/#1374/#1375/#1376 convergence failures into existing OPS-08-B-SH-02 planning as one generation-aware evidence cascade without adding a second Self-Healing action, writer, workflow or authority.",
+  "workItemDE": "Die beobachteten Konvergenzfehler aus PR #1371/#1373/#1374/#1375/#1376 als generation-aware Evidence-Cascade in die bestehende OPS-08-B-SH-02-Planung integrieren, ohne zweiten Self-Healing-Action-, Writer-, Workflow- oder Authority-Pfad.",
+  "startedAt": "2026-09-24",
+  "baseBranch": "main",
+  "baseSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5",
+  "lastSyncedMainSha": "d28eff774f24ceab05c1d18268c9b12749a09fe5",
+  "branch": "agent/operations-sh02-pr-evidence-cascade-planning-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-04 / PVC-08 / PVC-18",
+  "priority": "P0",
+  "priorityReason": "Repeated deterministic PR evidence drift now proves a missing generation-aware handoff among already-existing bounded convergence paths, including the fixed merge-cadence PATCH repair.",
+  "claimedPaths": [
+    ".ai/work-claims/OPS-SH02-PR-EVIDENCE-CASCADE-PLANNING-20260924.json",
+    "docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "CAPITAL-AI-ASH-01",
+    "self-healing-contract/1.2.0",
+    "RECONCILE_REPOSITORY_PROJECTION",
+    "RECONCILE_PR_DECISION_EVIDENCE",
+    "MERGE_CADENCE_PATCH_V1 registered repairer",
+    "open PR #1377 terminal recorrelation before GOV cadence-evidence implementation changes",
+    "open PR #1378 terminal recorrelation before GOV PR-decision-reconciler implementation changes",
+    "open PR #1379 terminal recorrelation before OPS Roadmap/SH-02 parent linkage"
+  ],
+  "scopeBoundary": [
+    "Planning and architecture-evidence integration only; no new remediation action or finding namespace.",
+    "No mutation of docs/projects/operations/ROADMAP.md or the SH-02 parent package while PR #1379 owns those paths.",
+    "No mutation of GOV PR Decision Evidence Reconciler/template surfaces while PRs #1377/#1378 own them.",
+    "No SH-02.12 activation and no generic Issue-to-code executor.",
+    "No provider, Production, IAM, Secret, Billing, database or merge mutation.",
+    "No second PR-body writer, current-state baseline writer, cadence writer, scheduler or control plane."
+  ],
+  "exitEvidence": [
+    "A bounded OPS work package records the #1371/#1373/#1374/#1375/#1376 failure/fix sequence and acceptance criteria.",
+    "CAPITAL-AI-ASH-01 records generation-aware repository/PR evidence convergence as a current architectural invariant.",
+    "Changed files do not overlap open PR #1377, #1378 or #1379.",
+    "Roadmap/SH-02 parent linkage is explicitly deferred until #1379 is terminal and CURRENT_MAIN is reread.",
+    "Exact-head repository checks pass and final merge authority remains unchanged."
+  ],
+  "acceptanceCriteria": [
+    "Missing/stale PR Production evidence continues to use RECONCILE_PR_DECISION_EVIDENCE only.",
+    "Current-state ROADMAP/TASK_REGISTER baseline drift continues to use RECONCILE_REPOSITORY_PROJECTION only.",
+    "MERGE_CADENCE_PATCH_V1 remains the existing registered cadence-version repair path.",
+    "A successful repository mutation that changes PR head triggers a newly bound evidence generation instead of reusing stale body evidence.",
+    "Same-generation repeat attempts fail closed; a materially changed generation permits one fresh bounded reconciliation.",
+    "Final PR Decision Evidence reflects terminal exact-head Required Check state before merge readiness is considered current.",
+    "No second writer, action ID, workflow or authority is introduced."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
