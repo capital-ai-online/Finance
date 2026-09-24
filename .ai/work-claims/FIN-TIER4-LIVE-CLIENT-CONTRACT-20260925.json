@@ -6,7 +6,7 @@
   "project": "CAPITAL-AI-FINTECH",
   "projectFolder": "fintech",
   "ownerScope": "PVC-09..16 live market-data client boundary and canonical score projection contract.",
-  "workItem": "Materialize the FINTECH-owned Tier 4 live-client event contract while keeping browser transport/presentation owner-correct in CAPITAL-AI-FE.",
+  "workItem": "Materialize the FINTECH-owned Tier 4 live-client projection contract while keeping browser transport/presentation owner-correct in CAPITAL-AI-FE.",
   "startedAt": "2026-09-25T00:35:00+02:00",
   "baseBranch": "main",
   "baseSha": "f510699a182c4a184e2fdc8691bbef1d830c9e21",
@@ -20,7 +20,9 @@
     "/AGENTS.md@CURRENT_MAIN",
     "market-data/1.0.0",
     "CanonicalScoreResult / scoring-integrity",
-    "Tier 3 governed WebSocket/fan-out transport not yet materialized on CURRENT_MAIN"
+    "Observed parallel Tier-3 branch agent/fintech-tier3-cache-fanout-20260925 declares market-data-fanout/1.0.0; non-authoritative until merge",
+    "Concrete Render WebSocket transport + redistribution entitlement evidence",
+    "Live verified-quote authority for PriceAlert events"
   ],
   "claimedPaths": [
     ".ai/work-claims/FIN-TIER4-LIVE-CLIENT-CONTRACT-20260925.json",
@@ -31,16 +33,21 @@
   "protectedBoundaries": [
     "No client-side scoring authority",
     "No synthetic/fallback financial values",
-    "No invented WebSocket endpoint",
-    "No Tier 3 Redis/PubSub/fan-out implementation in this slice",
+    "Raw Tier-3 fan-out ticks remain alertEligible=false and scoringEligible=false",
+    "No invented public WebSocket endpoint",
+    "No Tier-3 Redis/PubSub/fan-out implementation in this slice",
     "No ranking or execution mutation",
     "Frontend/browser implementation remains CAPITAL-AI-FE owned"
   ],
   "overlapReadback": {
     "currentMain": "f510699a182c4a184e2fdc8691bbef1d830c9e21",
-    "openPullRequests": [],
-    "directChangedFileOverlap": false
+    "openPullRequests": [
+      1448,
+      1449
+    ],
+    "directChangedFileOverlap": false,
+    "note": "PR #1448 is Tier-2 upstream and changes MarketDataGateway/MarketTickGate/RateLimitBudget, not Tier-4 claimed paths. Tier-3 exists as a parallel branch with different claimed files."
   },
-  "exitGate": "Focused contract tests and TypeScript checks PASS on exact head; Tier 3 dependency remains fail-closed; FE handover recorded; Human/CODEOWNER merge.",
+  "exitGate": "Exact-head focused tests/build and Required Checks PASS; raw Tier-3 ticks remain presentation-only; transport dependencies remain fail-closed; FE handover #1447 recorded; Human/CODEOWNER merge.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
