@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-CI-MINIMAL-VALIDATION-V3-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "OPS-CI-MINIMAL-VALIDATION-V3 — minimal affected-file build/test and cleanup convergence",
+  "startedAt": "2026-09-24T23:35:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "13c27d69ba5564e32eea089455d3ccf60860c391",
+  "branch": "agent/operations-ci-minimal-validation-v3-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-06/PVC-07",
+  "priority": "P0",
+  "priorityReason": "Fresh Owner direction requires build-and-test minimization, stale test/workflow cleanup, fail-fast ordering and bounded archive handoff without weakening Required Checks, Security, QM, Release or Production gates.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-CI-MINIMAL-VALIDATION-V3-20260924.json",
+    ".github/workflows/ci.yml",
+    "scripts/pr/classifyPrScope.mjs",
+    "scripts/pr/classifyPrScope.test.mjs",
+    "scripts/pr/planPrValidation.mjs",
+    "scripts/pr/planPrValidation.test.mjs",
+    "tests/unit/ciDeploymentControlPlane.test.ts",
+    "tests/unit/ciDeploymentGuards.test.ts",
+    "tests/unit/productionCiRunnerConsolidation.test.ts",
+    "docs/projects/operations/work-packages/OPS_CI_MINIMAL_VALIDATION_V3_2026-09-24.md",
+    "docs/projects/operations/evidence/OPS_CI_MINIMAL_VALIDATION_BASELINE_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_TO_DOC_ARCHIVE_COMPACTION_HANDOVER_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "No Required Check, Security, QM, Governance, Human/CODEOWNER or Production gate is removed.",
+    "Unknown/global dependency/toolchain changes remain fail-closed FULL.",
+    "No second CI controller, archive authority, scheduler or deletion authority is introduced.",
+    "Archive compression and retention implementation remains owner-correct CAPITAL-AI-DOC work.",
+    "capital-ai-ci-shadow.yml remains frozen and is not deleted by this slice."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct main mutation or self-merge."
+}

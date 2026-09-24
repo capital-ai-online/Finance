@@ -25,6 +25,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import {
   classifyChangedFiles,
+  isDatabaseMigrationPath,
   isOperationsReleaseControlPath,
   isOrdinaryOperationsToolingPath,
 } from './classifyPrScope.mjs';
@@ -171,6 +172,8 @@ export function planChangedFiles(files, options = {}) {
       node_pr_tests: true,
       node_systemadmin_tests: true,
       node_security_assessment_tests: true,
+      node_migration_tests: true,
+      security_sentinel_tests: true,
       codeql_mode: 'full',
       codeql_languages: allCurrentRepositoryCodeqlLanguages().join(','),
       automated_code_review_mode: 'full',
@@ -209,6 +212,8 @@ export function planChangedFiles(files, options = {}) {
       node_pr_tests: false,
       node_systemadmin_tests: false,
       node_security_assessment_tests: false,
+      node_migration_tests: false,
+      security_sentinel_tests: false,
       codeql_mode: 'none',
       codeql_languages: '',
       automated_code_review_mode: 'none',
@@ -217,9 +222,6 @@ export function planChangedFiles(files, options = {}) {
     };
   }
 
-  // Documentary artifacts that are consumed only by known test files are
-  // validation inputs, not production runtime inputs. Run exactly those direct
-  // consumers plus Vitest's changed graph instead of escalating the whole suite.
   if (consumerEscalation && consumerTestOnly) {
     return {
       validation_profile: 'focused',
@@ -227,6 +229,8 @@ export function planChangedFiles(files, options = {}) {
       node_pr_tests: consumerNodePrTests,
       node_systemadmin_tests: consumerNodeSystemadminTests,
       node_security_assessment_tests: consumerSecurityAssessmentTests,
+      node_migration_tests: false,
+      security_sentinel_tests: false,
       codeql_mode: 'none',
       codeql_languages: '',
       automated_code_review_mode: 'none',
@@ -235,8 +239,6 @@ export function planChangedFiles(files, options = {}) {
     };
   }
 
-  // Any documentary artifact consumed by runtime, workflow or an unhandled test
-  // surface remains fail-closed FULL.
   if (consumerEscalation) {
     return {
       validation_profile: 'full',
@@ -244,6 +246,8 @@ export function planChangedFiles(files, options = {}) {
       node_pr_tests: true,
       node_systemadmin_tests: true,
       node_security_assessment_tests: true,
+      node_migration_tests: true,
+      security_sentinel_tests: true,
       codeql_mode: 'full',
       codeql_languages: allCurrentRepositoryCodeqlLanguages().join(','),
       automated_code_review_mode: 'full',
@@ -253,18 +257,23 @@ export function planChangedFiles(files, options = {}) {
   }
 
   const nonDocs = normalized.filter((file) => !isDocsPath(file));
-  const onlyTests = nonDocs.every(isTestPath);
-  const onlyVitestTests = nonDocs.every(isVitestTestPath);
-  const onlyFocusedNodeValidation = nonDocs.every(isFocusedNodeValidationPath);
-  const onlyNonDeployWorkflow = nonDocs.every((file) => isWorkflowPath(file) && file !== '.github/workflows/ci.yml');
+  const onlyTests = nonDocs.length > 0 && nonDocs.every(isTestPath);
+  const onlyVitestTests = nonDocs.length > 0 && nonDocs.every(isVitestTestPath);
+  const onlyFocusedNodeValidation = nonDocs.length > 0 && nonDocs.every(isFocusedNodeValidationPath);
+  const onlyNonDeployWorkflow = nonDocs.length > 0
+    && nonDocs.every((file) => isWorkflowPath(file) && file !== '.github/workflows/ci.yml');
+  const onlyWorkflowOrFocusedNodeValidation = nonDocs.length > 0
+    && nonDocs.every((file) => isFocusedNodeValidationPath(file)
+      || (isWorkflowPath(file) && file !== '.github/workflows/ci.yml'));
   const onlyOrdinaryOperationsTooling = nonDocs.length > 0
     && nonDocs.every((file) => isOrdinaryOperationsToolingPath(file) || isTestPath(file));
-  const dependencyOnly = nonDocs.every(isDependencyPath);
+  const dependencyOnly = nonDocs.length > 0 && nonDocs.every(isDependencyPath);
   const hasHighRisk = nonDocs.some(isHighRiskPath);
   const hasGlobalTestTrigger = nonDocs.some(isGlobalTestTrigger);
   const hasWorkflow = nonDocs.some(isWorkflowPath);
   const hasAppSource = nonDocs.some((file) => file.startsWith('src/'));
   const hasVitestTests = nonDocs.some(isVitestTestPath);
+  const hasDatabaseMigration = nonDocs.some(isDatabaseMigrationPath);
 
   const knownSelective = nonDocs.every((file) =>
     isTestPath(file)
@@ -272,6 +281,7 @@ export function planChangedFiles(files, options = {}) {
     || isWorkflowPath(file)
     || file.startsWith('src/')
     || isDependencyPath(file)
+    || isDatabaseMigrationPath(file)
     || isJavaScriptTypeScriptPath(file)
     || isPythonPath(file),
   );
@@ -282,13 +292,20 @@ export function planChangedFiles(files, options = {}) {
     : 'focused';
 
   let vitestMode = 'none';
-  if (hasGlobalTestTrigger || hasHighRisk || hasUnknown) {
+  if (hasGlobalTestTrigger || hasUnknown) {
     vitestMode = 'full';
-  } else if (onlyVitestTests || hasAppSource || hasVitestTests || onlyOrdinaryOperationsTooling) {
+  } else if (onlyWorkflowOrFocusedNodeValidation) {
+    vitestMode = 'none';
+  } else if (
+    onlyVitestTests
+    || hasAppSource
+    || hasVitestTests
+    || onlyOrdinaryOperationsTooling
+    || hasHighRisk
+    || hasDatabaseMigration
+  ) {
     vitestMode = 'changed';
   } else if (!onlyFocusedNodeValidation && !onlyNonDeployWorkflow && !dependencyOnly) {
-    // A known source/script path outside the narrow focused validators keeps a
-    // conservative full-suite fallback until an explicit selector is defined.
     vitestMode = 'full';
   }
 
@@ -298,6 +315,8 @@ export function planChangedFiles(files, options = {}) {
     file === 'scripts/security/validateSecurityAssessment.mjs'
     || file === 'scripts/security/validateSecurityAssessment.test.mjs',
   );
+  const nodeMigrationTests = hasDatabaseMigration;
+  const securitySentinelTests = hasHighRisk && !hasGlobalTestTrigger && !hasUnknown;
 
   let codeqlMode = 'none';
   let codeqlLanguages = inferCodeqlLanguages(nonDocs);
@@ -331,20 +350,24 @@ export function planChangedFiles(files, options = {}) {
     node_pr_tests: nodePrTests,
     node_systemadmin_tests: nodeSystemadminTests,
     node_security_assessment_tests: nodeSecurityAssessmentTests,
+    node_migration_tests: nodeMigrationTests,
+    security_sentinel_tests: securitySentinelTests,
     codeql_mode: codeqlMode,
     codeql_languages: codeqlLanguages.join(','),
     automated_code_review_mode: automatedReviewMode,
     direct_vitest_tests_json: '[]',
     reason: explain(
       hasUnknown ? 'unknown-non-doc-fail-closed'
-        : hasHighRisk ? 'high-risk-change'
-          : hasGlobalTestTrigger ? 'global-test-trigger'
-            : onlyTests ? 'test-only'
-              : onlyFocusedNodeValidation ? 'focused-node-validation'
-                : onlyNonDeployWorkflow ? 'workflow-only'
-                  : dependencyOnly ? 'dependency-only'
-                    : onlyOrdinaryOperationsTooling ? 'ordinary-operations-tooling'
-                      : 'selective-source-change',
+        : hasGlobalTestTrigger ? 'global-test-trigger'
+          : hasHighRisk ? 'high-risk-targeted-tests'
+            : hasDatabaseMigration ? 'database-migration-focused'
+              : onlyTests ? 'test-only'
+                : onlyFocusedNodeValidation ? 'focused-node-validation'
+                  : onlyWorkflowOrFocusedNodeValidation ? 'workflow-and-node-validation'
+                    : onlyNonDeployWorkflow ? 'workflow-only'
+                      : dependencyOnly ? 'dependency-only'
+                        : onlyOrdinaryOperationsTooling ? 'ordinary-operations-tooling'
+                          : 'selective-source-change',
       normalized,
     ),
   };
@@ -416,6 +439,12 @@ function selectedTests(plan, baseSha) {
   if (plan.node_security_assessment_tests && plan.vitest_mode !== 'full') {
     selected.push('node --test scripts/security/validateSecurityAssessment.test.mjs');
   }
+  if (plan.node_migration_tests && plan.vitest_mode !== 'full') {
+    selected.push('node --test scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs');
+  }
+  if (plan.security_sentinel_tests && plan.vitest_mode !== 'full') {
+    selected.push('npx vitest run tests/unit/securityResponse.test.ts tests/unit/securityRouteMatching.test.ts tests/unit/adminRouterBypassAudit.test.ts tests/unit/serverMiddlewareExtraction.test.ts --passWithNoTests');
+  }
   return selected;
 }
 
@@ -459,6 +488,8 @@ export function buildPreflightEvidence({
     node_pr_tests: plan.node_pr_tests === true && plan.vitest_mode !== 'full',
     node_systemadmin_tests: plan.node_systemadmin_tests === true && plan.vitest_mode !== 'full',
     node_security_assessment_tests: plan.node_security_assessment_tests === true && plan.vitest_mode !== 'full',
+    node_migration_tests: plan.node_migration_tests === true && plan.vitest_mode !== 'full',
+    security_sentinel_tests: plan.security_sentinel_tests === true && plan.vitest_mode !== 'full',
     build: scope.build === true,
     dependency_audit: scope.audit === true,
     workflow_security: scope.workflow_security === true,
@@ -519,6 +550,8 @@ export function buildPreflightEvidence({
       codeql_mode: plan.codeql_mode,
       codeql_languages: plan.codeql_languages,
       automated_code_review_mode: plan.automated_code_review_mode,
+      node_migration_tests: plan.node_migration_tests,
+      security_sentinel_tests: plan.security_sentinel_tests,
       reason: plan.reason,
     },
   };

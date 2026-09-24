@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   classifyChangedFiles,
+  isDatabaseMigrationPath,
   isDocsPath,
   isKnownNonProductionValidationPath,
   isOperationsReleaseControlPath,
@@ -16,6 +17,13 @@ describe('isDocsPath', () => {
     assert.equal(isDocsPath('.ai/work-claims/x.json'), true);
     assert.equal(isDocsPath('README.md'), true);
     assert.equal(isDocsPath('src/app.ts'), false);
+  });
+});
+
+describe('isDatabaseMigrationPath', () => {
+  it('recognizes Supabase SQL migrations without treating arbitrary SQL as database scope', () => {
+    assert.equal(isDatabaseMigrationPath('supabase/migrations/20260924171500_index.sql'), true);
+    assert.equal(isDatabaseMigrationPath('docs/examples/schema.sql'), false);
   });
 });
 
@@ -120,7 +128,7 @@ describe('classifyChangedFiles', () => {
     assert.equal(s.docker_image, false);
   });
 
-  it('class R for Dockerfile keeps scoped checks but skips PR production builds', () => {
+  it('class R for Dockerfile keeps runtime checks and verifies the production build/predeploy path', () => {
     const s = classifyChangedFiles(['Dockerfile']);
     assert.equal(s.class, 'R');
     assert.equal(s.production_impact, true);
@@ -129,30 +137,58 @@ describe('classifyChangedFiles', () => {
     assert.equal(s.unit, true);
     assert.equal(s.audit, true);
     assert.equal(s.docker, true);
-    assert.equal(s.build, false);
-    assert.equal(s.predeploy, false);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
     assert.equal(s.docker_image, false);
   });
 
-  it('class R for package.json audits dependencies but skips PR production builds', () => {
+  it('class R for package.json audits dependencies and verifies the production build/predeploy path', () => {
     const s = classifyChangedFiles(['package.json']);
     assert.equal(s.class, 'R');
     assert.equal(s.production_impact, true);
     assert.equal(s.audit, true);
-    assert.equal(s.build, false);
-    assert.equal(s.predeploy, false);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
     assert.equal(s.docker_image, false);
   });
 
-  it('class R for server runtime changes skips PR production builds', () => {
+  it('class R for server runtime changes verifies build/predeploy without duplicating the PR Docker image build', () => {
     const s = classifyChangedFiles(['server/runtime/businessReadiness.ts']);
     assert.equal(s.class, 'R');
     assert.equal(s.production_impact, true);
     assert.equal(s.unit, true);
-    assert.equal(s.build, false);
-    assert.equal(s.predeploy, false);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
     assert.equal(s.docker, true);
     assert.equal(s.docker_image, false);
+  });
+
+  it('Supabase migration + direct regression test avoids unrelated website build while retaining database validation', () => {
+    const s = classifyChangedFiles([
+      'supabase/migrations/20260924171500_index_stripe_managed_webhooks_account_fk.sql',
+      'tests/unit/stripeManagedWebhooksFkIndex.test.ts',
+    ]);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
+    assert.equal(s.database_migration, true);
+    assert.equal(s.node, true);
+    assert.equal(s.lint, true);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
+    assert.equal(s.audit, false);
+  });
+
+  it('SQL-only Supabase migration skips TypeScript/build but retains focused database validation', () => {
+    const s = classifyChangedFiles(['supabase/migrations/20260924171500_index.sql']);
+    assert.equal(s.class, 'C');
+    assert.equal(s.production_impact, true);
+    assert.equal(s.database_migration, true);
+    assert.equal(s.node, true);
+    assert.equal(s.lint, false);
+    assert.equal(s.unit, true);
+    assert.equal(s.build, false);
+    assert.equal(s.predeploy, false);
   });
 
   it('test-only keeps scoped tests but skips production build/predeploy', () => {
@@ -183,13 +219,13 @@ describe('classifyChangedFiles', () => {
     assert.equal(s.predeploy, false);
   });
 
-  it('ci.yml is class R and production impacting but skips PR production builds', () => {
+  it('ci.yml is class R and production impacting with build/predeploy verification', () => {
     const s = classifyChangedFiles(['.github/workflows/ci.yml']);
     assert.equal(s.class, 'R');
     assert.equal(s.production_impact, true);
     assert.equal(s.workflow_security, true);
-    assert.equal(s.build, false);
-    assert.equal(s.predeploy, false);
+    assert.equal(s.build, true);
+    assert.equal(s.predeploy, true);
     assert.equal(s.docker_image, false);
   });
 

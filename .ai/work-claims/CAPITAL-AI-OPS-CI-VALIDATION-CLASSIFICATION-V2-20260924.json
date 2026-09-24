@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -30,5 +30,7 @@
     "scripts/pr/preflightEvidence.test.mjs",
     "scripts/pr/runtimeConsumedArtifacts.mjs"
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge.",
+  "releasedAt": "2026-09-24T23:35:00+02:00",
+  "releaseReason": "PR #1411 merged on 2026-09-24T16:17:15Z and the historical branch no longer exists; fresh Human/Owner direction re-authorizes successor OPS-CI-MINIMAL-VALIDATION-V3 from CURRENT_MAIN 13c27d69ba5564e32eea089455d3ccf60860c391."
 }

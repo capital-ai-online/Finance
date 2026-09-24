@@ -66,6 +66,11 @@ export function isDependencyManifest(filePath) {
   return p === 'package.json' || p === 'package-lock.json';
 }
 
+export function isDatabaseMigrationPath(filePath) {
+  const p = normalizePath(filePath);
+  return p.startsWith('supabase/migrations/') && p.endsWith('.sql');
+}
+
 export function isKnownNonProductionValidationPath(filePath) {
   const p = normalizePath(filePath);
   if (isDocsPath(p)) return true;
@@ -94,6 +99,7 @@ export function classifyChangedFiles(files, options = {}) {
       class: 'R', production_impact: true, node: true, lint: true, unit: true,
       build: true, audit: true, predeploy: true, docker: true, docker_image: true,
       workflow_security: true, integrity, npm_advisory: true, consumer_escalation: false, consumer_test_only: false,
+      database_migration: false,
     };
   }
 
@@ -113,6 +119,7 @@ export function classifyChangedFiles(files, options = {}) {
       class: 'D', production_impact: false, node: false, lint: false, unit: false,
       build: false, audit: false, predeploy: false, docker: false, docker_image: false,
       workflow_security: false, integrity, npm_advisory: false, consumer_escalation: false, consumer_test_only: false,
+      database_migration: false,
     };
   }
 
@@ -122,12 +129,16 @@ export function classifyChangedFiles(files, options = {}) {
   let hasDependency = false;
   let hasAppOrTest = false;
   let hasScriptOnly = true;
+  let hasDatabaseMigration = false;
+  let hasTypedSource = false;
 
   for (const file of normalized) {
     if (!isDocsPath(file)) hasNonDocs = true;
     if (isRuntimeDeployPath(file)) hasRuntime = true;
     if (isWorkflowPath(file)) hasWorkflow = true;
     if (isDependencyManifest(file)) hasDependency = true;
+    if (isDatabaseMigrationPath(file)) hasDatabaseMigration = true;
+    if (/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file)) hasTypedSource = true;
 
     const isScript = file.startsWith('scripts/') || file.startsWith('.github/') || isDocsPath(file);
     if (!isScript && !isDocsPath(file)) hasScriptOnly = false;
@@ -166,6 +177,20 @@ export function classifyChangedFiles(files, options = {}) {
     audit = false;
   }
 
+  const onlyDatabaseValidation = hasDatabaseMigration && normalized.every((file) =>
+    isDocsPath(file)
+    || isDatabaseMigrationPath(file)
+    || file.startsWith('tests/'),
+  );
+  if (klass === 'C' && onlyDatabaseValidation && !consumerEscalation) {
+    productionImpact = true;
+    build = false;
+    predeploy = false;
+    audit = false;
+    lint = hasTypedSource;
+    unit = true;
+  }
+
   const onlyNonProductionValidation = normalized.every(isKnownNonProductionValidationPath);
   if (klass === 'C' && onlyNonProductionValidation && !hasRuntime && (!consumerEscalation || consumerTestOnly)) {
     productionImpact = false;
@@ -183,8 +208,8 @@ export function classifyChangedFiles(files, options = {}) {
     unit = true;
     audit = true;
     docker = true;
-    build = false;
-    predeploy = false;
+    build = true;
+    predeploy = true;
     docker_image = false;
   }
 
@@ -206,6 +231,7 @@ export function classifyChangedFiles(files, options = {}) {
     hasScriptOnly,
     consumer_escalation: consumerEscalation,
     consumer_test_only: consumerTestOnly,
+    database_migration: hasDatabaseMigration,
   };
 }
 
@@ -235,6 +261,7 @@ export function writeGithubOutput(scope) {
     `npm_advisory=${scope.npm_advisory}`,
     `consumer_escalation=${scope.consumer_escalation === true}`,
     `consumer_test_only=${scope.consumer_test_only === true}`,
+    `database_migration=${scope.database_migration === true}`,
     `full=${scope.node && scope.unit && scope.build}`,
   ];
   const text = `${lines.join('\n')}\n`;

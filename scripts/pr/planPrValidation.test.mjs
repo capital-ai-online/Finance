@@ -152,13 +152,27 @@ describe('planChangedFiles', () => {
     assert.equal(plan.codeql_mode, 'full');
   });
 
-  it('forces FULL tests/review for security-sensitive source', () => {
+  it('keeps high-risk validation FULL while selecting only changed Vitest plus security sentinels', () => {
     const plan = planChangedFiles(['src/platform/Security/safeIo.ts']);
     assert.equal(plan.validation_profile, 'full');
-    assert.equal(plan.vitest_mode, 'full');
+    assert.equal(plan.vitest_mode, 'changed');
+    assert.equal(plan.security_sentinel_tests, true);
     assert.equal(plan.codeql_mode, 'full');
     assert.equal(plan.codeql_languages, 'javascript-typescript');
     assert.equal(plan.automated_code_review_mode, 'full');
+  });
+
+  it('selects focused database validation for Supabase migrations instead of the repository-wide suite', () => {
+    const plan = planChangedFiles([
+      'supabase/migrations/20260924171500_index_stripe_managed_webhooks_account_fk.sql',
+      'tests/unit/stripeManagedWebhooksFkIndex.test.ts',
+    ]);
+    assert.equal(plan.validation_profile, 'focused');
+    assert.equal(plan.vitest_mode, 'changed');
+    assert.equal(plan.node_migration_tests, true);
+    assert.equal(plan.security_sentinel_tests, false);
+    assert.equal(plan.codeql_mode, 'none');
+    assert.match(plan.reason, /database-migration-focused/);
   });
 
   it('keeps dependency-only changes FULL while CodeQL remains unnecessary', () => {
@@ -201,6 +215,18 @@ describe('planChangedFiles', () => {
     assert.equal(plan.codeql_mode, 'targeted');
   });
 
+  it('keeps mixed workflow + PR-validator changes out of the application Vitest suite', () => {
+    const plan = planChangedFiles([
+      '.github/workflows/pr-decision-reconciler.yml',
+      'scripts/pr/reconcilePrDecisionEvidence.test.mjs',
+    ]);
+    assert.equal(plan.validation_profile, 'focused');
+    assert.equal(plan.vitest_mode, 'none');
+    assert.equal(plan.node_pr_tests, true);
+    assert.equal(plan.codeql_mode, 'targeted');
+    assert.equal(plan.automated_code_review_mode, 'full');
+  });
+
   it('fails closed to FULL for unknown non-documentary paths', () => {
     const plan = planChangedFiles(['custom/tooling.xyz']);
     assert.equal(plan.validation_profile, 'full');
@@ -219,6 +245,8 @@ describe('planChangedFiles', () => {
     assert.equal(plan.node_pr_tests, true);
     assert.equal(plan.node_systemadmin_tests, true);
     assert.equal(plan.node_security_assessment_tests, true);
+    assert.equal(plan.node_migration_tests, true);
+    assert.equal(plan.security_sentinel_tests, true);
   });
 
   it('preserves embedded newlines as data in structured changed-file JSON', () => {
