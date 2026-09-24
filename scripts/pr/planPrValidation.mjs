@@ -23,14 +23,19 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { classifyChangedFiles } from './classifyPrScope.mjs';
+import {
+  classifyChangedFiles,
+  isOperationsReleaseControlPath,
+  isOrdinaryOperationsToolingPath,
+} from './classifyPrScope.mjs';
 import {
   findRuntimeConsumedPaths,
+  findRuntimeConsumerFiles,
   isDocsPath,
   normalizePath,
 } from './runtimeConsumedArtifacts.mjs';
 
-export { findRuntimeConsumedPaths, isDocsPath, normalizePath };
+export { findRuntimeConsumedPaths, findRuntimeConsumerFiles, isDocsPath, normalizePath };
 
 export function parseChangedFilesJson(value) {
   const parsed = JSON.parse(String(value ?? ''));
@@ -104,6 +109,7 @@ export function isHighRiskPath(filePath) {
     || p.startsWith('src/platform/Billing/')
     || p.startsWith('src/platform/Entitlement')
     || p.startsWith('scripts/security/')
+    || isOperationsReleaseControlPath(p)
     || /(^|\/)(auth|security|entitlement|billing)(\/|\.|-)/i.test(p);
 }
 
@@ -149,7 +155,11 @@ function explain(primary, files) {
 
 /**
  * @param {string[]} files
- * @param {{ forceFull?: boolean, runtimeConsumedPaths?: string[] }} [options]
+ * @param {{
+ *   forceFull?: boolean,
+ *   runtimeConsumedPaths?: string[],
+ *   runtimeConsumerFiles?: Record<string, string[]>,
+ * }} [options]
  */
 export function planChangedFiles(files, options = {}) {
   const normalized = (files || []).map(normalizePath).filter(Boolean);
@@ -164,12 +174,33 @@ export function planChangedFiles(files, options = {}) {
       codeql_mode: 'full',
       codeql_languages: allCurrentRepositoryCodeqlLanguages().join(','),
       automated_code_review_mode: 'full',
+      direct_vitest_tests_json: '[]',
       reason: 'main-push-or-explicit-force-full',
     };
   }
 
   const runtimeConsumed = new Set((options.runtimeConsumedPaths || []).map(normalizePath));
   const consumerEscalation = normalized.some((file) => runtimeConsumed.has(file));
+  const runtimeConsumerFiles = Object.values(options.runtimeConsumerFiles || {})
+    .flat()
+    .map(normalizePath)
+    .filter(Boolean);
+  const directVitestTests = Array.from(new Set(runtimeConsumerFiles.filter(isVitestTestPath))).sort();
+  const consumerNodePrTests = runtimeConsumerFiles.some((file) => file.startsWith('scripts/pr/') && isTestPath(file));
+  const consumerNodeSystemadminTests = runtimeConsumerFiles.some((file) => file.startsWith('scripts/systemadmin/') && isTestPath(file));
+  const consumerSecurityAssessmentTests = runtimeConsumerFiles.some((file) =>
+    file === 'scripts/security/validateSecurityAssessment.test.mjs',
+  );
+  const coveredConsumerTests = runtimeConsumerFiles.every((file) =>
+    isVitestTestPath(file)
+    || (file.startsWith('scripts/pr/') && isTestPath(file))
+    || (file.startsWith('scripts/systemadmin/') && isTestPath(file))
+    || file === 'scripts/security/validateSecurityAssessment.test.mjs',
+  );
+  const consumerTestOnly = consumerEscalation
+    && runtimeConsumerFiles.length > 0
+    && runtimeConsumerFiles.every(isTestPath)
+    && coveredConsumerTests;
 
   if ((normalized.length === 0 || normalized.every(isDocsPath)) && !consumerEscalation) {
     return {
@@ -181,14 +212,31 @@ export function planChangedFiles(files, options = {}) {
       codeql_mode: 'none',
       codeql_languages: '',
       automated_code_review_mode: 'none',
+      direct_vitest_tests_json: '[]',
       reason: explain('documentation-only', normalized),
     };
   }
 
-  // The scope classifier already escalates runtime-consumed documentary artifacts
-  // to class C. Without the same signal here, CI could build/predeploy that class C
-  // change while selecting zero unit tests. Until a narrower dependency mapping is
-  // proven, fail closed to full validation for this uncommon boundary case.
+  // Documentary artifacts that are consumed only by known test files are
+  // validation inputs, not production runtime inputs. Run exactly those direct
+  // consumers plus Vitest's changed graph instead of escalating the whole suite.
+  if (consumerEscalation && consumerTestOnly) {
+    return {
+      validation_profile: 'focused',
+      vitest_mode: directVitestTests.length > 0 ? 'changed' : 'none',
+      node_pr_tests: consumerNodePrTests,
+      node_systemadmin_tests: consumerNodeSystemadminTests,
+      node_security_assessment_tests: consumerSecurityAssessmentTests,
+      codeql_mode: 'none',
+      codeql_languages: '',
+      automated_code_review_mode: 'none',
+      direct_vitest_tests_json: JSON.stringify(directVitestTests),
+      reason: explain('test-consumed-documentary-artifact', normalized),
+    };
+  }
+
+  // Any documentary artifact consumed by runtime, workflow or an unhandled test
+  // surface remains fail-closed FULL.
   if (consumerEscalation) {
     return {
       validation_profile: 'full',
@@ -199,6 +247,7 @@ export function planChangedFiles(files, options = {}) {
       codeql_mode: 'full',
       codeql_languages: allCurrentRepositoryCodeqlLanguages().join(','),
       automated_code_review_mode: 'full',
+      direct_vitest_tests_json: '[]',
       reason: explain('runtime-consumed-documentary-artifact', normalized),
     };
   }
@@ -208,6 +257,8 @@ export function planChangedFiles(files, options = {}) {
   const onlyVitestTests = nonDocs.every(isVitestTestPath);
   const onlyFocusedNodeValidation = nonDocs.every(isFocusedNodeValidationPath);
   const onlyNonDeployWorkflow = nonDocs.every((file) => isWorkflowPath(file) && file !== '.github/workflows/ci.yml');
+  const onlyOrdinaryOperationsTooling = nonDocs.length > 0
+    && nonDocs.every((file) => isOrdinaryOperationsToolingPath(file) || isTestPath(file));
   const dependencyOnly = nonDocs.every(isDependencyPath);
   const hasHighRisk = nonDocs.some(isHighRiskPath);
   const hasGlobalTestTrigger = nonDocs.some(isGlobalTestTrigger);
@@ -233,7 +284,7 @@ export function planChangedFiles(files, options = {}) {
   let vitestMode = 'none';
   if (hasGlobalTestTrigger || hasHighRisk || hasUnknown) {
     vitestMode = 'full';
-  } else if (onlyVitestTests || hasAppSource || hasVitestTests) {
+  } else if (onlyVitestTests || hasAppSource || hasVitestTests || onlyOrdinaryOperationsTooling) {
     vitestMode = 'changed';
   } else if (!onlyFocusedNodeValidation && !onlyNonDeployWorkflow && !dependencyOnly) {
     // A known source/script path outside the narrow focused validators keeps a
@@ -283,6 +334,7 @@ export function planChangedFiles(files, options = {}) {
     codeql_mode: codeqlMode,
     codeql_languages: codeqlLanguages.join(','),
     automated_code_review_mode: automatedReviewMode,
+    direct_vitest_tests_json: '[]',
     reason: explain(
       hasUnknown ? 'unknown-non-doc-fail-closed'
         : hasHighRisk ? 'high-risk-change'
@@ -354,6 +406,10 @@ function selectedTests(plan, baseSha) {
   const selected = [];
   if (plan.vitest_mode === 'full') selected.push('npm test');
   if (plan.vitest_mode === 'changed') selected.push(`npx vitest run --changed ${baseSha} --passWithNoTests`);
+  const directVitestTests = JSON.parse(String(plan.direct_vitest_tests_json || '[]'));
+  if (directVitestTests.length > 0) {
+    selected.push(`npx vitest run ${directVitestTests.join(' ')} --passWithNoTests`);
+  }
   if (plan.node_pr_tests && plan.vitest_mode !== 'full') selected.push('node --test scripts/pr/*.test.mjs');
   if (plan.node_systemadmin_tests && plan.vitest_mode !== 'full') selected.push('node --test scripts/systemadmin/*.test.mjs');
   if (plan.node_security_assessment_tests && plan.vitest_mode !== 'full') {
@@ -373,6 +429,7 @@ export function buildPreflightEvidence({
   treeSha,
   files = [],
   runtimeConsumedPaths = [],
+  runtimeConsumerFiles = {},
   forceFull = false,
   toolVersions = {},
   results = {},
@@ -382,8 +439,8 @@ export function buildPreflightEvidence({
   const normalizedTree = assertSha('treeSha', treeSha);
   const normalizedFiles = (files || []).map(normalizePath).filter(Boolean);
   const normalizedResults = normalizePreflightResults(results);
-  const scope = classifyChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
-  const plan = planChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths });
+  const scope = classifyChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths, runtimeConsumerFiles });
+  const plan = planChangedFiles(normalizedFiles, { forceFull, runtimeConsumedPaths, runtimeConsumerFiles });
 
   const prFastRelevant = normalizedFiles.some(isOssQualityPrFastPath);
   const qualitySelection = {
@@ -426,6 +483,7 @@ export function buildPreflightEvidence({
     pr_class: scope.class,
     production_impact: scope.production_impact === true,
     changed_paths: normalizedFiles,
+    runtime_consumer_files: runtimeConsumerFiles,
     validation_profile: String(plan.validation_profile || '').toUpperCase(),
     selected_tests: selectedTests(plan, normalizedBase),
     required_exact_head_contexts: REQUIRED_EXACT_HEAD_CONTEXTS,
@@ -458,6 +516,7 @@ function main() {
 
   let files = [];
   let runtimeConsumedPaths = [];
+  let runtimeConsumerFiles = {};
   if (!forceFull) {
     const base = process.env.PR_BASE_SHA || process.env.BASE_SHA || '';
     const head = process.env.PR_HEAD_SHA || process.env.HEAD_SHA || 'HEAD';
@@ -470,10 +529,11 @@ function main() {
       // newline-delimited paths. Security-sensitive provider workflows use JSON.
       files = process.env.CHANGED_FILES.split(/\r?\n/).map(normalizePath).filter(Boolean);
     }
-    runtimeConsumedPaths = findRuntimeConsumedPaths(files, head);
+    runtimeConsumerFiles = findRuntimeConsumerFiles(files, head);
+    runtimeConsumedPaths = Object.keys(runtimeConsumerFiles).sort();
   }
 
-  const plan = planChangedFiles(files, { forceFull, runtimeConsumedPaths });
+  const plan = planChangedFiles(files, { forceFull, runtimeConsumedPaths, runtimeConsumerFiles });
   console.log(`[planPrValidation] profile=${plan.validation_profile} vitest=${plan.vitest_mode} codeql=${plan.codeql_mode} review=${plan.automated_code_review_mode} consumer_escalation=${runtimeConsumedPaths.length > 0} files=${forceFull ? '(force-full)' : files.length}`);
   if (runtimeConsumedPaths.length > 0) console.log(`[planPrValidation] runtime-consumed changed artifacts: ${runtimeConsumedPaths.join(', ')}`);
   console.log(JSON.stringify(plan, null, 2));
@@ -491,6 +551,7 @@ function main() {
       treeSha,
       files,
       runtimeConsumedPaths,
+      runtimeConsumerFiles,
       forceFull,
       toolVersions: { node: process.version },
       results,
