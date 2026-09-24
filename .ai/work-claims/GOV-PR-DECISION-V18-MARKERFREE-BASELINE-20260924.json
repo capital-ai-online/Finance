@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-PR-DECISION-V18-MARKERFREE-BASELINE-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the existing v1.8 marker-free Production-Baseline bootstrap gap in the single PR Decision Evidence Reconciler.",
+  "priority": "P0",
+  "priorityReason": "The defect blocks PR #1403 Governance despite successful exact-head build/test and security evidence.",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-24T14:34:00Z",
+  "baseBranch": "main",
+  "baseSha": "be33bde31d9e96d8cb306086428f90036350d8ea",
+  "branch": "agent/governance-v18-markerfree-baseline-bootstrap-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/GOV-PR-DECISION-V18-MARKERFREE-BASELINE-20260924.json",
+    "scripts/pr/repairLegacyPrBodyStructure.mjs",
+    "scripts/pr/repairLegacyPrBodyStructure.test.mjs",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/governance/work-packages/GOV_PR_DECISION_V18_MARKERFREE_BASELINE_01_2026-09-24.md",
+    ".ai/work-claims/GOV-SH-V3-02-PR-BASE-ANCESTRY-20260921.json",
+    ".ai/work-claims/GOV-PR-AUTOFIX-V17-CONVERGENCE-20260920.json"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. No second PR-body writer, direct-main mutation or agent self-merge.",
+  "currentMainCorrelation": {
+    "sha": "be33bde31d9e96d8cb306086428f90036350d8ea",
+    "status": "SYNCED",
+    "correlatedAt": "2026-09-24T14:34:00Z"
+  }
+}
