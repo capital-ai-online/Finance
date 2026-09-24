@@ -1,11 +1,11 @@
 # OPS-MTA-STS-HOST-ISOLATION-01
 
-**Status:** IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING  
+**Status:** IMPLEMENTED_ON_MAIN / RUNTIME_DEPLOYMENT_PENDING  
 **Project:** CAPITAL-AI-OPS  
 **Primary PVC:** PVC-08 — Production Operations  
 **Security relationship:** cross-cutting mail-security boundary  
 **Branch:** `agent/operations-mta-sts-host-isolation-20260924`  
-**CURRENT_MAIN baseline:** `be33bde31d9e96d8cb306086428f90036350d8ea`
+**CURRENT_MAIN baseline:** `332861e4ae19f80c3bdc15dccf3733cdc52c265f`
 
 ## Observed state
 
@@ -31,3 +31,20 @@ No DNS, Render configuration, CookieConsent logic, GA4 consent logic, credential
 3. Open writer/file/semantic overlap is absent at PR creation.
 4. Required exact-head Governance, build/test, GitGuardian and container/security evidence is truthful and successful before merge.
 5. Human/CODEOWNER merge is required; direct self-merge is prohibited.
+
+
+## Post-merge validation
+
+- PR: `#1408`
+- Exact PR head: `97885eefc4631822e2cfb6d422a437ef75d28809`
+- Merge commit: `cc8398e40019459653403272749f3c6fc756f1aa`
+- Fresh CURRENT_MAIN readback: `332861e4ae19f80c3bdc15dccf3733cdc52c265f`
+- Merge ancestry: PASS — the #1408 merge commit is an ancestor of CURRENT_MAIN.
+- Exact-head CI: PASS — Governance, Project Directive, Container Security and CI completed successfully.
+- Focused MTA-STS test: PASS — `tests/unit/mtaStsPolicy.test.ts` executed 3/3 tests successfully inside the successful full suite.
+- Open-writer overlap after merge: none for the MTA-STS route/composition/test/evidence files.
+- Render Production observed during this validation: `fb62cf1f9313d6f3d34db60cc0561d60cd0a7c74`.
+- Runtime deployment state: PENDING — the currently live Render commit predates PR #1408, so production behavior is not yet claimed as converged.
+- Direct live HTTP verification from the agent tool environment was unavailable because the execution environment could not resolve the custom hostname. This is recorded as a tooling limitation, not as a production failure.
+
+Repository implementation exit evidence is satisfied. Final runtime verification remains bound to the canonical GitHub→Render deployment/cadence path and must read back the deployed commit plus the public MTA-STS behavior after deployment.
