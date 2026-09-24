@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-GITHUB-ENTERPRISE-403-DIAGNOSTICS-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -18,7 +18,7 @@
   "startedAt": "2026-09-24T11:38:00Z",
   "baseBranch": "main",
   "baseSha": "57ccdfeeedd6fb16212d9c55699fe77745900dc3",
-  "lastSyncedMainSha": "57ccdfeeedd6fb16212d9c55699fe77745900dc3",
+  "lastSyncedMainSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
   "branch": "operations/github-enterprise-403-diagnostics-20260924",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-READ-FAILURE-ISOLATION-20260924.json",
@@ -45,5 +45,11 @@
     "Targeted unit tests cover diagnostics and redaction.",
     "Exact-head repository checks remain truthful; Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "reason": "PR #1397 merged and Run #35999363977 proved full Enterprise settings readback PASS.",
+    "pullRequest": 1397,
+    "mergeCommitSha": "7c8f572e7112c96ee31264ec8a7775b971678a4d",
+    "workflowRunId": 35999363977
+  }
 }
