@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-V18-BOOTSTRAP-REGEX-20260924",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "owner": "CAPITAL-AI-GOV",
+  "primaryProductivePvc": [
+    "PVC-05"
+  ],
+  "priority": "P1",
+  "branchName": "governance/issue-1366-pr-v18-bootstrap-regex-20260924",
+  "baseBranch": "main",
+  "baseSha": "cb0012e7f38452eb638ed2e3affe5e74f0b44ed6",
+  "workItem": "Fix Issue #1366 by correcting the over-escaped v1.8 bootstrap marker regex in the existing single PR Decision Evidence Reconciler.",
+  "claimedPaths": [
+    ".github/workflows/pr-decision-reconciler.yml",
+    "scripts/pr/reconcilePrDecisionEvidence.test.mjs",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/governance/work-packages/GOV_PR_DECISION_BOOTSTRAP_REGEX_01_2026-09-24.md",
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-V18-BOOTSTRAP-REGEX-20260924.json"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Issue #1366 READY_FOR_PROJECT_EXECUTION",
+    "existing single PR Decision Evidence Reconciler"
+  ],
+  "exitEvidence": [
+    "Exact canonical v1.8 marker regex is present in the existing workflow.",
+    "Over-escaped regex form is prohibited by regression coverage.",
+    "Exact-head Governance/CI/workflow-security pass.",
+    "No second PR-body writer."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
