@@ -677,3 +677,69 @@ test('leading PR body projection repairs the PR #1298 hybrid shape and binds one
     '## 3. 🔍 Technical Evidence',
   ]);
 });
+
+test('PR #1364 treats later Production movement as a new baseline generation and converges idempotently', () => {
+  const firstProductionSha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const firstBaseline = convergenceBaseline();
+  firstBaseline.generatedAt = '2026-09-24T02:36:00.000Z';
+  firstBaseline.production = {
+    ...firstBaseline.production,
+    commitSha: firstProductionSha,
+  };
+  firstBaseline.drift = {
+    ...firstBaseline.drift,
+    productionToMainCommits: 1,
+  };
+  firstBaseline.baselineId = computeProductionBaselineId(firstBaseline);
+
+  const canonicalProductionRefreshBody = canonicalBody()
+    .replace(
+      '> P1 · PR-Klasse C · PATCH',
+      '> P1 🟠 Hoch · PR-Klasse C · PATCH 🩹',
+    )
+    .replace(
+      '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance\n- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      [
+        '- **Projekt:** 🧠 CAPITAL-AI-GOV · Governance',
+        '- **Priorität:** P1 🟠 Hoch',
+        '- **Versionsimpact:** PATCH 🩹',
+        '- **Version-Manager-Check:** PASS — canonical production-refresh fixture.',
+        '- **PR-Klasse:** C',
+        '- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja',
+      ].join('\n'),
+    );
+
+  const first = prepareLeadingPrBody(canonicalProductionRefreshBody, firstBaseline, { prClass: 'C' });
+  assert.equal(first.eligible, true);
+  assert.equal(first.structureChanged, false);
+  assert.equal(first.baselineChanged, true);
+  assert.ok(first.body.includes(firstBaseline.baselineId));
+  assert.ok(first.body.includes(firstProductionSha));
+
+  const nextBaseline = structuredClone(firstBaseline);
+  nextBaseline.generatedAt = '2026-09-24T02:41:27.475Z';
+  nextBaseline.production.commitSha = mainSha;
+  nextBaseline.drift.productionToMainCommits = 0;
+  nextBaseline.baselineId = computeProductionBaselineId(nextBaseline);
+
+  assert.notEqual(nextBaseline.baselineId, firstBaseline.baselineId);
+
+  const second = prepareLeadingPrBody(first.body, nextBaseline, { prClass: 'C' });
+  assert.equal(second.eligible, true);
+  assert.equal(second.structureChanged, false);
+  assert.equal(second.baselineChanged, true);
+  assert.equal(second.reason, 'production-baseline-reconciled');
+  assert.ok(second.body.includes(nextBaseline.baselineId));
+  assert.ok(second.body.includes(mainSha));
+  assert.ok(!second.body.includes(firstBaseline.baselineId));
+  assert.equal((second.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
+  assert.equal((second.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
+
+  const stable = prepareLeadingPrBody(second.body, nextBaseline, { prClass: 'C' });
+  assert.equal(stable.eligible, true);
+  assert.equal(stable.changed, false);
+  assert.equal(stable.structureChanged, false);
+  assert.equal(stable.baselineChanged, false);
+  assert.equal(stable.reason, 'already-canonical');
+});
+
