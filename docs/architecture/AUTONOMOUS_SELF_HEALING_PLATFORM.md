@@ -294,6 +294,15 @@ The corresponding owner-correct GOV repair is tracked by Issue #1405 and its
 bounded work package. SH-02.13 consumes the resulting verified evidence; it does
 not duplicate the GOV PR-body writer or baseline repairer.
 
+A second independent validation failure observed while repairing this chain was
+`CURRENT_STATE_PROJECTION_BASELINE_STALE` on
+`docs/projects/governance/ROADMAP.md`: the projection still referenced an older
+main generation. When an owner-correct slice already touches such a current-state
+projection, the same bounded convergence must refresh its baseline to the exact
+`CURRENT_MAIN` before declaring validation success. This is projection
+reconciliation, not a reason to suppress `governanceControlPlane.test.ts` or
+relax freshness validation.
+
 ## 10. Rollout
 
 1. **Foundation** — consolidate process health/lifecycle, bounded frontend stale-asset recovery, architecture/supersession.
