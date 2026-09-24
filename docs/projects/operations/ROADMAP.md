@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@bac6f4224cdb4f570c415c1310a264b3081756e6`
+**Baseline:** `main@67f9be45e41d78ca5d5c58f9be860d1887e4afad`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -35,14 +35,13 @@ Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
 
 ### SH-02 Issue #1355 — TypeScript literal-union drift intake
 
-**State:** `IMPLEMENTED_ON_BRANCH / OBSERVE_ONLY`  
+**State:** `DONE_MAIN / TERMINAL / OBSERVE_ONLY`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-08, PVC-18`
 
 The existing PR Autofix classifier recognizes the exact PR #1352 `TS2322`
 literal-union widening family without enabling generic code mutation.
 Disposition is `BLOCKED_NOT_PROVEN` / `OBSERVE_ONLY`; all unknown TypeScript
-failures stay blocked. Human/CODEOWNER merge remains required before this
-classifier extension becomes current-main behavior.
+failures stay blocked. PR #1380 is Human/CODEOWNER-merged as `67f9be45e41d78ca5d5c58f9be860d1887e4afad`; the classifier extension is current-main behavior and remains `OBSERVE_ONLY / BLOCKED_NOT_PROVEN` with no source-repair authority.
 
 
 ### SH-02.11 activation update — 2026-09-23
