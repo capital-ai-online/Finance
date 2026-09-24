@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI02-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -67,5 +67,13 @@
         "verification": "Fresh synchronize-triggered Governance run required on the resulting head."
       }
     ]
+  },
+  "releasedAt": "2026-09-24T21:14:00Z",
+  "releaseEvidence": {
+    "reason": "Human/CODEOWNER merge completed",
+    "mergedPr": "#1443",
+    "mergeCommit": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
+    "verifiedCurrentMain": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
+    "continuation": "VAI-03 Self-Healing generation integration remains a separate owner-correct slice under Issue #1429."
   }
 }

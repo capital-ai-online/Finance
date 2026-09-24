@@ -1,6 +1,6 @@
 # OPS-ARTIFACT-VERSION-INVENTORY-VAI02
 
-Status: IMPLEMENTATION_IN_PROGRESS
+Status: DONE_MAIN
 Project: CAPITAL-AI-OPS
 Primary PVC: PVC-06 Version Management
 Supporting PVC: PVC-04 Supervisor, PVC-07 Release Management
@@ -37,3 +37,18 @@ VAI-03 Self-Healing generation integration and VAI-04 findings/actions remain ou
 - Duplicate producer candidates produce explicit ambiguity evidence and no arbitrary edge.
 - TypeScript and focused tests pass.
 - Exact-head CI/Governance/Security evidence is required before merge.
+
+
+## Main completion evidence
+
+- Human/CODEOWNER merge: PR #1443
+- Merge commit: `4b93dd41f1e3368d42d003ff9a456e7135876c51`
+- Post-merge verification baseline: `4b93dd41f1e3368d42d003ff9a456e7135876c51`
+- VAI-02 producer-consumer graph and deterministic consumer fingerprints are present on CURRENT_MAIN.
+- Exact-head CI, Governance, Project Directive, OSS and Container Security completed successfully before merge.
+- The VAI-02 work claim is released and non-exclusive in this closeout slice.
+- Issue #1429 remains open because VAI-03 and VAI-04 are separate follow-up slices.
+
+## Continuation
+
+VAI-03 may bind the merged Artifact Version Inventory identity into the existing Self-Healing convergence generation. It must reuse the existing Self-Healing authority and must not create a second controller, scheduler, version authority or writer family.
