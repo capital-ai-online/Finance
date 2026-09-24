@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-PR900-03D3-EVIDENCE-STORAGE-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -38,5 +38,12 @@
     "sha": "921620b2a672cc585bd627ecdeeec86ea51cb577",
     "status": "SYNCED",
     "correlatedAt": "2026-09-20T19:33:00Z"
+  },
+  "releaseEvidence": {
+    "reason": "merged",
+    "pullRequest": 1175,
+    "mergeCommitSha": "a5d2297527a9e394ac751ac542567b6ac238d6fd",
+    "mergedAt": "2026-09-20T19:58:36Z",
+    "releasedBy": "CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924"
   }
 }

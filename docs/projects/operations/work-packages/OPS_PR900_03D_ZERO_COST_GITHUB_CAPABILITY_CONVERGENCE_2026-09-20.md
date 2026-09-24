@@ -5,7 +5,7 @@
 **Trust root:** /AGENTS.md@CURRENT_MAIN  
 **Owner direction:** 2026-09-20 — implement unused GitHub settings/capacity without creating additional cost  
 **Initial baseline:** main@242e1847800af27ad80d4b4a693a28b9754eb25d  
-**Status:** IMPLEMENTING — 03D.1/03D.2 MERGED VIA #1173; 03D.3 EVIDENCE STORAGE IN PROGRESS  
+**Status:** TERMINAL — 03D.1/03D.2 MERGED VIA #1173; 03D.3 MERGED VIA #1175; current follow-up moved to `OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-01`  
 **Merge authority:** HUMAN_MERGE_REQUIRED
 
 ## Purpose
@@ -137,3 +137,11 @@ After 03D.3 merges and real provider readback is available:
 3. optimize Cost Watch polling only if warning/blocker semantics remain reproducible;
 4. produce an explicit candidate list of currently unused settings that can be enabled with zero observed paid usage;
 5. only after exact shared-pool readback PASS, decide whether additional EVIDENCE_ARTIFACT uploads can be admitted below the 35 GiB warning threshold.
+
+
+## Terminal convergence — 2026-09-24
+
+- PR #1173 merged at `a9e32f27f8f9edc41dcce34e5439294667338a20`.
+- PR #1175 merged at `a5d2297527a9e394ac751ac542567b6ac238d6fd`.
+- Historical claims `OPS-PR900-03D-ZERO-COST-CAPABILITY-20260920` and `OPS-PR900-03D3-EVIDENCE-STORAGE-20260920` are released and non-exclusive.
+- New settings/export work is not a revival of this package; it is the fresh owner-directed follow-up `OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-01`.

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-PR900-03D-ZERO-COST-CAPABILITY-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -35,5 +35,12 @@
     "sha": "242e1847800af27ad80d4b4a693a28b9754eb25d",
     "status": "SYNCED",
     "correlatedAt": "2026-09-20T19:10:00Z"
+  },
+  "releaseEvidence": {
+    "reason": "merged",
+    "pullRequest": 1173,
+    "mergeCommitSha": "a9e32f27f8f9edc41dcce34e5439294667338a20",
+    "mergedAt": "2026-09-20T19:29:21Z",
+    "releasedBy": "CAPITAL-AI-OPS-GITHUB-SETTINGS-EFFECTIVE-EXPORT-20260924"
   }
 }

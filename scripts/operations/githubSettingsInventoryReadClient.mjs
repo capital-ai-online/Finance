@@ -9,12 +9,18 @@ const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 const MAX_INSTALLATION_PAGES = 100;
 const MAX_RULESET_PAGES = 100;
 const MAX_ARTIFACT_PAGES = 100;
+const MAX_ENVIRONMENT_PAGES = 100;
 
 export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'organization.actions.permissions.get': Object.freeze({
     scope: 'organization',
     requiredPermission: 'Administration: read',
     path: ({ organization }) => `/orgs/${organization}/actions/permissions`,
+  }),
+  'organization.actions.selected_actions.get': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/permissions/selected-actions`,
   }),
   'organization.actions.workflow_permissions.get': Object.freeze({
     scope: 'organization',
@@ -61,6 +67,11 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Administration: read',
     path: ({ repository }) => `/repos/${repository}/actions/permissions`,
   }),
+  'repository.actions.selected_actions.get': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Administration: read',
+    path: ({ repository }) => `/repos/${repository}/actions/permissions/selected-actions`,
+  }),
   'repository.actions.workflow_permissions.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Administration: read',
@@ -96,6 +107,17 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Actions: read',
     pagination: 'artifactCollection',
     path: ({ repository }) => `/repos/${repository}/actions/artifacts`,
+  }),
+  'repository.environments.list': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Actions: read',
+    pagination: 'environmentCollection',
+    path: ({ repository }) => `/repos/${repository}/environments`,
+  }),
+  'repository.code_security.configuration.get': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Administration: read',
+    path: ({ repository }) => `/repos/${repository}/code-security-configuration`,
   }),
   'repository.custom_properties.list': Object.freeze({
     scope: 'repository',
@@ -337,6 +359,30 @@ export function createGitHubSettingsInventoryReadClient({
     return Object.freeze({ total_count: artifacts.length, artifacts: Object.freeze(artifacts) });
   }
 
+  async function readEnvironmentCollection(path) {
+    const environments = [];
+    let totalCount = 0;
+
+    for (let page = 1; page <= MAX_ENVIRONMENT_PAGES; page += 1) {
+      const joiner = path.includes('?') ? '&' : '?';
+      const payload = await authenticatedGet(`${path}${joiner}per_page=100&page=${page}`);
+      if (!payload || !Array.isArray(payload.environments)) {
+        fail('repository environments response must contain an environments array');
+      }
+      if (page === 1 && Number.isInteger(payload.total_count)) totalCount = payload.total_count;
+      environments.push(...payload.environments);
+      if (payload.environments.length < 100) {
+        return Object.freeze({
+          total_count: totalCount || environments.length,
+          environments: Object.freeze(environments),
+        });
+      }
+      if (page === MAX_ENVIRONMENT_PAGES) fail('environment pagination exceeded safety limit');
+    }
+
+    return Object.freeze({ total_count: environments.length, environments: Object.freeze(environments) });
+  }
+
   return Object.freeze({
     describeBoundary() {
       return Object.freeze({
@@ -345,6 +391,8 @@ export function createGitHubSettingsInventoryReadClient({
         rawProxy: false,
         capabilities: Object.freeze(Object.keys(GITHUB_SETTINGS_READ_CAPABILITIES)),
         repositoryRulesetsPermission: 'Metadata: read',
+        repositoryEnvironmentsPermission: 'Actions: read',
+        repositoryCodeSecurityConfigurationPermission: 'Administration: read',
         tokenPersistence: false,
         clientSecretUsed: false,
       });
@@ -356,6 +404,7 @@ export function createGitHubSettingsInventoryReadClient({
       if (descriptor.scope === 'repository' && !repository) fail('repository is required');
       const path = descriptor.path(context(repository));
       if ('pagination' in descriptor && descriptor.pagination === 'artifactCollection') return readArtifactCollection(path);
+      if ('pagination' in descriptor && descriptor.pagination === 'environmentCollection') return readEnvironmentCollection(path);
       return authenticatedGet(path);
     },
 

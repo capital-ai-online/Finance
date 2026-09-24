@@ -3,6 +3,10 @@ import {
   projectArtifactStorageInventory,
   projectCacheStorageLimit,
   projectCacheUsage,
+  projectSelectedActions,
+  projectEnvironmentInventory,
+  projectCodeSecurityConfiguration,
+  projectEffectiveSettingsPolicy,
 } from '../../scripts/operations/githubSettingsInventoryProjection.mjs';
 
 describe('GitHub settings storage projection', () => {
@@ -53,5 +57,187 @@ describe('GitHub settings storage projection', () => {
       namesRedacted: true,
       workflowIdentityRedacted: true,
     });
+  });
+});
+
+
+describe('GitHub settings effective policy projection', () => {
+  it('projects selected action constraints without broadening parent policy', () => {
+    expect(projectSelectedActions({
+      github_owned_allowed: true,
+      verified_allowed: false,
+      patterns_allowed: ['z/*', 'a/*', 'a/*'],
+    })).toEqual({
+      githubOwnedAllowed: true,
+      verifiedAllowed: false,
+      patternsAllowed: ['a/*', 'z/*'],
+    });
+  });
+
+  it('redacts environment reviewer identity while preserving protection semantics', () => {
+    expect(projectEnvironmentInventory({
+      total_count: 1,
+      environments: [{
+        name: 'production',
+        protection_rules: [
+          { type: 'wait_timer', wait_timer: 10 },
+          {
+            type: 'required_reviewers',
+            prevent_self_review: true,
+            reviewers: [
+              { type: 'User', reviewer: { login: 'secret-owner' } },
+              { type: 'Team', reviewer: { slug: 'ops' } },
+            ],
+          },
+        ],
+        deployment_branch_policy: {
+          protected_branches: true,
+          custom_branch_policies: false,
+        },
+      }],
+    })).toEqual({
+      totalCount: 1,
+      environments: [{
+        name: 'production',
+        protectionRuleTypes: ['required_reviewers', 'wait_timer'],
+        waitTimerMinutes: 10,
+        requiredReviewerCount: 2,
+        reviewerTypes: ['Team', 'User'],
+        preventSelfReview: true,
+        deploymentBranchPolicy: {
+          protectedBranches: true,
+          customBranchPolicies: false,
+        },
+        reviewerIdentitiesRedacted: true,
+      }],
+    });
+  });
+
+  it('projects code security settings without configuration or reviewer identity', () => {
+    expect(projectCodeSecurityConfiguration({
+      status: 'attached',
+      configuration: {
+        id: 1325,
+        name: 'recommended',
+        target_type: 'organization',
+        enforcement: 'enforced',
+        advanced_security: 'enabled',
+        dependency_graph: 'enabled',
+        code_scanning_default_setup: 'enabled',
+        secret_scanning: 'enabled',
+        secret_scanning_push_protection: 'enabled',
+      },
+    })).toMatchObject({
+      attachmentStatus: 'attached',
+      targetType: 'organization',
+      enforcement: 'enforced',
+      advancedSecurity: 'enabled',
+      dependencyGraph: 'enabled',
+      codeScanningDefaultSetup: 'enabled',
+      secretScanning: 'enabled',
+      secretScanningPushProtection: 'enabled',
+      configurationIdentityRedacted: true,
+      reviewerIdentitiesRedacted: true,
+    });
+  });
+
+  it('resolves conservative Enterprise to Organization to Repository ceilings', () => {
+    const selected = {
+      githubOwnedAllowed: true,
+      verifiedAllowed: true,
+      patternsAllowed: [],
+    };
+    const effective = projectEffectiveSettingsPolicy({
+      enterpriseActions: {
+        enabledOrganizations: 'all',
+        enabledRepositories: null,
+        enabled: false,
+        allowedActions: 'selected',
+        shaPinningRequired: true,
+      },
+      enterpriseWorkflow: {
+        defaultWorkflowPermissions: 'read',
+        canApprovePullRequestReviews: false,
+      },
+      enterpriseSelectedActions: selected,
+      organizationActions: {
+        enabledOrganizations: null,
+        enabledRepositories: 'all',
+        enabled: false,
+        allowedActions: 'selected',
+        shaPinningRequired: true,
+      },
+      organizationWorkflow: {
+        defaultWorkflowPermissions: 'read',
+        canApprovePullRequestReviews: false,
+      },
+      organizationSelectedActions: selected,
+      repositoryActions: {
+        enabledOrganizations: null,
+        enabledRepositories: null,
+        enabled: true,
+        allowedActions: 'selected',
+        shaPinningRequired: true,
+      },
+      repositoryWorkflow: {
+        defaultWorkflowPermissions: 'read',
+        canApprovePullRequestReviews: false,
+      },
+      repositorySelectedActions: selected,
+    });
+
+    expect(effective.status).toBe('PASS');
+    expect(effective.actions.execution).toBe('ENABLED');
+    expect(effective.actions.shaPinningRequired).toBe(true);
+    expect(effective.actions.defaultWorkflowPermissions).toBe('read');
+    expect(effective.actions.canApprovePullRequestReviews).toBe(false);
+    expect(effective.actions.selectedConstraintsComplete).toBe(true);
+    expect(effective.lowerScopesCannotBroadenParentPolicy).toBe(true);
+    expect(effective.improvementFindings).toEqual([
+      expect.objectContaining({
+        id: 'VERIFIED_MARKETPLACE_BLANKET_ALLOW',
+        state: 'REVIEW_RECOMMENDED',
+      }),
+    ]);
+  });
+
+  it('emits fail-closed improvement findings for weak or unobservable policy ceilings', () => {
+    const effective = projectEffectiveSettingsPolicy({
+      enterpriseActions: {
+        enabledOrganizations: 'all',
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      enterpriseWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+      organizationActions: {
+        enabledRepositories: 'all',
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      organizationWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+      repositoryActions: {
+        enabled: true,
+        allowedActions: 'selected',
+        shaPinningRequired: false,
+      },
+      repositoryWorkflow: {
+        defaultWorkflowPermissions: 'write',
+        canApprovePullRequestReviews: true,
+      },
+    });
+
+    expect(effective.status).toBe('PARTIAL_COVERAGE');
+    expect(effective.improvementFindings.map((finding) => finding.id)).toEqual(expect.arrayContaining([
+      'ACTIONS_FULL_SHA_PINNING',
+      'DEFAULT_GITHUB_TOKEN_READ_ONLY',
+      'ACTIONS_PR_REVIEW_APPROVAL',
+      'SELECTED_ACTIONS_OBSERVABILITY',
+    ]));
   });
 });

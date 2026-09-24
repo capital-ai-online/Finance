@@ -41,6 +41,9 @@ export function projectActionsPermissions(raw) {
     enabledRepositories: typeof settings.enabled_repositories === 'string'
       ? settings.enabled_repositories
       : null,
+    enabledOrganizations: typeof settings.enabled_organizations === 'string'
+      ? settings.enabled_organizations
+      : null,
     allowedActions: typeof settings.allowed_actions === 'string' ? settings.allowed_actions : null,
     shaPinningRequired: settings.sha_pinning_required === true,
   });
@@ -188,5 +191,245 @@ export function projectCapturedSetting(capture, projector) {
     status: 'PASS',
     requiredPermission: capture.requiredPermission || null,
     data: projector(capture.data),
+  });
+}
+
+
+export function projectSelectedActions(raw) {
+  const settings = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({
+    githubOwnedAllowed: settings.github_owned_allowed === true,
+    verifiedAllowed: settings.verified_allowed === true,
+    patternsAllowed: sortedUnique(Array.isArray(settings.patterns_allowed) ? settings.patterns_allowed : []),
+  });
+}
+
+export function projectEnvironmentInventory(raw) {
+  const payload = raw && typeof raw === 'object' ? raw : {};
+  const environments = Array.isArray(payload.environments) ? payload.environments : [];
+  return Object.freeze({
+    totalCount: Number.isInteger(payload.total_count) ? payload.total_count : environments.length,
+    environments: Object.freeze(environments.map((environment) => {
+      const rules = Array.isArray(environment?.protection_rules) ? environment.protection_rules : [];
+      const reviewerRule = rules.find((rule) => rule?.type === 'required_reviewers');
+      const waitTimerRule = rules.find((rule) => rule?.type === 'wait_timer');
+      const reviewers = Array.isArray(reviewerRule?.reviewers) ? reviewerRule.reviewers : [];
+      return Object.freeze({
+        name: typeof environment?.name === 'string' ? environment.name : null,
+        protectionRuleTypes: sortedUnique(rules.map((rule) => rule?.type)),
+        waitTimerMinutes: Number.isInteger(waitTimerRule?.wait_timer) ? waitTimerRule.wait_timer : null,
+        requiredReviewerCount: reviewers.length,
+        reviewerTypes: sortedUnique(reviewers.map((reviewer) => reviewer?.type)),
+        preventSelfReview: reviewerRule?.prevent_self_review === true,
+        deploymentBranchPolicy: Object.freeze({
+          protectedBranches: environment?.deployment_branch_policy?.protected_branches === true,
+          customBranchPolicies: environment?.deployment_branch_policy?.custom_branch_policies === true,
+        }),
+        reviewerIdentitiesRedacted: true,
+      });
+    })),
+  });
+}
+
+export function projectCodeSecurityConfiguration(raw) {
+  const payload = raw && typeof raw === 'object' ? raw : {};
+  const configuration = payload.configuration && typeof payload.configuration === 'object'
+    ? payload.configuration
+    : {};
+  const feature = (name) => typeof configuration[name] === 'string' ? configuration[name] : null;
+  return Object.freeze({
+    attachmentStatus: typeof payload.status === 'string' ? payload.status : null,
+    targetType: feature('target_type'),
+    enforcement: feature('enforcement'),
+    advancedSecurity: feature('advanced_security'),
+    dependencyGraph: feature('dependency_graph'),
+    dependencyGraphAutosubmitAction: feature('dependency_graph_autosubmit_action'),
+    dependabotAlerts: feature('dependabot_alerts'),
+    dependabotSecurityUpdates: feature('dependabot_security_updates'),
+    codeScanningDefaultSetup: feature('code_scanning_default_setup'),
+    codeScanningDelegatedAlertDismissal: feature('code_scanning_delegated_alert_dismissal'),
+    secretScanning: feature('secret_scanning'),
+    secretScanningPushProtection: feature('secret_scanning_push_protection'),
+    secretScanningDelegatedBypass: feature('secret_scanning_delegated_bypass'),
+    secretScanningValidityChecks: feature('secret_scanning_validity_checks'),
+    secretScanningNonProviderPatterns: feature('secret_scanning_non_provider_patterns'),
+    secretScanningGenericSecrets: feature('secret_scanning_generic_secrets'),
+    secretScanningDelegatedAlertDismissal: feature('secret_scanning_delegated_alert_dismissal'),
+    privateVulnerabilityReporting: feature('private_vulnerability_reporting'),
+    configurationIdentityRedacted: true,
+    reviewerIdentitiesRedacted: true,
+  });
+}
+
+function mostRestrictiveWorkflowPermission(values) {
+  const known = values.filter((value) => value === 'read' || value === 'write');
+  if (known.includes('read')) return 'read';
+  return known.length === values.length && known.length > 0 ? 'write' : null;
+}
+
+function conservativeApproval(values) {
+  const known = values.filter((value) => typeof value === 'boolean');
+  if (known.includes(false)) return false;
+  return known.length === values.length && known.length > 0 ? true : null;
+}
+
+/**
+ * @param {{
+ *   enterpriseActions?: any;
+ *   enterpriseWorkflow?: any;
+ *   enterpriseSelectedActions?: any;
+ *   organizationActions?: any;
+ *   organizationWorkflow?: any;
+ *   organizationSelectedActions?: any;
+ *   repositoryActions?: any;
+ *   repositoryWorkflow?: any;
+ *   repositorySelectedActions?: any;
+ *   environmentInventory?: any;
+ *   codeSecurityConfiguration?: any;
+ * }} [options]
+ */
+export function projectEffectiveSettingsPolicy({
+  enterpriseActions = null,
+  enterpriseWorkflow = null,
+  enterpriseSelectedActions = null,
+  organizationActions = null,
+  organizationWorkflow = null,
+  organizationSelectedActions = null,
+  repositoryActions = null,
+  repositoryWorkflow = null,
+  repositorySelectedActions = null,
+  environmentInventory = null,
+  codeSecurityConfiguration = null,
+} = {}) {
+  const actionLevels = Object.freeze({
+    enterprise: enterpriseActions,
+    organization: organizationActions,
+    repository: repositoryActions,
+  });
+  const selectedLevels = Object.freeze({
+    enterprise: enterpriseSelectedActions,
+    organization: organizationSelectedActions,
+    repository: repositorySelectedActions,
+  });
+  const selectedRequired = [
+    ['enterprise', enterpriseActions, enterpriseSelectedActions],
+    ['organization', organizationActions, organizationSelectedActions],
+    ['repository', repositoryActions, repositorySelectedActions],
+  ].filter(([, actions]) => actions?.allowedActions === 'selected');
+  const selectedConstraintsComplete = selectedRequired.every(([, , selected]) => selected !== null);
+
+  const shaValues = [enterpriseActions, organizationActions, repositoryActions]
+    .map((value) => value?.shaPinningRequired)
+    .filter((value) => typeof value === 'boolean');
+  const shaPinningRequired = shaValues.includes(true)
+    ? true
+    : shaValues.length === 3
+      ? false
+      : null;
+
+  const workflowValues = [enterpriseWorkflow, organizationWorkflow, repositoryWorkflow]
+    .map((value) => value?.defaultWorkflowPermissions);
+  const approvalValues = [enterpriseWorkflow, organizationWorkflow, repositoryWorkflow]
+    .map((value) => value?.canApprovePullRequestReviews);
+  const defaultWorkflowPermissions = mostRestrictiveWorkflowPermission(workflowValues);
+  const canApprovePullRequestReviews = conservativeApproval(approvalValues);
+
+  let actionsExecution = 'UNKNOWN';
+  if (enterpriseActions?.enabledOrganizations === 'none') actionsExecution = 'BLOCKED_BY_ENTERPRISE';
+  else if (organizationActions?.enabledRepositories === 'none') actionsExecution = 'BLOCKED_BY_ORGANIZATION';
+  else if (repositoryActions?.enabled === false) actionsExecution = 'DISABLED_AT_REPOSITORY';
+  else if (
+    enterpriseActions?.enabledOrganizations === 'selected'
+    || organizationActions?.enabledRepositories === 'selected'
+  ) actionsExecution = 'CONDITIONALLY_ENABLED';
+  else if (repositoryActions?.enabled === true) actionsExecution = 'ENABLED';
+
+  const knownCore = [
+    enterpriseActions,
+    enterpriseWorkflow,
+    organizationActions,
+    organizationWorkflow,
+    repositoryActions,
+    repositoryWorkflow,
+  ];
+
+  const improvementFindings = [];
+  if (shaPinningRequired !== true) {
+    improvementFindings.push(Object.freeze({
+      id: 'ACTIONS_FULL_SHA_PINNING',
+      severity: 'HIGH',
+      state: shaPinningRequired === false ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Require actions to be pinned to a full-length commit SHA at the highest enforceable scope.',
+      protectedMutation: true,
+    }));
+  }
+  if (defaultWorkflowPermissions !== 'read') {
+    improvementFindings.push(Object.freeze({
+      id: 'DEFAULT_GITHUB_TOKEN_READ_ONLY',
+      severity: 'HIGH',
+      state: defaultWorkflowPermissions === 'write' ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Use read-only as the default GITHUB_TOKEN permission and grant write only per job.',
+      protectedMutation: true,
+    }));
+  }
+  if (canApprovePullRequestReviews !== false) {
+    improvementFindings.push(Object.freeze({
+      id: 'ACTIONS_PR_REVIEW_APPROVAL',
+      severity: 'HIGH',
+      state: canApprovePullRequestReviews === true ? 'IMPROVEMENT_AVAILABLE' : 'NOT_OBSERVABLE',
+      recommendation: 'Keep GitHub Actions unable to approve pull request reviews unless an explicit governance contract requires it.',
+      protectedMutation: true,
+    }));
+  }
+  if (!selectedConstraintsComplete) {
+    improvementFindings.push(Object.freeze({
+      id: 'SELECTED_ACTIONS_OBSERVABILITY',
+      severity: 'MEDIUM',
+      state: 'NOT_OBSERVABLE',
+      recommendation: 'Restore read-only selected-actions visibility at every scope using selected mode before diagnosing workflow startup failures.',
+      protectedMutation: false,
+    }));
+  }
+  const blanketVerifiedScopes = Object.entries(selectedLevels)
+    .filter(([, selected]) => selected?.verifiedAllowed === true)
+    .map(([scope]) => scope);
+  if (blanketVerifiedScopes.length > 0) {
+    improvementFindings.push(Object.freeze({
+      id: 'VERIFIED_MARKETPLACE_BLANKET_ALLOW',
+      severity: 'MEDIUM',
+      state: 'REVIEW_RECOMMENDED',
+      scopes: Object.freeze(blanketVerifiedScopes),
+      recommendation: 'Review replacing blanket verified-Marketplace allowance with the smallest explicit SHA-pinned action allowlist required by CURRENT_MAIN.',
+      protectedMutation: true,
+    }));
+  }
+  if (codeSecurityConfiguration?.codeScanningDefaultSetup === 'disabled') {
+    improvementFindings.push(Object.freeze({
+      id: 'CODE_SCANNING_DEFAULT_SETUP_DISABLED',
+      severity: 'MEDIUM',
+      state: 'REVIEW_RECOMMENDED',
+      recommendation: 'Review CodeQL/default setup against current entitlement and existing selective CodeQL architecture before any provider change.',
+      protectedMutation: true,
+    }));
+  }
+
+  return Object.freeze({
+    status: knownCore.every(Boolean) && selectedConstraintsComplete
+      ? 'PASS'
+      : 'PARTIAL_COVERAGE',
+    sourcePrecedence: Object.freeze(['enterprise', 'organization', 'repository']),
+    lowerScopesCannotBroadenParentPolicy: true,
+    actions: Object.freeze({
+      execution: actionsExecution,
+      shaPinningRequired,
+      defaultWorkflowPermissions,
+      canApprovePullRequestReviews,
+      selectedConstraintsComplete,
+      levels: actionLevels,
+      selectedActions: selectedLevels,
+    }),
+    deploymentEnvironments: environmentInventory,
+    codeSecurity: codeSecurityConfiguration,
+    improvementFindings: Object.freeze(improvementFindings),
   });
 }
