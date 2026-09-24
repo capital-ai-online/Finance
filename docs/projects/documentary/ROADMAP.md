@@ -1,6 +1,6 @@
 # CAPITAL-AI-DOC — Canonical Roadmap
 
-**Baseline:** `main@23be3c2d257020647884f46267e0c864ff003a68`
+**Baseline:** `main@a9f1be965ccb31e173019d507f78320f5fdad933`
 
 **Project:** `CAPITAL-AI-DOC`  
 **Folder:** `docs/projects/documentary/`  
