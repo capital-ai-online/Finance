@@ -4,6 +4,10 @@ import { createGitHubBillingGatewayAdapter } from './githubBillingGatewayAdapter
 import { createGitHubLicenseUsageReadClient } from './githubLicenseUsageReadClient.mjs';
 import { createGitHubUserBillingReadClient } from './githubUserBillingReadClient.mjs';
 import {
+  readRenderCostSnapshot,
+  readStripeSubscriptionSnapshot,
+} from './providerCostWatchRead.mjs';
+import {
   buildGitHubCostWatchReport,
   GITHUB_COST_WATCH_DEFAULT_START,
 } from './githubCostWatchPolicy.mjs';
@@ -114,7 +118,41 @@ if (userAccessToken) {
   };
 }
 
-const report = buildGitHubCostWatchReport({
+let renderCost;
+try {
+  renderCost = await readRenderCostSnapshot({
+    apiKey: process.env.CAPITAL_AI_RENDER_API_KEY,
+    workspaceId: process.env.CAPITAL_AI_RENDER_WORKSPACE_ID,
+    workspacePlan: process.env.CAPITAL_AI_RENDER_WORKSPACE_PLAN,
+  });
+} catch (error) {
+  renderCost = Object.freeze({
+    coverage: Object.freeze({
+      status: 'ERROR',
+      reason: `Render read failed with provider status ${Number.isInteger(error?.status) ? error.status : 'unknown'}`,
+    }),
+  });
+}
+
+let stripeSubscriptions;
+try {
+  stripeSubscriptions = await readStripeSubscriptionSnapshot({
+    apiKey: process.env.CAPITAL_AI_STRIPE_BILLING_READ_KEY,
+  });
+} catch (error) {
+  stripeSubscriptions = Object.freeze({
+    coverage: Object.freeze({
+      status: 'ERROR',
+      reason: `Stripe subscription read failed with provider status ${Number.isInteger(error?.status) ? error.status : 'unknown'}`,
+    }),
+    semantics: 'CUSTOMER_RECURRING_CHARGES_NOT_MERCHANT_OPERATING_COST',
+    activeSubscriptionCount: null,
+    recurringItems: Object.freeze([]),
+    monthlyEquivalentByCurrency: Object.freeze({}),
+  });
+}
+
+const githubReport = buildGitHubCostWatchReport({
   mode,
   generatedAt: now,
   startAt: new Date(startMs).toISOString(),
@@ -128,6 +166,15 @@ const report = buildGitHubCostWatchReport({
   personalCoverage,
 });
 
+const report = Object.freeze({
+  ...githubReport,
+  schemaVersion: '1.0.0',
+  providers: Object.freeze({
+    render: renderCost,
+    stripeSubscriptions,
+  }),
+});
+
 fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), { mode: 0o600 });
 
 process.stdout.write(`${JSON.stringify({
@@ -137,6 +184,19 @@ process.stdout.write(`${JSON.stringify({
   coverage: report.coverage,
   actionsMinutes: report.actionsMinutes,
   totals: report.totals,
+  providers: {
+    render: {
+      coverage: report.providers?.render?.coverage,
+      monthlyListPriceBaselineUsd: report.providers?.render?.monthlyListPriceBaselineUsd ?? null,
+      pipeline: report.providers?.render?.pipeline ?? null,
+      workflowCount: report.providers?.render?.workflows?.count ?? null,
+    },
+    stripeSubscriptions: {
+      coverage: report.providers?.stripeSubscriptions?.coverage,
+      activeSubscriptionCount: report.providers?.stripeSubscriptions?.activeSubscriptionCount ?? null,
+      monthlyEquivalentByCurrency: report.providers?.stripeSubscriptions?.monthlyEquivalentByCurrency ?? {},
+    },
+  },
   alertRowCount: report.alertRows.length,
   alertFingerprint: report.alertFingerprint,
   emailRequired: report.emailRequired,
