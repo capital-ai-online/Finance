@@ -4,9 +4,9 @@
 **Primary PVC:** PVC-02; supporting PVC-08/PVC-18  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Owner direction:** 2026-09-24 — complete the GitHub settings inventory, add effective-policy resolution, and produce versioned redacted JSON/Markdown exports  
-**Fresh baseline:** `main@206fc5f5ff200cd2929be067b5e555f9927bfacc`  
-**Branch:** `operations/github-settings-effective-export-20260924`  
-**Status:** IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING  
+**Fresh baseline:** `main@e3951f8a1b82f9f6fa272c33ecc57a1de4fd2736`  
+**Branch:** `operations/github-settings-read-failure-isolation-20260924`  
+**Status:** POST_MERGE_VALIDATION / FAILURE_ISOLATION_ON_BRANCH  
 **Merge authority:** HUMAN_MERGE_REQUIRED
 
 ## Purpose
@@ -88,3 +88,22 @@ The effective-policy layer may emit evidence-backed recommendations, but recomme
 - effective policy is `PARTIAL_COVERAGE` whenever a required parent/child policy read is unavailable;
 - improvement findings distinguish hardening opportunities from protected provider mutations;
 - no second GitHub settings registry or provider mutation authority is created.
+
+
+## Post-merge validation evidence — 2026-09-24
+
+Run `#35988980160` on `main@e3951f8a1b82f9f6fa272c33ecc57a1de4fd2736` reproduced an independent-stage control-flow defect:
+
+- `Read-only Enterprise License Usage Attribution` returned HTTP `403`;
+- the job exited before `Read-only GitHub Settings and Retention Inventory` executed;
+- therefore the newly configured Enterprise token could not be evaluated against the three Enterprise Actions settings endpoints;
+- no secret or token value was logged.
+
+The follow-up slice isolates each read-only evidence stage with its original step outcome and adds one final completion gate. Independent reads continue even after a peer-stage failure, while the overall workflow still fails if any required evidence stage did not succeed. Cleanup remains unconditional.
+
+### Additional acceptance criteria
+
+- an Enterprise license-read `403` must not suppress the Enterprise Actions settings inventory;
+- independent evidence failures remain observable as their original step outcomes;
+- the final job conclusion remains failing whenever a required read stage fails;
+- runner-temporary private-key and evidence cleanup still executes under `if: always()`.
