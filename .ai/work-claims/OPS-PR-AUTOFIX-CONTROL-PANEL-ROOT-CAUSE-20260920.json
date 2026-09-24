@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "OPS-PR-AUTOFIX-CONTROL-PANEL-ROOT-CAUSE-20260920",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -52,5 +52,9 @@
     "Deterministic CI expectation repair requires an individually registered repairer plus exact declared evidence tokens"
   ],
   "exitGate": "Observed PR build/test failures are repaired only through individually registered evidence-bound repairers; Decision/Evidence drift has one canonical writer; Governance reruns occur only after proven baseline/metadata mutation; the 45k Actions state remains a protected blocker; and the Control Panel projects the bounded finding-to-fix mapping without mutation authority.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, close, supersession or abandonment.",
+  "lastSyncedMainSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "releasedBy": "issue-1427 owner-correct reconciliation",
+  "releasedMainSha": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+  "releaseEvidence": "PR #1174 merged at 921620b2a672cc585bd627ecdeeec86ea51cb577; releaseCondition satisfied."
 }
