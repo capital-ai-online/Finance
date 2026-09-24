@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-QM-OSS-PR-FAST-RUNNER-DEDUP-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "QM-OSS-PR-FAST-RUNNER-DEDUP-01 — eliminate the redundant PR_FAST scope runner and avoid OSS Quality runs for irrelevant paths.",
+  "priority": "P1",
+  "priorityReason": "Private-repository hosted job billing rounds job execution time to whole minutes; a dedicated applicability runner adds avoidable cost before the actual optional PR_FAST assurance.",
+  "projectId": "CAPITAL-AI-QM",
+  "projectFolder": "docs/projects/quality-management/",
+  "projectStage": "cross-cutting independent assurance; no productive PVC",
+  "startedAt": "2026-09-24T15:55:00Z",
+  "baseBranch": "main",
+  "baseSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "branch": "agent/quality-oss-pr-fast-runner-dedup-20260924",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-QM-OSS-PR-FAST-RUNNER-DEDUP-20260924.json",
+    ".github/workflows/oss-quality-assurance.yml",
+    "scripts/pr/ossQualityAssuranceWorkflow.test.mjs",
+    "docs/projects/quality-management/work-packages/QM_OSS_PR_FAST_RUNNER_DEDUP_01_2026-09-24.md"
+  ],
+  "scopeBoundary": [
+    "Keep PR_FAST secret and dependency-regression assurance unchanged for relevant diffs.",
+    "Use GitHub-native pull_request paths to avoid allocating a runner for irrelevant diffs.",
+    "Collapse applicability and assurance from two hosted jobs to one relevant-path job.",
+    "Keep daily deep assurance unchanged.",
+    "No Required Check, merge authority, runtime, Render or production mutation."
+  ],
+  "exitEvidence": [
+    "PR_FAST workflow has one ubuntu-latest job.",
+    "Irrelevant documentary-only diffs do not trigger OSS Quality Assurance.",
+    "Relevant src/server/scripts/tests/dependency/workflow paths still trigger PR_FAST.",
+    "Gitleaks and OSV regression gates remain present and fail closed when evidence is unavailable.",
+    "Exact-head hosted checks pass before Human/CODEOWNER merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+}
