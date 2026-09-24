@@ -22,7 +22,7 @@ function assertUpstashUrl(value: string): URL {
 }
 
 function redisSafeTopic(topic: string): string {
-  if (!/^market:[a-z]+:[A-Z0-9._:-]+$/.test(topic)) {
+  if (!/^asset:[a-z]+:[A-Z0-9._:-]+$/.test(topic)) {
     throw new Error('MARKET_DATA_FANOUT_INVALID_TOPIC');
   }
   return topic;
