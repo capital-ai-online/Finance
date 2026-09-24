@@ -157,7 +157,7 @@ test('cadence-aware production baseline accepts queued ancestor lag and blocks t
   baseline.drift = { ...baseline.drift, productionToMainCommits: 3 };
   baseline.baselineId = computeProductionBaselineId(baseline);
 
-  const projected = prepareLeadingPrBody(canonicalBody(), baseline);
+  const projected = prepareLeadingPrBody(canonicalBody(), baseline, { prClass: 'C' });
   assert.equal(projected.eligible, true);
 
   const cadence = (overrides = {}) => ({
@@ -190,7 +190,7 @@ test('cadence-aware production baseline accepts queued ancestor lag and blocks t
   const wrongRepository = structuredClone(baseline);
   wrongRepository.production.repoSlug = 'other/repository';
   wrongRepository.baselineId = computeProductionBaselineId(wrongRepository);
-  const wrongRepositoryProjection = prepareLeadingPrBody(canonicalBody(), wrongRepository);
+  const wrongRepositoryProjection = prepareLeadingPrBody(canonicalBody(), wrongRepository, { prClass: 'C' });
   assert.equal(wrongRepositoryProjection.eligible, true);
   assert.equal(
     evaluateProductionBaseline(wrongRepositoryProjection.body, mainSha, headSha, {
