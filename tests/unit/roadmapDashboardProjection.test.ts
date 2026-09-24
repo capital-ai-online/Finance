@@ -156,8 +156,11 @@ describe('Roadmap dashboard projection', () => {
   it('uses only canonical branding and shared presentation contracts', () => {
     const dashboard = read('src/features/public/ui/RoadmapDashboard.tsx');
 
-    expect(dashboard).toContain("../../../shared/branding/CapitalAiLogo");
-    expect(dashboard).toContain("../../../shared/ui/Card");
+    expect(dashboard).toContain("./LandingPageTemplate");
+    expect(dashboard).toContain("LandingPanel");
+    expect(dashboard).not.toContain("../../../shared/ui/Card");
+    expect(dashboard).not.toContain("app-shell-frame");
+    expect(dashboard).not.toContain("ui-panel");
     expect(dashboard).toContain('text-brand-primary');
     expect(dashboard).toContain('text-roadmap-foundation');
     expect(dashboard).toContain('text-roadmap-automation');
@@ -168,6 +171,12 @@ describe('Roadmap dashboard projection', () => {
     expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.brandmark).toBe('docs/frontend/brandmark.json');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.designTokens).toBe(
       'docs/frontend/design-tokens.json',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.pageTemplate).toBe(
+      'src/features/public/ui/LandingPageTemplate.tsx',
+    );
+    expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.logoProjection).toBe(
+      'src/features/public/ui/frontend-port/components/BrandLogo.tsx',
     );
   });
 
