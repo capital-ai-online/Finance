@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "OPS-CI-VALIDATION-CLASSIFICATION-V2 — selective build/test and ChatGPT preflight convergence",
+  "startedAt": "2026-09-24T17:34:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "332861e4ae19f80c3bdc15dccf3733cdc52c265f",
+  "branch": "agent/operations-ci-validation-classification-v2-20260924",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-06/PVC-07",
+  "priority": "P0",
+  "priorityReason": "Fresh Owner direction requires selective affected-file PR validation and pre-PR ChatGPT preflight without weakening main, release, dependency or security gates.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-CI-VALIDATION-CLASSIFICATION-V2-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-02-CI-01E-20260921.json",
+    ".github/workflows/ci.yml",
+    "scripts/pr/runtimeConsumedArtifacts.mjs",
+    "scripts/pr/classifyPrScope.mjs",
+    "scripts/pr/classifyPrScope.test.mjs",
+    "scripts/pr/planPrValidation.mjs",
+    "scripts/pr/planPrValidation.test.mjs",
+    "docs/projects/operations/work-packages/OPS_CI_VALIDATION_CLASSIFICATION_V2_2026-09-24.md"
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession, or abandonment; no agent self-merge."
+}
