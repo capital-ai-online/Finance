@@ -692,7 +692,7 @@ test('PR #1364 treats later Production movement as a new baseline generation and
   };
   firstBaseline.baselineId = computeProductionBaselineId(firstBaseline);
 
-  const first = prepareLeadingPrBody(canonicalBody(), firstBaseline, { prClass: 'D' });
+  const first = prepareLeadingPrBody(canonicalBody(), firstBaseline, { prClass: 'C' });
   assert.equal(first.eligible, true);
   assert.equal(first.structureChanged, false);
   assert.equal(first.baselineChanged, true);
@@ -707,7 +707,7 @@ test('PR #1364 treats later Production movement as a new baseline generation and
 
   assert.notEqual(nextBaseline.baselineId, firstBaseline.baselineId);
 
-  const second = prepareLeadingPrBody(first.body, nextBaseline, { prClass: 'D' });
+  const second = prepareLeadingPrBody(first.body, nextBaseline, { prClass: 'C' });
   assert.equal(second.eligible, true);
   assert.equal(second.structureChanged, false);
   assert.equal(second.baselineChanged, true);
@@ -718,7 +718,7 @@ test('PR #1364 treats later Production movement as a new baseline generation and
   assert.equal((second.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->/g) || []).length, 1);
   assert.equal((second.body.match(/<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->/g) || []).length, 1);
 
-  const stable = prepareLeadingPrBody(second.body, nextBaseline, { prClass: 'D' });
+  const stable = prepareLeadingPrBody(second.body, nextBaseline, { prClass: 'C' });
   assert.equal(stable.eligible, true);
   assert.equal(stable.changed, false);
   assert.equal(stable.structureChanged, false);
