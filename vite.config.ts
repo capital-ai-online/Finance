@@ -5,7 +5,7 @@ import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 
 const packageMetadata = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'),
+  fs.readFileSync(path.resolve(import.meta.dirname, 'package.json'), 'utf8'),
 ) as { version: string };
 
 const PLATFORM_SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -43,7 +43,7 @@ type TokenNode = {
 };
 
 const designTokens = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, 'docs/frontend/design-tokens.json'), 'utf8'),
+  fs.readFileSync(path.resolve(import.meta.dirname, 'docs/frontend/design-tokens.json'), 'utf8'),
 ) as Record<string, unknown>;
 
 function tokenValue(pathSegments: string[]): unknown {
@@ -167,7 +167,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     build: {

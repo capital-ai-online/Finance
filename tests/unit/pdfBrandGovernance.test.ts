@@ -62,7 +62,7 @@ describe('P0 CAPITAL-AI PDF brand governance', () => {
     const clientVersion = read('src/platform/Release/clientVersion.ts');
 
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+(?:[-+].+)?$/);
-    expect(viteConfig).toContain("fs.readFileSync(path.resolve(__dirname, 'package.json')");
+    expect(viteConfig).toContain("fs.readFileSync(path.resolve(import.meta.dirname, 'package.json')");
     expect(viteConfig).toContain('__CAPITAL_AI_VERSION__');
     expect(clientVersion).toContain('requireInjectedPlatformVersion(__CAPITAL_AI_VERSION__)');
     expect(clientVersion).toContain('export const CAPITAL_AI_VERSION');
