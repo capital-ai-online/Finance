@@ -11,17 +11,21 @@ test('WP-06E remains subordinate to SH-02 and emits evidence only', async () => 
   assert.match(workflow, /does not create Finding\/Action\/Budget authority/);
 });
 
-test('WP-06E preserves stale-main cancellation and idempotent branch collision handling', async () => {
+test('WP-06E verifies an existing AUTO_SYNC branch exactly before idempotent reuse', async () => {
   const workflow = await fs.readFile('.github/workflows/documentary-change-impact.yml', 'utf8');
 
   assert.match(workflow, /group:\s*documentary-change-impact-main/);
   assert.match(workflow, /cancel-in-progress:\s*true/);
   assert.match(workflow, /Staler Documentary-Impact-Run/);
   assert.match(workflow, /CURRENT_MAIN drift before AUTO_SYNC write/);
-  assert.match(workflow, /AUTO_SYNC branch already exists: \$\{branch\}; idempotent reuse/);
-  assert.match(workflow, /Branch collision: `IDEMPOTENT_REUSE`/);
+  assert.match(workflow, /Existing AUTO_SYNC branch is not a single commit over exact source SHA/);
+  assert.match(workflow, /compare\/\{basehead\}/);
+  assert.match(workflow, /Existing AUTO_SYNC branch changed-file set does not match the fresh plan/);
+  assert.match(workflow, /Existing AUTO_SYNC branch patch content mismatch/);
+  assert.match(workflow, /Existing AUTO_SYNC branch claim mismatch against the fresh maintenance handoff/);
+  assert.match(workflow, /verified idempotent reuse/);
+  assert.match(workflow, /Branch collision: `IDEMPOTENT_REUSE_AFTER_EXACT_TREE_AND_CLAIM_VERIFICATION`/);
 });
-
 test('WP-06E keeps protected authority out of the Documentary workflow', async () => {
   const workflow = await fs.readFile('.github/workflows/documentary-change-impact.yml', 'utf8');
 
