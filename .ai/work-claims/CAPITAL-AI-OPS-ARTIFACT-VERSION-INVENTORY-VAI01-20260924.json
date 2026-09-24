@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI01-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -49,5 +49,13 @@
     "Inventory generation performs no repository content rewrite.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation.",
+  "releasedAt": "2026-09-24T20:49:00Z",
+  "releaseEvidence": {
+    "reason": "Human/CODEOWNER merge completed",
+    "mergedPr": "#1430",
+    "mergeCommit": "b23d4c2e1bb00fb0db18cfcd77108e709b532ffa",
+    "verifiedCurrentMain": "ea9fafc03aa9e05ee9e2f801da09c50392cd1ecc",
+    "continuation": "VAI-02 producer-consumer graph remains a separate owner-correct slice under Issue #1429."
+  }
 }
