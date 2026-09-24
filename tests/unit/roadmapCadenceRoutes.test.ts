@@ -8,6 +8,13 @@ function response(value: unknown): Response {
   });
 }
 
+function contentsResponse(value: unknown): Response {
+  return response({
+    encoding: 'base64',
+    content: Buffer.from(JSON.stringify(value), 'utf8').toString('base64'),
+  });
+}
+
 describe('roadmap cadence live projection', () => {
   it('projects latest GitHub main separately from an older healthy Production identity', async () => {
     const currentMain = 'f'.repeat(40);
@@ -30,8 +37,8 @@ describe('roadmap cadence live projection', () => {
           { sha: 'c'.repeat(40), parents: [{ sha: '0'.repeat(40) }], commit: { message: 'older' } },
         ]);
       }
-      if (url.includes('DETERMINISTIC_VERSIONING_RULE_CONTRACT.json')) {
-        return response({
+      if (url.includes('/contents/docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json?ref=')) {
+        return contentsResponse({
           version: '1.1.0',
           automaticMaterializationPolicy: {
             mode: 'MERGED_PR_CADENCE_PATCH',
@@ -39,7 +46,9 @@ describe('roadmap cadence live projection', () => {
           },
         });
       }
-      if (url.endsWith('/main/package.json')) return response({ version: '0.6.0' });
+      if (url.includes('/contents/package.json?ref=')) {
+        return contentsResponse({ version: '0.6.0' });
+      }
       if (url.includes('/compare/')) return response({ status: 'ahead' });
       throw new Error('Unexpected URL ' + url);
     }) as typeof fetch;
@@ -55,6 +64,12 @@ describe('roadmap cadence live projection', () => {
 
     expect(projection.repository.currentMainSha).toBe(currentMain);
     expect(projection.production.commitSha).toBe(productionSha);
+    expect(fetchMock.mock.calls.some(([url]) =>
+      String(url).includes('/contents/package.json?ref=' + currentMain),
+    )).toBe(true);
+    expect(fetchMock.mock.calls.some(([url]) =>
+      String(url).includes('/contents/docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json?ref=' + currentMain),
+    )).toBe(true);
     expect(projection.cadence).toMatchObject({
       mode: 'CADENCE_5_10',
       activationPullRequest: 1336,
