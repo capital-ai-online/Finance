@@ -5,14 +5,23 @@ WORKDIR /app
 
 # Materialize the pinned Google Analytics MCP provider in the existing builder stage.
 # This preserves the canonical three-stage Docker contract; the final runtime receives
-# only the completed venv and does not resolve Python packages at request time.
+# only the completed venv and does not resolve Python packages at request time.\n# Package managers are build-only tooling and are removed from the copied runtime venv after validation.
 RUN apk add --no-cache python3 py3-pip \
   && python3 -m venv /opt/ga4-mcp \
   && /opt/ga4-mcp/bin/pip install --no-cache-dir analytics-mcp==0.7.0 msgpack==1.2.1 setuptools==78.1.1 \
+  && /opt/ga4-mcp/bin/pip check \
   && test -x /opt/ga4-mcp/bin/analytics-mcp \
-  && /opt/ga4-mcp/bin/python -c "import analytics_mcp; import google.analytics.admin_v1beta; import google.analytics.data_v1beta" \
+  && /opt/ga4-mcp/bin/python -c "import analytics_mcp; import google.analytics.admin_v1beta; import google.analytics.data_v1beta; import importlib.metadata as md; assert md.version('msgpack') == '1.2.1'" \
   && rm -rf /root/.cache \
-  && rm -f /opt/ga4-mcp/bin/pip /opt/ga4-mcp/bin/pip3 /opt/ga4-mcp/bin/pip3.*
+    /opt/ga4-mcp/lib/python*/site-packages/pip \
+    /opt/ga4-mcp/lib/python*/site-packages/pip-*.dist-info \
+    /opt/ga4-mcp/lib/python*/site-packages/setuptools \
+    /opt/ga4-mcp/lib/python*/site-packages/setuptools-*.dist-info \
+    /opt/ga4-mcp/lib/python*/site-packages/_distutils_hack \
+    /opt/ga4-mcp/lib/python*/site-packages/pkg_resources \
+  && rm -f /opt/ga4-mcp/lib/python*/site-packages/distutils-precedence.pth \
+    /opt/ga4-mcp/bin/pip /opt/ga4-mcp/bin/pip3 /opt/ga4-mcp/bin/pip3.* \
+  && /opt/ga4-mcp/bin/python -c "import analytics_mcp; import google.analytics.admin_v1beta; import google.analytics.data_v1beta; import importlib.metadata as md, importlib.util as iu; assert md.version('msgpack') == '1.2.1'; assert iu.find_spec('pip') is None; assert iu.find_spec('setuptools') is None"
 
 # Never execute Node dependency lifecycle scripts as root. The official Node image already
 # provides the unprivileged `node` identity; keep the complete application build under that user.
