@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-LANDING-DESIGN-ROADMAP-TEMPLATE-20260924",
   "status": "active",
   "exclusive": true,
@@ -36,5 +36,15 @@
   "recorrelatedAt": "2026-09-24",
   "recorrelationNote": "Synchronized after CURRENT_MAIN advanced through PR #1369; main delta was FINTECH-only and had no claimed-path overlap.",
   "previousBranch": "frontend/landing-design-roadmap-template-20260924",
-  "branchNormalizationReason": "Canonical pre-create validator requires an approved agent namespace; project identity remains explicit through the frontend slug and CAPITAL-AI-FE claim."
+  "branchNormalizationReason": "Canonical pre-create validator requires an approved agent namespace; project identity remains explicit through the frontend slug and CAPITAL-AI-FE claim.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectStage": "cross-cutting; no productive PVC",
+  "workItemDE": "Landingpage-Design für Roadmap und Branding Kit übernehmen",
+  "priority": "P1",
+  "priorityReason": "Fresh Human/Owner direction replaces a visibly stale public Roadmap/dashboard presentation contract and aligns the canonical Branding Kit with the productive Landingpage without changing domain semantics.",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  }
 }
