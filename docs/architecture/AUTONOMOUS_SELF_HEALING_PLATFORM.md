@@ -243,6 +243,25 @@ This rule creates no new remediation action, finding namespace, writer, schedule
 
 Implementation planning and observed evidence are captured in `docs/projects/operations/work-packages/OPS_SH02_PR_EVIDENCE_CASCADE_01_2026-09-24.md`. PRs #1377/#1378/#1380 are terminal merged evidence and no longer active writers. Closed/unmerged #1379 remains historical evidence only.
 
+### 9.2 Post-Merge Roadmap closure correlation — SH-02.13
+
+After a Human/CODEOWNER merge, Roadmap/work-package closure is part of convergence rather than a separate lifecycle. The existing post-merge path must re-read exact `CURRENT_MAIN`, prove the merged commit is contained by that generation, resolve canonical Project/Owner/PVC and bind the merge to the canonical Roadmap/work-package identity before any completion state is derived.
+
+Completion is evidence-bound:
+
+- `DONE_MAIN / TERMINAL` requires every explicit exit criterion of the canonical work package to be satisfied by the merged/current-main generation;
+- `MERGED_MAIN / EVIDENCE_GATE` is used when repository integration is complete but an explicit downstream Production/runtime/Security/QM/Compliance/domain criterion remains open;
+- `PARTIAL_MAIN / ACTIVE` preserves a package whose merged PR completed only a bounded child slice;
+- missing/ambiguous identity, stale generation, contradictory Owner/PVC or incomplete evidence fails closed as `BLOCKED_CORRELATION`.
+
+The immediate public/live Roadmap state may be derived read-only from the verified CURRENT_MAIN generation. Persistent changes to canonical Roadmap/work-package Markdown or associated work-claim state remain repository mutations and therefore use the existing branch-only repository-projection reconciliation lane; they never write directly to `main` and remain Human/CODEOWNER-merge gated.
+
+The closure generation is idempotent on `(mergedPrNumber, mergeCommitSha, workPackageId, exitEvidenceDigest)`. Replaying the same fingerprint is a no-op. A metadata-only Roadmap closure synchronization PR cannot recursively create a productive work item or trigger another closure mutation for the same fingerprint.
+
+This capability must reuse current Post-Merge Production Correlation, Project/Owner/PVC resolution, `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`, work-claim/overlap semantics and the exact-CURRENT_MAIN live Roadmap projection. It creates no second Roadmap registry, scheduler, queue, Supervisor, writer family, merge authority or direct-main exception. Foreign-owner closure findings are handed to the canonical owner rather than mutated by OPS.
+
+Detailed planning and acceptance evidence: `docs/projects/operations/work-packages/OPS_SH02_POST_MERGE_ROADMAP_CLOSURE_2026-09-24.md`.
+
 ## 10. Rollout
 
 1. **Foundation** — consolidate process health/lifecycle, bounded frontend stale-asset recovery, architecture/supersession.
