@@ -2,11 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   MARKET_DATA_CONTRACT_VERSION,
   type CanonicalMarketDataSnapshot,
-  type MarketDataProvider,
-  type SnapshotRequest,
 } from '../../src/platform/MarketData/contracts';
-import { MarketDataGateway } from '../../src/platform/MarketData/MarketDataGateway';
-import { ProviderRegistry } from '../../src/platform/MarketData/ProviderRegistry';
 import {
   MARKET_DATA_FANOUT_CONTRACT_VERSION,
   type MarketDataFanoutTick,
@@ -152,46 +148,25 @@ describe('Tier 3 market-data cache and fan-out', () => {
     expect((calls[0].init?.headers as Record<string, string>).Authorization).toBe('Bearer server-secret-token');
   });
 
-  it('bindet Fan-out ausschließlich an akzeptierte Provider-Evidence und isoliert Fan-out-Fehler vom Gateway', async () => {
-    const request: SnapshotRequest = {
-      symbol: 'BTC',
-      assetClass: 'crypto',
-      correlationId: 'corr-tier3',
-      maxAgeMs: 10_000,
-    };
-    const provider: MarketDataProvider = {
-      descriptor: {
-        id: 'test-primary',
-        role: 'primary',
-        capabilities: ['snapshot'],
-        assetClasses: ['crypto'],
-        enabled: true,
-        priority: 1,
-      },
-      getSnapshot: vi.fn(async input => snapshot({
-        provider: 'test-primary',
-        symbol: input.symbol,
-        assetClass: input.assetClass,
-        correlationId: input.correlationId,
-      })),
-    };
-    const registry = new ProviderRegistry();
-    registry.register(provider);
-    const sink = { publish: vi.fn(() => Promise.reject(new Error('redis unavailable'))) };
-    const onFanoutFailure = vi.fn();
-    const gateway = new MarketDataGateway(registry, { fanoutSink: sink, onFanoutFailure });
+  it('lässt evidence-lose Daten nicht in den Fan-out und isoliert einen Redis-Ausfall vom lokalen Ring', async () => {
+    const redis = {
+      writeAndPublish: vi.fn(() => Promise.reject(new Error('redis unavailable'))),
+      loadRecent: vi.fn(async () => []),
+      subscribe: vi.fn(async () => undefined),
+    } as unknown as UpstashRedisRestFanout;
+    const onFanoutError = vi.fn();
+    const hub = new MarketDataFanoutHub({ redis, onFanoutError });
 
-    const result = await gateway.getSnapshot(request);
-    await Promise.resolve();
-
-    expect(result.snapshot.qualityState).toBe('LIVE');
-    expect(sink.publish).toHaveBeenCalledTimes(1);
-    expect(onFanoutFailure).toHaveBeenCalledTimes(1);
-
-    const hub = new MarketDataFanoutHub();
     hub.publish(snapshot({ evidenceId: null }));
     expect(hub.ringBuffer.size('asset:crypto:BTC')).toBe(0);
+    expect(redis.writeAndPublish).not.toHaveBeenCalled();
+
     hub.publish(snapshot());
     expect(hub.ringBuffer.size('asset:crypto:BTC')).toBe(1);
+    expect(redis.writeAndPublish).toHaveBeenCalledTimes(1);
+
+    await Promise.resolve();
+    expect(onFanoutError).toHaveBeenCalledWith('redis-write', expect.any(Error));
+    expect(hub.ringBuffer.recent('asset:crypto:BTC', 1)[0].price).toBe(112345.67);
   });
 });
