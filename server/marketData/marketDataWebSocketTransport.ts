@@ -104,9 +104,12 @@ export function encodeServerWebSocketText(payload: string): Buffer {
   return encodeFramePayload(Buffer.from(payload, 'utf8'), 0x1);
 }
 
-function encodeServerWebSocketControl(opcode: 0x8 | 0x9 | 0xA, payload = Buffer.alloc(0)): Buffer {
-  if (payload.length > 125) throw new Error('MARKET_DATA_WS_CONTROL_FRAME_TOO_LARGE');
-  return encodeFramePayload(payload, opcode);
+function encodeServerWebSocketControl(
+  opcode: 0x8 | 0x9 | 0xA,
+  payload: Uint8Array = new Uint8Array(),
+): Buffer {
+  if (payload.byteLength > 125) throw new Error('MARKET_DATA_WS_CONTROL_FRAME_TOO_LARGE');
+  return encodeFramePayload(Buffer.from(payload), opcode);
 }
 
 export function encodeMaskedClientWebSocketTextForTest(payload: string, mask = Buffer.from([1, 2, 3, 4])): Buffer {
