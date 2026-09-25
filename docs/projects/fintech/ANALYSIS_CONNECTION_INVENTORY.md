@@ -41,6 +41,24 @@ Die Registry ist eine Verifikations-/Indexoberfläche. Sie ersetzt weder \`Provi
 | Individual | Individual Bond Scoring Proposal | Bonds · individuelle Staats-/Unternehmensanleihen | DISABLED bis Review + Golden-Dataset-Backtest + explizite Promotion abgeschlossen sind |
 | Individual | Altcoin Pattern Research Scorer | Crypto · Altcoin Pattern Research | Spezialisierte OHLC-/Pattern-Evidence, nur Research-Kontext bis unabhängig validiert |
 | Hybrid | Profi Market Screener | Multi-Asset · verifiziertes Screening | Live Discovery + kanonische Score-/Evidence-Projektion; keine route-lokale Score-Erzeugung |
+| Data Authority & Evidence | Crypto Momentum Research | Crypto · Momentum/Flow Context | Evidenced Returns/Flow/Liquidity; Research-only und fehlende Faktoren nie als Null/Neutral ersetzen |
+| Data Authority & Evidence | Crypto Regime Research | Crypto · Marktregime-Kontext | Momentum/Sentiment/Liquidity/Flow/Volatilität evidenzgebunden klassifizieren; kein produktiver Score |
+| Individual | Crypto Pattern Confluence Research | Crypto · Multi-Timeframe Pattern Evidence | PatternSignalResolver + mindestens zwei gleichgerichtete Timeframes und >=4h-Bestätigung; Research-only |
+| Hybrid | Crypto Signal Fusion Research | Crypto · Research Signal Fusion | Submodelle erst nach eigener Evidence-Prüfung fusionieren; ausdrücklich keine Trade-/Order-Authority |
+| Individual | Crypto Kill-Switch Research Telemetry | Crypto · Risk-Telemetry | Separater Risk-Telemetry-Vertrag; Research-Defaults dürfen nicht zu Production Policy werden |
+| Individual | Buffett Value Check | Aktien · verified fundamentals/display + manuelle Szenarioannahmen | Valuation-Pfad über Evidence/Provenance; COMPATIBILITY_ONLY bis vollständige owner-authoritative Migration |
+| Individual | Monte-Carlo Risk Engine | Portfolio / Multi-Asset · Szenariosimulation | Governed Simulation Contract erforderlich; aktueller Client-Simulationspfad bleibt BLOCKED |
+| Hybrid | Quantitative Backtest Engine | Crypto, Aktien, Forex, Rohstoffe · Historical Strategy Backtest | Canonical History/Evidence + geschützte Execution; aktueller History-Pfad COMPATIBILITY_ONLY |
+| Hybrid | Portfolio Allocation Backtester | Portfolio / Multi-Asset · gewichtetes Portfolio vs Equal-Weight Benchmark | Canonical per-Asset History + Weight Contract + protected execution; COMPATIBILITY_ONLY |
+| Individual | Portfolio Performance Legacy Dashboard | Portfolio · synthetische Legacy-Performance | Verified NAV-/Performance-Evidence erforderlich; aktuelle synthetische Kurve/fixe KPIs BLOCKED |
+| Hybrid | Legacy Screener | Multi-Asset · Legacy Screening Simulation | Durch Profi Market Screener / Canonical Score+Ranking supersedieren; pseudo-random Scores/Patterns BLOCKED |
+| Hybrid | Charts Technical Analysis | Crypto, Aktien, Forex, Index, Rohstoffe · technische Charts | Verified OHLCV + Canonical Score Projection; /api/charts-scoring ist NON_PRODUCTION_SIMULATION, daher BLOCKED |
+| Individual | Market Sentiment Heatmap Creator | Crypto, Aktien, Forex, Multi-Asset · Heatmap Sandbox | Nur evidenzgebundene Sentiment-/Pattern-Features; preset/pseudo-abgeleitete Finanzwerte BLOCKED |
+| Individual | Real-Time Risk Assessment / VaR | Portfolio / Multi-Asset · archivierte Risk-Zentrale | Nur nach Owner-Reaktivierung und verifiziertem Risk Contract; aktuell DISABLED |
+| Individual | Favorite Asset Live Pattern Slots | Crypto · Binance Spot 1h/4h | Read-only Pattern Evidence; Browser-Direct-Providerzugriff hinter governed Gateway migrieren; COMPATIBILITY_ONLY |
+| Individual | Asset Universe What-If Scoring Sandbox | Multi-Asset · slider-basierte Legacy-Modelle | Nur Registry-gelieferte Modelle/Formeln; hard-coded Modelle/Example Scores BLOCKED |
+| Data Authority & Evidence | Enterprise Scorer Workbench | Crypto, Aktien, Forex, Index · Canonical Score Consumer | Canonical Endpoints + Provenance/Model-Lineage; UI erzeugt keinen eigenen Score |
+| Data Authority & Evidence | Raw Materials Dashboard | Rohstoffe · canonical commodity score + Research-Challenger | Canonical Commodity Score strikt von Research-/Category-Projektionen trennen |
 
 ## Vertragsprofile
 
@@ -216,6 +234,104 @@ currency risk              6 %
 \`\`\`
 
 Der Vertrag ist nicht produktiv ausführbar.
+
+## Research-, Compatibility- und Blocked-Modelle
+
+### Crypto Momentum Research — research only
+
+Modell: `crypto-momentum-research/0.1.0`
+
+```text
+trend =
+  0.25 × tanh(return_1h × 20)
++ 0.20 × tanh(return_4h × 12)
++ 0.20 × tanh(return_1d × 8)
++ 0.20 × tanh(trendStrength)
++ 0.15 × tanh(relativeStrength)
+
+flow nominal:
+volumeRatio 35 % · volumeAcceleration 25 %
+openInterestChange 20 % · liquidityChange 20 %
+
+raw      = 0.62 × trend + 0.38 × flow
+adjusted = raw - RSI/funding/liquidity penalties
+score    = logistic(adjusted), projected to 0..100
+```
+
+Fehlende optionale Flow-Faktoren werden nicht zu Null gemacht; verfügbare Gewichte werden renormalisiert. `scoreEligible=false`, `executionEligible=false`.
+
+### Crypto Signal Fusion Research — research only
+
+Modell: `crypto-signal-fusion-research/0.1.0`
+
+```text
+researchTradeScore =
+  0.30 × regimeFit
++ 0.25 × momentumScore
++ 0.20 × patternQuality
++ 0.15 × sentimentScore
++ 0.10 × executionQuality
+
+sourceThresholdsMet = researchTradeScore >= 70 && regimeFit >= 60
+```
+
+Auch bei erfülltem Threshold entsteht **keine** Trade-/Order-Freigabe.
+
+### Buffett Value Check — compatibility only
+
+```text
+Graham =
+  EPS × (8.5 + 2 × growth) × bondYieldFactor / aaaBondYield
+
+DCF =
+  Σ(projectedCashFlowPerShare_year / (1 + discountRate)^year)
+  + terminalPrice / (1 + discountRate)^projectionYears
+
+Margin of Safety =
+  (consensusValue - marketPrice) / consensusValue × 100
+```
+
+Verified Asset Display/Fundamentals und manuelle Szenarioannahmen bleiben getrennt provenance-markiert.
+
+### Monte-Carlo Risk Engine — blocked
+
+```text
+Price_t =
+  Price_(t-1) × exp((r - 0.5 × σ²) × Δt + σ × W × sqrt(Δt))
+
+VaR95 = initialCapital - percentile_5(finalValues)
+```
+
+Die vorhandene Client-Simulation wird inventarisiert, aber wegen unvollständiger Execution-/Input-Authority **nicht** als kanonischer Benchmarkpfad freigegeben.
+
+### Portfolio Allocation Backtester — compatibility only
+
+```text
+portfolioValue_t =
+  Σ(initialCapital × weight_i × price_i,t / firstPrice_i)
+
+equalWeightBenchmark_t =
+  Σ(initialCapital × (1/N) × price_i,t / firstPrice_i)
+
+annualizedVolatility =
+  stdev(dailyReturns) × sqrt(365) × 100
+
+Sharpe =
+  (CAGR - 2.5 %) / annualizedVolatility
+```
+
+Der aktuelle `/api/backtest-history`-Kompatibilitätspfad muss für kanonischen Status noch vollständig auf owner-authoritative History/Evidence konvergieren.
+
+### Explizit blockierte Legacy-Semantik
+
+- **Portfolio Performance:** synthetische Sinus-/Cosinus-Kurve und feste Sharpe/Drawdown/Volatilität/VaR-Werte.
+- **Legacy Screener:** symbolbasierte Pseudozufalls-Score-/Preis-Offsets, fest verdrahtete Pattern und erzwungener Score für bestimmte Pattern.
+- **Charts:** lokale technische Indikatoren sind darstellbar, aber `/api/charts-scoring` ist `NON_PRODUCTION_SIMULATION`.
+- **Heatmap Creator:** Preset-Bullish/Bearish-Werte, aus Market Cap geschätztes Volumen und symbol-hash-basierte Pattern.
+- **Asset Universe Sandbox:** route-lokale Modelle, Gewichte und Example Scores; künftig ausschließlich Registry-/Contract-Projektion.
+- **Real-Time Risk Assessment:** Modul ist deaktiviert und liefert aktuell `null`.
+
+Diese Pfade erscheinen in `/datacalculator`, damit sie sichtbar benchmark-/migrationsfähig sind; ihr Status-Gate verhindert aber, dass sie als produktive Zielarchitektur ausgewählt werden.
 
 ## /datacalculator
 
