@@ -57,6 +57,15 @@ const ROUTES = [
       'CAPITAL-AI Market Vocabulary: freigegebene Begriffe, Definitionen, Aliase und Thesaurus-Begriffe.',
   },
   {
+    routePath: '/datacalculator',
+    file: 'datacalculator/index.html',
+    title: 'Data Calculator – CAPITAL-AI Workflow Lab',
+    description:
+      'Analyse- und Scoring-Anbindungen in CAPITAL-AI als Evidence-gebundene Workflows vergleichen, zusammensetzen, validieren und lokal benchmarken.',
+    noscript:
+      'CAPITAL-AI Data Calculator: Analyse- und Scoring-Anbindungen als Evidence-gebundene Workflows vergleichen und validieren.',
+  },
+  {
     routePath: '/impressum',
     file: 'impressum/index.html',
     title: 'Impressum – CAPITAL-AI',
