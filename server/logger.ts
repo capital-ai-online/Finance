@@ -81,6 +81,7 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
         clientIpHash: client.clientIpHash, clientNetwork: client.clientNetwork, userAgent: client.userAgent,
         traceId: traceParent?.traceId, parentSpanId: traceParent?.parentSpanId, traceFlags: traceParent?.traceFlags,
         edgeRayId: edgeTrust.edgeRayId, edgeTrust: edgeTrust.state, edgeTrustReason: edgeTrust.reason,
+        edgeTrustEvidence: edgeTrust.evidence,
       });
     }
 
@@ -90,6 +91,7 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
       clientIpHash: client.clientIpHash, clientNetwork: client.clientNetwork, userAgent: client.userAgent,
       traceId: traceParent?.traceId, parentSpanId: traceParent?.parentSpanId, traceFlags: traceParent?.traceFlags,
       edgeRayId: edgeTrust.edgeRayId, edgeTrust: edgeTrust.state, edgeTrustReason: edgeTrust.reason,
+        edgeTrustEvidence: edgeTrust.evidence,
       securitySignal: probeFamily ? 'reconnaissance-probe' : undefined, probeFamily: probeFamily ?? undefined,
       burstDetected: detection?.burstDetected, technologyEnumerationDetected: detection?.technologyEnumerationDetected,
       requestsInBurstWindow: detection?.requestsInBurstWindow, distinctFamiliesInEnumerationWindow: detection?.distinctFamiliesInEnumerationWindow,

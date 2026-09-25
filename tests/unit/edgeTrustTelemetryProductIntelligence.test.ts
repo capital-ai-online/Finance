@@ -39,6 +39,18 @@ describe('Cloudflare -> Render edge trust', () => {
       reason: 'trusted',
       clientIp: '203.0.113.7',
       edgeRayId: '230b030023ae2822-FRA',
+      evidence: {
+        renderRuntime: true,
+        sharedSecretConfigured: true,
+        canonicalHost: true,
+        forwardedProtoHttps: true,
+        edgeTokenPresent: true,
+        edgeTokenMatched: true,
+        clientIpPresent: true,
+        clientIpValid: true,
+        rayIdPresent: true,
+        rayIdValid: true,
+      },
     });
     expect(getClientIp(renderRequest(), { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('203.0.113.7');
@@ -58,18 +70,50 @@ describe('Cloudflare -> Render edge trust', () => {
   });
 
   it('fails closed when the edge secret is missing or mismatched', () => {
-    expect(resolveCloudflareRenderEdgeTrust(renderRequest(), {
+    const missingSecret = resolveCloudflareRenderEdgeTrust(renderRequest(), {
       isRender: true,
       sharedSecret: undefined,
-    }).reason).toBe('missing-shared-secret');
+    });
+    expect(missingSecret.reason).toBe('missing-shared-secret');
+    expect(missingSecret.evidence).toMatchObject({
+      sharedSecretConfigured: false,
+      canonicalHost: true,
+      forwardedProtoHttps: true,
+      edgeTokenPresent: true,
+      edgeTokenMatched: null,
+      clientIpValid: true,
+      rayIdValid: true,
+    });
 
     const request = renderRequest({ [EDGE_TRUST_HEADER]: 'attacker-controlled-token-value!!' });
-    expect(resolveCloudflareRenderEdgeTrust(request, {
+    const mismatched = resolveCloudflareRenderEdgeTrust(request, {
       isRender: true,
       sharedSecret: EDGE_SECRET,
-    }).reason).toBe('edge-token-mismatch');
+    });
+    expect(mismatched.reason).toBe('edge-token-mismatch');
+    expect(mismatched.evidence.edgeTokenMatched).toBe(false);
     expect(getClientIp(request, { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('10.0.0.7');
+  });
+
+  it('keeps fail-closed evidence useful when the edge token is absent', () => {
+    const edge = resolveCloudflareRenderEdgeTrust(renderRequest({
+      [EDGE_TRUST_HEADER]: undefined,
+    }), { isRender: true, sharedSecret: EDGE_SECRET });
+
+    expect(edge.reason).toBe('missing-edge-token');
+    expect(edge.evidence).toMatchObject({
+      renderRuntime: true,
+      sharedSecretConfigured: true,
+      canonicalHost: true,
+      forwardedProtoHttps: true,
+      edgeTokenPresent: false,
+      edgeTokenMatched: null,
+      clientIpPresent: true,
+      clientIpValid: true,
+      rayIdPresent: true,
+      rayIdValid: true,
+    });
   });
 
   it('rejects malformed Cloudflare identity metadata', () => {
