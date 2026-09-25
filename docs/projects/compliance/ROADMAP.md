@@ -40,6 +40,16 @@ The package operationalizes the already-existing `REQ-COMP-038 = UNKNOWN` gate t
 
 **Exit:** `FINREG_PERIMETER_EVIDENCE_READY` only after every material recommendation-like financial/crypto surface is factually inventoried, WpIG/MAR and MiCAR classifications are competently dispositioned, conditional DORA/GwG/§34f consequences remain evidence-gated, remuneration/conflicts are mapped, and all productive remediation is routed to the actual canonical owner.
 
+### FINREG evidence refresh — 2026-09-25
+
+**Evidence pack:** `../../compliance/CAPITAL-AI-COMP/evidence/COMP_FINREG_01_MIFID17_MICAR_DORA_EVIDENCE_2026-09-25.md`
+
+- MiFID II Article 17 / RTS 6: `CONDITIONAL_TRIGGER_NOT_CURRENTLY_EVIDENCED`; no productive broker/order/execution path is evidenced and FT-7+ remains unauthorised. This is not a legal exemption.
+- MiCAR/BaFin: `SERVICE_CLASSIFICATION_REQUIRED`; Article 66/81 evidence families are defined but legal/service classification remains Human/Legal.
+- DORA: `APPLICABILITY_HELD / ENGINEERING_EVIDENCE_PARTIAL`; ICT risk, incidents, resilience testing, third-party/register/exit and recovery evidence are mapped.
+- `REQ-COMP-032 / COMP-GAP-007` remains an open measured recovery-evidence gap.
+
+
 ## Current return reassessment — REQ-COMP-033
 
 ### COMP-REQ-033 — Audit / traceability current-return reassessment
