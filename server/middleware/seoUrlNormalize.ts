@@ -10,6 +10,7 @@ export const PUBLIC_SPA_PATHS = new Set([
   '/universe',
   '/learning-platform',
   '/vocabulary',
+  '/datacalculator',
   '/impressum',
   '/agb',
   '/datenschutz',

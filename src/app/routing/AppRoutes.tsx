@@ -28,6 +28,9 @@ const RoadmapDashboard = lazy(() =>
 const MediaStudio = lazy(() =>
   import('../../features/social/ui/MediaStudio').then((module) => ({ default: module.MediaStudio })),
 );
+const DataCalculatorWorkbench = lazy(() =>
+  import('../../features/datacalculator/ui/DataCalculatorWorkbench'),
+);
 
 interface AppRoutesProps {
   userSession: UserSession | null;
@@ -233,6 +236,14 @@ export function AppRoutes({
     return (
       <RouteLoadingBoundary>
         <RoadmapDashboard />
+      </RouteLoadingBoundary>
+    );
+  }
+
+  if (currentPath === '/datacalculator') {
+    return (
+      <RouteLoadingBoundary>
+        <DataCalculatorWorkbench />
       </RouteLoadingBoundary>
     );
   }
