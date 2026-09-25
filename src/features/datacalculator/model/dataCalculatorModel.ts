@@ -104,16 +104,20 @@ export function validateWorkflow(
     {
       id: 'status-gate',
       label: '5 · Contract Status Gate',
-      state: contract.status === 'DISABLED'
+      state: contract.status === 'DISABLED' || contract.status === 'BLOCKED'
         ? 'BLOCKED'
-        : contract.status === 'RESEARCH_ONLY' || contract.status === 'CONTEXT_ONLY'
+        : contract.status === 'RESEARCH_ONLY' || contract.status === 'CONTEXT_ONLY' || contract.status === 'COMPATIBILITY_ONLY'
           ? 'WARN'
           : 'PASS',
       detail: contract.status === 'CANONICAL'
         ? 'Kanonischer Vertrag ist grundsätzlich produktiv zulässig; Evidence-Gates bleiben bindend.'
-        : contract.status === 'DISABLED'
-          ? 'Dieser Vertrag ist ausdrücklich nicht produktiv ausführbar.'
-          : 'Dieser Vertrag ist Research/Context only und darf keinen produktiven Score vortäuschen.',
+        : contract.status === 'COMPATIBILITY_ONLY'
+          ? 'Compatibility-Pfad darf weiterlaufen, ist aber noch nicht die kanonische Zielarchitektur.'
+          : contract.status === 'BLOCKED'
+            ? 'Dieser bestehende Pfad enthält nicht freigegebene/synthetische Semantik oder eine fehlende Authority und bleibt blockiert.'
+            : contract.status === 'DISABLED'
+              ? 'Dieser Vertrag ist ausdrücklich deaktiviert und nicht produktiv ausführbar.'
+              : 'Dieser Vertrag ist Research/Context only und darf keinen produktiven Score vortäuschen.',
     },
   ];
 
@@ -135,9 +139,11 @@ export function architectureFitScore(
   const completeness = passEquivalent / total;
   const deployability = contract.status === 'CANONICAL'
     ? 1
-    : contract.status === 'RESEARCH_ONLY' || contract.status === 'CONTEXT_ONLY'
-      ? 0.5
-      : 0;
+    : contract.status === 'COMPATIBILITY_ONLY'
+      ? 0.65
+      : contract.status === 'RESEARCH_ONLY' || contract.status === 'CONTEXT_ONLY'
+        ? 0.5
+        : 0;
   const simplicity = (6 - contract.benchmark.integrationComplexity) / 5;
 
   return Math.round((evidence * 0.40 + completeness * 0.25 + deployability * 0.20 + simplicity * 0.15) * 100);
