@@ -23,7 +23,7 @@ describe('AnalysisConnectionRegistry', () => {
   });
 
   it('gives every analysis/scoring entry provider services, storage models, UI flow and formula evidence', () => {
-    expect(ANALYSIS_CONNECTION_CONTRACTS.length).toBeGreaterThanOrEqual(36);
+    expect(ANALYSIS_CONNECTION_CONTRACTS.length).toBeGreaterThanOrEqual(38);
 
     for (const contract of ANALYSIS_CONNECTION_CONTRACTS) {
       expect(contract.assetClasses.length).toBeGreaterThan(0);
@@ -82,6 +82,8 @@ describe('AnalysisConnectionRegistry', () => {
       'charts-technical-analysis-legacy',
       'heatmap-creator-legacy',
       'asset-universe-sandbox-legacy',
+      'legacy-market-sentiment-widget',
+      'legacy-sentiment-dashboard',
     ];
 
     for (const id of blockedIds) {
