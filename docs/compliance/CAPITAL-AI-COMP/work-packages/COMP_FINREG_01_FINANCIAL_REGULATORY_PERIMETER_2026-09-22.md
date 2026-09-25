@@ -3,7 +3,8 @@
 **Canonical identity:** `COMP-FINREG-01-FINANCIAL-REGULATORY-PERIMETER-20260922`  
 **Project:** `CAPITAL-AI-COMP`  
 **Canonical project folder:** `docs/projects/compliance/`  
-**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`  
+**Baseline:** `main@a503cea6b4ff9c72f8cf2a35113ab7a537922574`  
+**Evidence refresh:** `2026-09-25` — MiFID II Article 17 / MiCAR-BaFin / DORA evidence slice materialized  
 **State:** `ACTIVE_FROM_HUMAN_OWNER_DIRECTION / LEGAL_REVIEW_REQUIRED`  
 **Priority:** `P1 — PRE-PUBLIC-PROMOTION LEGAL GATE`  
 **Authority:** `/AGENTS.md@CURRENT_MAIN`  
@@ -346,6 +347,17 @@ After legal classification only:
 - Human/Legal: final regulated-activity and jurisdictional decision.
 
 No foreign implementation is performed by this COMP package.
+
+## 6A. Evidence implementation refresh — 2026-09-25
+
+Canonical evidence pack: `../evidence/COMP_FINREG_01_MIFID17_MICAR_DORA_EVIDENCE_2026-09-25.md`.
+
+- MiFID II Article 17 / RTS 6: `MIFID17_CONDITIONAL_TRIGGER_NOT_CURRENTLY_EVIDENCED`; current main has no productive Broker/Order/Execution path and FT-7+ remains unauthorised. This is not a legal exemption.
+- MiCAR/BaFin: `MICAR_SERVICE_CLASSIFICATION_REQUIRED / NO_CASP_OR_EXEMPTION_ASSERTION`; Article 66 and Article 81 evidence families are defined and activate only after competent service classification.
+- DORA: `REQ-COMP-022` remains Human/Legal held; the evidence pack maps management, ICT risk, incident, resilience-test, ICT-third-party/register/exit and recovery evidence.
+- `REQ-COMP-032 / COMP-GAP-007` remains open and is not converted into a DORA PASS.
+
+Any new automated order initiation/generation/routing/execution invalidates the current MiFID-17 trigger disposition and requires fresh classification before promotion.
 
 ## 7. Interim fail-closed release rule
 
