@@ -751,7 +751,7 @@ export const ANALYSIS_CONNECTION_CONTRACTS: readonly AnalysisConnectionContract[
     subclasses: ['Canonical score/evidence consumer; productive bonds excluded'],
     bestConcept: 'Data Authority & Evidence consumer only: model/version/evidence must come from canonical endpoints and registry/dispatcher lineage.',
     status: 'CANONICAL',
-    bindingSequence: ['Canonical score endpoint', 'Evidence/provenance readback', 'CanonicalScoreResult', 'Visualization view model', 'Enterprise Scorer UI'],
+    bindingSequence: ['Evidence/provenance endpoint', 'Canonical score endpoint', 'CanonicalScoreResult', 'Visualization view model', 'Enterprise Scorer UI'],
     providerApplicationServices: ['/api/crypto/score', '/api/registry/assets/:symbol/verified-score', 'ScoringDispatcher'],
     storageModels: ['CanonicalScoreResult', 'Provenance entries', 'Evidence IDs'],
     uiFlow: ['Canonical endpoint', 'buildCryptoView/buildTraditionalView', 'Evidence/score visualization', 'Enterprise Scorer UI'],
