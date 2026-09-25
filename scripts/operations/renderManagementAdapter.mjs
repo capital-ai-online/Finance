@@ -161,6 +161,7 @@ async function requestRender({
   method = 'GET',
   fetchImpl = fetch,
   expectedStatuses = [200],
+  jsonBody = undefined,
 }) {
   const token = clean(apiKey);
   if (!token) fail('CAPITAL_AI_RENDER_API_KEY is required');
@@ -169,7 +170,9 @@ async function requestRender({
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${token}`,
+      ...(jsonBody === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
+    ...(jsonBody === undefined ? {} : { body: JSON.stringify(jsonBody) }),
     signal: AbortSignal.timeout(10_000),
   });
 
@@ -523,6 +526,41 @@ export async function buildRenderSettingsInventory({
       allFiles: 'BLOCKED_PENDING_EXPLICIT_DYNAMIC_CACHE_POLICY_COVERAGE',
     }),
     secretsOrTokensProjected: false,
+  });
+}
+
+export async function triggerRenderExactCommitDeploy({
+  apiKey,
+  serviceId = EXPECTED_FINANCE_SERVICE.id,
+  commitId,
+  fetchImpl = fetch,
+} = {}) {
+  const id = clean(serviceId);
+  if (id !== EXPECTED_FINANCE_SERVICE.id) {
+    fail(`exact Finance service id required; received ${id || 'missing'}`);
+  }
+  const sha = clean(commitId).toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(sha)) {
+    fail('commitId must be an exact 40-character Git commit SHA');
+  }
+  const payload = await requestRender({
+    apiKey,
+    path: `/services/${encodeURIComponent(id)}/deploys`,
+    method: 'POST',
+    fetchImpl,
+    expectedStatuses: [200, 201, 202],
+    jsonBody: {
+      commitId: sha,
+      clearCache: 'do_not_clear',
+    },
+  });
+  return Object.freeze({
+    status: 'TRIGGERED',
+    serviceId: id,
+    commitId: sha,
+    deployId: clean(payload?.id || payload?.deploy?.id) || null,
+    deployStatus: clean(payload?.status || payload?.deploy?.status) || null,
+    credentialProjected: false,
   });
 }
 
