@@ -1,0 +1,14 @@
+{
+  "name": "capital-ai-pubsub-broker-benchmark",
+  "private": true,
+  "type": "module",
+  "description": "Isolated pub/sub benchmark harness. Not part of the production runtime.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "bench:smoke": "node src/run.mjs --profile smoke",
+    "bench:mid": "node src/run.mjs --profile mid",
+    "bench:future": "node src/run.mjs --profile future"
+  }
+}

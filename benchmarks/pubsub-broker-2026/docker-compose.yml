@@ -1,0 +1,42 @@
+# Isolated broker stacks. Do not attach this file to production render.yaml.
+name: capital-ai-pubsub-bench
+
+networks:
+  net-redis:
+    driver: bridge
+  net-valkey:
+    driver: bridge
+  net-nats:
+    driver: bridge
+
+services:
+  redis-local:
+    image: redis:7.4-alpine
+    container_name: bench-redis-local
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--protected-mode", "no"]
+    ports:
+      - "16379:6379"
+    networks: [net-redis]
+    mem_limit: 512m
+    cpus: 1.0
+
+  valkey-local:
+    image: valkey/valkey:8.1-alpine
+    container_name: bench-valkey-local
+    command: ["valkey-server", "--save", "", "--appendonly", "no", "--protected-mode", "no"]
+    ports:
+      - "16380:6379"
+    networks: [net-valkey]
+    mem_limit: 512m
+    cpus: 1.0
+
+  nats-local:
+    image: nats:2.15-alpine
+    container_name: bench-nats-local
+    command: ["--http_port", "8222", "--port", "4222"]
+    ports:
+      - "14222:4222"
+      - "18222:8222"
+    networks: [net-nats]
+    mem_limit: 512m
+    cpus: 1.0
