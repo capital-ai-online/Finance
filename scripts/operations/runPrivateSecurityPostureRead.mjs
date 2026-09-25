@@ -23,6 +23,7 @@ const githubSettings = readJson('CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH');
 const githubSecurity = readJson('CAPITAL_AI_GITHUB_SECURITY_EVIDENCE_PATH');
 const render = readJson('CAPITAL_AI_RENDER_EVIDENCE_PATH');
 const supabase = readJson('CAPITAL_AI_SUPABASE_POSTURE_PATH');
+const supabaseAuth = readJson('CAPITAL_AI_SUPABASE_AUTH_POSTURE_PATH');
 const headers = readJson('CAPITAL_AI_PRODUCTION_HEADERS_PATH');
 
 const ci = readText('.github/workflows/ci.yml');
@@ -208,6 +209,58 @@ if (String(headers?.headers?.server || '').toLowerCase().includes('cloudflare'))
   ));
 }
 
+if (supabaseAuth?.status === 'NOT_OBSERVABLE') {
+  findings.push(finding(
+    'SUPABASE-AUTH-POSTURE-NOT-OBSERVABLE',
+    'HIGH',
+    'NOT_OBSERVABLE',
+    'Supabase Auth Management API posture is not observable with the configured read credential.',
+    'Restore only the existing CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN read path; do not create a second management credential.',
+    supabaseAuth,
+  ));
+} else {
+  const hibp = supabaseAuth?.settings?.password_hibp_enabled;
+  if (hibp && hibp.state !== 'MATCH') {
+    findings.push(finding(
+      'SUPABASE-LEAKED-PASSWORD-PROTECTION',
+      'MEDIUM',
+      'DRIFT_OR_PLAN_CONSTRAINT',
+      `Supabase leaked-password protection is observed as ${String(hibp.observed)} while the repository target is ${String(hibp.desired)}.`,
+      'Keep this fail-closed as a plan/capability constraint until the provider confirms the feature is available; do not silently treat it as enabled.',
+    ));
+  }
+  const rotation = supabaseAuth?.settings?.refresh_token_rotation_enabled;
+  if (rotation && rotation.observed !== true) {
+    findings.push(finding(
+      'SUPABASE-REFRESH-TOKEN-ROTATION',
+      'HIGH',
+      'OBSERVED',
+      'Supabase refresh-token rotation is not observed as enabled.',
+      'Reconcile Auth configuration through the existing guarded Supabase config-control workflow and verify readback.',
+    ));
+  }
+  const reauth = supabaseAuth?.settings?.security_update_password_require_reauthentication;
+  if (reauth && reauth.observed !== true) {
+    findings.push(finding(
+      'SUPABASE-PASSWORD-CHANGE-REAUTH',
+      'HIGH',
+      'OBSERVED',
+      'Password changes are not observed as requiring reauthentication.',
+      'Reconcile the canonical Auth security setting and verify readback before allowing privileged password-change flows.',
+    ));
+  }
+  const captcha = supabaseAuth?.settings?.security_captcha_enabled;
+  if (captcha && captcha.observed === true) {
+    findings.push(finding(
+      'SUPABASE-CAPTCHA-DRIFT',
+      'MEDIUM',
+      'OBSERVED',
+      'Supabase captcha is enabled although the current CAPITAL-AI auth target keeps captcha disabled.',
+      'Use the existing auth-config authority to restore the current fail-closed no-captcha contract only after confirming anti-abuse compensating controls.',
+    ));
+  }
+}
+
 if (supabase?.status !== 'PASS') {
   findings.push(finding(
     'SUPABASE-POSTURE-PARTIAL',
@@ -253,6 +306,7 @@ const output = Object.freeze({
     githubSecurityStatus: githubSecurity?.status || 'NOT_OBSERVABLE',
     renderStatus: render?.status || render?.settingsInventory?.status || 'NOT_OBSERVABLE',
     supabaseStatus: supabase?.status || 'NOT_OBSERVABLE',
+    supabaseAuthStatus: supabaseAuth?.status || 'NOT_OBSERVABLE',
     productionHeadersStatus: headers?.status || 'NOT_OBSERVABLE',
   }),
   findings: Object.freeze(findings),
