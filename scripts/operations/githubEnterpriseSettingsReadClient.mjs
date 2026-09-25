@@ -39,6 +39,10 @@ export const GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES = Object.freeze({
     path: ({ enterprise }) => `/enterprises/${enterprise}/actions/runners`,
     pagination: Object.freeze({ kind: 'object', field: 'runners' }),
   }),
+  'enterprise.audit_log.recent': Object.freeze({
+    requiredPermission: 'Enterprise audit log: read (classic PAT read:audit_log or Enterprise administration read)',
+    path: ({ enterprise }) => `/enterprises/${enterprise}/audit-log?include=web&order=desc&per_page=100`,
+  }),
 });
 
 function fail(message) {
