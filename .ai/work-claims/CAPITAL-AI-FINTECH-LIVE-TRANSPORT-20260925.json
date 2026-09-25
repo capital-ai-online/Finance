@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..11 live provider ingress, evidence/DQ admission and Tier-3 fan-out transport; bounded Tier-4 contract compatibility correction only.",
+  "workItem": "Connect Binance public bookTicker WebSocket ingress through the canonical MarketDataGateway Tier-2 gate into the merged Tier-3 fan-out and expose an authenticated, activation-gated browser WebSocket transport without creating a second market-data or scoring authority.",
+  "startedAt": "2026-09-25T04:38:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "2a2244bd55bef6a88d892ec17c8ecc20b037e22f",
+  "branch": "agent/fintech-live-transport-20260925",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "ADR-0041 / ESS-0016 streaming, entitlement and redistribution gates",
+    "Merged market-data-fanout/1.0.0 Tier-3 contract on CURRENT_MAIN",
+    "Merged market-live-client/1.0.0 Tier-4 projection contract on CURRENT_MAIN",
+    "Provider redistribution/display entitlement evidence before productive activation",
+    "CAPITAL-AI-FE Issue #1447 remains the browser-consumer handover",
+    "CAPITAL-AI-FINTECH Issue #1450 remains downstream scoring-trigger work and is not activated by this slice"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925.json",
+    ".ai/work-claims/CAPITAL-AI-FINTECH-TIER3-CACHE-FANOUT-20260925.json",
+    ".ai/work-claims/FIN-TIER4-LIVE-CLIENT-CONTRACT-20260925.json",
+    "docs/projects/fintech/work-packages/FIN_TIER3_4_LIVE_TRANSPORT_2026-09-25.md",
+    "docs/projects/fintech/work-packages/FIN_TIER4_LIVE_CLIENT_CONTRACT_2026-09-25.md",
+    "server/marketData/liveMarketDataRuntime.ts",
+    "server/marketData/marketDataWebSocketTransport.ts",
+    "server.application.ts",
+    "src/platform/MarketData/LiveClientFeedContract.ts",
+    "tests/unit/liveMarketDataRuntime.test.ts",
+    "tests/unit/marketDataWebSocketTransport.test.ts",
+    "tests/unit/liveClientFeedContract.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No provider plan, entitlement, Render, Redis, secret, IAM, billing or external control-plane mutation.",
+    "Both upstream Binance ingress and browser redistribution are disabled unless explicit server-side activation flags are true.",
+    "Raw Tier-3 ticks remain presentation-only and cannot become verified-quote, scoring, ranking or execution authority.",
+    "MarketDataGateway/MarketTickGate remain the only Tier-2 admission boundary; Tier-3 remains the fan-out/backpressure authority.",
+    "Browser access requires an existing verified backend session plus canonical Origin and WebSocket subprotocol validation.",
+    "No new npm dependency or duplicate WebSocket room/fan-out authority.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "overlapReadback": {
+    "currentMain": "2a2244bd55bef6a88d892ec17c8ecc20b037e22f",
+    "openPullRequests": [],
+    "directChangedFileOverlap": false,
+    "note": "Merged Tier-3/Tier-4 claims were stale active/exclusive metadata and are released on this branch before the new bounded claim."
+  },
+  "exitGate": "Focused runtime/transport/client-contract tests plus TypeScript/build and Required Checks on exact PR head; fresh CURRENT_MAIN/writer correlation; activation remains fail-closed pending entitlement/provider evidence; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
