@@ -251,7 +251,7 @@ export function createBinanceBookTickerIngress(
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
   let reconnectAttempt = 0;
-  let currentState: BinanceBookTickerIngress['state'] extends () => infer R ? R : never =
+  let currentState: ReturnType<BinanceBookTickerIngress['state']> =
     options.enabled && url ? 'CONNECTING' : 'DISABLED';
 
   const setState = (state: 'CONNECTING' | 'LIVE' | 'RECONNECTING' | 'STOPPED', detail?: string) => {
@@ -320,7 +320,7 @@ export function createBinanceBookTickerIngress(
     url,
     start() {
       if (!options.enabled || !url || stopped || typeof WebSocketCtor !== 'function') return false;
-      if (socket && socket.readyState < WebSocket.CLOSING) return true;
+      if (socket && socket.readyState < 2) return true;
       connect();
       return true;
     },
@@ -329,7 +329,7 @@ export function createBinanceBookTickerIngress(
       clearReconnect();
       const current = socket;
       socket = null;
-      if (current && current.readyState < WebSocket.CLOSING) current.close(1000, 'capital-ai-shutdown');
+      if (current && current.readyState < 2) current.close(1000, 'capital-ai-shutdown');
       setState('STOPPED');
     },
     state() {
