@@ -98,6 +98,18 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     path: ({ organization }) => `/orgs/${organization}/code-security/configurations`,
     pagination: Object.freeze({ kind: 'array' }),
   }),
+  'organization.app_installations.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Administration: read',
+    path: ({ organization }) => `/orgs/${organization}/installations`,
+    pagination: Object.freeze({ kind: 'object', field: 'installations' }),
+  }),
+  'organization.actions.secrets.list': Object.freeze({
+    scope: 'organization',
+    requiredPermission: 'Secrets: read',
+    path: ({ organization }) => `/orgs/${organization}/actions/secrets`,
+    pagination: Object.freeze({ kind: 'object', field: 'secrets' }),
+  }),
   'repository.settings.get': Object.freeze({
     scope: 'repository',
     requiredPermission: 'Metadata: read',
@@ -176,6 +188,12 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     requiredPermission: 'Metadata: read',
     path: ({ repository }) => `/repos/${repository}/rulesets`,
     pagination: Object.freeze({ kind: 'array' }),
+  }),
+  'repository.actions.secrets.list': Object.freeze({
+    scope: 'repository',
+    requiredPermission: 'Secrets: read',
+    path: ({ repository }) => `/repos/${repository}/actions/secrets`,
+    pagination: Object.freeze({ kind: 'object', field: 'secrets' }),
   }),
 });
 
