@@ -66,7 +66,7 @@ export function normalizeLiveMarketSymbols(symbols: readonly string[]): string[]
 
 export function buildBinanceBookTickerUrl(
   symbols: readonly string[],
-  baseUrl = BINANCE_PUBLIC_MARKET_DATA_BASE_URL,
+  baseUrl: string = BINANCE_PUBLIC_MARKET_DATA_BASE_URL,
 ): string | null {
   const normalized = normalizeLiveMarketSymbols(symbols);
   if (normalized.length === 0) return null;
