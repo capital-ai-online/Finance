@@ -84,6 +84,20 @@ jobs:
           fi
           chmod 600 "${RENDER_EVIDENCE_PATH}"
 
+      - name: Supabase Auth Security Posture read-only erfassen
+        env:
+          CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN: ${{ secrets.CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN }}
+          CAPITAL_AI_SUPABASE_AUTH_POSTURE_PATH: ${{ runner.temp }}/supabase-auth-posture.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN}" ]]; then
+            printf '%s\n' '{"status":"NOT_OBSERVABLE","reason":"CAPITAL_AI_SUPABASE_MGMT_ACCESS_TOKEN missing"}' > "${CAPITAL_AI_SUPABASE_AUTH_POSTURE_PATH}"
+          else
+            node scripts/operations/runPrivateSupabaseSecurityPostureRead.mjs > /dev/null
+          fi
+          chmod 600 "${CAPITAL_AI_SUPABASE_AUTH_POSTURE_PATH}"
+
       - name: Supabase DB Security Posture read-only erfassen
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -168,6 +182,7 @@ jobs:
           CAPITAL_AI_GITHUB_SECURITY_EVIDENCE_PATH: ${{ runner.temp }}/github-security-posture.json
           CAPITAL_AI_RENDER_EVIDENCE_PATH: ${{ runner.temp }}/render-posture.json
           CAPITAL_AI_SUPABASE_POSTURE_PATH: ${{ runner.temp }}/supabase-posture.json
+          CAPITAL_AI_SUPABASE_AUTH_POSTURE_PATH: ${{ runner.temp }}/supabase-auth-posture.json
           CAPITAL_AI_PRODUCTION_HEADERS_PATH: ${{ runner.temp }}/production-headers.json
           CAPITAL_AI_SECURITY_POSTURE_EVIDENCE_PATH: ${{ runner.temp }}/security-posture.json
           CAPITAL_AI_SECURITY_POSTURE_MARKDOWN_PATH: ${{ runner.temp }}/security-posture.md
@@ -190,4 +205,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f --             "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-/nonexistent}"             "${RUNNER_TEMP}/github-settings.json"             "${RUNNER_TEMP}/github-settings.md"             "${RUNNER_TEMP}/github-security-posture.json"             "${RUNNER_TEMP}/render-posture.json"             "${RUNNER_TEMP}/supabase-posture.json"             "${RUNNER_TEMP}/production-headers.json"             "${RUNNER_TEMP}/security-posture.json"             "${RUNNER_TEMP}/security-posture.md"
+          rm -f --             "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-/nonexistent}"             "${RUNNER_TEMP}/github-settings.json"             "${RUNNER_TEMP}/github-settings.md"             "${RUNNER_TEMP}/github-security-posture.json"             "${RUNNER_TEMP}/render-posture.json"             "${RUNNER_TEMP}/supabase-posture.json"             "${RUNNER_TEMP}/supabase-auth-posture.json"             "${RUNNER_TEMP}/production-headers.json"             "${RUNNER_TEMP}/security-posture.json"             "${RUNNER_TEMP}/security-posture.md"
