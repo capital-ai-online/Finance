@@ -102,7 +102,8 @@ describe('AnalysisConnectionRegistry', () => {
     ]) {
       const contract = ANALYSIS_CONNECTION_CONTRACTS.find((candidate) => candidate.id === id);
       expect(contract?.status, id).toBe('RESEARCH_ONLY');
-      expect(contract?.scoringModel.toLowerCase(), id).toContain('research');
+      const checks = validateWorkflow(contract!, buildDefaultWorkflow(contract!));
+      expect(checks.find((check) => check.id === 'status-gate')?.state, id).toBe('WARN');
     }
   });
 
