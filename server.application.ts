@@ -21,6 +21,11 @@ import { getOpenAIInstance, isOpenAIConfigured } from './server/openaiClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { createApplicationMarketDataRuntime } from './server/marketData/createApplicationMarketDataRuntime';
 import {
+  createBinanceBookTickerIngressFromEnv,
+  createLiveMarketDataRuntime,
+} from './server/marketData/liveMarketDataRuntime';
+import { attachMarketDataWebSocketTransport } from './server/marketData/marketDataWebSocketTransport';
+import {
   enrichStandardCryptoWithCanonicalScore,
   isStandardCryptoMarketDataAsset,
 } from './server/marketData/canonicalCryptoScoreEnrichment';
@@ -1169,6 +1174,28 @@ async function startServer() {
   // falls der Check fehlschlägt.
   await runIamSchemaHealthCheck();
 
+  // FIN-TIER3/4 live transport: repository wiring is safe-by-default. Neither upstream provider
+  // streaming nor downstream browser redistribution starts unless its explicit server-side flag
+  // is true. Provider/display/redistribution entitlement evidence remains a separate production
+  // activation gate under ADR-0041 / ESS-0016.
+  const liveMarketDataRuntime = createLiveMarketDataRuntime({
+    fanoutOptions: {
+      onFanoutError: (stage, error) => {
+        serverLogger.warn('Live market fan-out degradation', {
+          stage,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      },
+    },
+  });
+  const liveMarketDataIngress = createBinanceBookTickerIngressFromEnv(
+    liveMarketDataRuntime,
+    (state, detail) => serverLogger.info('Binance public market stream state', { state, detail }),
+    (error) => serverLogger.warn('Binance public market stream error', {
+      error: error instanceof Error ? error.message : String(error),
+    }),
+  );
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1205,6 +1232,16 @@ async function startServer() {
 
   const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+
+    const liveIngressStarted = liveMarketDataIngress.start();
+    serverLogger.info('Live market ingress activation gate', {
+      requested: process.env.MARKET_DATA_LIVE_INGRESS_ENABLED?.trim().toLowerCase() === 'true',
+      started: liveIngressStarted,
+      symbolsConfigured: (process.env.MARKET_DATA_LIVE_SYMBOLS ?? '')
+        .split(',')
+        .map(value => value.trim())
+        .filter(Boolean).length,
+    });
     
     // Production remains immutable/read-only; the watcher only starts in writable non-production runtimes.
     startRecursiveFileWatcher();
@@ -1237,6 +1274,18 @@ async function startServer() {
     serverLogger.info('Stripe configuration validation', getStripeConfigurationStatus(getCleanEnv));
   });
 
+  const liveMarketDataTransport = attachMarketDataWebSocketTransport(
+    httpServer,
+    liveMarketDataRuntime.fanoutHub,
+    {
+      enabled: process.env.MARKET_DATA_LIVE_CLIENT_ENABLED?.trim().toLowerCase() === 'true',
+      isProduction: isProductionEnv,
+      onError: (error) => serverLogger.warn('Live market client transport error', {
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    },
+  );
+
   // ADR-0037: Render sends SIGTERM during deploy/restart. Stop periodic work first, then
   // drain the HTTP server. A bounded force-exit stays below Render's 30 second shutdown
   // window so the old instance cannot linger indefinitely.
@@ -1244,6 +1293,9 @@ async function startServer() {
     if (shutdownStarted) return;
     shutdownStarted = true;
     serverLogger.info('Graceful shutdown initiated', { signal });
+
+    liveMarketDataIngress.stop();
+    liveMarketDataTransport.close();
 
     if (marketDataRefreshTimer) {
       clearInterval(marketDataRefreshTimer);

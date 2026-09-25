@@ -1,6 +1,6 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
-**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
+**Baseline:** `main@a503cea6b4ff9c72f8cf2a35113ab7a537922574`
 
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
@@ -39,6 +39,16 @@ Fresh Human/Owner direction on 2026-09-22 activates a bounded financial-regulato
 The package operationalizes the already-existing `REQ-COMP-038 = UNKNOWN` gate through the existing `COMP-08 → COMP-01..07` lifecycle. It does not create a ninth Compliance workstream, does not assign a productive PVC to COMP and does not pre-empt Human/Legal classification.
 
 **Exit:** `FINREG_PERIMETER_EVIDENCE_READY` only after every material recommendation-like financial/crypto surface is factually inventoried, WpIG/MAR and MiCAR classifications are competently dispositioned, conditional DORA/GwG/§34f consequences remain evidence-gated, remuneration/conflicts are mapped, and all productive remediation is routed to the actual canonical owner.
+
+### FINREG evidence refresh — 2026-09-25
+
+**Evidence pack:** `../../compliance/CAPITAL-AI-COMP/evidence/COMP_FINREG_01_MIFID17_MICAR_DORA_EVIDENCE_2026-09-25.md`
+
+- MiFID II Article 17 / RTS 6: `CONDITIONAL_TRIGGER_NOT_CURRENTLY_EVIDENCED`; no productive broker/order/execution path is evidenced and FT-7+ remains unauthorised. This is not a legal exemption.
+- MiCAR/BaFin: `SERVICE_CLASSIFICATION_REQUIRED`; Article 66/81 evidence families are defined but legal/service classification remains Human/Legal.
+- DORA: `APPLICABILITY_HELD / ENGINEERING_EVIDENCE_PARTIAL`; ICT risk, incidents, resilience testing, third-party/register/exit and recovery evidence are mapped.
+- `REQ-COMP-032 / COMP-GAP-007` remains an open measured recovery-evidence gap.
+
 
 ## Current return reassessment — REQ-COMP-033
 

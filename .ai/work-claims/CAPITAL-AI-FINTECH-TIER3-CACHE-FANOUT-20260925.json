@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-TIER3-CACHE-FANOUT-20260925",
+  "status": "released",
+  "exclusive": false,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..11 post-ingress market-data distribution, evidence-preserving cache and fan-out.",
+  "workItem": "Tier 3 bounded 200-tick asset ring, delta wire codec, Upstash Redis Pub/Sub projection and transport-neutral WebSocket room multiplexer.",
+  "startedAt": "2026-09-25T00:32:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "f510699a182c4a184e2fdc8691bbef1d830c9e21",
+  "branch": "agent/fintech-tier3-cache-fanout-20260925",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "ADR-0041 / ESS-0016 streaming and redistribution gates",
+    "Open PR #1448 is evidence of the concurrent Tier-2 MarketDataGateway writer; Tier-3 deliberately does not modify that file",
+    "Tier-2-to-Tier-3 hot-path adapter is deferred until #1448 is Human-merged or otherwise terminal and CURRENT_MAIN is reread",
+    "Open PR #1449 consumes an asset-room live-client contract downstream; no direct changed-file overlap exists"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-TIER3-CACHE-FANOUT-20260925.json",
+    "docs/projects/fintech/work-packages/FIN_TIER3_CACHE_FANOUT_2026-09-25.md",
+    "src/platform/MarketData/Fanout/contracts.ts",
+    "src/platform/MarketData/Fanout/MarketDataRingBuffer.ts",
+    "src/platform/MarketData/Fanout/MarketDataDeltaCodec.ts",
+    "src/platform/MarketData/Fanout/UpstashRedisRestFanout.ts",
+    "src/platform/MarketData/Fanout/MarketDataWebSocketRoomMultiplexer.ts",
+    "src/platform/MarketData/Fanout/MarketDataFanoutHub.ts",
+    "tests/unit/marketDataTier3Fanout.test.ts"
+  ],
+  "protectedBoundaries": [
+    "Tier 3 creates no provider, evidence, Data Quality, scoring, ranking or execution authority.",
+    "No provider promotion, trading capability, frontend-local market truth or synthetic price is introduced.",
+    "Redis is a bounded cache/distribution projection; Redis failure cannot alter market-data truth.",
+    "No Render, Upstash, secret, IAM, billing or provider-control-plane mutation occurs in this repository slice.",
+    "Public WebSocket transport activation remains gated by redistribution entitlement, server transport integration and load evidence."
+  ],
+  "overlapReadback": {
+    "currentMain": "f510699a182c4a184e2fdc8691bbef1d830c9e21",
+    "openPullRequests": [
+      1448,
+      1449
+    ],
+    "directChangedFileOverlap": false,
+    "note": "An initial Tier-3 MarketDataGateway hook was removed after discovering PR #1448 writes that file. Tier 3 now owns only new Fanout paths plus its package/test/claim."
+  },
+  "exitGate": "Focused Tier-3 tests plus repository TypeScript/required checks on exact PR head; no writer overlap; public redistribution remains gated; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "releasedAt": "2026-09-25T04:38:00+02:00",
+    "reason": "Associated Tier-3 implementation was Human/CODEOWNER-merged as PR #1451 and is on CURRENT_MAIN.",
+    "currentMain": "2a2244bd55bef6a88d892ec17c8ecc20b037e22f"
+  }
+}

@@ -26,6 +26,7 @@ describe('S2 public HTML files (path-safe)', () => {
       universe: path.resolve(dir, 'universe', 'index.html'),
       learningPlatform: path.resolve(dir, 'learning-platform', 'index.html'),
       vocabulary: path.resolve(dir, 'vocabulary', 'index.html'),
+      dataCalculator: path.resolve(dir, 'datacalculator', 'index.html'),
       impressum: path.resolve(dir, 'impressum', 'index.html'),
       agb: path.resolve(dir, 'agb', 'index.html'),
       datenschutz: path.resolve(dir, 'datenschutz', 'index.html'),

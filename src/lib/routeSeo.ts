@@ -39,6 +39,12 @@ const ROUTES: Record<string, RouteSeo> = {
       'Das CAPITAL-AI Market Vocabulary bündelt freigegebene Begriffe, Definitionen, Aliase und Thesaurus-Begriffe in der aktuellen Glossar-Oberfläche.',
     canonicalPath: '/vocabulary',
   },
+  '/datacalculator': {
+    title: 'Data Calculator – CAPITAL-AI Workflow Lab',
+    description:
+      'Analyse- und Scoring-Anbindungen in CAPITAL-AI als Evidence-gebundene Workflows vergleichen, zusammensetzen, validieren und lokal benchmarken.',
+    canonicalPath: '/datacalculator',
+  },
   '/impressum': {
     title: 'Impressum – CAPITAL-AI',
     description: 'Impressum und Anbieterkennzeichnung gemäß § 5 DDG für CAPITAL-AI (Sven Kulessa).',
