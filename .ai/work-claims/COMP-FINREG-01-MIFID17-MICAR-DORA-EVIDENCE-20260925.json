@@ -25,7 +25,10 @@
     "docs/compliance/CAPITAL-AI-COMP/work-packages/COMP_FINREG_01_FINANCIAL_REGULATORY_PERIMETER_2026-09-22.md",
     "docs/compliance/CAPITAL_AI_REGULATORY_CONTROL_MATRIX_2026-08-19.md",
     "docs/projects/compliance/ROADMAP.md",
-    "docs/compliance/CAPITAL-AI-COMP/mappings/COMPLIANCE_HANDOFF_REGISTER.md"
+    "docs/compliance/CAPITAL-AI-COMP/mappings/COMPLIANCE_HANDOFF_REGISTER.md",
+    "docs/compliance/CAPITAL-AI-COMP/mappings/REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md",
+    "docs/compliance/CAPITAL-AI-COMP/traceability/COMPLIANCE_TRACEABILITY_MATRIX.md",
+    "docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_REQUIREMENTS_INVENTORY.md"
   ],
   "dependencies": [
     "Human Owner direction 2026-09-25 to continue MiFID II Article 17, MiCAR/BaFin and DORA evidence implementation",
@@ -54,6 +57,7 @@
   "correlation": {
     "currentMainSha": "a503cea6b4ff9c72f8cf2a35113ab7a537922574",
     "openWriterOverlap": "NONE; no open PRs during fresh pre-mutation correlation",
-    "executionBoundaryEvidence": "Current repository evidence keeps LIVE_EXECUTION / FT-7+ unauthorized and exposes no productive Broker/Order/Execution authority."
+    "executionBoundaryEvidence": "Current repository evidence keeps LIVE_EXECUTION / FT-7+ unauthorized and exposes no productive Broker/Order/Execution authority.",
+    "traceabilityConvergence": "Requirement inventory, Requirement→Control→Evidence mapping and Compliance traceability now bind the FINREG evidence pack."
   }
 }
