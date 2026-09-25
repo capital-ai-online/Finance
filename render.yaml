@@ -8,8 +8,8 @@ services:
     plan: starter
     numInstances: 1
     # Production deploy authority is GitHub CI: verified main -> supply-chain attestation ->
-    # exact-SHA Render deploy hook -> post-deploy identity verification. Keep Render auto-deploy
-    # off to avoid a second, un-attested deployment control plane.
+    # exact-commit Render API trigger via the existing GitHub Actions API credential -> post-deploy
+    # identity verification. Keep Render auto-deploy off to avoid a second deployment control plane.
     autoDeployTrigger: off
     healthCheckPath: /healthz
     maxShutdownDelaySeconds: 30
