@@ -35,6 +35,8 @@ Die Registry ist eine Verifikations-/Indexoberfläche. Sie ersetzt weder \`Provi
 | Hybrid | Precious Metals Research | Rohstoffe · Gold, Silber, Precious-Metal Benchmarks | Market-Evidence + Macro/Risk Context; keine Vermischung mit Resource-Project-Metriken |
 | Hybrid | Agriculture Commodity Research | Rohstoffe · Agriculture Benchmarks | Market-History + point-in-time USDA/Physical Evidence |
 | Data Authority & Evidence | AI Market Sentiment Evidence Projection | Multi-Asset · Crypto, Aktien, Forex, Index, Rohstoffe | Jede numerische Sentiment-Feature-Dimension muss separat attestiert sein; Research-only |
+| Data Authority & Evidence | Legacy Market Sentiment Widget | Multi-Asset · Legacy Sentiment Consumer | Fehlende Scores niemals mit 50/Neutral ersetzen; aktueller Fallback BLOCKED |
+| Individual | Legacy Sentiment Dashboard / Shock Sandbox | Crypto, Aktien, Forex, Rohstoffe · Presets/History/What-if | Szenarioanalyse klar von beobachteter Evidence trennen; hard-coded Presets/History BLOCKED |
 | Data Authority & Evidence | Macro Yield-Curve Risk Regime | Multi-Asset · Cross-Asset Macro Context | FRED Evidence Context, ausdrücklich kein Asset-Score und kein Execution-Preis |
 | Data Authority & Evidence | Cross-Asset Ranking | Multi-Asset · nur vergleichbare kanonische Score-Kohorten | Downstream von CanonicalScoreResult + Governance-/Comparability-Evidence |
 | Individual | Deterministic Portfolio Allocator | Portfolio / Multi-Asset · Research/Paper, long-only, unlevered | Governed Target Weights; keine automatische Gewichtserzeugung aus Scores |
@@ -328,6 +330,8 @@ Der aktuelle `/api/backtest-history`-Kompatibilitätspfad muss für kanonischen 
 - **Legacy Screener:** symbolbasierte Pseudozufalls-Score-/Preis-Offsets, fest verdrahtete Pattern und erzwungener Score für bestimmte Pattern.
 - **Charts:** lokale technische Indikatoren sind darstellbar, aber `/api/charts-scoring` ist `NON_PRODUCTION_SIMULATION`.
 - **Heatmap Creator:** Preset-Bullish/Bearish-Werte, aus Market Cap geschätztes Volumen und symbol-hash-basierte Pattern.
+- **Legacy Market Sentiment:** fehlender numerischer Score wird zu 50 und fehlendes Label zu Neutral.
+- **Legacy Sentiment Dashboard:** hard-coded Asset-/Sektor-/History-Sentiment bleibt Szenario-/Demo-Semantik, nicht beobachtete Evidence.
 - **Asset Universe Sandbox:** route-lokale Modelle, Gewichte und Example Scores; künftig ausschließlich Registry-/Contract-Projektion.
 - **Real-Time Risk Assessment:** Modul ist deaktiviert und liefert aktuell `null`.
 
