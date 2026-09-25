@@ -41,11 +41,11 @@ describe('Cloudflare -> Render edge trust', () => {
       edgeRayId: '230b030023ae2822-FRA',
       evidence: {
         renderRuntime: true,
-        sharedSecretConfigured: true,
+        proofConfigured: true,
         canonicalHost: true,
         forwardedProtoHttps: true,
-        edgeTokenPresent: true,
-        edgeTokenMatched: true,
+        proofPresented: true,
+        proofMatched: true,
         clientIpPresent: true,
         clientIpValid: true,
         rayIdPresent: true,
@@ -65,6 +65,7 @@ describe('Cloudflare -> Render edge trust', () => {
 
     expect(edge.state).toBe('untrusted');
     expect(edge.reason).toBe('invalid-host');
+    expect(edge.evidence).toMatchObject({ canonicalHost: false, proofMatched: true });
     expect(getClientIp(request, { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('10.0.0.7');
   });
@@ -76,11 +77,11 @@ describe('Cloudflare -> Render edge trust', () => {
     });
     expect(missingSecret.reason).toBe('missing-shared-secret');
     expect(missingSecret.evidence).toMatchObject({
-      sharedSecretConfigured: false,
+      proofConfigured: false,
       canonicalHost: true,
       forwardedProtoHttps: true,
-      edgeTokenPresent: true,
-      edgeTokenMatched: null,
+      proofPresented: true,
+      proofMatched: null,
       clientIpValid: true,
       rayIdValid: true,
     });
@@ -91,7 +92,7 @@ describe('Cloudflare -> Render edge trust', () => {
       sharedSecret: EDGE_SECRET,
     });
     expect(mismatched.reason).toBe('edge-token-mismatch');
-    expect(mismatched.evidence.edgeTokenMatched).toBe(false);
+    expect(mismatched.evidence.proofMatched).toBe(false);
     expect(getClientIp(request, { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('10.0.0.7');
   });
@@ -104,11 +105,11 @@ describe('Cloudflare -> Render edge trust', () => {
     expect(edge.reason).toBe('missing-edge-token');
     expect(edge.evidence).toMatchObject({
       renderRuntime: true,
-      sharedSecretConfigured: true,
+      proofConfigured: true,
       canonicalHost: true,
       forwardedProtoHttps: true,
-      edgeTokenPresent: false,
-      edgeTokenMatched: null,
+      proofPresented: false,
+      proofMatched: null,
       clientIpPresent: true,
       clientIpValid: true,
       rayIdPresent: true,

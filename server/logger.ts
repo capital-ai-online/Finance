@@ -81,7 +81,7 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
         clientIpHash: client.clientIpHash, clientNetwork: client.clientNetwork, userAgent: client.userAgent,
         traceId: traceParent?.traceId, parentSpanId: traceParent?.parentSpanId, traceFlags: traceParent?.traceFlags,
         edgeRayId: edgeTrust.edgeRayId, edgeTrust: edgeTrust.state, edgeTrustReason: edgeTrust.reason,
-        edgeTrustEvidence: edgeTrust.evidence,
+      edgeTrustEvidence: edgeTrust.evidence,
       });
     }
 
