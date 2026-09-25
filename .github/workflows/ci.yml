@@ -607,6 +607,13 @@ jobs:
             --target=node24 \
             --outfile=artifacts/deployment/verifyDeploymentIdentity.mjs
           node --check artifacts/deployment/verifyDeploymentIdentity.mjs
+          npx esbuild scripts/deployment/triggerRenderExactCommit.mjs \
+            --bundle \
+            --platform=node \
+            --format=esm \
+            --target=node24 \
+            --outfile=artifacts/deployment/triggerRenderExactCommit.mjs
+          node --check artifacts/deployment/triggerRenderExactCommit.mjs
 
       - name: P2B Supply-Chain-Artefakte aus demselben main-Build ablegen
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -619,6 +626,7 @@ jobs:
             dist/security/provenance.json.sigstore.json
             dist/control-plane/release-manifest.json
             artifacts/deployment/verifyDeploymentIdentity.mjs
+            artifacts/deployment/triggerRenderExactCommit.mjs
           retention-days: 90
           if-no-files-found: error
 
@@ -686,6 +694,7 @@ jobs:
           const fs = require('node:fs');
           const manifestPath = 'p2b-runtime/dist/control-plane/release-manifest.json';
           const verifierPath = 'p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs';
+          const triggerPath = 'p2b-runtime/artifacts/deployment/triggerRenderExactCommit.mjs';
           const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
           if (manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA) {
             throw new Error(`Release-Manifest ist an ${manifest.sourceCommit} statt ${process.env.VERIFIED_COMMIT_SHA} gebunden.`);
@@ -693,34 +702,32 @@ jobs:
           if (!fs.existsSync(verifierPath)) {
             throw new Error('Standalone Deployment-Identity-Verifier fehlt im verifizierten Build-Artefakt.');
           }
+          if (!fs.existsSync(triggerPath)) {
+            throw new Error('Standalone exact-commit Render API trigger fehlt im verifizierten Build-Artefakt.');
+          }
           NODE
 
-      - name: Render-Deployment für verifizierten main-Commit auslösen
+      - name: Render-Deployment für verifizierten main-Commit per API auslösen
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          CAPITAL_AI_RENDER_API_KEY: ${{ secrets.CAPITAL_AI_RENDER_API_KEY }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test -n "$RENDER_DEPLOY_HOOK_URL"
+          test -n "$CAPITAL_AI_RENDER_API_KEY"
 
-          # Render Deploy Hooks resolve Git refs (branch/tag), not arbitrary 40-char commit IDs.
-          # Fail closed if main moved after this workflow's verified build, then deploy the still-exact main ref.
+          # Fail closed if main moved after this workflow's verified build.
           live_main_sha="$(
             curl --fail-with-body --silent --show-error --location \
               --header "Authorization: Bearer $GITHUB_TOKEN" \
               --header "Accept: application/vnd.github+json" \
-              --header "X-GitHub-Api-Version: 2022-11-28" \
+              --header "X-GitHub-Api-Version: 2026-03-10" \
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/main" \
               | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>process.stdout.write(JSON.parse(d).sha))"
           )"
           test "$live_main_sha" = "$VERIFIED_COMMIT_SHA"
 
-          separator='?'
-          case "$RENDER_DEPLOY_HOOK_URL" in *\?*) separator='&' ;; esac
-          curl --fail-with-body --silent --show-error --location \
-            --request POST \
-            "${RENDER_DEPLOY_HOOK_URL}${separator}ref=main"
+          node p2b-runtime/artifacts/deployment/triggerRenderExactCommit.mjs
 
       - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
         env:
