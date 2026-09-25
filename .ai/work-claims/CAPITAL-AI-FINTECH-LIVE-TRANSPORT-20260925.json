@@ -37,7 +37,8 @@
     "src/platform/MarketData/LiveClientFeedContract.ts",
     "tests/unit/liveMarketDataRuntime.test.ts",
     "tests/unit/marketDataWebSocketTransport.test.ts",
-    "tests/unit/liveClientFeedContract.test.ts"
+    "tests/unit/liveClientFeedContract.test.ts",
+    ".env.example"
   ],
   "protectedBoundaries": [
     "No provider plan, entitlement, Render, Redis, secret, IAM, billing or external control-plane mutation.",
