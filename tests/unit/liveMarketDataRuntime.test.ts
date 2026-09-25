@@ -83,8 +83,8 @@ describe('FINTECH live market-data runtime', () => {
       eventKind: 'bbo',
       bid: 100,
       ask: 100.02,
-      price: 100.01,
     });
+    expect(replay[0].price).toBeCloseTo(100.01, 10);
   });
 
   it('fails closed for malformed or out-of-order upstream evidence', () => {
