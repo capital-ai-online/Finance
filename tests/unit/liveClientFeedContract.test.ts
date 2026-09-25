@@ -21,7 +21,7 @@ function visualizationTick(index: number, price = 100): MarketLiveVisualizationT
     sourceContractVersion: MARKET_LIVE_CLIENT_TIER3_FANOUT_VERSION,
     kind: 'market-tick',
     eventId: `tier3-${index}`,
-    topic: 'market:crypto:BTC',
+    topic: 'asset:crypto:BTC',
     assetId: 'crypto:BTC',
     symbol: 'BTC',
     assetClass: 'crypto',
