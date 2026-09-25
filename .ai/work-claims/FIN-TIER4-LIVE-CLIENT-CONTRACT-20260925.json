@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "FIN-TIER4-LIVE-CLIENT-CONTRACT-20260925",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FINTECH",
   "projectFolder": "fintech",
   "ownerScope": "PVC-09..16 live market-data client boundary and canonical score projection contract.",
@@ -49,5 +49,10 @@
     "note": "PR #1448 is Tier-2 upstream and changes MarketDataGateway/MarketTickGate/RateLimitBudget, not Tier-4 claimed paths. Tier-3 exists as a parallel branch with different claimed files."
   },
   "exitGate": "Exact-head focused tests/build and Required Checks PASS; raw Tier-3 ticks remain presentation-only; transport dependencies remain fail-closed; FE handover #1447 recorded; Human/CODEOWNER merge.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "releasedAt": "2026-09-25T04:38:00+02:00",
+    "reason": "Associated Tier-4 client contract was already merged to main; active/exclusive state is stale coordination metadata.",
+    "currentMain": "2a2244bd55bef6a88d892ec17c8ecc20b037e22f"
+  }
 }

@@ -110,7 +110,7 @@ function validIsoDate(value: unknown): value is string {
 }
 
 function expectedMarketTopic(assetClass: MarketDataAssetClass, symbol: string): string {
-  return `market:${assetClass}:${symbol.toUpperCase().trim()}`;
+  return `asset:${assetClass}:${symbol.toUpperCase().trim()}`;
 }
 
 export function isMarketLiveVisualizationTick(
