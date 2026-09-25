@@ -126,9 +126,10 @@ export function encodeMaskedClientWebSocketTextForTest(payload: string, mask = B
   return Buffer.concat([header, mask, masked]);
 }
 
-function rejectUpgrade(socket: Socket, status: 400 | 401 | 403 | 426 | 429 | 503): void {
+function rejectUpgrade(socket: Socket, status: 400 | 404 | 401 | 403 | 426 | 429 | 503): void {
   const reason = {
     400: 'Bad Request',
+    404: 'Not Found',
     401: 'Unauthorized',
     403: 'Forbidden',
     426: 'Upgrade Required',
@@ -344,7 +345,10 @@ export function attachMarketDataWebSocketTransport(
     } catch {
       return;
     }
-    if (pathname !== routePath) return;
+    if (pathname !== routePath) {
+      rejectUpgrade(socket, 404);
+      return;
+    }
 
     void (async () => {
       if (!options.enabled) {
