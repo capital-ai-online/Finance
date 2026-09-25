@@ -1,6 +1,6 @@
 # CAPITAL-AI-COMP — Canonical Roadmap
 
-**Baseline:** `main@4c4a88e7f83150191c81134439e7bc9a1145ad4a`
+**Baseline:** `main@a503cea6b4ff9c72f8cf2a35113ab7a537922574`
 
 **Project:** `CAPITAL-AI-COMP`  
 **Folder:** `docs/projects/compliance/`  
