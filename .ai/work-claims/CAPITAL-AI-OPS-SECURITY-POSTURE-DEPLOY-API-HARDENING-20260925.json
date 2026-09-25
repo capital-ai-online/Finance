@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Add one bounded manual read-only security posture workflow, extend existing GitHub settings evidence for app/secret/audit metadata, harden browser security headers, and converge the canonical GitHub-to-Render deployment lane from the deleted deploy hook to the existing Render API credential.",
+  "workItemDE": "Einen begrenzten manuellen Read-only-Security-Posture-Workflow ergänzen, bestehende GitHub-Settings-Evidence um App-/Secret-/Audit-Metadaten erweitern, Browser-Security-Header härten und die kanonische GitHub→Render-Deployment-Lane vom gelöschten Deploy Hook auf das bestehende Render-API-Credential konvergieren.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "supportingPvc": ["PVC-07", "PVC-08", "PVC-18"],
+  "startedAt": "2026-09-25T21:10:00Z",
+  "baseBranch": "main",
+  "baseSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+  "lastSyncedMainSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+  "branch": "operations/security-posture-deploy-api-hardening-20260925",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925.json",
+    ".github/workflows/private-security-posture-read.yml",
+    ".github/workflows/ci.yml",
+    "render.yaml",
+    "server.application.ts",
+    "scripts/deployment/triggerRenderExactCommit.mjs",
+    "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "scripts/operations/githubSettingsInventoryProjection.mjs",
+    "scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs",
+    "scripts/operations/runPrivateSecurityPostureRead.mjs",
+    "scripts/operations/renderManagementAdapter.mjs",
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "tests/unit/githubSettingsInventoryProjection.test.ts",
+    "tests/unit/privateSecurityPostureWorkflow.test.ts",
+    "tests/unit/renderManagementAdapter.test.ts",
+    "tests/unit/securityWebBaselineProjection.test.ts"
+  ],
+  "scopeBoundary": [
+    "Reuse the existing GitHub Enterprise/settings readers and existing Enterprise Read secret; no second GitHub settings authority or raw REST proxy.",
+    "Posture workflow is workflow_dispatch-only, read-only and redacts secret/token/key values; missing provider permissions remain NOT_OBSERVABLE.",
+    "Render deployment stays in the existing CI deploy-production lane and uses the existing CAPITAL_AI_RENDER_API_KEY; no second deployment workflow or Render native auto-deploy.",
+    "No secret values are read into evidence, committed or logged. Secret checks are metadata/audit-event only.",
+    "SEC retains independent verification authority; this OPS slice implements affected runtime/deployment controls only.",
+    "Do not touch PR #1460 files server/logger.ts, src/platform/Security/edgeTrust.ts or tests/unit/edgeTrustTelemetryProductIntelligence.test.ts."
+  ],
+  "exitEvidence": [
+    "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
+    "Focused tests cover new read-only capabilities, secret-value redaction, Render exact-commit API request and browser header contract.",
+    "Deployment chain no longer depends on RENDER_DEPLOY_HOOK_URL and still fails closed on stale main/incorrect deployment identity.",
+    "Manual posture workflow uses bounded read-only GitHub/Render/Supabase evidence and deletes temporary evidence/key files on every outcome.",
+    "No writer/file/semantic overlap remains before PR creation.",
+    "Human/CODEOWNER merge remains required; SEC runtime verification remains independent."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
