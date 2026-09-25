@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PUBSUB-BROKER-BENCHMARK-20260925",
+  "status": "active",
+  "exclusive": false,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok 4.6",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "Add an isolated pub/sub broker benchmark folder comparing Upstash, Render Valkey, NATS and Redis for p50/p95/p99, publish latency, memory, disconnect recovery and 10k subscribers.",
+  "priority": "P2",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "supportingStages": ["PVC-04"],
+  "baseBranch": "main",
+  "baseSha": "2a2244bd55bef6a88d892ec17c8ecc20b037e22f",
+  "branch": "agent/operations-pubsub-broker-benchmark-20260925",
+  "claimedPaths": [
+    "benchmarks/pubsub-broker-2026/",
+    "docs/projects/operations/evidence/PUBSUB_BROKER_BENCHMARK_2026-09-25.md",
+    ".ai/work-claims/CAPITAL-AI-OPS-PUBSUB-BROKER-BENCHMARK-20260925.json"
+  ],
+  "invariants": [
+    "Harness must not be imported by the production runtime.",
+    "No secrets committed.",
+    "Render and Upstash remain owner-provisioned remotes.",
+    "Literature envelopes are labelled as non-measured."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

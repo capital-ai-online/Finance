@@ -1,0 +1,29 @@
+{
+  "title": "Render Valkey future-load matrix vs 10k simulated subscribers",
+  "as_of": "2026-09-25",
+  "assumption": "Redis/Valkey pub/sub requires one dedicated TCP connection per subscriber.",
+  "render_key_value_plans": [
+    { "plan": "free", "ram": "25MB", "connection_limit": 50, "ten_k_subscribers": "FAIL" },
+    { "plan": "256mb", "ram": "256MB", "monthly_usd": 10, "connection_limit": 250, "ten_k_subscribers": "FAIL" },
+    { "plan": "1g", "ram": "1GB", "monthly_usd": 32, "connection_limit": 1000, "ten_k_subscribers": "FAIL" },
+    { "plan": "5g", "ram": "5GB", "monthly_usd": 135, "connection_limit": 5000, "ten_k_subscribers": "FAIL" },
+    { "plan": "10g", "ram": "10GB", "monthly_usd": 250, "connection_limit": 10000, "ten_k_subscribers": "CAPACITY_OK_NO_HEADROOM" },
+    { "plan": "20g", "ram": "20GB", "monthly_usd": 550, "connection_limit": 20000, "ten_k_subscribers": "PASS_RECOMMENDED" },
+    { "plan": "40g", "ram": "40GB", "monthly_usd": 1100, "connection_limit": 40000, "ten_k_subscribers": "PASS_HEADROOM" }
+  ],
+  "upstash": {
+    "published_tcp_connection_ceiling": 10000,
+    "published_throughput_cap_cmds_per_sec": 10000,
+    "rest_pubsub": false,
+    "ten_k_subscribers": "CAPACITY_OK_NO_HEADROOM",
+    "latency_class_same_region_ms": { "p50": "1-3", "p95": "3-8", "p99": "5-15" }
+  },
+  "nats": {
+    "ten_k_subscribers": "PASS",
+    "latency_class_local_ms": { "p50": "0.2-0.8", "p95": "0.5-3", "p99": "1-10" }
+  },
+  "redis_oss_and_valkey_engine": {
+    "latency_class_same_host_or_az_ms": { "p50": "0.3-1.0", "p95": "0.8-3", "p99": "1-5" },
+    "fanout_note": "single-threaded command execution; p99 grows with subscriber count"
+  }
+}
