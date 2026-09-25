@@ -25,7 +25,7 @@ export interface WorkflowBenchmarkResult {
 
 const INGRESS_PATTERN = /(provider|adapter|registry|marketdata|evidence|discovery|target)/i;
 const EVIDENCE_PATTERN = /(evidence|provenance|freshness|quality|validated)/i;
-const SCORING_PATTERN = /(scor|model|dispatch|evaluation|allocator|ranking|regime|resolver)/i;
+const SCORING_PATTERN = /(scor|model|dispatch|evaluation|allocat|ranking|regime|resolver)/i;
 const CANONICAL_PATTERN = /(canonical|dispatcher)/i;
 const UI_PATTERN = /\bui\b|workbench|dashboard|board|screen|projection/i;
 
