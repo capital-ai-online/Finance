@@ -1,0 +1,193 @@
+name: Private Security Posture Read
+run-name: CAPITAL-AI private security posture @ ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-security-posture-read
+  cancel-in-progress: false
+
+jobs:
+  posture:
+    name: Private read-only security posture
+    if: github.ref == 'refs/heads/main' && github.actor == 'SvenKulessa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24.18.0'
+
+      - name: Private GitHub App Konfiguration fail-closed prüfen
+        env:
+          APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+          ENTERPRISE_READ_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APP_CLIENT_ID ENTERPRISE_SLUG APP_PRIVATE_KEY ENTERPRISE_READ_PAT; do
+            [[ -n "${!name}" ]] || { echo "::error::${name} fehlt."; exit 1; }
+          done
+          key_path="${RUNNER_TEMP}/capital-ai-github-app-private-key.pem"
+          umask 077
+          printf '%s' "${APP_PRIVATE_KEY}" > "${key_path}"
+          echo "CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
+
+      - name: GitHub Enterprise Org Repo User Settings read-only erfassen
+        env:
+          CAPITAL_AI_GITHUB_APP_CLIENT_ID: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
+          CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
+          CAPITAL_AI_GITHUB_USER_READ_PAT: ${{ secrets.CAPITAL_AI_GITHUB_USER_READ_PAT }}
+          CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/github-settings.json
+          CAPITAL_AI_GITHUB_SETTINGS_MARKDOWN_PATH: ${{ runner.temp }}/github-settings.md
+        run: node scripts/operations/runPrivateGitHubSettingsInventoryRead.mjs > /dev/null
+
+      - name: GitHub App Secret-Metadaten und Audit-Evidence read-only erfassen
+        env:
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_ORG_LOGIN: ${{ github.repository_owner }}
+          CAPITAL_AI_GITHUB_REPOSITORY: ${{ github.repository }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
+          CAPITAL_AI_GITHUB_SECURITY_EVIDENCE_PATH: ${{ runner.temp }}/github-security-posture.json
+        run: node scripts/operations/runPrivateGitHubSecurityPostureEvidence.mjs > /dev/null
+
+      - name: Render Settings read-only erfassen
+        env:
+          CAPITAL_AI_RENDER_API_KEY: ${{ secrets.CAPITAL_AI_RENDER_API_KEY }}
+          CAPITAL_AI_RENDER_WORKSPACE_ID: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_ID }}
+          CAPITAL_AI_RENDER_WORKSPACE_PLAN: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_PLAN }}
+          RENDER_EVIDENCE_PATH: ${{ runner.temp }}/render-posture.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CAPITAL_AI_RENDER_API_KEY}" || -z "${CAPITAL_AI_RENDER_WORKSPACE_ID}" ]]; then
+            printf '%s\n' '{"status":"NOT_OBSERVABLE","reason":"Render read credential/workspace variable missing"}' > "${RENDER_EVIDENCE_PATH}"
+          else
+            node scripts/operations/renderManagementAdapter.mjs --action inventory > "${RENDER_EVIDENCE_PATH}"
+          fi
+          chmod 600 "${RENDER_EVIDENCE_PATH}"
+
+      - name: Supabase DB Security Posture read-only erfassen
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_EVIDENCE_PATH: ${{ runner.temp }}/supabase-posture.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_DB_URL}" ]]; then
+            printf '%s\n' '{"status":"NOT_OBSERVABLE","reason":"SUPABASE_DB_URL missing"}' > "${SUPABASE_EVIDENCE_PATH}"
+            chmod 600 "${SUPABASE_EVIDENCE_PATH}"
+            exit 0
+          fi
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client >/dev/null
+          fi
+          export PGOPTIONS='-c default_transaction_read_only=on'
+          psql "${SUPABASE_DB_URL}" --no-psqlrc --set ON_ERROR_STOP=1 --tuples-only --no-align <<'SQL' > "${SUPABASE_EVIDENCE_PATH}"
+          SELECT json_build_object(
+            'status', 'PASS',
+            'serverVersion', current_setting('server_version'),
+            'migrationCount', (SELECT count(*)::int FROM supabase_migrations.schema_migrations),
+            'latestMigration', (SELECT max(version) FROM supabase_migrations.schema_migrations),
+            'publicTableCount', (
+              SELECT count(*)::int
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public' AND c.relkind = 'r'
+            ),
+            'publicTablesWithoutRls', (
+              SELECT count(*)::int
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity = false
+            ),
+            'securityDefinerFunctions', (
+              SELECT count(*)::int
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname IN ('public', 'fintech_core') AND p.prosecdef = true
+            )
+          );
+          SQL
+          chmod 600 "${SUPABASE_EVIDENCE_PATH}"
+
+      - name: Öffentliche Security Header read-only erfassen
+        env:
+          HEADER_EVIDENCE_PATH: ${{ runner.temp }}/production-headers.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          const path = process.env.HEADER_EVIDENCE_PATH;
+          try {
+            const response = await fetch('https://capital-ai.online/', {
+              redirect: 'manual',
+              headers: { Accept: 'text/html' },
+              signal: AbortSignal.timeout(10000),
+            });
+            const names = [
+              'server',
+              'permissions-policy',
+              'cross-origin-opener-policy',
+              'cross-origin-resource-policy',
+              'strict-transport-security',
+              'x-content-type-options',
+              'x-frame-options',
+              'content-security-policy',
+              'referrer-policy',
+            ];
+            const headers = Object.fromEntries(names.map((name) => [name, response.headers.get(name)]));
+            fs.writeFileSync(path, JSON.stringify({ status: 'PASS', httpStatus: response.status, headers }, null, 2), { mode: 0o600 });
+          } catch (error) {
+            fs.writeFileSync(path, JSON.stringify({ status: 'NOT_OBSERVABLE', reason: String(error?.name || 'fetch failed') }, null, 2), { mode: 0o600 });
+          }
+          NODE
+
+      - name: Repo Provider und Runtime Evidence korrelieren
+        env:
+          CAPITAL_AI_GITHUB_SETTINGS_EVIDENCE_PATH: ${{ runner.temp }}/github-settings.json
+          CAPITAL_AI_GITHUB_SECURITY_EVIDENCE_PATH: ${{ runner.temp }}/github-security-posture.json
+          CAPITAL_AI_RENDER_EVIDENCE_PATH: ${{ runner.temp }}/render-posture.json
+          CAPITAL_AI_SUPABASE_POSTURE_PATH: ${{ runner.temp }}/supabase-posture.json
+          CAPITAL_AI_PRODUCTION_HEADERS_PATH: ${{ runner.temp }}/production-headers.json
+          CAPITAL_AI_SECURITY_POSTURE_EVIDENCE_PATH: ${{ runner.temp }}/security-posture.json
+          CAPITAL_AI_SECURITY_POSTURE_MARKDOWN_PATH: ${{ runner.temp }}/security-posture.md
+        run: node scripts/operations/runPrivateSecurityPostureRead.mjs
+
+      - name: Redacted Security Posture im Job Summary anzeigen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="${RUNNER_TEMP}/security-posture.md"
+          if [[ -f "${report}" ]]; then
+            cat "${report}" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "Security posture: NOT_OBSERVABLE" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Temporäre Credential und Evidence Dateien entfernen
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f --             "${CAPITAL_AI_GITHUB_APP_PRIVATE_KEY_PATH:-/nonexistent}"             "${RUNNER_TEMP}/github-settings.json"             "${RUNNER_TEMP}/github-settings.md"             "${RUNNER_TEMP}/github-security-posture.json"             "${RUNNER_TEMP}/render-posture.json"             "${RUNNER_TEMP}/supabase-posture.json"             "${RUNNER_TEMP}/production-headers.json"             "${RUNNER_TEMP}/security-posture.json"             "${RUNNER_TEMP}/security-posture.md"
