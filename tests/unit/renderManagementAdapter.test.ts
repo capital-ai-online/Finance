@@ -9,6 +9,7 @@ import {
   describeSpendLimitCapability,
   planSuspendedValidationServiceDeletion,
   registryCredentialConsumers,
+  triggerRenderExactCommitDeploy,
 } from '../../scripts/operations/renderManagementAdapter.mjs';
 
 function response(status: number, body: unknown = null) {
@@ -241,6 +242,46 @@ describe('Render management adapter', () => {
     expect(JSON.stringify(inventory)).not.toContain('must-not-project');
     expect(JSON.stringify(inventory)).not.toContain('test-token');
     expect(calls.every((call) => call.method === 'GET')).toBe(true);
+  });
+
+  it('triggers only the exact Finance commit through the Render API without projecting credentials', async () => {
+    const exactSha = '1234567890abcdef1234567890abcdef12345678';
+    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      expect(String(input)).toBe(`https://api.render.com/v1/services/${EXPECTED_FINANCE_SERVICE.id}/deploys`);
+      expect(init?.method).toBe('POST');
+      expect(init?.headers).toMatchObject({
+        Authorization: 'Bearer test-token',
+        'Content-Type': 'application/json',
+      });
+      expect(JSON.parse(String(init?.body))).toEqual({
+        commitId: exactSha,
+        clearCache: 'do_not_clear',
+      });
+      return response(201, { id: 'dep-exact', status: 'build_in_progress' });
+    });
+
+    const result = await triggerRenderExactCommitDeploy({
+      apiKey: 'test-token',
+      commitId: exactSha,
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result).toEqual({
+      status: 'TRIGGERED',
+      serviceId: EXPECTED_FINANCE_SERVICE.id,
+      commitId: exactSha,
+      deployId: 'dep-exact',
+      deployStatus: 'build_in_progress',
+      credentialProjected: false,
+    });
+    expect(JSON.stringify(result)).not.toContain('test-token');
+
+    await expect(triggerRenderExactCommitDeploy({
+      apiKey: 'test-token',
+      serviceId: 'srv-other',
+      commitId: exactSha,
+      fetchImpl: fetchImpl as typeof fetch,
+    })).rejects.toThrow(/exact Finance service id required/);
   });
 
   it('keeps the management workflow owner/main-bound and without OIDC authority', () => {
