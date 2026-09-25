@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI04-20260925",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete issue #1429 VAI-04 by mapping deterministic Artifact-Version drift findings onto the existing assured Self-Healing writer family without changing the core Self-Healing contract generation.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-06",
+  "supportingStages": [
+    "PVC-04",
+    "PVC-07"
+  ],
+  "baseBranch": "main",
+  "baseSha": "59aa3caf83546a23c98ac16a33beda07c487b700",
+  "branch": "agent/operations-artifact-version-vai04-20260925",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI04-20260925.json",
+    "docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI04_2026-09-25.md",
+    "src/platform/Release/Services/artifactVersionSelfHealingPolicy.ts",
+    "tests/unit/artifactVersionSelfHealingPolicy.test.ts"
+  ],
+  "dependencies": [
+    "VAI-01 / PR #1430",
+    "VAI-02 / PR #1443",
+    "VAI-03 / PR #1445",
+    "self-healing-contract/1.2.0"
+  ],
+  "invariants": [
+    "Do not create a second Self-Healing controller, action registry, writer family, version authority or merge authority.",
+    "Do not mutate self-healing-contract/1.2.0 or its independent QM/Security assurance generation.",
+    "ARTIFACT_VERSION_CONSUMER_DRIFT and ARTIFACT_VERSION_DECLARATION_DRIFT may delegate only to the existing RECONCILE_REPOSITORY_PROJECTION action after deterministic, owner-resolved, ambiguity-free evidence.",
+    "ARTIFACT_VERSION_UNCLASSIFIED and every incomplete or ambiguous evidence shape remain OBSERVE_ONLY.",
+    "No provider, database, deployment, protected recovery or direct-main mutation."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
