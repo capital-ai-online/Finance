@@ -65,7 +65,7 @@ This work MUST NOT:
 - emit a synthetic score, neutral default or heuristic replacement;
 - treat raw Tier-3 provider ticks as alert-eligible;
 - treat raw Tier-3 provider ticks as score-eligible;
-- invent a public WebSocket endpoint while the server transport adapter is absent;
+- bypass the canonical `/api/market-data/live` server transport or treat repository presence as productive activation;
 - replace the Tier-3 server-side ring buffer, Pub/Sub or fan-out authority;
 - convert presentation state into `CanonicalScoreResult`;
 - mutate ranking, execution eligibility or provider routing.
@@ -87,8 +87,8 @@ This work MUST NOT:
 
 ## Remaining runtime dependencies
 
-1. Tier 3 must Human/CODEOWNER merge.
-2. A concrete Render WebSocket server adapter, authentication/subscription policy, heartbeat and shutdown path must be owner-correctly activated.
+1. Tier 3 is Human/CODEOWNER-merged on CURRENT_MAIN; its canonical room namespace is `asset:<assetClass>:<SYMBOL>`.
+2. The bounded server WebSocket adapter, authentication/subscription policy, heartbeat and shutdown path are implemented in `CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925`, but productive activation remains gated by entitlement/redistribution and runtime evidence.
 3. Feed/provider redistribution rights must be evidenced before public streaming.
 4. Live alert events must originate from a verified quote/consensus authority, not raw provider ticks.
 5. Live scoring triggers must remain backend FINTECH orchestration and emit only canonical results.
