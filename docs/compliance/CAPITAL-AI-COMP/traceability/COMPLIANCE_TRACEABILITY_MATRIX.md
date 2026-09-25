@@ -2,10 +2,10 @@
 
 **Document ID:** `DOC-COMP-TRACEABILITY-2026-08-31`  
 **Role:** traceability / non-authorizing  
-**Version:** 1.3.2  
-**Date:** 2026-09-16  
+**Version:** 1.3.3  
+**Date:** 2026-09-25  
 **Execution model:** `CAPITAL-AI-COMP-V2` v2.1  
-**Current-main correlation:** `main@f6fccf64f78a1a29c3f98a9aa3adc8634d51b80d`  
+**Current-main correlation:** `main@a503cea6b4ff9c72f8cf2a35113ab7a537922574`  
 **Status:** `COMP-03 TRACEABILITY CURRENT — 37 ACTIVE INPUTS; REQ-COMP-033 OPS/SEC RETURNS REASSESSED`
 
 This is a navigation/traceability projection. Detailed source wording and applicability remain in `COMPLIANCE_REQUIREMENTS_INVENTORY.md` and `APPLICABILITY_MATRIX.md`; detailed control mapping remains in `REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md`; assessment/evidence status remains in the Compliance reports. Traceability does not create Authority or prove compliance.
@@ -27,7 +27,7 @@ Current ownership resolves only through `docs/projects/README.md` and `docs/proj
 | `REQ-COMP-019` | AI transparency candidate scope | ESS-0019 + `AI_CONTENT_TRANSPARENCY_CONTRACT` + claim control | `CLIENT/PVC-01`, `DOC/PVC-03`, `FINTECH/PVC-17` as actually affected | 01→02→03→06→04→05→07/08 | evidence-held; target handoffs are trigger/scope-specific |
 | `REQ-COMP-020` | AI oversight/decision boundary | ESS-0019 + ADR-0087 + `financialDecisionAuthority=false` factual boundary | Human/Legal first; then affected `FINTECH/PVC-16..17` or `CLIENT/PVC-01` | 01→02→03→04/07/08 | legal/scope-held; no pre-emptive obligation backlog |
 | `REQ-COMP-021` | AI literacy | `AI_LITERACY_CONTROL.md` + ESS-0019 | Human Owner / organizational operator; no productive PVC by training obligation | 01→02→06→04→05→07 | `COMP-GAP-005`; attributable Human evidence missing |
-| `REQ-COMP-022` | DORA | external regulation only until applicability | Human/Legal; `PVC-N/A` until concrete applicable obligation | 01→02→05→07 | `COMP-GAP-006`; `LEGAL_REVIEW`, no pre-emptive DORA controls |
+| `REQ-COMP-022` | DORA | external regulation + FINREG evidence-pack families; no productive DORA control promotion before applicability | Human/Legal first; conditional `OPS/PVC-08` + SEC verification after positive scope | 01→02→03→05→06→07 | `COMP-GAP-006`; `LEGAL_REVIEW`; evidence families mapped, `REQ-COMP-032` operating recovery gap remains open |
 | `REQ-COMP-023` | Consumer/digital contracts | current consumer-contract/billing evidence | Human/Legal; `CLIENT/PVC-01`, `OPS/PVC-08` only after concrete obligation/surface correlation | 01→02→03/06→04→05→07 | legal/scope-held |
 | `REQ-COMP-024` | ISO/IEC 27001 | existing Security controls + dated benchmark evidence | SEC evidence; actual productive owner only for independently established internal-control gap | 02→03→06→04 | `NOT_APPLICABLE` as binding authority |
 | `REQ-COMP-025` | ISO/IEC 42001 | `CTRL-AIMS-PDCA-001` + standards crosswalk | `GOV/PVC-05` | 02→03→04 | `NOT_APPLICABLE` as binding authority; current Governance benchmark only |
@@ -41,7 +41,7 @@ Current ownership resolves only through `docs/projects/README.md` and `docs/proj
 | `REQ-COMP-035` | Records / documentation | document lifecycle controls | `DOC/PVC-03`; `GOV/PVC-05` for shared registry; DATA/OPS where record storage/trace transport affected | 03→06→04→05→07 | `PARTIALLY_COMPLIANT`; internal `COMP-GAP-008` resolved, external record-keeping duties remain regime/scope-specific |
 | `REQ-COMP-036` | Release / rollback | deploy/hosted-CI controls + ADR-0060 where applicable | `OPS/PVC-07..08` | 03→06→04→05/07 | `PARTIALLY_COMPLIANT`; exact-SHA release evidence exists, fresh rollback drill not established |
 | `REQ-COMP-037` | DDG/TDDDG | current privacy/consent/claim controls only; no invented legal Authority | Human/Legal first; affected `CLIENT/DATA` plus cross-cutting presentation/marketing owners for their own surfaces | 01→02→03→06→04→05→07 | legal/scope-held |
-| `REQ-COMP-038` | Financial-services/supervisory scope | factual decision boundaries only | Human/Legal; `FINTECH/PVC-15..17` supplies facts/owns later technical remediation if required | 01→02→07 | `UNKNOWN`; no pre-emptive regulatory backlog |
+| `REQ-COMP-038` | Financial-services/supervisory scope | factual decision boundaries + MiFID II Art.17/RTS6 and MiCAR/BaFin evidence pack | Human/Legal; `FINTECH/PVC-09..17` supplies facts/owns later technical remediation if required | 01→02→03→06→04→05→07 | `LEGAL_REVIEW_REQUIRED`; MiFID17 current trigger not evidenced without productive order execution; MiCAR service/CASP/advice classification unresolved; no licence/exemption assertion |
 | `REQ-COMP-039` | AI Act high-risk trigger | ESS-0019 + AI inventory + current decision boundaries | Human/Legal on trigger; actual use-case owner, commonly `FINTECH/PVC-17` or `CLIENT/PVC-01` | 08→01→02→03→06→04→05→07 | trigger/legal-held; no blanket high-risk classification |
 
 ## Retired historical IDs

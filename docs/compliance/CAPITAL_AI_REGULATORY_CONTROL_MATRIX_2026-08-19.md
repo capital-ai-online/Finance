@@ -1,11 +1,11 @@
 # CAPITAL-AI Regulatory Control Matrix — 2026-08-19
 
 **Document ID:** COMPLIANCE-CAPITAL-AI-MATRIX-2026-08-19  
-**Version:** `1.1.0`  
+**Version:** `1.2.0`  
 **Version authority:** `src/platform/Documentary/Versioning/DocumentaryVersion.ts` + canonical `docs/governance/document-registry.json`; legacy `src/platform/VersionManager` remains read-only under ADR-0096  
 **Status:** GOVERNANCE / ENGINEERING BASELINE — applicability requires factual/legal classification  
 **Owner:** CAPITAL-AI Owner / Security & Compliance  
-**Review date:** 2026-08-22
+**Review date:** 2026-09-25
 
 > Engineering/compliance traceability artifact, not legal advice. Source requirement, legal applicability, repository control and completion evidence are distinct. `TBD`, engineering `PASS` or implemented controls must never be translated into a blanket `AI Act compliant` or `DORA compliant` claim.
 
@@ -17,7 +17,7 @@
 | AI Act Art. 50 transparency | applicable transparency provisions from 2026-08-02 where conditions are met | visible AI interaction disclosure + machine-readable application transparency metadata; no blanket compliance assertion |
 | EU Commission Art. 50 transparency guidance | final Commission guidance published 2026-07-20 | engineering interpretation baseline; legal sufficiency still reviewed per use case |
 | EU Commission high-risk classification guidance | draft guidance/consultation state reviewed in 2026-08 baseline | do not treat draft guidance as binding final classification authority |
-| Regulation (EU) 2022/2554 — DORA | binding for financial entities in scope | applicability first; repository FinTech branding alone does not establish DORA scope |
+| Directive 2014/65/EU Art. 17 + Delegated Regulation (EU) 2017/589 (RTS 6) | binding where an in-scope investment firm engages in algorithmic trading | trigger requires regulated entity/activity plus automated order parameters; current productive order execution is not evidenced |\n| Regulation (EU) 2023/1114 — MiCAR | binding where crypto-asset/service scope applies | classify each crypto surface before CASP/advice/portfolio-management controls are asserted |\n| Regulation (EU) 2022/2554 — DORA | binding for financial entities in scope | applicability first; repository FinTech branding alone does not establish DORA scope |
 | ISO/IEC 42001:2023 | voluntary/certifiable benchmark unless otherwise required | benchmark only unless Owner adopts certification target |
 | NIST AI RMF / GenAI Profile | voluntary benchmark | control-design/reference mapping only |
 
@@ -117,3 +117,17 @@ No current repository control declares these asset/market research uses high-ris
 5. Human review/training may not be fabricated by model output.
 6. Voluntary NIST/ISO alignment may be described only with the exact mapped controls/evidence; certification must never be implied without certification evidence.
 7. Review this matrix whenever a new AI use case, regulated activity, legal entity, material provider, public synthetic-content channel or protected production capability is introduced.
+
+## G. Financial-regulatory evidence refresh — 2026-09-25
+
+Canonical evidence pack: `CAPITAL-AI-COMP/evidence/COMP_FINREG_01_MIFID17_MICAR_DORA_EVIDENCE_2026-09-25.md`.
+
+| Regime | Trigger/applicability | Current evidence state |
+|---|---|---|
+| MiFID II Art. 17 / RTS 6 | in-scope investment firm + algorithmic order activity | `CONDITIONAL_TRIGGER_NOT_CURRENTLY_EVIDENCED`; no productive order path on assessed baseline |
+| MiCAR | per-surface crypto-asset/service classification | `LEGAL_REVIEW_REQUIRED`; no CASP/exemption assertion |
+| MiCAR Art. 66 | positive CASP scope | `CONDITIONAL_CONTROL_FAMILY` |
+| MiCAR Art. 81 | positive advice/portfolio-management scope | `CONDITIONAL_CONTROL_FAMILY` |
+| DORA | Article-2/entity/activity or relevant ICT-provider scope | `APPLICABILITY_HELD / ENGINEERING_EVIDENCE_PARTIAL` |
+
+For DORA, the mapped evidence families are governance, ICT risk management, incident handling/reporting, resilience testing, ICT third-party risk, register of information, exit strategy and continuity/recovery. `REQ-COMP-032` remains an open measured recovery-evidence gap. These rows are readiness/evidence states, not legal compliance verdicts.

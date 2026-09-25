@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "COMP-FINREG-01-MIFID17-MICAR-DORA-EVIDENCE-20260925",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement an evidence-first MiFID II Article 17, MiCAR/BaFin and DORA regulatory evidence slice inside the existing COMP-FINREG-01 perimeter without asserting legal applicability or compliance.",
+  "workItemDE": "MiFID-II-Artikel-17-, MiCAR/BaFin- und DORA-Nachweise evidence-first innerhalb des bestehenden COMP-FINREG-01-Perimeters umsetzen, ohne rechtliche Anwendbarkeit oder Compliance zu behaupten.",
+  "priority": "P1",
+  "priorityReason": "Public recommendation-like financial/crypto surfaces exist while regulatory applicability remains Human/Legal gated.",
+  "projectId": "CAPITAL-AI-COMP",
+  "projectFolder": "docs/projects/compliance/",
+  "relationship": "CROSS_CUTTING",
+  "productivePvc": null,
+  "baseBranch": "main",
+  "baseSha": "a503cea6b4ff9c72f8cf2a35113ab7a537922574",
+  "branch": "compliance/finreg-mifid17-micar-dora-evidence-20260925",
+  "claimedPaths": [
+    ".ai/work-claims/COMP-FINREG-01-MIFID17-MICAR-DORA-EVIDENCE-20260925.json",
+    "docs/compliance/CAPITAL-AI-COMP/evidence/COMP_FINREG_01_MIFID17_MICAR_DORA_EVIDENCE_2026-09-25.md",
+    "docs/compliance/CAPITAL-AI-COMP/work-packages/COMP_FINREG_01_FINANCIAL_REGULATORY_PERIMETER_2026-09-22.md",
+    "docs/compliance/CAPITAL_AI_REGULATORY_CONTROL_MATRIX_2026-08-19.md",
+    "docs/projects/compliance/ROADMAP.md",
+    "docs/compliance/CAPITAL-AI-COMP/mappings/COMPLIANCE_HANDOFF_REGISTER.md",
+    "docs/compliance/CAPITAL-AI-COMP/mappings/REQUIREMENT_CONTROL_EVIDENCE_MATRIX.md",
+    "docs/compliance/CAPITAL-AI-COMP/traceability/COMPLIANCE_TRACEABILITY_MATRIX.md",
+    "docs/compliance/CAPITAL-AI-COMP/inventory/COMPLIANCE_REQUIREMENTS_INVENTORY.md"
+  ],
+  "dependencies": [
+    "Human Owner direction 2026-09-25 to continue MiFID II Article 17, MiCAR/BaFin and DORA evidence implementation",
+    "/AGENTS.md@CURRENT_MAIN",
+    "COMP-FINREG-01 active canonical work package",
+    "Human/Legal remains the classification authority for regulated activity/entity scope"
+  ],
+  "guardrails": [
+    "No BaFin, MiCAR, MiFID II or DORA compliance claim is created by engineering evidence.",
+    "No licence, exemption, CASP, Wertpapierinstitut or DORA entity status is inferred.",
+    "No broker, order, trading, custody or live-execution capability is introduced.",
+    "MiFID II Article 17 remains conditional unless regulated algorithmic trading facts are established.",
+    "DORA technical obligations remain conditional until Article 2/entity/activity applicability is competently established.",
+    "Foreign productive remediation is routed to the canonical owner.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "One current-main evidence pack maps MiFID II Article 17/RTS 6, MiCAR/BaFin and DORA requirements to repository evidence and explicit gaps.",
+    "MiFID II Article 17 trigger state records the absence of a productive broker/order/execution path on the assessed baseline.",
+    "MiCAR advice/CASP and BaFin licensing evidence requirements remain explicitly Human/Legal gated.",
+    "DORA evidence families include ICT risk management, incidents, resilience testing, ICT third-party register/exit strategy and measured recovery evidence.",
+    "COMP-FINREG-01 and the canonical Compliance roadmap reference the new evidence pack.",
+    "No unsupported blanket compliance state is introduced."
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "correlation": {
+    "currentMainSha": "a503cea6b4ff9c72f8cf2a35113ab7a537922574",
+    "openWriterOverlap": "NONE; no open PRs during fresh pre-mutation correlation",
+    "executionBoundaryEvidence": "Current repository evidence keeps LIVE_EXECUTION / FT-7+ unauthorized and exposes no productive Broker/Order/Execution authority.",
+    "traceabilityConvergence": "Requirement inventory, Requirement→Control→Evidence mapping and Compliance traceability now bind the FINREG evidence pack.",
+    "baselineAutofix": {
+      "sourceCiRun": 36111083875,
+      "failedTest": "tests/unit/governanceControlPlane.test.ts",
+      "failure": "CURRENT_STATE_PROJECTION_BASELINE_STALE",
+      "repairCommit": "0038244da20c28ab1ebe574051d978f5698464ce",
+      "repairScope": "docs/projects/compliance/ROADMAP.md baseline only",
+      "priorSuiteEvidence": "580 passed test files / 3423 passed tests; one stale-baseline failure"
+    }
+  }
+}
