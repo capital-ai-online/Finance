@@ -8,6 +8,7 @@ import {
   createProductIntelligenceEvent,
   parseTraceParent,
   PRODUCT_INTELLIGENCE_SCHEMA_VERSION,
+  redactTelemetryAttributes,
 } from '../../src/platform/Telemetry';
 
 const EDGE_SECRET = '0123456789abcdef0123456789abcdef';
@@ -115,6 +116,24 @@ describe('Cloudflare -> Render edge trust', () => {
       rayIdPresent: true,
       rayIdValid: true,
     });
+  });
+
+  it('keeps edge trust evidence observable through telemetry redaction', () => {
+    const edge = resolveCloudflareRenderEdgeTrust(renderRequest(), {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
+    });
+
+    const redacted = redactTelemetryAttributes({ edgeTrustEvidence: edge.evidence });
+    expect(redacted?.edgeTrustEvidence).toMatchObject({
+      proofConfigured: true,
+      proofPresented: true,
+      proofMatched: true,
+      clientIpValid: true,
+      rayIdValid: true,
+    });
+    expect(Object.keys(edge.evidence).some((key) => /secret|token/i.test(key))).toBe(false);
+    expect(JSON.stringify(redacted)).not.toContain(EDGE_SECRET);
   });
 
   it('rejects malformed Cloudflare identity metadata', () => {
