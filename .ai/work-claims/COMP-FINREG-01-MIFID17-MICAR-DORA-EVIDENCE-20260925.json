@@ -58,6 +58,14 @@
     "currentMainSha": "a503cea6b4ff9c72f8cf2a35113ab7a537922574",
     "openWriterOverlap": "NONE; no open PRs during fresh pre-mutation correlation",
     "executionBoundaryEvidence": "Current repository evidence keeps LIVE_EXECUTION / FT-7+ unauthorized and exposes no productive Broker/Order/Execution authority.",
-    "traceabilityConvergence": "Requirement inventory, Requirement→Control→Evidence mapping and Compliance traceability now bind the FINREG evidence pack."
+    "traceabilityConvergence": "Requirement inventory, Requirement→Control→Evidence mapping and Compliance traceability now bind the FINREG evidence pack.",
+    "baselineAutofix": {
+      "sourceCiRun": 36111083875,
+      "failedTest": "tests/unit/governanceControlPlane.test.ts",
+      "failure": "CURRENT_STATE_PROJECTION_BASELINE_STALE",
+      "repairCommit": "0038244da20c28ab1ebe574051d978f5698464ce",
+      "repairScope": "docs/projects/compliance/ROADMAP.md baseline only",
+      "priorSuiteEvidence": "580 passed test files / 3423 passed tests; one stale-baseline failure"
+    }
   }
 }
