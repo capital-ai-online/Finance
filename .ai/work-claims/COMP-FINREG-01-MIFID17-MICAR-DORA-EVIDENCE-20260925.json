@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "COMP-FINREG-01-MIFID17-MICAR-DORA-EVIDENCE-20260925",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -67,5 +67,13 @@
       "repairScope": "docs/projects/compliance/ROADMAP.md baseline only",
       "priorSuiteEvidence": "580 passed test files / 3423 passed tests; one stale-baseline failure"
     }
+  },
+  "releaseEvidence": {
+    "reason": "Human/CODEOWNER merge completed",
+    "pr": 1457,
+    "mergeCommit": "9f7e5ffa8745c3586031eea9ac9d5347f2d442fe",
+    "mergedAt": "2026-09-25T08:33:48Z",
+    "currentMainAtRelease": "9f7e5ffa8745c3586031eea9ac9d5347f2d442fe",
+    "postMergeReview": "docs/compliance/CAPITAL-AI-COMP/reports/COMP_POST_FINREG_3PVC_REVIEW_2026-09-25.md"
   }
 }
