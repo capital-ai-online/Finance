@@ -2,7 +2,7 @@
 
 **Project:** `CAPITAL-AI-FINTECH`  
 **Owner/PVC:** `CAPITAL-AI-FINTECH / PVC-09..16`  
-**Status:** `IMPLEMENTED_BRANCH / TIER3_MERGE_AND_TRANSPORT_DEPENDENCY`  
+**Status:** `MERGED_CONTRACT / TIER3_TOPIC_CORRECTED_IN_LIVE_TRANSPORT_SLICE / TRANSPORT_ACTIVATION_GATED`  
 **Fresh Human direction:** 2026-09-25  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`
 
@@ -47,7 +47,7 @@ A fresh repository readback discovered the parallel branch
 It currently implements:
 
 - `market-data-fanout/1.0.0`;
-- canonical `market:<assetClass>:<SYMBOL>` topics;
+- canonical `asset:<assetClass>:<SYMBOL>` topics;
 - exactly 200 ticks per topic;
 - delta frames;
 - Upstash Redis REST Pub/Sub;
