@@ -55,10 +55,14 @@ function statusClasses(status: AnalysisContractStatus): string {
   switch (status) {
     case 'CANONICAL':
       return 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300';
+    case 'COMPATIBILITY_ONLY':
+      return 'border-cyan-400/25 bg-cyan-400/10 text-cyan-300';
     case 'RESEARCH_ONLY':
       return 'border-violet-400/25 bg-violet-400/10 text-violet-300';
     case 'CONTEXT_ONLY':
       return 'border-sky-400/25 bg-sky-400/10 text-sky-300';
+    case 'BLOCKED':
+      return 'border-orange-400/25 bg-orange-400/10 text-orange-300';
     case 'DISABLED':
       return 'border-rose-400/25 bg-rose-400/10 text-rose-300';
   }
@@ -78,8 +82,10 @@ function conceptClasses(concept: DataConnectionConceptName): string {
 }
 
 function compactStatus(status: AnalysisContractStatus): string {
+  if (status === 'COMPATIBILITY_ONLY') return 'Compatibility';
   if (status === 'RESEARCH_ONLY') return 'Research';
   if (status === 'CONTEXT_ONLY') return 'Context';
+  if (status === 'BLOCKED') return 'Blocked';
   if (status === 'DISABLED') return 'Disabled';
   return 'Canonical';
 }
