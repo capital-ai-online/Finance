@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const root = path.resolve(__dirname, '../..');
 const migrationPath = path.join(
   root,
-  'supabase/migrations/20260920141000_outbox_worker_recovery.sql',
+  'supabase/migrations/20260920161056_outbox_worker_recovery.sql',
 );
 const correctiveMigrationPath = path.join(
   root,
