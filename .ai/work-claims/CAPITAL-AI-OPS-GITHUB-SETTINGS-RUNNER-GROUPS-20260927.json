@@ -19,7 +19,7 @@
   "baseBranch": "main",
   "baseSha": "f961ce6c9a15a4c627b7e6a21adf840f1584b5e9",
   "lastSyncedMainSha": "f961ce6c9a15a4c627b7e6a21adf840f1584b5e9",
-  "branch": "operations/github-enterprise-runner-groups-20260927",
+  "branch": "agent/operations-github-enterprise-runner-groups-20260927",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-RUNNER-GROUPS-20260927.json",
     ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-20260924.json",
