@@ -63,7 +63,7 @@ export const GITHUB_SETTINGS_READ_CAPABILITIES = Object.freeze({
     scope: 'organization',
     requiredPermission: 'Self-hosted runners: read',
     path: ({ organization }) => `/orgs/${organization}/actions/runner-groups`,
-    pagination: Object.freeze({ kind: 'object', field: 'groups' }),
+    pagination: Object.freeze({ kind: 'object', field: 'runner_groups' }),
   }),
   'organization.actions.cache_usage.get': Object.freeze({
     scope: 'organization',
