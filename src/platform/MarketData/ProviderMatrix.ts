@@ -49,6 +49,7 @@ export interface ProviderMatrixEntry {
   rateLimit: ProviderRateLimitPolicy;
   circuitBreaker: ProviderCircuitBreakerPolicy;
   gatewayStatus: ProviderGatewayStatus;
+  capabilityAssetClasses?: Partial<Record<ProviderCapability, readonly MarketDataAssetClass[]>>;
   capabilityRoutes?: readonly ProviderCapabilityRoute[];
   notes?: string;
 }
@@ -75,6 +76,11 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityAssetClasses: {
+      snapshot: ['stock', 'forex', 'crypto'],
+      quote: ['stock', 'forex', 'crypto'],
+      history: ['stock', 'forex', 'crypto', 'commodity', 'index'],
+    },
     capabilityRoutes: [
       { capability: 'history', assetClasses: ['commodity'], gatewayStatus: 'history_gateway_only' },
       { capability: 'history', assetClasses: ['stock', 'forex', 'crypto', 'index'], gatewayStatus: 'legacy_off_gateway' },
@@ -164,6 +170,10 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 15, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityAssetClasses: {
+      snapshot: ['crypto'],
+      history: ['crypto', 'stock', 'forex', 'bond'],
+    },
     capabilityRoutes: [
       { capability: 'history', assetClasses: ['crypto', 'stock', 'forex', 'bond'], gatewayStatus: 'legacy_off_gateway' },
     ],
@@ -337,6 +347,19 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
     gatewayStatus: 'not_wired',
     notes: 'Governed EUR-Lex/JRC-derived criticality evidence. Economic Importance and Supply Risk remain separate context dimensions and are never silently added to benchmark market score.',
+  },
+  {
+    id: 'binance-spot-bars',
+    displayName: 'Binance Spot Bars',
+    role: 'primary',
+    capabilities: ['history', 'bars'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 10,
+    rateLimit: { capacity: 24, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'history_gateway_only',
+    notes: 'Canonical crypto bars/history provider used by MarketDataHistoryGateway for /api/market-data/history/:symbol. Venue-specific provenance remains explicit; no consolidated execution-price authority.',
   },
   {
     id: 'binance-public',
@@ -590,6 +613,18 @@ export const LEGACY_PROVIDER_COMPATIBILITY_BINDINGS: readonly ProviderCompatibil
 
 export function getProviderMatrixEntry(id: string): ProviderMatrixEntry | undefined {
   return PROVIDER_MATRIX.find((entry) => entry.id === id);
+}
+
+export function providerSupportsCapability(
+  entry: ProviderMatrixEntry,
+  capability: ProviderCapability,
+  assetClass: MarketDataAssetClass,
+): boolean {
+  if (!entry.capabilities.includes(capability)) return false;
+  const scopedAssetClasses = entry.capabilityAssetClasses?.[capability];
+  return scopedAssetClasses
+    ? scopedAssetClasses.includes(assetClass)
+    : entry.assetClasses.includes(assetClass);
 }
 
 export function providerCapabilityGatewayStatus(
