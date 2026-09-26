@@ -11,6 +11,10 @@ services:
     # exact-commit Render API trigger via the existing GitHub Actions API credential -> post-deploy
     # identity verification. Keep Render auto-deploy off to avoid a second deployment control plane.
     autoDeployTrigger: off
+    # Production PR previews are disabled by OPS-RENDER-PREVIEW-SECURITY-01.
+    # A future preview authority requires isolated credentials/data and a separate Owner decision.
+    previews:
+      generation: off
     healthCheckPath: /healthz
     maxShutdownDelaySeconds: 30
     # Production runtime configuration is sourced exclusively from Render environment variables.
