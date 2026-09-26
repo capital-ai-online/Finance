@@ -5,8 +5,9 @@
 **PVC:** `PVC-02 / PVC-04 / PVC-18`  
 **Parent:** `OPS-08-B-SH-02`  
 **Slice:** `SH-02.13`  
-**Baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`  
-**State:** `PLANNED / OWNER-DIRECTED / IMPLEMENTATION_NOT_STARTED`
+**Planning baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`  
+**Implementation baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**State:** `IMPLEMENTATION_ON_BRANCH / CURRENT_MAIN_CORRELATED / HUMAN_MERGE_REQUIRED`
 
 ## Outcome
 
@@ -86,15 +87,36 @@ reference regression case.
 
 No new generic scheduler, queue, workflow family, Roadmap registry or merge authority is permitted.
 
+## Implementation materialization — 2026-09-26
+
+The fresh implementation branch `agent/operations-sh02-13-roadmap-closure-implementation-20260926` starts from exact CURRENT_MAIN `36fd8502178f42fd3b20562f4f60290fcbb2d11f` and materializes the existing plan without creating a peer control plane:
+
+1. `src/platform/Supervisor/postMergeRoadmapClosure.ts` is the pure evidence-bound closure contract. It derives exactly the four planned states, detects owner-local vs foreign-owner documentation drift, binds the closure fingerprint and suppresses replay/closure-sync recursion.
+2. The existing `.github/workflows/self-healing-package-continuation.yml` gains one read-only post-merge correlation step. It still runs only after successful Post-Merge Production Correlation, uses no checkout and has no contents-write/approval/merge authority.
+3. The workflow correlates changed/claimed canonical work-package paths against their current-main documentation state, merged claim lifecycle and the leading `docs/architecture/ROADMAP.md` reference.
+4. Deterministic drift remains the existing `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` class. The workflow records one generation-bound, deduplicated non-authorizing issue; it does not itself write Roadmap files.
+5. Foreign-owner drift is explicitly `OWNER_CORRECT_HANDOFF`; OPS does not mutate a GOV/SEC/QM/COMP/FE/FINTECH/CLIENT/DOC owner package merely because it detects the mismatch.
+6. Unit regressions cover terminal, evidence-gated, partial, ambiguous, foreign-owner, replay and closure-sync cases.
+
+### Bootstrap drift reconciliation on CURRENT_MAIN
+
+| Merged work | Owner | Repository evidence | Work-package state after this slice | Leading-Roadmap disposition |
+|---|---|---|---|---|
+| PR #1463 — Security Posture + Render API Hardening | CAPITAL-AI-OPS | exact-head CI/Governance/Container/Project/PR evidence PASS; merge `82f50a97...` | `MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING` | owner-local closure entry; provider gates remain open |
+| PR #1465 — Production Release Authority Supersession | CAPITAL-AI-GOV | exact-head required evidence PASS; merge `bc42ef4b...` | foreign-owner package/claim still needs GOV closure | leading Roadmap records `OWNER_CORRECT_HANDOFF`; OPS does not rewrite GOV package |
+| PR #1466 — Auth-Session / Profilnavigation | CAPITAL-AI-OPS | exact-head CI #6588, Governance #6100, Container #3571, Project #884, PR #967 PASS; merge/current-main `36fd850...` | `DONE_MAIN / TERMINAL` | owner-local terminal closure entry |
+
+Open PR #1467 is an independent OPS Supabase-ledger writer and has no changed-file overlap with this SH-02.13 implementation slice.
+
 ## Implementation plan
 
-1. Define a pure post-merge closure-correlation contract and normalized states.
-2. Bind merged-PR metadata to exactly one canonical work-package identity or fail closed.
-3. Evaluate exit evidence, including downstream gates explicitly required by the package.
-4. Feed the verified state into the existing live Roadmap projection.
-5. Reuse the existing branch-only repository-projection repair path for persistent terminalization and work-claim release.
-6. Add idempotency/recursion guards and owner-correct handoff behavior.
-7. Add deterministic tests for complete, partial, ambiguous, stale, foreign-owner and evidence-gated merges.
+1. Define a pure post-merge closure-correlation contract and normalized states. **IMPLEMENTED_ON_BRANCH**
+2. Bind merged-PR metadata to canonical work-package identity or fail closed. **IMPLEMENTED_ON_BRANCH**
+3. Evaluate repository vs downstream evidence without collapsing missing evidence into PASS. **IMPLEMENTED_ON_BRANCH**
+4. Correlate persistent package state, leading Roadmap state and claim lifecycle. **IMPLEMENTED_ON_BRANCH**
+5. Reuse the existing repository-projection drift/action lane; create no second writer. **IMPLEMENTED_ON_BRANCH**
+6. Add idempotency/recursion guards and owner-correct handoff behavior. **IMPLEMENTED_ON_BRANCH**
+7. Add deterministic tests for complete, partial, ambiguous, foreign-owner and evidence-gated merges. **IMPLEMENTED_ON_BRANCH**
 
 ## Acceptance / exit evidence
 
@@ -117,4 +139,4 @@ SH-02.13 is complete only when tests prove all of the following:
 
 ## Human boundary
 
-This planning slice changes documentation/projection only. It does not activate a new automatic mutation capability. Productive implementation and any later persistent Roadmap reconciliation remain subject to current `/AGENTS.md@CURRENT_MAIN`, exact-head validation and Human/CODEOWNER merge.
+This implementation adds correlation and non-authorizing issue evidence only. It does not grant a new repository writer or automatic mutation capability. Persistent Roadmap/work-package/claim reconciliation remains branch-only through the existing bounded repository-projection path and still requires exact-head validation plus Human/CODEOWNER merge.
