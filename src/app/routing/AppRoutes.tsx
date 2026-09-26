@@ -4,12 +4,10 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { ProfilePage } from '../../components/ProfilePage';
 import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui';
 import type { UserSession } from '../types/UserSession';
 
-const ProfilePage = lazy(() =>
-  import('../../components/ProfilePage').then((module) => ({ default: module.ProfilePage })),
-);
 const LearningVocabulary = lazy(() =>
   import('../../features/learning/ui/LearningVocabulary').then((module) => ({
     default: module.LearningVocabulary,

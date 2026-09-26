@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-AUTH-SESSION-CONVERGENCE-20260926",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete the backend-first authentication process by eliminating duplicate refresh-token rotation, coalescing client and server session reads, and making the authenticated profile route immediately available.",
+  "workItemDE": "Den backend-first Authentifizierungsprozess durch einfache Session-Auflösung, koaleszierte Refreshes und eine sofort verfügbare Profilroute fertigstellen.",
+  "startedAt": "2026-09-26T18:13:11+02:00",
+  "baseBranch": "main",
+  "baseSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
+  "lastSyncedMainSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
+  "branch": "operations/auth-session-convergence-20260926",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation with supporting PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "Owner reports a productive authenticated profile freeze after successful Google login and Enterprise entitlement projection.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-SESSION-CONVERGENCE-20260926.json",
+    "docs/projects/operations/work-packages/OPS_AUTH_SESSION_CONVERGENCE_2026-09-26.md",
+    "server/auth/backendAuth.ts",
+    "server/routes/backendAuthRoutes.ts",
+    "src/app/auth/SessionComposition.tsx",
+    "src/app/routing/AppRoutes.tsx",
+    "tests/unit/authSessionConvergence.test.ts"
+  ],
+  "dependencies": [
+    "Supabase Auth remains ACTIVE_HEALTHY.",
+    "Production and CURRENT_MAIN use the existing backend-first HttpOnly-cookie architecture.",
+    "Human/CODEOWNER merge is required before the fix can enter main."
+  ],
+  "acceptanceCriteria": [
+    "GET /api/auth/session resolves the backend cookie only once.",
+    "Concurrent requests carrying the same refresh token share one bounded provider rotation result.",
+    "Overlapping browser session reads are coalesced and cannot resurrect a logged-out projection.",
+    "The authenticated profile action renders without an unbounded lazy profile chunk.",
+    "Profile-to-landing SPA navigation preserves the verified session and Enterprise tier.",
+    "Focused and required CI checks pass on the exact PR head.",
+    "No direct merge or Production mutation occurs."
+  ],
+  "evidence": {
+    "currentMain": "82f50a97db513cab02e0a342c19230badb0b3ade",
+    "productionCommit": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+    "sourceParity": "The affected auth/profile files are identical between Production and CURRENT_MAIN before this change.",
+    "providerState": "Supabase project AIFINANCIAL is ACTIVE_HEALTHY and the repository/database migration ledger is aligned at 20260924161429.",
+    "observedAuthEvidence": "Supabase Auth logs show two refresh operations at the same session timestamp, including token revocation; current /api/auth/session code performs pending and verified resolution sequentially.",
+    "openWriterOverlap": "Open PR #1465 is Governance-only and has no changed-file or semantic overlap with this auth/runtime slice.",
+    "ownerDirection": "Fresh Owner direction requests correlation against current main and completion of the entire authentication process."
+  },
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited."
+}

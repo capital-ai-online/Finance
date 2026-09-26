@@ -12,6 +12,8 @@ const SESSION_CHUNK_SIZE = 2800;
 const MAX_SESSION_CHUNKS = 8;
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const OAUTH_TRANSIENT_MAX_AGE_SECONDS = 60 * 10;
+const SESSION_REFRESH_REUSE_WINDOW_MS = 10_000;
+const MAX_SESSION_REFRESH_REUSE_ENTRIES = 256;
 
 interface StoredBackendSession {
   version: 1;
@@ -29,6 +31,18 @@ export interface VerifiedBackendAuth {
   refreshed: boolean;
   mfaPending: boolean;
 }
+
+interface BackendSessionRefreshResult {
+  session: Session;
+  user: User;
+}
+
+interface BackendSessionRefreshEntry {
+  promise: Promise<BackendSessionRefreshResult | null>;
+  reuseUntil: number;
+}
+
+const backendSessionRefreshes = new Map<string, BackendSessionRefreshEntry>();
 
 function getSupabaseUrl(): string {
   return getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
@@ -196,6 +210,62 @@ function createStatelessAuthClient() {
   });
 }
 
+function refreshTokenFingerprint(refreshToken: string): string {
+  return createHash('sha256').update(refreshToken).digest('hex');
+}
+
+function pruneBackendSessionRefreshes(now: number): void {
+  for (const [key, entry] of backendSessionRefreshes) {
+    if (entry.reuseUntil <= now) backendSessionRefreshes.delete(key);
+  }
+
+  while (backendSessionRefreshes.size >= MAX_SESSION_REFRESH_REUSE_ENTRIES) {
+    const oldestKey = backendSessionRefreshes.keys().next().value;
+    if (typeof oldestKey !== 'string') break;
+    backendSessionRefreshes.delete(oldestKey);
+  }
+}
+
+/**
+ * Coalesces refresh-token rotation for concurrent requests carrying the same cookie.
+ *
+ * Supabase refresh tokens are single-use. Keeping the successful result for a short bounded
+ * interval lets every response persist the same rotated pair instead of racing the provider with
+ * the already-consumed token. Only a SHA-256 fingerprint is used as the lookup key.
+ */
+async function refreshBackendSessionOnce(
+  refreshToken: string,
+): Promise<BackendSessionRefreshResult | null> {
+  const now = Date.now();
+  const key = refreshTokenFingerprint(refreshToken);
+  const existing = backendSessionRefreshes.get(key);
+  if (existing && existing.reuseUntil > now) return existing.promise;
+
+  pruneBackendSessionRefreshes(now);
+  const promise = (async () => {
+    const client = createStatelessAuthClient();
+    const { data, error } = await client.auth.refreshSession({ refresh_token: refreshToken });
+    if (error || !data.session || !data.user) return null;
+    return { session: data.session, user: data.user };
+  })().catch(() => null);
+  const entry: BackendSessionRefreshEntry = {
+    promise,
+    reuseUntil: now + SESSION_REFRESH_REUSE_WINDOW_MS,
+  };
+  backendSessionRefreshes.set(key, entry);
+
+  void promise.then((result) => {
+    if (backendSessionRefreshes.get(key) !== entry) return;
+    if (!result) {
+      backendSessionRefreshes.delete(key);
+      return;
+    }
+    entry.reuseUntil = Date.now() + SESSION_REFRESH_REUSE_WINDOW_MS;
+  });
+
+  return promise;
+}
+
 export type BackendUserAuthClient = ReturnType<typeof createStatelessAuthClient>;
 
 /**
@@ -326,14 +396,14 @@ async function resolveBackendAuth(
     // returning the replacement cookie to the browser.
     if (!res) return null;
 
-    const { data, error } = await client.auth.refreshSession({ refresh_token: refreshToken });
-    if (error || !data.session || !data.user) return null;
-    accessToken = data.session.access_token;
-    refreshToken = data.session.refresh_token;
-    expiresAt = data.session.expires_at ?? Math.floor(Date.now() / 1000) + data.session.expires_in;
-    user = data.user;
+    const result = await refreshBackendSessionOnce(refreshToken);
+    if (!result) return null;
+    accessToken = result.session.access_token;
+    refreshToken = result.session.refresh_token;
+    expiresAt = result.session.expires_at ?? Math.floor(Date.now() / 1000) + result.session.expires_in;
+    user = result.user;
     refreshed = true;
-    writeSessionCookie(req, res, data.session, mfaPending);
+    writeSessionCookie(req, res, result.session, mfaPending);
   }
 
   return { user, accessToken, refreshToken, expiresAt, refreshed, mfaPending };
@@ -343,7 +413,8 @@ export async function resolveVerifiedBackendAuth(
   req: Request,
   res?: Response,
 ): Promise<VerifiedBackendAuth | null> {
-  return resolveBackendAuth(req, res, false);
+  const resolved = await resolveBackendAuth(req, res, true);
+  return resolved?.mfaPending ? null : resolved;
 }
 
 export async function resolvePendingBackendAuth(
@@ -352,6 +423,13 @@ export async function resolvePendingBackendAuth(
 ): Promise<VerifiedBackendAuth | null> {
   const verified = await resolveBackendAuth(req, res, true);
   return verified?.mfaPending ? verified : null;
+}
+
+export async function resolveBackendAuthSession(
+  req: Request,
+  res?: Response,
+): Promise<VerifiedBackendAuth | null> {
+  return resolveBackendAuth(req, res, true);
 }
 
 export async function revokeBackendAuthSession(req: Request, scope: 'local' | 'global'): Promise<void> {
