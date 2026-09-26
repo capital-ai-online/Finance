@@ -49,8 +49,8 @@ const checks: Check[] = [
   {
     id: 'PCG-014',
     file: '.github/workflows/ci.yml',
-    description: 'Render deployment hook must use the deployable main ref after exact main-SHA revalidation',
-    includes: 'ref=main',
+    description: 'Render deployment must use the exact verified commit through the canonical Render API trigger',
+    includes: 'node p2b-runtime/artifacts/deployment/triggerRenderExactCommit.mjs',
   },
   {
     id: 'PCG-018',
