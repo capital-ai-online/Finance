@@ -31,11 +31,25 @@ export interface EdgeTrustOptions {
   trustedHosts?: readonly string[];
 }
 
+export interface EdgeTrustEvidence {
+  renderRuntime: boolean;
+  proofConfigured: boolean;
+  canonicalHost: boolean;
+  forwardedProtoHttps: boolean;
+  proofPresented: boolean;
+  proofMatched: boolean | null;
+  clientIpPresent: boolean;
+  clientIpValid: boolean;
+  rayIdPresent: boolean;
+  rayIdValid: boolean;
+}
+
 export interface EdgeTrustContext {
   state: EdgeTrustState;
   reason: EdgeTrustReason;
   clientIp?: string;
   edgeRayId?: string;
+  evidence: EdgeTrustEvidence;
 }
 
 const CF_RAY_PATTERN = /^[0-9a-f]{16}(?:-[a-z0-9]{3})?$/i;
@@ -92,39 +106,57 @@ export function resolveCloudflareRenderEdgeTrust(
   options: EdgeTrustOptions = {},
 ): EdgeTrustContext {
   const isRender = options.isRender ?? process.env.RENDER === 'true';
-  if (!isRender) return { state: 'not-render', reason: 'not-render' };
-
   const sharedSecret = validSharedSecret(options.sharedSecret ?? process.env[EDGE_TRUST_SECRET_ENV]);
-  if (!sharedSecret) return { state: 'untrusted', reason: 'missing-shared-secret' };
-
-  const host = normalizedHost(request.headers.host);
   const trustedHosts = options.trustedHosts ?? CAPITAL_AI_PUBLIC_HOSTS;
-  if (!host || !trustedHosts.includes(host)) {
-    return { state: 'untrusted', reason: 'invalid-host' };
+  // Internal fallbacks/tests can present partial request-like objects. Treat a missing
+  // headers bag as untrusted evidence instead of throwing before the fail-closed checks run.
+  const headers = request?.headers ?? {};
+  const host = normalizedHost(headers.host);
+  const forwardedProtoHttps =
+    singleHeader(headers['x-forwarded-proto'])?.toLowerCase() === 'https';
+  const presentedToken = singleHeader(headers[EDGE_TRUST_HEADER]);
+  const clientIpHeader = singleHeader(headers['cf-connecting-ip']);
+  const clientIp = validIp(clientIpHeader);
+  const edgeRayId = singleHeader(headers['cf-ray']);
+  const rayIdValid = Boolean(edgeRayId && CF_RAY_PATTERN.test(edgeRayId));
+  const proofMatched =
+    sharedSecret && presentedToken ? safeEqual(presentedToken, sharedSecret) : null;
+
+  const evidence: EdgeTrustEvidence = {
+    renderRuntime: isRender,
+    proofConfigured: Boolean(sharedSecret),
+    canonicalHost: Boolean(host && trustedHosts.includes(host)),
+    forwardedProtoHttps,
+    proofPresented: Boolean(presentedToken),
+    proofMatched,
+    clientIpPresent: Boolean(clientIpHeader),
+    clientIpValid: Boolean(clientIp),
+    rayIdPresent: Boolean(edgeRayId),
+    rayIdValid,
+  };
+
+  if (!isRender) return { state: 'not-render', reason: 'not-render', evidence };
+  if (!sharedSecret) return { state: 'untrusted', reason: 'missing-shared-secret', evidence };
+  if (!evidence.canonicalHost) {
+    return { state: 'untrusted', reason: 'invalid-host', evidence };
   }
-
-  if (singleHeader(request.headers['x-forwarded-proto'])?.toLowerCase() !== 'https') {
-    return { state: 'untrusted', reason: 'invalid-forwarded-proto' };
+  if (!forwardedProtoHttps) {
+    return { state: 'untrusted', reason: 'invalid-forwarded-proto', evidence };
   }
-
-  const presentedToken = singleHeader(request.headers[EDGE_TRUST_HEADER]);
-  if (!presentedToken) return { state: 'untrusted', reason: 'missing-edge-token' };
-  if (!safeEqual(presentedToken, sharedSecret)) {
-    return { state: 'untrusted', reason: 'edge-token-mismatch' };
+  if (!presentedToken) return { state: 'untrusted', reason: 'missing-edge-token', evidence };
+  if (!proofMatched) {
+    return { state: 'untrusted', reason: 'edge-token-mismatch', evidence };
   }
-
-  const clientIp = validIp(request.headers['cf-connecting-ip']);
-  if (!clientIp) return { state: 'untrusted', reason: 'invalid-client-ip' };
-
-  const edgeRayId = singleHeader(request.headers['cf-ray']);
-  if (!edgeRayId || !CF_RAY_PATTERN.test(edgeRayId)) {
-    return { state: 'untrusted', reason: 'invalid-ray-id' };
+  if (!clientIp) return { state: 'untrusted', reason: 'invalid-client-ip', evidence };
+  if (!rayIdValid) {
+    return { state: 'untrusted', reason: 'invalid-ray-id', evidence };
   }
 
   return {
     state: 'trusted-cloudflare-render',
     reason: 'trusted',
     clientIp,
-    edgeRayId,
+    edgeRayId: edgeRayId ?? undefined,
+    evidence,
   };
 }
