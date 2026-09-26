@@ -28,14 +28,23 @@
     "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
     "supabase/migrations/*.sql",
     "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
-    "tests/unit/privacyRetentionHardening.test.ts"
+    "tests/unit/privacyRetentionHardening.test.ts",
+    "tests/unit/promoRedemptionsRetirement.test.ts",
+    "tests/unit/outboxWorkerRecoveryMigration.test.ts",
+    "tests/unit/privacyGovernance.test.ts",
+    "tests/unit/subscriptionAuthorityLegacyIsolation.test.ts",
+    "tests/unit/userLifecycleSubscriptionProjection.test.ts",
+    "tests/unit/dashboardCompositionBoundary.test.ts",
+    "tests/unit/publicLandingRoute.test.ts",
+    "tests/unit/securityPerformancePriorityRemediation.test.ts"
   ],
   "scopeBoundary": [
     "Repository-only migration-history path reconciliation.",
     "No Supabase migration repair, db push, apply_migration, DDL, DML, provider setting, secret, role, or Production mutation.",
     "Already-applied provider history is copied from read-only schema_migrations statement evidence.",
     "Seven current repository-local migrations remain pending and are not applied by this work item.",
-    "Human/CODEOWNER merge remains required."
+    "Human/CODEOWNER merge remains required.",
+    "Regression consumers are aligned to the exact migration filenames and the merged eager ProfilePage contract from PR #1466; no runtime implementation is changed by this follow-up."
   ],
   "acceptanceCriteria": [
     "All 78 provider ledger versions have exact version/name paths in supabase/migrations.",
@@ -52,7 +61,8 @@
     "before": "61 local files; 19 exact matches; 32 timestamp aliases; 27 remote-only history rows; 10 local-only files.",
     "plannedAfter": "85 local files; 78 exact matches; zero aliases; zero remote-only rows; seven local-only files.",
     "openWriterOverlap": "No open pull request at pre-create correlation.",
-    "ownerDirection": "Continue explaining the ledger and complete its fix in a separate repository PR."
+    "ownerDirection": "Continue explaining the ledger and complete its fix in a separate repository PR.",
+    "regressionConsumerReadback": "CI on head 1254505b found five stale migration-path consumers and three stale lazy-ProfilePage assertions; PR #1466 evidence confirms eager ProfilePage is the merged anti-freeze contract."
   },
   "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited."
 }
