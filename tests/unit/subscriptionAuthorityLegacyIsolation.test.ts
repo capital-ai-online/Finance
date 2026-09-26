@@ -17,7 +17,7 @@ describe('canonical subscription authority and legacy isolation', () => {
 
   it('keeps Checkout subscription metadata aligned with the Stripe-to-public trigger identity', () => {
     const stripe = read('server/stripe.ts');
-    const migration = read('supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql');
+    const migration = read('supabase/migrations/20260905103413_user_lifecycle_subscription_identity_authority.sql');
 
     expect(stripe).toContain('subscription_data = {');
     expect(stripe).toContain('user_id: userId ||');

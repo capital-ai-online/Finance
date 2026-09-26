@@ -247,7 +247,8 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(landingPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(landingPort).not.toMatch(/from\s+['"][^'"]*\/app\//);
     expect(loginPage).not.toMatch(/from\s+['"][^'"]*\/app\//);
-    expect(routes).toContain("import('../../components/ProfilePage')");
+    expect(routes).toContain("import { ProfilePage } from '../../components/ProfilePage'");
+    expect(routes).not.toContain("import('../../components/ProfilePage')");
     expect(routes).not.toContain("import('../dashboard/Dashboard')");
     expect(routes).not.toContain("import('../public/PublicAnalysisWorkbench')");
   });
@@ -260,7 +261,7 @@ describe('canonical landing-first routing, static baseline and protected-route b
     expect(rootBlock).not.toContain('userSession=');
     expect(rootBlock).not.toContain('handleLogin');
     expect(rootBlock).not.toContain('handleRegister');
-    expect(routes).toContain('const ProfilePage = lazy');
+    expect(routes).not.toContain('const ProfilePage = lazy');
     expect(routes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
     expect(routes).not.toContain('const Dashboard = lazy');
     expect(routes).not.toContain('const PublicAnalysisWorkbench = lazy');

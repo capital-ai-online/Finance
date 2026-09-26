@@ -35,7 +35,8 @@ describe('P2 public/login bundle boundary', () => {
     expect(routes).toContain(
       "import { LandingPage, LegalAndFaqPages, LoginPage, PasswordUpdatePage } from '../../features/public/ui'",
     );
-    expect(routes).toContain("import('../../components/ProfilePage')");
+    expect(routes).toContain("import { ProfilePage } from '../../components/ProfilePage'");
+    expect(routes).not.toContain("import('../../components/ProfilePage')");
     expect(routes).not.toContain("import('../dashboard/Dashboard')");
     expect(routes).not.toContain("import('../../features/public/ui/LandingPage')");
     expect(routes).toContain("import('../../features/learning/ui/LearningVocabulary')");
