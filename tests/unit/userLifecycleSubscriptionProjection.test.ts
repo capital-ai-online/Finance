@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const migrationPath = path.join(
   process.cwd(),
-  'supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql',
+  'supabase/migrations/20260905103413_user_lifecycle_subscription_identity_authority.sql',
 );
 
 function migration(): string {
