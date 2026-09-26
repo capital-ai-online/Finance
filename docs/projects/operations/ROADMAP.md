@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`
+**Baseline:** `main@f961ce6c9a15a4c627b7e6a21adf840f1584b5e9`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-26 — CURRENT_MAIN `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
+**Reconciliation:** 2026-09-26 — CURRENT_MAIN `f961ce6c9a15a4c627b7e6a21adf840f1584b5e9`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -18,14 +18,19 @@ This file remains a temporary project execution projection until the separately 
 
 ### OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-01
 
-**State:** `IMPLEMENTATION_ON_BRANCH / READ_ONLY`  
+**State:** `FOLLOW_UP_ON_BRANCH / READ_ONLY / HUMAN_MERGE_REQUIRED`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08, PVC-18`  
-**Source package:** `work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md`
+**Source package:** `work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md`  
+**Follow-up:** `work-packages/OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md`
 
-Extend the existing settings inventory into one four-scope management adapter:
-Enterprise → Organization → Repository → User. Existing readers remain canonical
-scope transports. Missing API/auth coverage is explicit `NOT_OBSERVABLE`; no
-provider mutation is introduced.
+The four-scope adapter implementation merged via PR #1399. Manual validation
+run #18 on CURRENT_MAIN `f961ce6c9a15a4c627b7e6a21adf840f1584b5e9` reached all
+independent reads, but the Enterprise runner-group response parser expected
+`groups` instead of GitHub's documented `runner_groups` field; the settings
+inventory and dependent storage report failed closed. The bounded correction is
+on `operations/github-enterprise-runner-groups-20260927`; provider settings
+remain unchanged and no provider mutation is introduced. Close only after exact
+head checks, Human/CODEOWNER merge, and a fresh successful main workflow run.
 
 ### OPS-CI-VALIDATION-CLASSIFICATION-V2
 

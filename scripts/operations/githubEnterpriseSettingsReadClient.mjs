@@ -32,7 +32,7 @@ export const GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES = Object.freeze({
   'enterprise.actions.runner_groups.list': Object.freeze({
     requiredPermission: 'Enterprise runners: read (classic PAT manage_runners:enterprise)',
     path: ({ enterprise }) => `/enterprises/${enterprise}/actions/runner-groups`,
-    pagination: Object.freeze({ kind: 'object', field: 'groups' }),
+    pagination: Object.freeze({ kind: 'object', field: 'runner_groups' }),
   }),
   'enterprise.actions.self_hosted_runners.list': Object.freeze({
     requiredPermission: 'Enterprise runners: read (classic PAT manage_runners:enterprise)',
