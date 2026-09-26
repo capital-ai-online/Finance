@@ -4,9 +4,11 @@
 **Primary PVC:** `PVC-02 — Controlled Implementation`  
 **Supporting PVC:** `PVC-08 — Production Operations`  
 **Primary Owner:** `CAPITAL-AI-OPS`  
-**Baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**Implementation baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**Merged main:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`  
+**Merged PR:** `#1467`  
 **Branch:** `operations/supabase-ledger-exact-reconciliation-20260926`  
-**Status:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING / HUMAN_MERGE_REQUIRED`  
+**Status:** `MERGED_MAIN / EVIDENCE_GATE / SUPABASE_PREVIEW_NOT_PROVEN`  
 **Mutation class:** repository-only; Supabase read-only
 
 ## Meaning of the ledger
@@ -44,3 +46,11 @@ No `migration repair`, `db push`, `apply_migration`, DDL, DML, provider configur
 - the canonical validator and focused tests pass;
 - Supabase Preview passes on the exact PR head;
 - Human/CODEOWNER review and merge remain required.
+
+## Post-merge closure — 2026-09-26
+
+Repository reconciliation is Human-merged through PR #1467 as `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`. Exact-head CI #6595, Governance #6106, Container Security #3578, Project Execution Directive #891, OSS/PR #973, GitGuardian and License checks were terminal-success. The Supabase provider check named **Supabase Preview** was observed as `skipped`, however, so the package's explicit Preview exit criterion is not promoted to PASS.
+
+The merged claim is released because the repository writer is terminal. The work package remains evidence-gated until an owner-correct Supabase Preview/readback proves that the exact migration-history paths are accepted by the provider.
+
+**Closure disposition:** `MERGED_MAIN / EVIDENCE_GATE / SUPABASE_PREVIEW_NOT_PROVEN`.
