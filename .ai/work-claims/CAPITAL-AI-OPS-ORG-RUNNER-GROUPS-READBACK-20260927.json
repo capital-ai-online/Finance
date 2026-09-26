@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ORG-RUNNER-GROUPS-READBACK-20260927",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete the post-merge settings inventory read by correcting the organization runner-groups pagination field observed in manual workflow run #19.",
+  "workItemDE": "Post-Merge-Einstellungsinventar abschließen: das Feld der paginierten Organization-Runnergruppen-Antwort aus manuellem Workflow-Lauf #19 korrigieren.",
+  "priority": "P1",
+  "priorityReason": "Run #19 on merged main proved Enterprise settings parsing but exposed the same documented runner_groups response shape in the combined organization settings reader, blocking the redacted inventory and storage report.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-26T23:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "c1ea7b128238d51110cebbb5bfbe4d43ccab17cd",
+  "lastSyncedMainSha": "c1ea7b128238d51110cebbb5bfbe4d43ccab17cd",
+  "branch": "agent/operations-org-runner-groups-readback-20260927",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ORG-RUNNER-GROUPS-READBACK-20260927.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-RUNNER-GROUPS-20260927.json",
+    "scripts/operations/githubSettingsInventoryReadClient.mjs",
+    "tests/unit/githubSettingsInventoryReadClient.test.ts",
+    "docs/projects/operations/work-packages/OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md"
+  ],
+  "scopeBoundary": [
+    "GET-only organization settings read; no provider setting, IAM, secret, billing, production or deployment mutation.",
+    "Use GitHub's documented runner_groups response key for organization runner-group pagination.",
+    "Preserve fail-closed behavior for malformed responses and redacted output boundaries.",
+    "Do not expose or modify Enterprise PAT, GitHub App private key, user data, raw runner metadata or any secret value."
+  ],
+  "exitEvidence": [
+    "Focused combined settings client test verifies the documented organization runner_groups payload is accepted.",
+    "Exact-head Governance, CI, Security and required checks pass; Human/CODEOWNER merge remains required.",
+    "After merge, rerun Private GitHub Billing Read on fresh main and verify Settings Inventory, redacted export, Storage Capability and final Evidence Completion Gate."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

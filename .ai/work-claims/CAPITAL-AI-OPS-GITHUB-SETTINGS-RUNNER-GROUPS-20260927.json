@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-GITHUB-SETTINGS-RUNNER-GROUPS-20260927",
-  "status": "active",
+  "status": "released",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -42,5 +42,13 @@
     "Exact-head Governance, CI, Security and required checks pass; Human/CODEOWNER merge remains required.",
     "After Human/CODEOWNER merge, rerun Private GitHub Billing Read on main and verify the settings inventory and dependent storage report outcomes."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-26T23:38:26Z",
+  "releaseEvidence": {
+    "pullRequest": 1470,
+    "mergeCommit": "c1ea7b128238d51110cebbb5bfbe4d43ccab17cd",
+    "mergedAt": "2026-09-26T23:38:26Z",
+    "postMergeRun": 19,
+    "outcome": "ENTERPRISE_FIX_VERIFIED_ORGANIZATION_FOLLOW_UP_REQUIRED"
+  }
 }
