@@ -81,3 +81,27 @@ Security does not take over the OPS release/deployment implementation. The exact
 `FIRST_BLOCKING_DEPENDENCY_F15_FOREIGN_OWNER`
 
 `NO_ARTIFICIAL_SEC_WORK_CREATED`
+
+
+## 6. Bounded three-PVC idle review
+
+**Review trigger:** No additional owner-correct SEC implementation item is READY after the #1460 post-merge reconciliation. The first active dependency remains foreign-owned F15, and open PR #1463 already carries the corresponding OPS implementation surface. This review is scoped to exactly three PVC units and transfers no ownership.
+
+| PVC | Current state | Evidence state | Finding / risk | Dependency / owner-correct handover |
+|---|---|---|---|---|
+| `PVC-07 Release Management` | F15 remains the first unresolved P0 dependency in `SEC-WEB-HARDENING-01`. | Current Roadmap records OPS-07-A + OPS-08-A as the canonical return path; draft PR #1463 changes `.github/workflows/ci.yml`, Render deployment code and release controls. | Release identity must converge on the scanned/signed immutable artifact; a rebuild-from-ref path must not be represented as artifact identity equivalence. | Existing handover: `CAPITAL-AI-OPS` / PR #1463. SEC retains verification only. |
+| `PVC-08 Production Operations` | Production remains cadence-managed; the PR #1462 preflight observes Production `1e8904dfec75` as a healthy ancestor of CURRENT_MAIN `15e1e0e3dc6f`. | Canonical Production preflight baseline for #1462: `sha256:892cb35b62c4cc202bace02b4b4729d0ae5f660b82bb4ef8a33be1bd00248c28`; queued Production lag is cadence-conformant. | Preview/deploy/provider controls are operational authority and must remain fail-closed behind OPS/Human gates. | Existing handover: `CAPITAL-AI-OPS` / PR #1463; no SEC provider mutation. |
+| `PVC-18 EventMesh / Traceability` | Read-only traceability remains an evidence surface, not an authorization plane. | #1460 Edge-Trust telemetry evidence is merged; #1462 binds the post-merge state to CURRENT_MAIN and preserves F20/F21/F25 as partial/open where appropriate. | Trace/evidence must not be promoted into merge, deploy or business authority, and sensitive request/secret material must remain redacted. | Existing SEC verification boundary; no separate mutation or ownership transfer is required. |
+
+### Deduplication
+
+- Central current-state source: `docs/architecture/ROADMAP.md@CURRENT_MAIN`.
+- Existing owner-correct runtime/release implementation: draft PR #1463, `CAPITAL-AI-OPS`, supporting PVC-07 / PVC-08 / PVC-18.
+- PR #1462 itself is documentation/evidence only and has no exact changed-file overlap with #1463.
+- No second Release, Deployment, Provider, Traceability or Security authority is created.
+
+### Review disposition
+
+`NO_NEW_LOCAL_ACTION / EXISTING_OWNER_CORRECT_HANDOFF`
+
+No additional SEC work package is derived. The next SEC implementation step remains gated on terminal owner-return evidence for F15. After that return, the canonical dependency chain resumes at `F23 → F10 → production/open-writer re-correlation`.
