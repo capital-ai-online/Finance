@@ -108,13 +108,16 @@ export function resolveCloudflareRenderEdgeTrust(
   const isRender = options.isRender ?? process.env.RENDER === 'true';
   const sharedSecret = validSharedSecret(options.sharedSecret ?? process.env[EDGE_TRUST_SECRET_ENV]);
   const trustedHosts = options.trustedHosts ?? CAPITAL_AI_PUBLIC_HOSTS;
-  const host = normalizedHost(request.headers.host);
+  // Internal fallbacks/tests can present partial request-like objects. Treat a missing
+  // headers bag as untrusted evidence instead of throwing before the fail-closed checks run.
+  const headers = request?.headers ?? {};
+  const host = normalizedHost(headers.host);
   const forwardedProtoHttps =
-    singleHeader(request.headers['x-forwarded-proto'])?.toLowerCase() === 'https';
-  const presentedToken = singleHeader(request.headers[EDGE_TRUST_HEADER]);
-  const clientIpHeader = singleHeader(request.headers['cf-connecting-ip']);
+    singleHeader(headers['x-forwarded-proto'])?.toLowerCase() === 'https';
+  const presentedToken = singleHeader(headers[EDGE_TRUST_HEADER]);
+  const clientIpHeader = singleHeader(headers['cf-connecting-ip']);
   const clientIp = validIp(clientIpHeader);
-  const edgeRayId = singleHeader(request.headers['cf-ray']);
+  const edgeRayId = singleHeader(headers['cf-ray']);
   const rayIdValid = Boolean(edgeRayId && CF_RAY_PATTERN.test(edgeRayId));
   const proofMatched =
     sharedSecret && presentedToken ? safeEqual(presentedToken, sharedSecret) : null;
