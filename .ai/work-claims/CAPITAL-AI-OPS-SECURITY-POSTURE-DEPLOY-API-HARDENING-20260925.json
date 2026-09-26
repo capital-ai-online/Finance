@@ -50,7 +50,8 @@
     "tests/unit/privateSecurityPostureWorkflow.test.ts",
     "tests/unit/productionCiRunnerConsolidation.test.ts",
     "tests/unit/renderManagementAdapter.test.ts",
-    "tests/unit/securityWebBaselineProjection.test.ts"
+    "tests/unit/securityWebBaselineProjection.test.ts",
+    "scripts/security/verifyProductionConfigInvariants.ts"
   ],
   "scopeBoundary": [
     "Reuse the existing GitHub settings-inventory authority plus one bounded fixed-endpoint incident-evidence reader using the existing Enterprise Read secret; no second generic settings authority or raw REST proxy.",
@@ -61,7 +62,8 @@
     "Do not touch PR #1460 files server/logger.ts, src/platform/Security/edgeTrust.ts or tests/unit/edgeTrustTelemetryProductIntelligence.test.ts.",
     "Render cleanup must verify missing allowlisted services through exact-ID provider reads or return NOT_OBSERVABLE/BLOCKED; list omission alone is never proof of deletion.",
     "Finance PR previews may only be disabled after Human/CODEOWNER merge through the existing bounded Render Management workflow with exact service identity, exact confirmation and immediate after-readback.",
-    "Cadence PATCH 0.6.5 may only update the registered MERGE_CADENCE_PATCH_V1 allowlist through the existing Release Version Gate."
+    "Cadence PATCH 0.6.5 may only update the registered MERGE_CADENCE_PATCH_V1 allowlist through the existing Release Version Gate.",
+    "Production configuration guard PCG-014 may be updated only to replace the retired Render deploy-hook/ref=main invariant with the already-tested exact-commit Render API trigger contract; PCG-018 live-main equality remains unchanged."
   ],
   "exitEvidence": [
     "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
@@ -73,7 +75,8 @@
     "Render cleanup no longer reports PASS from list omission alone; exact-ID readback distinguishes PRESENT, ABSENT and NOT_OBSERVABLE.",
     "Render preview contract is machine-tested and Finance converges to pullRequestPreviewsEnabled=no and previews.generation=off before the provider finding is closed.",
     "package.json and package-lock.json plus governed version mirrors materialize exactly 0.6.5.",
-    "Production CI consolidation regression coverage asserts the exact-commit Render API trigger and rejects the retired deploy-hook ref=main expectation."
+    "Production CI consolidation regression coverage asserts the exact-commit Render API trigger and rejects the retired deploy-hook ref=main expectation.",
+    "Production configuration guard verifies the exact-commit Render API trigger contract and no longer requires the retired ref=main deploy-hook path."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
