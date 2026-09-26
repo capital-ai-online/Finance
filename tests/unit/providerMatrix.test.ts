@@ -135,7 +135,7 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
   it('inventories existing stock-fundamental and macro/rate evidence lanes without activating candidates', () => {
     expect(getProviderMatrixEntry('alpha-vantage')).toMatchObject({
       enabled: true,
-      gatewayStatus: 'legacy_off_gateway',
+      gatewayStatus: 'not_wired',
       assetClasses: ['stock'],
     });
     expect(getProviderMatrixEntry('alpha-vantage')?.capabilities).toEqual(
@@ -144,14 +144,14 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
 
     expect(getProviderMatrixEntry('fmp-traditional')).toMatchObject({
       enabled: true,
-      gatewayStatus: 'legacy_off_gateway',
+      gatewayStatus: 'not_wired',
       assetClasses: ['stock'],
       capabilities: ['fundamentals'],
     });
 
     expect(getProviderMatrixEntry('fred')).toMatchObject({
       enabled: true,
-      gatewayStatus: 'legacy_off_gateway',
+      gatewayStatus: 'not_wired',
       assetClasses: ['macro', 'bond'],
       capabilities: ['macro-series'],
     });
