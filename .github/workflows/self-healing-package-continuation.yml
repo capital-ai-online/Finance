@@ -174,11 +174,14 @@ jobs:
               const field =
                 markdown.match(/^\*\*(?:Status|State):\*\*\s*[\x60]?([^\x60\n]+)[\x60]?\s*$/im);
               if (field) return field[1].trim();
-              const section = markdown.match(
-                /^##\s+Status\s*$([\s\S]*?)(?=^##\s|$)/im,
-              );
-              if (section) {
-                const code = section[1].match(/\x60([^\x60\n]+)\x60/);
+
+              const heading = markdown.match(/^##\s+Status\s*$/im);
+              if (heading && typeof heading.index === 'number') {
+                const afterHeading = markdown.slice(heading.index + heading[0].length);
+                const nextHeadingIndex = afterHeading.search(/^##\s+/m);
+                const section =
+                  nextHeadingIndex >= 0 ? afterHeading.slice(0, nextHeadingIndex) : afterHeading;
+                const code = section.match(/\x60([^\x60\n]+)\x60/);
                 if (code) return code[1].trim();
               }
               return null;
