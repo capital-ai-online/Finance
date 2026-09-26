@@ -7,7 +7,7 @@
 Project: `CAPITAL-AI-OPS`
 Primary PVC: `PVC-02`
 Supporting PVC: `PVC-07 / PVC-08 / PVC-18`
-Branch: `operations/security-posture-deploy-api-hardening-20260925`
+Branch: `agent/operations-security-posture-deploy-api-hardening-20260926`
 Base: `main@1e8904dfec75a2ebb03bae8654133137708f1e3b`
 
 ## Trigger
@@ -25,7 +25,7 @@ The export contains no alert location or secret value. These observations theref
 
 - Canonical production repository: `capital-ai-online/Finance`.
 - Render Finance is bound to `main`, native auto-deploy is off, and the runtime reports one production instance.
-- Render Finance currently has automatic PR previews enabled in provider state. This is a provider-side hardening gap because service previews can create additional temporary instances. No provider mutation is performed by this branch.
+- Render Finance currently has automatic PR previews enabled in provider state. This is a provider-side hardening gap because service previews can create additional temporary instances. The branch now contains a bounded post-merge mutation action and fail-closed preview contract; no provider mutation is performed before Human/CODEOWNER merge.
 - The canonical `.github/workflows/ci.yml` still referenced the deleted `RENDER_DEPLOY_HOOK_URL`.
 - The existing Render management authority already uses `CAPITAL_AI_RENDER_API_KEY`.
 - Supabase AIFINANCIAL is active/healthy. Current provider security advice reports leaked-password protection disabled.
@@ -88,8 +88,8 @@ The public `server: cloudflare` disclosure is an edge-provider signal and is not
 
 The following remain external/provider actions and are not mutated by this branch:
 
-1. Disable automatic PR previews on the production Render Finance service.
-2. Determine exact locations and validity of the three GitHub risk-assessment observations.
+1. After Human/CODEOWNER merge, run the bounded `disable-finance-pr-previews` action and verify `pullRequestPreviewsEnabled=no` plus `previews.generation=off` by provider readback.
+2. Run the bounded exact residual static-site cleanup action for `srv-daemcseq1p3s739vd40g` only if it remains present, then verify exact-ID absence; independently determine exact locations and validity of the three GitHub risk-assessment observations.
 3. Confirm whether the Enterprise read PAT can observe Enterprise audit log, GitHub App installation inventory and secret metadata. Missing scopes remain `NOT_OBSERVABLE`.
 4. Any GitHub Enterprise/Organization policy change.
 5. Supabase leaked-password protection if the active plan does not expose the feature.
