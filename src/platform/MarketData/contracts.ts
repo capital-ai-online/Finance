@@ -14,7 +14,9 @@ export type ProviderCapability =
   | 'sentiment'
   | 'news'
   | 'onchain'
-  | 'governance';
+  | 'governance'
+  | 'orderbook'
+  | 'macro-series';
 export type ProviderRole = 'primary' | 'secondary' | 'shadow';
 export type MarketDataBarInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
 export type MarketDataQualityState =
