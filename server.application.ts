@@ -200,6 +200,20 @@ app.use((req, res, next) => {
   // zur CSP-Regel frame-ancestors 'self' aus server/securityResponse.ts (redundante, aber von
   // aelteren Browsern ohne CSP-Unterstuetzung benoetigte Absicherung).
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // SEC-WEB-F03 / Sitelemetry 2026-09-25: deny browser capabilities the application does
+  // not use. Payment/passkey capabilities are intentionally not restricted here because those
+  // flows have their own provider/browser contracts and must be compatibility-tested separately.
+  res.setHeader(
+    'Permissions-Policy',
+    'accelerometer=(), ambient-light-sensor=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), usb=()',
+  );
+  // Preserve OAuth/payment popup compatibility while severing unsafe opener relationships for
+  // unrelated cross-origin documents.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  // First-party application resources may be shared across CAPITAL-AI subdomains but not arbitrary
+  // third-party sites. This is intentionally less restrictive than same-origin until all subdomain
+  // asset/API consumers have independent production evidence.
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
 
   // F-04: Die Content-Security-Policy wird ausschliesslich von server/securityResponse.ts gesetzt
   // (ADR-0035/ADR-0040, nonce-basiert, mit object-src 'none', base-uri 'none' und form-action).

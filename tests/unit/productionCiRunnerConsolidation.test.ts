@@ -90,7 +90,11 @@ describe('P2B production CI runner consolidation', () => {
     expect(deploy).toContain("node-version: '24.18.0'");
     expect(deploy).toContain('manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA');
     expect(deploy).toContain('live_main_sha');
-    expect(deploy).toContain('ref=main');
+    expect(deploy).toContain('test "$live_main_sha" = "$VERIFIED_COMMIT_SHA"');
+    expect(deploy).toContain('CAPITAL_AI_RENDER_API_KEY');
+    expect(deploy).toContain('node p2b-runtime/artifacts/deployment/triggerRenderExactCommit.mjs');
+    expect(deploy).not.toContain('RENDER_DEPLOY_HOOK_URL');
+    expect(deploy).not.toContain('ref=main');
     expect(deploy).not.toContain('ref=${VERIFIED_COMMIT_SHA}');
     expect(deploy).toContain('node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs');
   });

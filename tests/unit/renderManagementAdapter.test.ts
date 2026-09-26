@@ -3,12 +3,17 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   EXPECTED_FINANCE_SERVICE,
   EXPECTED_REGISTRY_CREDENTIAL,
+  EXPECTED_STALE_STATIC_SITE,
   EXPECTED_SUSPENDED_VALIDATION_SERVICES,
   buildRenderSettingsInventory,
+  buildVerifiedSuspendedValidationServiceDeletionPlan,
+  deleteExactStaleStaticSite,
   deleteUnusedRegistryCredential,
+  disableFinancePrPreviews,
   describeSpendLimitCapability,
   planSuspendedValidationServiceDeletion,
   registryCredentialConsumers,
+  triggerRenderExactCommitDeploy,
 } from '../../scripts/operations/renderManagementAdapter.mjs';
 
 function response(status: number, body: unknown = null) {
@@ -47,6 +52,141 @@ describe('Render management adapter', () => {
     }]);
     expect(plan.blockedCount).toBe(1);
     expect(plan.candidateCount).toBe(0);
+  });
+
+  it('does not treat a service omitted from LIST as absent when exact-ID GET still sees it', async () => {
+    const hidden = EXPECTED_SUSPENDED_VALIDATION_SERVICES[0];
+    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      expect(method).toBe('GET');
+
+      if (url.includes('/services?')) {
+        return response(200, [{
+          ...EXPECTED_FINANCE_SERVICE,
+          branch: 'main',
+          suspended: 'not_suspended',
+          autoDeployTrigger: 'off',
+          serviceDetails: {
+            previews: { generation: 'automatic' },
+            pullRequestPreviewsEnabled: 'yes',
+          },
+        }]);
+      }
+
+      const directId = url.split('/services/')[1];
+      if (directId === hidden.id) {
+        return response(200, {
+          ...hidden,
+          suspended: 'suspended',
+        });
+      }
+      return response(404, { message: 'not found' });
+    });
+
+    const plan = await buildVerifiedSuspendedValidationServiceDeletionPlan({
+      apiKey: 'test-token',
+      workspaceId: 'workspace',
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(plan.verificationMode).toBe('LIST_PLUS_EXACT_ID_READ');
+    expect(plan.candidateCount).toBe(1);
+    expect(plan.candidates[0]).toEqual(hidden);
+    expect(plan.alreadyAbsentCount).toBe(21);
+    expect(plan.blockedCount).toBe(0);
+  });
+
+  it('deletes only the exact stale static site and proves it absent afterwards', async () => {
+    let exists = true;
+    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      expect(url).toBe(`https://api.render.com/v1/services/${EXPECTED_STALE_STATIC_SITE.id}`);
+
+      if (method === 'GET') {
+        if (!exists) return response(404, { message: 'not found' });
+        return response(200, {
+          ...EXPECTED_STALE_STATIC_SITE,
+          suspended: 'suspended',
+        });
+      }
+      if (method === 'DELETE') {
+        exists = false;
+        return response(204);
+      }
+      throw new Error(`unexpected method: ${method}`);
+    });
+
+    const result = await deleteExactStaleStaticSite({
+      apiKey: 'test-token',
+      confirmation: 'DELETE_EXACT_STALE_STATIC_SITE_SRV_DAEMCSEQ1P3S739VD40G',
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result).toMatchObject({
+      status: 'PASS',
+      mutationPerformed: true,
+      providerDeleteStatus: 204,
+      serviceId: EXPECTED_STALE_STATIC_SITE.id,
+      financeProtected: true,
+    });
+    expect(fetchImpl.mock.calls.some(([url]) => String(url).includes(EXPECTED_FINANCE_SERVICE.id))).toBe(false);
+  });
+
+  it('disables Finance PR previews with exact identity and immediate after-readback', async () => {
+    let disabled = false;
+    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      expect(url).toBe(`https://api.render.com/v1/services/${EXPECTED_FINANCE_SERVICE.id}`);
+
+      if (method === 'GET') {
+        return response(200, {
+          ...EXPECTED_FINANCE_SERVICE,
+          branch: 'main',
+          suspended: 'not_suspended',
+          autoDeployTrigger: 'off',
+          serviceDetails: {
+            previews: { generation: disabled ? 'off' : 'automatic' },
+            pullRequestPreviewsEnabled: disabled ? 'no' : 'yes',
+          },
+        });
+      }
+
+      if (method === 'PATCH') {
+        expect(JSON.parse(String(init?.body))).toEqual({
+          serviceDetails: {
+            pullRequestPreviewsEnabled: 'no',
+            previews: { generation: 'off' },
+          },
+        });
+        disabled = true;
+        return response(200, {});
+      }
+
+      throw new Error(`unexpected method: ${method}`);
+    });
+
+    const result = await disableFinancePrPreviews({
+      apiKey: 'test-token',
+      confirmation: 'DISABLE_FINANCE_PR_PREVIEWS',
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result).toEqual({
+      status: 'PASS',
+      mutationPerformed: true,
+      serviceId: EXPECTED_FINANCE_SERVICE.id,
+      before: {
+        pullRequestPreviewsEnabled: 'yes',
+        previewGeneration: 'automatic',
+      },
+      after: {
+        pullRequestPreviewsEnabled: 'no',
+        previewGeneration: 'off',
+      },
+    });
   });
 
   it('detects Render services that still consume the GHCR registry credential', () => {
@@ -243,6 +383,46 @@ describe('Render management adapter', () => {
     expect(calls.every((call) => call.method === 'GET')).toBe(true);
   });
 
+  it('triggers only the exact Finance commit through the Render API without projecting credentials', async () => {
+    const exactSha = '1234567890abcdef1234567890abcdef12345678';
+    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      expect(String(input)).toBe(`https://api.render.com/v1/services/${EXPECTED_FINANCE_SERVICE.id}/deploys`);
+      expect(init?.method).toBe('POST');
+      expect(init?.headers).toMatchObject({
+        Authorization: 'Bearer test-token',
+        'Content-Type': 'application/json',
+      });
+      expect(JSON.parse(String(init?.body))).toEqual({
+        commitId: exactSha,
+        clearCache: 'do_not_clear',
+      });
+      return response(201, { id: 'dep-exact', status: 'build_in_progress' });
+    });
+
+    const result = await triggerRenderExactCommitDeploy({
+      apiKey: 'test-token',
+      commitId: exactSha,
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result).toEqual({
+      status: 'TRIGGERED',
+      serviceId: EXPECTED_FINANCE_SERVICE.id,
+      commitId: exactSha,
+      deployId: 'dep-exact',
+      deployStatus: 'build_in_progress',
+      credentialProjected: false,
+    });
+    expect(JSON.stringify(result)).not.toContain('test-token');
+
+    await expect(triggerRenderExactCommitDeploy({
+      apiKey: 'test-token',
+      serviceId: 'srv-other',
+      commitId: exactSha,
+      fetchImpl: fetchImpl as typeof fetch,
+    })).rejects.toThrow(/exact Finance service id required/);
+  });
+
   it('keeps the management workflow owner/main-bound and without OIDC authority', () => {
     const yaml = fs.readFileSync('.github/workflows/render-management.yml', 'utf8');
     expect(yaml).toContain("github.ref == 'refs/heads/main'");
@@ -250,7 +430,9 @@ describe('Render management adapter', () => {
     expect(yaml).toContain('CAPITAL_AI_RENDER_API_KEY');
     expect(yaml).toContain('CAPITAL_AI_RENDER_WORKSPACE_PLAN');
     expect(yaml).toContain('delete-suspended-validation-services');
+    expect(yaml).toContain('delete-exact-stale-static-site');
     expect(yaml).toContain('delete-unused-registry-credential');
+    expect(yaml).toContain('disable-finance-pr-previews');
     expect(yaml).not.toContain('id-token: write');
     expect(yaml).not.toContain('issues: write');
     expect(yaml).not.toContain('pull-requests: write');

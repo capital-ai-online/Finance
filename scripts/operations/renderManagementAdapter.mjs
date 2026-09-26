@@ -3,7 +3,9 @@ const RENDER_API_BASE = 'https://api.render.com/v1';
 export const RENDER_MANAGEMENT_ACTIONS = Object.freeze([
   'inventory',
   'delete-suspended-validation-services',
+  'delete-exact-stale-static-site',
   'delete-unused-registry-credential',
+  'disable-finance-pr-previews',
   'spend-limit-capability',
 ]);
 
@@ -11,6 +13,12 @@ export const EXPECTED_FINANCE_SERVICE = Object.freeze({
   id: 'srv-d91o1o9o3t8c73edi55g',
   name: 'Finance',
   type: 'web_service',
+});
+
+export const EXPECTED_STALE_STATIC_SITE = Object.freeze({
+  id: 'srv-daemcseq1p3s739vd40g',
+  name: 'capital-ai-fe-bb2e-build-4a296b58',
+  type: 'static_site',
 });
 
 export const EXPECTED_REGISTRY_CREDENTIAL = Object.freeze({
@@ -155,12 +163,13 @@ function unwrapCollection(payload, key) {
     .filter((entry) => entry && typeof entry === 'object');
 }
 
-async function requestRender({
+async function requestRenderResult({
   apiKey,
   path,
   method = 'GET',
   fetchImpl = fetch,
   expectedStatuses = [200],
+  jsonBody = undefined,
 }) {
   const token = clean(apiKey);
   if (!token) fail('CAPITAL_AI_RENDER_API_KEY is required');
@@ -169,7 +178,9 @@ async function requestRender({
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${token}`,
+      ...(jsonBody === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
+    ...(jsonBody === undefined ? {} : { body: JSON.stringify(jsonBody) }),
     signal: AbortSignal.timeout(10_000),
   });
 
@@ -177,8 +188,34 @@ async function requestRender({
     throw providerError(`${method} ${path} failed with HTTP ${response.status}`, response.status);
   }
 
-  if (response.status === 204) return null;
-  return response.json().catch(() => null);
+  const body = response.status === 204 ? null : await response.json().catch(() => null);
+  return Object.freeze({ providerStatus: response.status, body });
+}
+
+async function requestRender(options) {
+  return (await requestRenderResult(options)).body;
+}
+
+export async function readRenderServiceById({
+  apiKey,
+  serviceId,
+  fetchImpl = fetch,
+} = {}) {
+  const id = clean(serviceId);
+  if (!id) fail('serviceId is required');
+  const result = await requestRenderResult({
+    apiKey,
+    path: `/services/${encodeURIComponent(id)}`,
+    fetchImpl,
+    expectedStatuses: [200, 403, 404, 410],
+  });
+  if (result.providerStatus === 200) {
+    return Object.freeze({ status: 'PRESENT', providerStatus: 200, service: result.body });
+  }
+  if (result.providerStatus === 403) {
+    return Object.freeze({ status: 'NOT_OBSERVABLE', providerStatus: 403, service: null });
+  }
+  return Object.freeze({ status: 'ABSENT', providerStatus: result.providerStatus, service: null });
 }
 
 export async function listRenderServices({
@@ -526,6 +563,49 @@ export async function buildRenderSettingsInventory({
   });
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   serviceId?: string | null;
+ *   commitId?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
+export async function triggerRenderExactCommitDeploy({
+  apiKey,
+  serviceId = EXPECTED_FINANCE_SERVICE.id,
+  commitId,
+  fetchImpl = fetch,
+} = {}) {
+  const id = clean(serviceId);
+  if (id !== EXPECTED_FINANCE_SERVICE.id) {
+    fail(`exact Finance service id required; received ${id || 'missing'}`);
+  }
+  const sha = clean(commitId).toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(sha)) {
+    fail('commitId must be an exact 40-character Git commit SHA');
+  }
+  const payload = await requestRender({
+    apiKey,
+    path: `/services/${encodeURIComponent(id)}/deploys`,
+    method: 'POST',
+    fetchImpl,
+    expectedStatuses: [200, 201, 202],
+    jsonBody: {
+      commitId: sha,
+      clearCache: 'do_not_clear',
+    },
+  });
+  return Object.freeze({
+    status: 'TRIGGERED',
+    serviceId: id,
+    commitId: sha,
+    deployId: clean(payload?.id || payload?.deploy?.id) || null,
+    deployStatus: clean(payload?.status || payload?.deploy?.status) || null,
+    credentialProjected: false,
+  });
+}
+
 export function planSuspendedValidationServiceDeletion(services = []) {
   const byId = new Map(services.map((service) => [clean(service?.id), service]));
   const candidates = [];
@@ -577,6 +657,114 @@ export function planSuspendedValidationServiceDeletion(services = []) {
   });
 }
 
+function exactSuspendedValidationIdentity(expected, observed) {
+  return Boolean(
+    observed
+    && clean(observed.name) === expected.name
+    && clean(observed.type) === expected.type
+    && clean(observed.suspended) === 'suspended'
+  );
+}
+
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   workspaceId?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
+export async function buildVerifiedSuspendedValidationServiceDeletionPlan({
+  apiKey,
+  workspaceId,
+  fetchImpl = fetch,
+} = {}) {
+  const listed = await listRenderServices({ apiKey, workspaceId, fetchImpl });
+  const initial = planSuspendedValidationServiceDeletion(listed);
+  const candidates = [...initial.candidates];
+  const verifiedAbsent = [];
+  const blocked = [...initial.blocked];
+
+  for (const expected of initial.alreadyAbsent) {
+    const direct = await readRenderServiceById({
+      apiKey,
+      serviceId: expected.id,
+      fetchImpl,
+    });
+    if (direct.status === 'ABSENT') {
+      verifiedAbsent.push(expected);
+      continue;
+    }
+    if (direct.status === 'NOT_OBSERVABLE') {
+      blocked.push(Object.freeze({
+        id: expected.id,
+        expectedName: expected.name,
+        observedName: null,
+        observedType: null,
+        observedSuspended: null,
+        reason: 'exact-id-read-not-observable',
+        providerStatus: direct.providerStatus,
+      }));
+      continue;
+    }
+    if (!exactSuspendedValidationIdentity(expected, direct.service)) {
+      blocked.push(Object.freeze({
+        id: expected.id,
+        expectedName: expected.name,
+        observedName: clean(direct.service?.name) || null,
+        observedType: clean(direct.service?.type) || null,
+        observedSuspended: clean(direct.service?.suspended) || null,
+        reason: 'exact-id-identity-drift',
+        providerStatus: direct.providerStatus,
+      }));
+      continue;
+    }
+    candidates.push(Object.freeze({
+      id: expected.id,
+      name: expected.name,
+      type: expected.type,
+    }));
+  }
+
+  if (candidates.some((candidate) => candidate.id === EXPECTED_FINANCE_SERVICE.id)) {
+    fail('Finance service must never enter the suspended validation deletion plan');
+  }
+
+  return Object.freeze({
+    expectedCount: EXPECTED_SUSPENDED_VALIDATION_SERVICES.length,
+    candidateCount: candidates.length,
+    alreadyAbsentCount: verifiedAbsent.length,
+    blockedCount: blocked.length,
+    candidates: Object.freeze(candidates),
+    alreadyAbsent: Object.freeze(verifiedAbsent),
+    blocked: Object.freeze(blocked),
+    verificationMode: 'LIST_PLUS_EXACT_ID_READ',
+  });
+}
+
+async function deleteRenderServiceById({
+  apiKey,
+  serviceId,
+  fetchImpl = fetch,
+} = {}) {
+  const id = clean(serviceId);
+  if (!id) fail('serviceId is required');
+  const result = await requestRenderResult({
+    apiKey,
+    path: `/services/${encodeURIComponent(id)}`,
+    method: 'DELETE',
+    fetchImpl,
+    expectedStatuses: [204, 403, 404, 410],
+  });
+  if (result.providerStatus === 403) {
+    fail(`DELETE /services/${id} is not observable/authorized with the configured Render API credential`);
+  }
+  return Object.freeze({
+    status: result.providerStatus === 204 ? 'DELETED' : 'ALREADY_ABSENT',
+    providerStatus: result.providerStatus,
+    mutationPerformed: result.providerStatus === 204,
+  });
+}
+
 export async function deleteSuspendedValidationServices({
   apiKey,
   workspaceId,
@@ -587,38 +775,209 @@ export async function deleteSuspendedValidationServices({
     fail('exact deletion confirmation is required');
   }
 
-  const before = await listRenderServices({ apiKey, workspaceId, fetchImpl });
-  const plan = planSuspendedValidationServiceDeletion(before);
+  const plan = await buildVerifiedSuspendedValidationServiceDeletionPlan({
+    apiKey,
+    workspaceId,
+    fetchImpl,
+  });
   if (plan.blockedCount > 0) {
-    fail(`live Render identity drift blocks deletion for ${plan.blockedCount} allowlisted service(s)`);
+    fail(`live Render identity/visibility drift blocks deletion for ${plan.blockedCount} allowlisted service(s)`);
   }
 
-  const deleted = [];
+  let deletedCount = 0;
+  let alreadyAbsentDuringDeleteCount = 0;
   for (const candidate of plan.candidates) {
-    await requestRender({
+    const result = await deleteRenderServiceById({
       apiKey,
-      path: `/services/${encodeURIComponent(candidate.id)}`,
-      method: 'DELETE',
+      serviceId: candidate.id,
       fetchImpl,
-      expectedStatuses: [204, 404, 410],
     });
-    deleted.push(candidate);
+    if (result.mutationPerformed) deletedCount += 1;
+    else alreadyAbsentDuringDeleteCount += 1;
   }
 
-  const after = await listRenderServices({ apiKey, workspaceId, fetchImpl });
-  const afterPlan = planSuspendedValidationServiceDeletion(after);
+  const afterPlan = await buildVerifiedSuspendedValidationServiceDeletionPlan({
+    apiKey,
+    workspaceId,
+    fetchImpl,
+  });
   if (afterPlan.candidateCount > 0 || afterPlan.blockedCount > 0) {
-    fail('post-delete readback did not converge');
+    fail(`post-delete readback did not converge: candidates=${afterPlan.candidateCount} blocked=${afterPlan.blockedCount}`);
   }
 
   return Object.freeze({
     status: 'PASS',
     mutation: 'DELETE_SUSPENDED_VALIDATION_SERVICES',
-    deletedCount: deleted.length,
-    alreadyAbsentCount: plan.alreadyAbsentCount,
+    deletedCount,
+    alreadyAbsentCount: plan.alreadyAbsentCount + alreadyAbsentDuringDeleteCount,
     remainingAllowlistedCount: 0,
+    verificationMode: afterPlan.verificationMode,
     financeProtected: true,
     secretsOrTokensLogged: false,
+  });
+}
+
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   confirmation?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
+export async function deleteExactStaleStaticSite({
+  apiKey,
+  confirmation,
+  fetchImpl = fetch,
+} = {}) {
+  if (confirmation !== 'DELETE_EXACT_STALE_STATIC_SITE_SRV_DAEMCSEQ1P3S739VD40G') {
+    fail('exact stale-static-site deletion confirmation is required');
+  }
+
+  const before = await readRenderServiceById({
+    apiKey,
+    serviceId: EXPECTED_STALE_STATIC_SITE.id,
+    fetchImpl,
+  });
+  if (before.status === 'ABSENT') {
+    return Object.freeze({
+      status: 'ALREADY_ABSENT',
+      mutationPerformed: false,
+      serviceId: EXPECTED_STALE_STATIC_SITE.id,
+      financeProtected: true,
+    });
+  }
+  if (before.status !== 'PRESENT') {
+    fail(`exact stale static site is not observable (HTTP ${before.providerStatus ?? 'unknown'})`);
+  }
+  if (!exactSuspendedValidationIdentity(EXPECTED_STALE_STATIC_SITE, before.service)) {
+    fail('exact stale static site identity drift blocks deletion');
+  }
+
+  const deletion = await deleteRenderServiceById({
+    apiKey,
+    serviceId: EXPECTED_STALE_STATIC_SITE.id,
+    fetchImpl,
+  });
+  const after = await readRenderServiceById({
+    apiKey,
+    serviceId: EXPECTED_STALE_STATIC_SITE.id,
+    fetchImpl,
+  });
+  if (after.status !== 'ABSENT') {
+    fail(`exact stale static site remains observable after DELETE (status=${after.status})`);
+  }
+
+  return Object.freeze({
+    status: 'PASS',
+    mutationPerformed: deletion.mutationPerformed,
+    providerDeleteStatus: deletion.providerStatus,
+    serviceId: EXPECTED_STALE_STATIC_SITE.id,
+    financeProtected: true,
+  });
+}
+
+function exactFinanceIdentity(service) {
+  return Boolean(
+    service
+    && clean(service.id) === EXPECTED_FINANCE_SERVICE.id
+    && clean(service.name) === EXPECTED_FINANCE_SERVICE.name
+    && clean(service.type) === EXPECTED_FINANCE_SERVICE.type
+    && clean(service.branch) === 'main'
+    && clean(service.suspended) === 'not_suspended'
+    && clean(service.autoDeployTrigger) === 'off'
+  );
+}
+
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   confirmation?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
+export async function disableFinancePrPreviews({
+  apiKey,
+  confirmation,
+  fetchImpl = fetch,
+} = {}) {
+  if (confirmation !== 'DISABLE_FINANCE_PR_PREVIEWS') {
+    fail('exact Finance preview-disable confirmation is required');
+  }
+
+  const before = await readRenderServiceById({
+    apiKey,
+    serviceId: EXPECTED_FINANCE_SERVICE.id,
+    fetchImpl,
+  });
+  if (before.status !== 'PRESENT') {
+    fail(`Finance service is not observable (status=${before.status})`);
+  }
+  if (!exactFinanceIdentity(before.service)) {
+    fail('Finance service identity/runtime drift blocks preview mutation');
+  }
+
+  const beforeSettings = projectRenderServiceSettings(before.service);
+  if (
+    beforeSettings.pullRequestPreviewsEnabled === 'no'
+    && beforeSettings.previewGeneration === 'off'
+  ) {
+    return Object.freeze({
+      status: 'ALREADY_CONVERGED',
+      mutationPerformed: false,
+      serviceId: EXPECTED_FINANCE_SERVICE.id,
+      before: Object.freeze({
+        pullRequestPreviewsEnabled: 'no',
+        previewGeneration: 'off',
+      }),
+      after: Object.freeze({
+        pullRequestPreviewsEnabled: 'no',
+        previewGeneration: 'off',
+      }),
+    });
+  }
+
+  await requestRender({
+    apiKey,
+    path: `/services/${encodeURIComponent(EXPECTED_FINANCE_SERVICE.id)}`,
+    method: 'PATCH',
+    fetchImpl,
+    expectedStatuses: [200],
+    jsonBody: {
+      serviceDetails: {
+        pullRequestPreviewsEnabled: 'no',
+        previews: { generation: 'off' },
+      },
+    },
+  });
+
+  const after = await readRenderServiceById({
+    apiKey,
+    serviceId: EXPECTED_FINANCE_SERVICE.id,
+    fetchImpl,
+  });
+  if (after.status !== 'PRESENT' || !exactFinanceIdentity(after.service)) {
+    fail('Finance service identity became non-observable or drifted after preview mutation');
+  }
+  const afterSettings = projectRenderServiceSettings(after.service);
+  if (
+    afterSettings.pullRequestPreviewsEnabled !== 'no'
+    || afterSettings.previewGeneration !== 'off'
+  ) {
+    fail('Finance preview settings did not converge to disabled/off');
+  }
+
+  return Object.freeze({
+    status: 'PASS',
+    mutationPerformed: true,
+    serviceId: EXPECTED_FINANCE_SERVICE.id,
+    before: Object.freeze({
+      pullRequestPreviewsEnabled: beforeSettings.pullRequestPreviewsEnabled,
+      previewGeneration: beforeSettings.previewGeneration,
+    }),
+    after: Object.freeze({
+      pullRequestPreviewsEnabled: afterSettings.pullRequestPreviewsEnabled,
+      previewGeneration: afterSettings.previewGeneration,
+    }),
   });
 }
 
@@ -679,7 +1038,7 @@ export async function deleteUnusedRegistryCredential({
     });
   }
 
-  await requestRender({
+  const deletion = await requestRenderResult({
     apiKey,
     path: `/registrycredentials/${encodeURIComponent(EXPECTED_REGISTRY_CREDENTIAL.id)}`,
     method: 'DELETE',
@@ -688,8 +1047,9 @@ export async function deleteUnusedRegistryCredential({
   });
 
   return Object.freeze({
-    status: 'PASS',
-    mutationPerformed: true,
+    status: deletion.providerStatus === 204 ? 'DELETED' : 'ALREADY_ABSENT',
+    mutationPerformed: deletion.providerStatus === 204,
+    providerStatus: deletion.providerStatus,
     credential: EXPECTED_REGISTRY_CREDENTIAL,
     secretsOrTokensLogged: false,
   });
@@ -728,7 +1088,7 @@ async function main() {
   let result;
   if (action === 'inventory') {
     const services = await listRenderServices(common);
-    const deletionPlan = planSuspendedValidationServiceDeletion(services);
+    const deletionPlan = await buildVerifiedSuspendedValidationServiceDeletionPlan(common);
     const registry = await inspectRegistryCredentialUsage(common);
     const settingsInventory = await buildRenderSettingsInventory({
       ...common,
@@ -751,8 +1111,18 @@ async function main() {
       ...common,
       confirmation: readArg('--confirm'),
     });
+  } else if (action === 'delete-exact-stale-static-site') {
+    result = await deleteExactStaleStaticSite({
+      ...common,
+      confirmation: readArg('--confirm'),
+    });
   } else if (action === 'delete-unused-registry-credential') {
     result = await deleteUnusedRegistryCredential({
+      ...common,
+      confirmation: readArg('--confirm'),
+    });
+  } else if (action === 'disable-finance-pr-previews') {
+    result = await disableFinancePrPreviews({
       ...common,
       confirmation: readArg('--confirm'),
     });

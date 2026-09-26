@@ -31,9 +31,11 @@ describe('SEC-WEB-00 current attack-surface baseline', () => {
     expect(containerWorkflow).not.toContain('RENDER_DEPLOY_HOOK_URL');
   });
 
-  it('fails closed on the remaining F15 split between verified GHCR and Render source deployment', () => {
-    expect(ciWorkflow).toContain('RENDER_DEPLOY_HOOK_URL');
-    expect(ciWorkflow).toContain('ref=main');
+  it('keeps F15 fail-closed while the deleted deploy hook is replaced by exact-commit Render API deployment', () => {
+    expect(ciWorkflow).not.toContain('RENDER_DEPLOY_HOOK_URL');
+    expect(ciWorkflow).toContain('CAPITAL_AI_RENDER_API_KEY');
+    expect(ciWorkflow).toContain('triggerRenderExactCommit.mjs');
+    expect(ciWorkflow).toContain('VERIFIED_COMMIT_SHA');
     expect(ciWorkflow).not.toContain('ghcr-image-digest.txt');
     expect(evidence).toContain('OPS-07-A Release Evidence Contract');
     expect(evidence).toContain('OPS-08-A Production Handoff & Recovery');

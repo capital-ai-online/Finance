@@ -1,7 +1,7 @@
 {
   "name": "Capital-AI",
   "description": "A futuristic Financial AI Platform (Capital-AI Modul 1) with complex chart validations, screenings, backtests, and Graham logic. EU compliant, no demo data policy.",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
