@@ -7,7 +7,7 @@
 **Frontend role:** presentation/recovery consumer; no productive PVC ownership  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Status:** OWNER-DIRECTED / CURRENT SELF-HEALING ARCHITECTURE  
-**Correlation baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**Correlation baseline:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`  
 **Runtime contract:** `src/platform/Supervisor/selfHealingContract.ts` / `self-healing-contract/1.2.0`
 
 ## 1. Goal
@@ -265,7 +265,7 @@ Detailed planning and acceptance evidence: `docs/projects/operations/work-packag
 
 **Implementation materialization — 2026-09-26:** SH-02.13 is materialized on the owner-correct OPS branch by the pure `postMergeRoadmapClosure.ts` contract plus one additional read-only correlation step in the existing `self-healing-package-continuation.yml` workflow. The step observes canonical work-package paths carried by the exact merged PR, current package status, merged claim lifecycle and the leading `docs/architecture/ROADMAP.md` reference. Drift is recorded only as generation-bound non-authorizing Issue evidence and resolves to the already registered `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` path. No second workflow family, Roadmap registry, contents writer, approval or merge authority is added.
 
-The bootstrap correlation on `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f` distinguishes three concrete outcomes rather than flattening them: #1466 is repository-terminal, #1463 is merged but provider-evidence-gated, and #1465 is a foreign-owner GOV closure handoff. This establishes the intended invariant that code completion, package documentation, leading Roadmap projection and claim lifecycle must converge together.
+The bootstrap correlation through `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0` distinguishes concrete outcomes rather than flattening them: #1466 is repository-terminal; #1463 and #1467 are merged but provider-evidence-gated; #1465 is a foreign-owner GOV closure handoff. This establishes the intended invariant that code completion, package documentation, leading Roadmap projection and claim lifecycle must converge together.
 
 
 #### PR evidence/bootstrap projection drift
