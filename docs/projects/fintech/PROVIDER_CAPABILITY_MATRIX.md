@@ -30,6 +30,7 @@ Static `enabled=true`, provider registration or a declared capability is not pro
 | CFTC COT | secondary | commodity | derivatives | `not_wired` / context/challenger evidence |
 | USGS MCS | primary | commodity | fundamentals | `not_wired` / governed research evidence |
 | EU CRMA | secondary | commodity | fundamentals | `not_wired` / context evidence |
+| Binance Spot Bars | primary | crypto | history, bars | `history_gateway_only`; canonical `/api/market-data/history/:symbol` history/bars lane |
 | Binance Public | primary | crypto | snapshot, quote, history, bars, derivatives, orderbook | `not_wired` analytics/evidence; compatibility history is recorded but not promoted to consolidated-price authority |
 | Kraken Futures Public | primary | crypto | quote, history, bars, derivatives, orderbook | `not_wired` analytics/evidence; compatibility history preserves venue provenance |
 | GoPlus | secondary | crypto | security, on-chain | `not_wired` / evidence-only |
