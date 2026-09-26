@@ -7,9 +7,11 @@
 **Security boundary:** `CAPITAL-AI-SEC`  
 **Frontend boundary:** `CAPITAL-AI-FE`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Baseline:** `main@82f50a97db513cab02e0a342c19230badb0b3ade`  
+**Implementation baseline:** `main@82f50a97db513cab02e0a342c19230badb0b3ade`  
+**Merged main:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**Merged PR:** `#1466`  
 **Priority:** `P0 / Owner-directed`  
-**Status:** `IMPLEMENTED_ON_BRANCH / VALIDATION_PENDING / HUMAN_MERGE_REQUIRED`
+**Status:** `DONE_MAIN / TERMINAL`
 
 ## Owner-visible failure
 
@@ -49,3 +51,14 @@ Two additional client-side gaps amplify the visible failure:
 - eager authenticated profile entry and SPA return navigation;
 - focused regression tests, TypeScript/build and required CI checks succeed on the exact PR head;
 - Human/CODEOWNER merge remains required.
+
+## Post-merge closure — 2026-09-26
+
+The repository exit gate is satisfied on the merged generation:
+
+- PR #1466 exact head `13d9f8e1ac6e94fcc6d660f8a38effb2511ee5fa` completed CI #6588, Governance #6100, Container Security #3571, Project Execution Directive #884 and OSS/PR evidence #967 successfully;
+- Human/CODEOWNER merged #1466 as CURRENT_MAIN `36fd8502178f42fd3b20562f4f60290fcbb2d11f`;
+- the package carries no independent downstream Production/provider exit criterion beyond the repository merge/validation boundary recorded above;
+- its merged work claim is released in the SH-02.13 reconciliation slice.
+
+**Closure disposition:** `DONE_MAIN / TERMINAL`. Later Auth/runtime incidents are fresh work and do not reopen this completed bounded package automatically.

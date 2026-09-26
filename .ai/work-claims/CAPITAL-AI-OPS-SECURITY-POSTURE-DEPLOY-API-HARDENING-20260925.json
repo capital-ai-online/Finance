@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -22,7 +22,7 @@
   "startedAt": "2026-09-25T21:10:00Z",
   "baseBranch": "main",
   "baseSha": "8a602e4a914d6ffa1ea29f46a6437c0712b551f2",
-  "lastSyncedMainSha": "8a602e4a914d6ffa1ea29f46a6437c0712b551f2",
+  "lastSyncedMainSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
   "branch": "agent/operations-security-posture-deploy-api-hardening-20260926",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925.json",
@@ -78,5 +78,9 @@
     "Production CI consolidation regression coverage asserts the exact-commit Render API trigger and rejects the retired deploy-hook ref=main expectation.",
     "Production configuration guard verifies the exact-commit Render API trigger contract and no longer requires the retired ref=main deploy-hook path."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-26T17:15:00Z",
+  "releaseReason": "Human/CODEOWNER merged PR #1463. Repository implementation is merged; package remains MERGED_MAIN / EVIDENCE_GATE until explicit provider readback exits are proven.",
+  "mergedPrNumber": 1463,
+  "mergeCommitSha": "82f50a97db513cab02e0a342c19230badb0b3ade"
 }
