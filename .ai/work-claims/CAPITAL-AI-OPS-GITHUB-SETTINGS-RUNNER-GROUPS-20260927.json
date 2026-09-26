@@ -27,7 +27,8 @@
     "docs/projects/operations/ROADMAP.md",
     "docs/projects/operations/work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md",
     "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
-    "tests/unit/githubEnterpriseSettingsReadClient.test.ts"
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts",
+    "docs/projects/operations/work-packages/OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md"
   ],
   "scopeBoundary": [
     "GET-only Enterprise settings read; no provider setting, IAM, secret, billing, production or deployment mutation.",
