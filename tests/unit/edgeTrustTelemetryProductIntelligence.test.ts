@@ -57,6 +57,26 @@ describe('Cloudflare -> Render edge trust', () => {
       .toBe('203.0.113.7');
   });
 
+  it('fails closed instead of throwing when an internal request has no headers bag', () => {
+    const edge = resolveCloudflareRenderEdgeTrust({} as any, {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
+    });
+
+    expect(edge.state).toBe('untrusted');
+    expect(edge.reason).toBe('invalid-host');
+    expect(edge.evidence).toMatchObject({
+      proofConfigured: true,
+      canonicalHost: false,
+      forwardedProtoHttps: false,
+      proofPresented: false,
+      clientIpPresent: false,
+      clientIpValid: false,
+      rayIdPresent: false,
+      rayIdValid: false,
+    });
+  });
+
   it('denies direct onrender-origin spoofing even when Cloudflare-looking headers are supplied', () => {
     const request = renderRequest({ host: 'finance-7clq.onrender.com' });
     const edge = resolveCloudflareRenderEdgeTrust(request, {
