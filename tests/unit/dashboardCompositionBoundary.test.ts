@@ -12,8 +12,8 @@ const legacyDashboard = read('src/components/Dashboard.tsx');
 
 describe('BB-2G dashboard composition boundary', () => {
   it('keeps the analytics dashboard out of the authenticated account entry route', () => {
-    expect(appRoutes).toContain('const ProfilePage = lazy(() =>');
-    expect(appRoutes).toContain("import('../../components/ProfilePage')");
+    expect(appRoutes).toContain("import { ProfilePage } from '../../components/ProfilePage'");
+    expect(appRoutes).not.toContain("import('../../components/ProfilePage')");
     expect(appRoutes).toContain('<RouteRedirect to="/profile" label="Weiter zum Profil" />');
     expect(appRoutes).not.toContain("import('../dashboard/Dashboard')");
     expect(appRoutes).not.toContain("../../components/Dashboard");
