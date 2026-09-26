@@ -23,7 +23,7 @@
 | Login roles | only Supabase-managed/system login roles observed | no custom-role password restore burden observed |
 | Storage | 1 private bucket / 0 objects | no object malware surface currently populated |
 | Security Advisor | leaked-password protection WARN | plan-constrained Free-tier control; alternative application mitigation remains required |
-| Performance Advisor | Stripe managed-webhook FK index warning + unused-index informational findings | re-read after restore required |
+| Performance Advisor | 2026-09-26 readback: prior Stripe managed-webhook FK warning resolved; 3 owner-auth/device FK INFO findings + 4 social-media RLS initplan WARN findings remain | owner-correct follow-up; no ad-hoc DDL in this recovery slice |
 | pg_cron history | ~81k rows / ~55 MiB | archive/retention required |
 | Security events, 7d | 207 suspicious_request events, all blocked | control active; origin/routing anomaly requires correlation, not malware attribution |
 
@@ -63,10 +63,10 @@ The current database preserves the main architecture boundaries:
   second queue.
 - Data API / RLS and server-side IAM remain distinct: RLS prevents row access, while server
   authorization decides who may invoke privileged product functions.
-- Existing migrations include dedicated FinTech traceability/FK-index work and a Stripe
-  managed-webhooks account-FK index migration. Because the live Performance Advisor still
-  reported that FK as unindexed before maintenance, the discrepancy is kept open until the
-  post-restore advisor readback; repository intent is not substituted for live evidence.
+- Existing migrations include dedicated FinTech traceability/FK-index work and the Stripe
+  managed-webhooks account-FK index migration. Fresh 2026-09-26 provider readback confirms
+  remote migration `20260924171500_index_stripe_managed_webhooks_account_fk`; the former
+  Stripe FK advisor finding is no longer present.
 
 No unused index is removed from an advisor hint alone. Index deletion requires measured
 query/index usage and owner-correct migration evidence.
@@ -130,13 +130,16 @@ Five validation gates:
    leaked-password protection disabled.
 4. **Runtime contracts:** PASS — Stripe Edge Functions remain ACTIVE at setup v8,
    webhook v9 and worker v8; 78 remote migrations remain readable.
-5. **Performance/ledger:** OPEN — live migrations end at `20260924161429`, while main
-   contains `20260924171500_index_stripe_managed_webhooks_account_fk.sql`. The Performance
-   Advisor still reports `stripe._managed_webhooks.fk_managed_webhooks_account` without a
-   covering index. This is a real repository/remote migration drift and must be repaired
-   through the canonical migration-ledger push, not an ad-hoc SQL index.
+5. **Performance/ledger:** PASS for the previously observed Stripe migration drift —
+   fresh 2026-09-26 provider readback includes
+   `20260924171500_index_stripe_managed_webhooks_account_fk`, and the prior
+   `stripe._managed_webhooks.fk_managed_webhooks_account` advisor finding is gone.
+   New unrelated advisor findings remain owner-correct follow-up: three unindexed FKs in
+   `owner_authorization_evidence` / `owner_device_credentials`, four RLS initplan
+   performance warnings on social-media tables, plus unused-index INFO findings. None is
+   silently remediated inside this recovery slice.
 
-Post-restore database size is ~90.3 MB and `cron.job_run_details` is ~82k rows /
-~57.9 MB. No cron rows were deleted by the provider maintenance. Weekly encrypted archive
+Fresh 2026-09-26 database size is ~92.0 MB and `cron.job_run_details` is 83,821 rows /
+~59.2 MB. No cron rows were deleted by the provider maintenance. Weekly encrypted archive
 and retention remain intentionally gated behind merged recovery code plus verified
 GitHub+Google-Drive off-site copies.
