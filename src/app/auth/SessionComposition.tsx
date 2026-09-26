@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { SubscriptionTier, UserSession } from '../types/UserSession';
 
 export interface SessionCompositionValue {
@@ -38,84 +38,99 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [authBootstrapPending, setAuthBootstrapPending] = useState(true);
   const [justLoggedOut, setJustLoggedOut] = useState(false);
+  const refreshInFlightRef = useRef<Promise<void> | null>(null);
+  const sessionEpochRef = useRef(0);
 
-  const refreshSession = useCallback(async () => {
-    setAuthBootstrapPending(true);
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 10_000);
-    try {
-      const response = await fetch('/api/auth/session', {
-        method: 'GET',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        headers: { Accept: 'application/json' },
-        signal: controller.signal,
-      });
+  const refreshSession = useCallback((): Promise<void> => {
+    if (refreshInFlightRef.current) return refreshInFlightRef.current;
 
-      if (!response.ok) {
-        setUserSession(null);
-        return;
+    const epoch = sessionEpochRef.current;
+    let operation: Promise<void>;
+    operation = (async () => {
+      setAuthBootstrapPending(true);
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 10_000);
+      try {
+        const response = await fetch('/api/auth/session', {
+          method: 'GET',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            if (sessionEpochRef.current === epoch) setUserSession(null);
+          }
+          return;
+        }
+
+        const payload = await response.json().catch(() => null);
+        if (payload?.authenticated !== true) {
+          if (sessionEpochRef.current === epoch) setUserSession(null);
+          return;
+        }
+
+        const user = payload?.user;
+        if (
+          !user ||
+          typeof user.id !== 'string' ||
+          typeof user.name !== 'string' ||
+          typeof user.email !== 'string' ||
+          !isSubscriptionTier(user.subscriptionTier)
+        ) {
+          console.error('[Auth] Backend returned an invalid session projection.');
+          if (sessionEpochRef.current === epoch) setUserSession(null);
+          return;
+        }
+
+        if (sessionEpochRef.current !== epoch) return;
+        setUserSession({
+          type: 'registered',
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: typeof user.username === 'string' ? user.username : '',
+          phoneNumber: typeof user.phoneNumber === 'string' ? user.phoneNumber : undefined,
+          phoneVerified: user.phoneVerified === true,
+          subscriptionTier: user.subscriptionTier,
+          avatarId: typeof user.avatarId === 'string' ? user.avatarId : '1',
+          avatarColor: typeof user.avatarColor === 'string' ? user.avatarColor : 'from-brand-primary to-brand-primary',
+          preferredAssetClass: ['Crypto', 'Stocks', 'Commodities', 'Forex'].includes(user.preferredAssetClass)
+            ? user.preferredAssetClass
+            : 'Crypto',
+          riskProfile: ['Sicherheitsorientiert', 'Ausgewogen', 'Spekulativ', 'Hochfrequenz-Trading'].includes(user.riskProfile)
+            ? user.riskProfile
+            : 'Ausgewogen',
+          capital: typeof user.capital === 'number' && Number.isFinite(user.capital) ? user.capital : 0,
+          customAvatarUrl: typeof user.customAvatarUrl === 'string' ? user.customAvatarUrl : undefined,
+          favoriteCryptocurrencies: Array.isArray(user.favoriteCryptocurrencies) ? user.favoriteCryptocurrencies : [],
+          favoriteStocks: Array.isArray(user.favoriteStocks) ? user.favoriteStocks : [],
+          portfolioAssets: Array.isArray(user.portfolioAssets) ? user.portfolioAssets : [],
+          investmentHorizon: ['Kurzfristig', 'Mittelfristig', 'Langfristig'].includes(user.investmentHorizon)
+            ? user.investmentHorizon
+            : 'Langfristig',
+          experienceLevel: ['Einsteiger', 'Fortgeschritten', 'Erfahren', 'Professionell'].includes(user.experienceLevel)
+            ? user.experienceLevel
+            : 'Einsteiger',
+          preferredCurrency: ['EUR', 'USD', 'CHF', 'GBP'].includes(user.preferredCurrency)
+            ? user.preferredCurrency
+            : 'EUR',
+        });
+        setJustLoggedOut(false);
+      } catch (error) {
+        console.warn('[Auth] Backend session readback failed:', error);
+      } finally {
+        window.clearTimeout(timeout);
+        if (sessionEpochRef.current === epoch) setAuthBootstrapPending(false);
       }
+    })().finally(() => {
+      if (refreshInFlightRef.current === operation) refreshInFlightRef.current = null;
+    });
 
-      const payload = await response.json().catch(() => null);
-      if (payload?.authenticated !== true) {
-        setUserSession(null);
-        return;
-      }
-
-      const user = payload?.user;
-      if (
-        !user ||
-        typeof user.id !== 'string' ||
-        typeof user.name !== 'string' ||
-        typeof user.email !== 'string' ||
-        !isSubscriptionTier(user.subscriptionTier)
-      ) {
-        console.error('[Auth] Backend returned an invalid session projection.');
-        setUserSession(null);
-        return;
-      }
-
-      setUserSession({
-        type: 'registered',
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        username: typeof user.username === 'string' ? user.username : '',
-        phoneNumber: typeof user.phoneNumber === 'string' ? user.phoneNumber : undefined,
-        phoneVerified: user.phoneVerified === true,
-        subscriptionTier: user.subscriptionTier,
-        avatarId: typeof user.avatarId === 'string' ? user.avatarId : '1',
-        avatarColor: typeof user.avatarColor === 'string' ? user.avatarColor : 'from-brand-primary to-brand-primary',
-        preferredAssetClass: ['Crypto', 'Stocks', 'Commodities', 'Forex'].includes(user.preferredAssetClass)
-          ? user.preferredAssetClass
-          : 'Crypto',
-        riskProfile: ['Sicherheitsorientiert', 'Ausgewogen', 'Spekulativ', 'Hochfrequenz-Trading'].includes(user.riskProfile)
-          ? user.riskProfile
-          : 'Ausgewogen',
-        capital: typeof user.capital === 'number' && Number.isFinite(user.capital) ? user.capital : 0,
-        customAvatarUrl: typeof user.customAvatarUrl === 'string' ? user.customAvatarUrl : undefined,
-        favoriteCryptocurrencies: Array.isArray(user.favoriteCryptocurrencies) ? user.favoriteCryptocurrencies : [],
-        favoriteStocks: Array.isArray(user.favoriteStocks) ? user.favoriteStocks : [],
-        portfolioAssets: Array.isArray(user.portfolioAssets) ? user.portfolioAssets : [],
-        investmentHorizon: ['Kurzfristig', 'Mittelfristig', 'Langfristig'].includes(user.investmentHorizon)
-          ? user.investmentHorizon
-          : 'Langfristig',
-        experienceLevel: ['Einsteiger', 'Fortgeschritten', 'Erfahren', 'Professionell'].includes(user.experienceLevel)
-          ? user.experienceLevel
-          : 'Einsteiger',
-        preferredCurrency: ['EUR', 'USD', 'CHF', 'GBP'].includes(user.preferredCurrency)
-          ? user.preferredCurrency
-          : 'EUR',
-      });
-      setJustLoggedOut(false);
-    } catch (error) {
-      console.warn('[Auth] Backend session readback failed:', error);
-      setUserSession(null);
-    } finally {
-      window.clearTimeout(timeout);
-      setAuthBootstrapPending(false);
-    }
+    refreshInFlightRef.current = operation;
+    return operation;
   }, []);
 
   useEffect(() => {
@@ -124,6 +139,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      sessionEpochRef.current += 1;
       setUserSession(null);
       setAuthBootstrapPending(false);
     };
@@ -133,6 +149,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
   const performLogout = async (scope: 'local' | 'global') => {
     // UI logout is immediate and cannot be held hostage by provider/network cleanup.
+    sessionEpochRef.current += 1;
     setUserSession(null);
     setAuthBootstrapPending(false);
     setJustLoggedOut(true);

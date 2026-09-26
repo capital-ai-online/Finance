@@ -17,6 +17,7 @@ import {
   normalizePostAuthPath,
   persistBackendAuthSession,
   resolveApplicationOrigin,
+  resolveBackendAuthSession,
   resolvePendingBackendAuth,
   resolveVerifiedBackendAuth,
   revokeBackendAuthSession,
@@ -997,19 +998,18 @@ backendAuthRouter.get('/session', AUTH_RATE_LIMIT, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
   try {
-    const pending = await resolvePendingBackendAuth(req, res);
-    if (pending) {
+    const resolved = await resolveBackendAuthSession(req, res);
+    if (resolved?.mfaPending) {
       res.status(200).json({ authenticated: false, mfaRequired: true });
       return;
     }
-    const verified = await resolveVerifiedBackendAuth(req, res);
-    if (!verified) {
+    if (!resolved) {
       clearBackendAuthCookies(req, res);
       res.status(200).json({ authenticated: false });
       return;
     }
 
-    const user = verified.user;
+    const user = resolved.user;
     const tier = normalizeTier(await getSubscription(user.id));
     const metadata = user.user_metadata || {};
     await ensureAccountProfile(user);
