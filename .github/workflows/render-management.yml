@@ -11,7 +11,9 @@ on:
         options:
           - inventory
           - delete-suspended-validation-services
+          - delete-exact-stale-static-site
           - delete-unused-registry-credential
+          - disable-finance-pr-previews
           - spend-limit-capability
       confirmation:
         description: 'Exact confirmation phrase required only for destructive actions'
