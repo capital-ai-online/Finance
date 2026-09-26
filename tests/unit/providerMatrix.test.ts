@@ -170,8 +170,8 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
 
   it('keeps all extended evidence suppliers outside MarketDataGateway authority', () => {
     const expected = {
-      'binance-public': ['snapshot', 'quote', 'bars', 'derivatives'],
-      'kraken-futures-public': ['derivatives', 'bars', 'quote'],
+      'binance-public': ['snapshot', 'quote', 'history', 'bars', 'derivatives', 'orderbook'],
+      'kraken-futures-public': ['derivatives', 'history', 'bars', 'quote', 'orderbook'],
       goplus: ['security', 'onchain'],
       dexscreener: ['snapshot', 'quote', 'onchain'],
       sourcify: ['security', 'onchain'],
