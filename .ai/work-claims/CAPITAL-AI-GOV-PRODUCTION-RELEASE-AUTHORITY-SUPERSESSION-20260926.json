@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PRODUCTION-RELEASE-AUTHORITY-SUPERSESSION-20260926",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Supersede package.json as Production Release version authority, retire the fixed ten-merge Production PATCH cadence, preserve five-merge deployment cadence, and define the owner-correct OPS migration with independent QM/SEC assurance evidence.",
+  "startedAt": "2026-09-26T16:41:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
+  "lastSyncedMainSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
+  "branch": "agent/governance-production-release-authority-supersession-20260926",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 Platform Director / cross-cutting Governance",
+  "priority": "P1",
+  "claimedPaths": [
+    "AGENTS.md",
+    "docs/adr/ADR-0107-production-release-version-authority-supersession.md",
+    "docs/projects/governance/work-packages/GOV_PRODUCTION_RELEASE_AUTHORITY_SUPERSESSION_2026-09-26.md",
+    "docs/projects/governance/evidence/GOV_PRODUCTION_RELEASE_SUPERSESSION_QM_REVIEW_2026-09-26.md",
+    "docs/projects/governance/evidence/GOV_PRODUCTION_RELEASE_SUPERSESSION_SEC_REVIEW_2026-09-26.md",
+    ".ai/work-claims/CAPITAL-AI-GOV-PRODUCTION-RELEASE-AUTHORITY-SUPERSESSION-20260926.json"
+  ],
+  "scopeBoundary": [
+    "Governance/trust-root supersession and read-only assurance evidence only.",
+    "No productive OPS Release runtime/tool/provider mutation.",
+    "No package.json or package-lock.json mutation.",
+    "No Render, Supabase, Stripe, IAM, secret, billing, DNS, tag or direct-main mutation.",
+    "Human/CODEOWNER merge remains required; this change cannot authorize itself.",
+    "OPS PVC-06..08 materialization starts only after the exact Governance supersession is merged and CURRENT_MAIN is re-read."
+  ],
+  "dependencies": [
+    "/AGENTS.md@82f50a97db513cab02e0a342c19230badb0b3ade",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "ADR-0030",
+    "ADR-0105",
+    "current protected main/tag rulesets"
+  ],
+  "exitEvidence": [
+    "Fresh branch starts at exact CURRENT_MAIN with no open PR writer.",
+    "AGENTS prospectively supersedes package-derived Production version and ten-merge Production PATCH cadence while preserving five-merge deployment cadence.",
+    "ADR-0107 defines one immutable released Production-version authority and exact Production identity tuple.",
+    "Separate QM and Security reviews record conditional findings without manufacturing Production PASS.",
+    "Owner-correct OPS handoff identifies current consumer migration surface.",
+    "No provider/package/runtime mutation occurs in the Governance slice."
+  ],
+  "acceptanceCriteria": [
+    "No duplicate Release/Deployment/version authority is introduced.",
+    "Human/CODEOWNER merge remains the only activation event.",
+    "Branch remains based on then-current main at PR readiness.",
+    "Required CI/Governance/Security evidence is exact-head and truthful.",
+    "PR creation fails closed unless project:CAPITAL-AI-GOV can be supplied at create time."
+  ],
+  "releaseCondition": "Release claim on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
