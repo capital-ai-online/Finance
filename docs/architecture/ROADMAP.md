@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-26`  
-**Baseline:** `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac`  
+**Baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -35,14 +35,14 @@ Canonical ownership is resolved from:
 
 Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..17` FINTECH. `CAPITAL-AI-DATA` is superseded as an independent productive owner. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
 
-## Current correlation — 2026-09-23
+## Current correlation — 2026-09-26
 
-- `main@4a095d7e267b284ed4456750ad031457a2ef9a0a` remains historical merge evidence for FE desktop convergence; CURRENT_MAIN for this projection is `4c4a88e7f83150191c81134439e7bc9a1145ad4a`.
-- SH-02.9A is contained on main through PR #1246 and its post-merge convergence PR #1259. SH-02.9 is now contained on main through merged OPS PR #1262; open OPS PR #1271 is its post-merge projection/convergence follow-up and is not promoted to current-main state by this index.
-- SH-V3-02's v1.8 collapsed-details self-heal extension is contained on main through merged GOV PR #1269; this remains part of the existing bounded Self-Healing architecture rather than a second control plane.
-- The current organizational projection resolves `PVC-09..17` exclusively to `CAPITAL-AI-FINTECH`; no current DATA-owner routing is retained here.
-- `CAPITAL-AI-SEC` current task/status state is consolidated here; its former project-local Roadmap and Security backlog documents are compatibility/detail/evidence only.
-- FE/GOV/OPS and other project work-package status remains in the owning project Roadmaps until a separate owner-correct migration is merged; this SEC slice does not seize foreign project ownership.
+- CURRENT_MAIN for this projection is `36fd8502178f42fd3b20562f4f60290fcbb2d11f`, Human/CODEOWNER merge of PR #1466.
+- Recent merged implementation evidence relevant to closure correlation is #1463 (OPS Security Posture/Render API hardening), #1465 (GOV Production Release Authority supersession) and #1466 (OPS Auth-Session/Profile convergence).
+- Open PR #1467 is the only observed current writer and owns an independent OPS Supabase-ledger slice; its changed files do not overlap the SH-02.13 Roadmap-closure implementation surface.
+- `CAPITAL-AI-SEC` and `CAPITAL-AI-QM` remain migrated to this Live Roadmap for current status. Other projects retain owner-correct project Roadmaps until their own migration is Human/CODEOWNER-merged.
+- Work-package completion is now projected in the DevelopmentChain completion ledger below. The ledger is non-authorizing and never substitutes for the owner work-package document, exact code/test evidence or `/AGENTS.md@CURRENT_MAIN`.
+- Deterministic package/Roadmap/claim drift remains the existing Self-Healing class `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`; foreign-owner drift is an `OWNER_CORRECT_HANDOFF`.
 
 ## Current invariants projected from AGENTS.md
 
@@ -65,6 +65,33 @@ Current work must be read from the owner-correct canonical status source and re-
 Active current-state projections MUST NOT cite removed standalone DevelopmentChain, PR, handoff or provider-specific policy files as current execution authority. Stable historical authority IDs may remain for traceability only when they resolve back to `/AGENTS.md@CURRENT_MAIN`. Security, Compliance, QM and domain contracts retain their subject-matter constraints and independent gates; they do not become a second development instruction hierarchy.
 
 Current projection drift is a bounded Self-Healing finding. Repository-owned deterministic projection drift may use the existing `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` path; foreign-owner or protected-policy contradictions are routed as owner-correct handoffs and remain fail-closed until verified.
+
+
+## DevelopmentChain work-package completion ledger
+
+This ledger is the repository-level **closure projection** for processed canonical work packages. It does not create task or mutation authority. A merged package is considered documentation-converged only when the same evidence-bound disposition is represented in its owner-correct package document, this leading Roadmap and the merged work-claim lifecycle.
+
+| Work package | Owner | Merge evidence | Owner document disposition | Leading Roadmap disposition | Remaining gate |
+|---|---|---|---|---|---|
+| `docs/projects/operations/work-packages/OPS_SECURITY_POSTURE_RENDER_API_HARDENING_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1463 · merge `82f50a97db513cab02e0a342c19230badb0b3ade` · exact-head CI/Governance/Container/Project/PR evidence PASS | `MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING` | `MERGED_MAIN / EVIDENCE_GATE` | explicit Render/GitHub/Supabase provider readbacks remain real-evidence-only |
+| `docs/projects/governance/work-packages/GOV_PRODUCTION_RELEASE_AUTHORITY_SUPERSESSION_2026-09-26.md` | `CAPITAL-AI-GOV` | PR #1465 · merge `bc42ef4b23a24db1f1947ab747b12de7392b0e53` · exact-head required evidence PASS | foreign-owner closure metadata still requires GOV reconciliation | `MERGED_MAIN / OWNER_CLOSURE_PENDING` | `OWNER_CORRECT_HANDOFF` to GOV; OPS must not rewrite the GOV package/claim |
+| `docs/projects/operations/work-packages/OPS_AUTH_SESSION_CONVERGENCE_2026-09-26.md` | `CAPITAL-AI-OPS` | PR #1466 · merge/current main `36fd8502178f42fd3b20562f4f60290fcbb2d11f` · CI #6588 / Governance #6100 / Container #3571 / Project #884 / PR #967 PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none for this bounded package; later incidents are fresh work |
+
+### Closure invariant
+
+After every successful Human/CODEOWNER merge that carries a canonical work-package identity, the existing Post-Merge Production Correlation → Self-Healing continuation path must correlate:
+
+`merged PR + merge SHA + CURRENT_MAIN + canonical Project/Owner/PVC + work-package exit evidence + work-package document + leading Roadmap + claim lifecycle`.
+
+Allowed derived states are exactly:
+
+- `DONE_MAIN / TERMINAL`;
+- `MERGED_MAIN / EVIDENCE_GATE`;
+- `PARTIAL_MAIN / ACTIVE`;
+- `BLOCKED_CORRELATION`.
+
+A mismatch between merged code/evidence and either documentation surface is a repository current-state projection finding, not permission for direct-main editing. Owner-local deterministic drift routes only to the existing bounded `RECONCILE_REPOSITORY_PROJECTION` lane. Foreign-owner drift is recorded as `OWNER_CORRECT_HANDOFF`. Replaying the same closure fingerprint or merging a closure-sync-only change must not create another productive closure mutation.
+
 
 
 ## Live Security state — `CAPITAL-AI-SEC`
