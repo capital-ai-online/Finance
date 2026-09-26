@@ -6,7 +6,7 @@
 **Parent:** `OPS-08-B-SH-02`  
 **Slice:** `SH-02.13`  
 **Planning baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`  
-**Implementation baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`  
+**Implementation baseline:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`  
 **State:** `IMPLEMENTATION_ON_BRANCH / CURRENT_MAIN_CORRELATED / HUMAN_MERGE_REQUIRED`
 
 ## Outcome
@@ -89,7 +89,7 @@ No new generic scheduler, queue, workflow family, Roadmap registry or merge auth
 
 ## Implementation materialization — 2026-09-26
 
-The fresh implementation branch `agent/operations-sh02-13-roadmap-closure-implementation-20260926` starts from exact CURRENT_MAIN `36fd8502178f42fd3b20562f4f60290fcbb2d11f` and materializes the existing plan without creating a peer control plane:
+The fresh implementation branch `agent/operations-sh02-13-roadmap-closure-implementation-20260926` started from `36fd8502178f42fd3b20562f4f60290fcbb2d11f` and is synchronized through exact CURRENT_MAIN `b4fe15600a20e22c0b5d58f8d358888491cdf0a0` and materializes the existing plan without creating a peer control plane:
 
 1. `src/platform/Supervisor/postMergeRoadmapClosure.ts` is the pure evidence-bound closure contract. It derives exactly the four planned states, detects owner-local vs foreign-owner documentation drift, binds the closure fingerprint and suppresses replay/closure-sync recursion.
 2. The existing `.github/workflows/self-healing-package-continuation.yml` gains one read-only post-merge correlation step. It still runs only after successful Post-Merge Production Correlation, uses no checkout and has no contents-write/approval/merge authority.
@@ -105,8 +105,9 @@ The fresh implementation branch `agent/operations-sh02-13-roadmap-closure-implem
 | PR #1463 — Security Posture + Render API Hardening | CAPITAL-AI-OPS | exact-head CI/Governance/Container/Project/PR evidence PASS; merge `82f50a97...` | `MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING` | owner-local closure entry; provider gates remain open |
 | PR #1465 — Production Release Authority Supersession | CAPITAL-AI-GOV | exact-head required evidence PASS; merge `bc42ef4b...` | foreign-owner package/claim still needs GOV closure | leading Roadmap records `OWNER_CORRECT_HANDOFF`; OPS does not rewrite GOV package |
 | PR #1466 — Auth-Session / Profilnavigation | CAPITAL-AI-OPS | exact-head CI #6588, Governance #6100, Container #3571, Project #884, PR #967 PASS; merge/current-main `36fd850...` | `DONE_MAIN / TERMINAL` | owner-local terminal closure entry |
+| PR #1467 — Supabase Migration Ledger | CAPITAL-AI-OPS | exact-head CI #6595, Governance #6106, Container #3578, Project #891, PR #973 PASS; Supabase Preview `skipped`; merge `b4fe1560...` | `MERGED_MAIN / EVIDENCE_GATE / SUPABASE_PREVIEW_NOT_PROVEN` | owner-local closure entry; provider Preview/readback remains open |
 
-Open PR #1467 is an independent OPS Supabase-ledger writer and has no changed-file overlap with this SH-02.13 implementation slice.
+PR #1467 merged after this implementation branch started and was absorbed by a fresh-main synchronization. Its package and claim are now part of the bootstrap closure correlation; the provider Preview gate remains explicitly non-PASS.
 
 ## Implementation plan
 
