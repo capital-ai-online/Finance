@@ -32,6 +32,12 @@ export interface ProviderCircuitBreakerPolicy {
   cooldownMs: number;
 }
 
+export interface ProviderCapabilityRoute {
+  capability: ProviderCapability;
+  assetClasses?: MarketDataAssetClass[];
+  gatewayStatus: ProviderGatewayStatus;
+}
+
 export interface ProviderMatrixEntry {
   id: string;
   displayName: string;
@@ -43,6 +49,7 @@ export interface ProviderMatrixEntry {
   rateLimit: ProviderRateLimitPolicy;
   circuitBreaker: ProviderCircuitBreakerPolicy;
   gatewayStatus: ProviderGatewayStatus;
+  capabilityRoutes?: readonly ProviderCapabilityRoute[];
   notes?: string;
 }
 
@@ -68,6 +75,10 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['commodity'], gatewayStatus: 'history_gateway_only' },
+      { capability: 'history', assetClasses: ['stock', 'forex', 'crypto', 'index'], gatewayStatus: 'legacy_off_gateway' },
+    ],
     notes: 'Traditional stock/forex/crypto quotes use MarketDataGateway. Commodity daily history is mapped through TwelveDataCommodityHistoryProvider -> MarketDataHistoryGateway. Stock/forex/index/crypto history also exists on the compatibility adapter and remains off the canonical history gateway until migrated; no direct scoring-route HTTP access is authorized by this matrix.',
   },
   {
@@ -94,6 +105,9 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 25, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+    ],
     notes: 'SC-5 Phase A–C: coins/{id} market_data via CoinGeckoMarketDataProvider → CanonicalMarketDataSnapshot (price + optional marketCap/supply). cryptoQuoteEvidence + multi-field cryptoSnapshotProvider share matrix RL/CB. A separate compatibility history path still performs direct CoinGecko market_chart reads; that history capability is inventoried here but is not promoted to MarketDataHistoryGateway by metadata alone. executionPriceEligible still false.',
   },
   {
@@ -133,6 +147,10 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+      { capability: 'orderbook', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+    ],
     notes: 'SC-5 Phase D: CoinAPIMarketDataProvider registered (matrix RL/CB) for a future gateway-hardened crypto quorum. Compatibility history and historical order-book metadata remain direct/off-gateway; cryptoSpotConsensus also consumes CoinAPI directly. cryptoQuoteEvidence still pins allowedProviderIds to [coingecko]. executionPriceEligible unchanged.',
   },
   {
@@ -146,6 +164,9 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 15, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto', 'stock', 'forex', 'bond'], gatewayStatus: 'legacy_off_gateway' },
+    ],
     notes: 'SC-5 Phase D: EODHDMarketDataProvider registers crypto snapshots behind MarketDataGateway. Direct compatibility history adapters also serve crypto/stock/forex plus explicit *.GBOND sovereign-yield evidence. Those direct history lanes remain off the canonical history gateway and EOD observations must never masquerade as current execution prices.',
   },
   {
@@ -569,6 +590,18 @@ export const LEGACY_PROVIDER_COMPATIBILITY_BINDINGS: readonly ProviderCompatibil
 
 export function getProviderMatrixEntry(id: string): ProviderMatrixEntry | undefined {
   return PROVIDER_MATRIX.find((entry) => entry.id === id);
+}
+
+export function providerCapabilityGatewayStatus(
+  entry: ProviderMatrixEntry,
+  capability: ProviderCapability,
+  assetClass: MarketDataAssetClass,
+): ProviderGatewayStatus {
+  const override = entry.capabilityRoutes?.find(route =>
+    route.capability === capability
+    && (!route.assetClasses || route.assetClasses.includes(assetClass)),
+  );
+  return override?.gatewayStatus ?? entry.gatewayStatus;
 }
 
 export function rateLimitOverridesFromMatrix(): Record<string, ProviderRateLimitPolicy> {
