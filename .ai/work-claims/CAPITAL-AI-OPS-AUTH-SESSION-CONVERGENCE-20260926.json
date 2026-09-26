@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-AUTH-SESSION-CONVERGENCE-20260926",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5",
@@ -13,7 +13,7 @@
   "startedAt": "2026-09-26T18:13:11+02:00",
   "baseBranch": "main",
   "baseSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
-  "lastSyncedMainSha": "82f50a97db513cab02e0a342c19230badb0b3ade",
+  "lastSyncedMainSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
   "branch": "operations/auth-session-convergence-20260926",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -53,5 +53,9 @@
     "openWriterOverlap": "Open PR #1465 is Governance-only and has no changed-file or semantic overlap with this auth/runtime slice.",
     "ownerDirection": "Fresh Owner direction requests correlation against current main and completion of the entire authentication process."
   },
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited.",
+  "releasedAt": "2026-09-26T17:15:00Z",
+  "releaseReason": "Human/CODEOWNER merged PR #1466; exact-head required evidence was terminal-success and the bounded package is DONE_MAIN / TERMINAL.",
+  "mergedPrNumber": 1466,
+  "mergeCommitSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f"
 }

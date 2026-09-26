@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SH02-13-ROADMAP-CLOSURE-IMPLEMENTATION-20260926",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Implement SH-02.13 evidence-bound post-merge closure correlation so processed work packages are reconciled in their owner documentation and the leading Live Roadmap without creating a second DevelopmentChain authority.",
+  "workItemDE": "SH-02.13 evidenzgebundene Post-Merge-Abschlusskorrelation implementieren, sodass bearbeitete Arbeitspakete in ihrer Owner-Dokumentation und in der führenden Live Roadmap abschließend abgeglichen werden, ohne eine zweite DevelopmentChain-Authority zu erzeugen.",
+  "priority": "P0",
+  "priorityReason": "Fresh Human Owner direction requires current-main reconciliation and deterministic closure of code/document implementation drift across work-package and leading Roadmap projections.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/PVC-04/PVC-18",
+  "startedAt": "2026-09-26T17:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
+  "lastSyncedMainSha": "b4fe15600a20e22c0b5d58f8d358888491cdf0a0",
+  "branch": "agent/operations-sh02-13-roadmap-closure-implementation-20260926",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SH02-13-ROADMAP-CLOSURE-IMPLEMENTATION-20260926.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-SH02-POST-MERGE-ROADMAP-CLOSURE-20260924.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-AUTH-SESSION-CONVERGENCE-20260926.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925.json",
+    ".github/workflows/self-healing-package-continuation.yml",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
+    "docs/architecture/ROADMAP.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_SH02_POST_MERGE_ROADMAP_CLOSURE_2026-09-24.md",
+    "docs/projects/operations/work-packages/OPS_AUTH_SESSION_CONVERGENCE_2026-09-26.md",
+    "docs/projects/operations/work-packages/OPS_SECURITY_POSTURE_RENDER_API_HARDENING_2026-09-25.md",
+    "src/platform/Supervisor/postMergeRoadmapClosure.ts",
+    "tests/unit/postMergeRoadmapClosure.test.ts",
+    "tests/unit/selfHealingPackageContinuationWorkflow.test.ts",
+    ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-LEDGER-EXACT-RECONCILIATION-20260926.json",
+    "docs/projects/operations/work-packages/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.md"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/architecture/ROADMAP.md as the repository-level non-authorizing Live Roadmap",
+    "existing Post-Merge Production Correlation and Self-Healing continuation lane",
+    "existing REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION action"
+  ],
+  "acceptanceCriteria": [
+    "A fully evidenced merge can derive DONE_MAIN / TERMINAL only after exact CURRENT_MAIN containment and explicit exit evidence.",
+    "Partial and downstream-evidence-gated merges remain non-terminal.",
+    "Work-package documentation, leading Roadmap projection and merged claim lifecycle are correlated together.",
+    "Owner-local deterministic drift routes only to the existing RECONCILE_REPOSITORY_PROJECTION lane.",
+    "Foreign-owner drift becomes OWNER_CORRECT_HANDOFF and is never silently mutated by OPS.",
+    "Closure fingerprints are idempotent and closure-sync changes cannot recursively create productive closure work.",
+    "The existing post-merge workflow observes closure drift without checkout, direct-main mutation, approval, auto-merge or merge authority.",
+    "Current OPS #1463/#1466/#1467 documentation drift is reconciled truthfully and GOV #1465 is surfaced only as a foreign-owner handoff.",
+    "Exact-head required checks pass before Human/CODEOWNER merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

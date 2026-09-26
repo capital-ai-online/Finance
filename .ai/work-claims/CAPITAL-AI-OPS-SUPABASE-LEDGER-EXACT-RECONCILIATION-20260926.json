@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-SUPABASE-LEDGER-EXACT-RECONCILIATION-20260926",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5",
@@ -13,7 +13,7 @@
   "startedAt": "2026-09-26T16:57:21Z",
   "baseBranch": "main",
   "baseSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
-  "lastSyncedMainSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
+  "lastSyncedMainSha": "b4fe15600a20e22c0b5d58f8d358888491cdf0a0",
   "branch": "operations/supabase-ledger-exact-reconciliation-20260926",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -64,5 +64,9 @@
     "ownerDirection": "Continue explaining the ledger and complete its fix in a separate repository PR.",
     "regressionConsumerReadback": "CI on head 1254505b found five stale migration-path consumers and three stale lazy-ProfilePage assertions; PR #1466 evidence confirms eager ProfilePage is the merged anti-freeze contract."
   },
-  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited."
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited.",
+  "releasedAt": "2026-09-26T17:35:00Z",
+  "releaseReason": "Human/CODEOWNER merged PR #1467. Repository implementation is merged; Supabase Preview was observed skipped, so the work package remains MERGED_MAIN / EVIDENCE_GATE.",
+  "mergedPrNumber": 1467,
+  "mergeCommitSha": "b4fe15600a20e22c0b5d58f8d358888491cdf0a0"
 }
