@@ -163,15 +163,14 @@
       "title": "Deterministic version decision",
       "status": "required",
       "authorityRefs": [
-        "AUTH-ADR-DETERMINISTIC-AUTONOMOUS-VERSIONING-2026-09-11",
-        "AUTH-GOV-DETERMINISTIC-VERSIONING-RULE-CONTRACT",
+        "AUTH-GOV-AGENT-TRUST-ROOT",
         "AUTH-ADR-PLATFORM-VERSION-RELEASE-LIFECYCLE-0030"
       ],
-      "requirement": "Ordinary automatic platform-version materialization is cadence-bound: every tenth merged Pull Request after the active cadence epoch or last merged version transition receives exactly the next PATCH version on its candidate branch through the existing Release Version Gate. package.json remains the sole authority and root package-lock mirrors must match. Semantic PATCH/MINOR/MAJOR classification remains release-impact evidence and cannot independently create an automatic between-cadence version mutation; direct main mutation, merge, release acceptance and deployment authority remain separate.",
+      "requirement": "Released Production version identity is acceptance-bound, not merge-count-bound. The single released Production-version authority is the protected final `vMAJOR.MINOR.PATCH` Git tag together with the digest-bound immutable accepted Release Manifest for the same source SHA, artifact digest and deployment identity. The former fixed ten-merge package PATCH materialization is retired for Production release authority; root package and lockfile versions remain package/tooling metadata only. Release classification remains bounded PATCH/MINOR/MAJOR evidence. Direct main mutation, Human/CODEOWNER merge, Production promotion, Release Acceptance and deployment remain separate protected boundaries. Until CAPITAL-AI-OPS / PVC-06..08 completes the productive migration, existing package-derived implementation is transitional evidence only and MUST NOT become an accepted Production fallback.",
       "evidence": [
         "AGENTS.md",
-        "docs/adr/ADR-0105-deterministic-autonomous-versioning.md",
-        "docs/governance/control-plane/DETERMINISTIC_VERSIONING_RULE_CONTRACT.json"
+        "docs/adr/ADR-0107-production-release-version-authority-supersession.md",
+        "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
       ]
     },
     {
