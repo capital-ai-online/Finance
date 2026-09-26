@@ -5,7 +5,7 @@
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-26 — CURRENT_MAIN `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
+**Reconciliation:** 2026-09-26 — CURRENT_MAIN `f961ce6c9a15a4c627b7e6a21adf840f1584b5e9`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
