@@ -202,8 +202,8 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 20,
     rateLimit: { capacity: 3, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'Existing server-side stock fundamentals/history/quote compatibility provider. OVERVIEW fundamentals are primary in stockFundamentals; ALPHA_VANTAGE_API_KEY remains the sole credential identity. This entry records existing runtime truth and does not authorize a new gateway path.',
+    gatewayStatus: 'not_wired',
+    notes: 'Existing server-side stock fundamentals/evidence adapter; OVERVIEW fundamentals are primary in stockFundamentals and ALPHA_VANTAGE_API_KEY remains the sole credential identity. Matrix presence records the evidence lane but does not grant MarketDataGateway authority.',
   },
   {
     id: 'fmp-traditional',
@@ -215,8 +215,8 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 20,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'Existing FMP ratios-ttm fallback/enrichment for stock fundamentals. Index quote/history lanes remain represented separately by fmp-index and fmp-index-history.',
+    gatewayStatus: 'not_wired',
+    notes: 'Existing FMP ratios-ttm fallback/enrichment for stock fundamentals. This is an evidence adapter outside MarketDataGateway; index quote/history lanes remain represented separately by fmp-index and fmp-index-history.',
   },
   {
     id: 'finnhub',
@@ -254,8 +254,8 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 10,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'Existing allow-listed macro/rate evidence adapter. FRED observations are context/rate evidence only and never execution-price eligible.',
+    gatewayStatus: 'not_wired',
+    notes: 'Existing allow-listed macro/rate evidence adapter outside MarketDataGateway. FRED observations are context/rate evidence only and never execution-price eligible.',
   },
   {
     id: 'ecb',
@@ -267,8 +267,8 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 10,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'Existing keyless ECB reference-rate evidence path. Reference FX/rate observations are informational and never execution-price eligible.',
+    gatewayStatus: 'not_wired',
+    notes: 'Existing keyless ECB reference-rate evidence adapter outside MarketDataGateway. Reference FX/rate observations are informational and never execution-price eligible.',
   },
   {
     id: 'defillama',
