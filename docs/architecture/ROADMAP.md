@@ -37,9 +37,9 @@ Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OP
 
 ## Current correlation — 2026-09-26
 
-- CURRENT_MAIN for this projection is `36fd8502178f42fd3b20562f4f60290fcbb2d11f`, Human/CODEOWNER merge of PR #1466.
+- CURRENT_MAIN for this projection is `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`, Human/CODEOWNER merge of PR #1467.
 - Recent merged implementation evidence relevant to closure correlation is #1463 (OPS Security Posture/Render API hardening), #1465 (GOV Production Release Authority supersession) and #1466 (OPS Auth-Session/Profile convergence).
-- Open PR #1467 is the only observed current writer and owns an independent OPS Supabase-ledger slice; its changed files do not overlap the SH-02.13 Roadmap-closure implementation surface.
+- PR #1467 is now Human/CODEOWNER-merged. Its repository migration-ledger reconciliation is on main, while the explicit Supabase Preview exit criterion remains evidence-gated because the observed provider check was `skipped`.
 - `CAPITAL-AI-SEC` and `CAPITAL-AI-QM` remain migrated to this Live Roadmap for current status. Other projects retain owner-correct project Roadmaps until their own migration is Human/CODEOWNER-merged.
 - Work-package completion is now projected in the DevelopmentChain completion ledger below. The ledger is non-authorizing and never substitutes for the owner work-package document, exact code/test evidence or `/AGENTS.md@CURRENT_MAIN`.
 - Deterministic package/Roadmap/claim drift remains the existing Self-Healing class `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION`; foreign-owner drift is an `OWNER_CORRECT_HANDOFF`.
@@ -76,6 +76,7 @@ This ledger is the repository-level **closure projection** for processed canonic
 | `docs/projects/operations/work-packages/OPS_SECURITY_POSTURE_RENDER_API_HARDENING_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1463 · merge `82f50a97db513cab02e0a342c19230badb0b3ade` · exact-head CI/Governance/Container/Project/PR evidence PASS | `MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING` | `MERGED_MAIN / EVIDENCE_GATE` | explicit Render/GitHub/Supabase provider readbacks remain real-evidence-only |
 | `docs/projects/governance/work-packages/GOV_PRODUCTION_RELEASE_AUTHORITY_SUPERSESSION_2026-09-26.md` | `CAPITAL-AI-GOV` | PR #1465 · merge `bc42ef4b23a24db1f1947ab747b12de7392b0e53` · exact-head required evidence PASS | foreign-owner closure metadata still requires GOV reconciliation | `MERGED_MAIN / OWNER_CLOSURE_PENDING` | `OWNER_CORRECT_HANDOFF` to GOV; OPS must not rewrite the GOV package/claim |
 | `docs/projects/operations/work-packages/OPS_AUTH_SESSION_CONVERGENCE_2026-09-26.md` | `CAPITAL-AI-OPS` | PR #1466 · merge/current main `36fd8502178f42fd3b20562f4f60290fcbb2d11f` · CI #6588 / Governance #6100 / Container #3571 / Project #884 / PR #967 PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none for this bounded package; later incidents are fresh work |
+| `docs/projects/operations/work-packages/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.md` | `CAPITAL-AI-OPS` | PR #1467 · merge `b4fe15600a20e22c0b5d58f8d358888491cdf0a0` · CI #6595 / Governance #6106 / Container #3578 / Project #891 / PR #973 PASS; Supabase Preview `skipped` | `MERGED_MAIN / EVIDENCE_GATE / SUPABASE_PREVIEW_NOT_PROVEN` | `MERGED_MAIN / EVIDENCE_GATE` | exact provider Preview/readback remains required by the package exit gate |
 
 ### Closure invariant
 
