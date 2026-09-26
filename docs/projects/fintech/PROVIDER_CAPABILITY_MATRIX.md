@@ -39,7 +39,7 @@ Static `enabled=true`, provider registration or a declared capability is not pro
 | GDELT | secondary | crypto, stock, forex, commodity, index, bond, macro | news | `not_wired` / discovery-provenance lane |
 | Dune | secondary | crypto | on-chain, governance | `not_wired` / governed read-results evidence |
 
-Matrix integration-lane count: **28**. Provider-family count is lower because FMP keeps separate index quote/history and stock-fundamental lanes.
+Matrix integration-lane count: **29**. Provider-family count is lower because FMP keeps separate index quote/history and stock-fundamental lanes.
 
 ## Changes from the previous FINTECH projection
 
