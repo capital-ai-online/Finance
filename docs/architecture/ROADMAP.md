@@ -2,8 +2,8 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
-**Status date:** `2026-09-24`  
-**Baseline:** `main@5c1b6727762364229516d4c74e85d9bf960574d1`  
+**Status date:** `2026-09-26`  
+**Baseline:** `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -69,7 +69,7 @@ Current projection drift is a bounded Self-Healing finding. Repository-owned det
 
 ## Live Security state — `CAPITAL-AI-SEC`
 
-**Correlation:** `main@5c1b6727762364229516d4c74e85d9bf960574d1` on 2026-09-24  
+**Correlation:** `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac` on 2026-09-26  
 **Relationship:** cross-cutting Security; no productive `PVC-*` ownership  
 **Direction:** `SECURITY_FOUNDATION_FIRST`  
 **Current status source:** this Live Roadmap; public projection: `/roadmap`
@@ -93,7 +93,9 @@ Security owns threat/risk/control definition, finding lifecycle, Security test r
 
 **Immediate dependency chain:** `SEC-WEB-00 ✅ → F01/F16 ✅ → F15 OPEN (OPS-07-A + OPS-08-A) → F23 → F10 → production/open-writer re-correlation`.
 
-**Current SEC-WEB-00 evidence:** `docs/projects/security/evidence/SEC_WEB_00_CURRENT_ATTACK_SURFACE_BASELINE_2026-09-24.md`. Exact CURRENT_MAIN Container Security run `35957793419` published and independently pulled `ghcr.io/capital-ai-online/finance@sha256:a793cf5d0259d7a529213cf437a77a8f92940a45bcb85463b77223722be18306` with verified Cosign signature, SLSA provenance and CycloneDX SBOM attestation. The remaining P0 release gap is F15: `ci.yml` still triggers Render from `ref=main` rather than deploying that verified digest.
+**Post-merge correlation — 2026-09-26:** PR #1460 (`dc74d03bb131`) is merged into CURRENT_MAIN generation `15e1e0e3dc6f`. Exact-head CI, Governance, Container Security and OSS/PR evidence were terminal-success before merge; post-merge readback found no open Pull Request writer. This closes the #1460 reconciliation obligation only. It does not advance the dependency graph past F15, which remains owner-correct to OPS/PVC-07+08.
+
+**Current SEC-WEB evidence:** baseline `docs/projects/security/evidence/SEC_WEB_00_CURRENT_ATTACK_SURFACE_BASELINE_2026-09-24.md` plus post-merge reconciliation `docs/projects/security/evidence/SEC_WEB_POST_MERGE_1460_RECONCILIATION_2026-09-26.md`. PR #1460 is merged and verifies the Edge-Trust fail-closed regression fix; it strengthens F20/F21/F25 evidence without closing those findings. The first unresolved P0 owner-return remains F15: the release/deployment path must prove that Production consumes the already scanned/signed immutable artifact identity rather than merely rebuilding from `ref=main`.
 
 ### Terminal / superseded SEC work
 
