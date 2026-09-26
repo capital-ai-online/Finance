@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SUPABASE-RESILIENCE-PVC08-20260925",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "OPS-08-SUPABASE-RESILIENCE — PostgreSQL backup, cron retention, security posture and data-platform catalog",
+  "startedAt": "2026-09-26T19:41:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "b4fe15600a20e22c0b5d58f8d358888491cdf0a0",
+  "branch": "agent/operations-supabase-resilience-pvc08-v3-20260926",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-08",
+  "priority": "P1",
+  "priorityReason": "Fresh Human Owner direction requests production database recovery/retention hardening before the planned Supabase platform upgrade and establishes a bounded data-platform catalog for near-term product growth.",
+  "claimedPaths": [
+    ".github/workflows/ops-recovery-evidence.yml",
+    ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-RESILIENCE-PVC08-20260925.json",
+    "scripts/operations/googleDriveBackupUpload.mjs",
+    "scripts/operations/googleDriveBackupUpload.test.mjs",
+    "scripts/operations/opsRecoveryWorkflowContract.test.mjs",
+    "docs/projects/operations/work-packages/OPS_08_SUPABASE_RESILIENCE_2026-09-25.md",
+    "docs/projects/operations/evidence/OPS_08_DATA_PLATFORM_CATALOG_2026-09-25.md",
+    "docs/architecture/api/API_INTERFACE_INVENTORY.md",
+    "docs/projects/operations/evidence/OPS_08_SUPABASE_CONTRACT_AUDIT_2026-09-25.md"
+  ],
+  "scopeBoundary": [
+    "Extend the existing OPS Recovery Evidence authority; do not create a second backup/recovery controller.",
+    "No direct main mutation and no agent self-merge.",
+    "No GitHub Advanced Security/CodeQL dependency; reuse existing OSS security authorities.",
+    "No destructive cron retention unless a complete encrypted weekly archive has first been materialized and verified.",
+    "Google Drive credentials remain external Human-managed secrets; no secret value is committed.",
+    "No FinTech provider/scoring authority transfer; data-platform alternatives are non-authorizing evaluation entries only."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
