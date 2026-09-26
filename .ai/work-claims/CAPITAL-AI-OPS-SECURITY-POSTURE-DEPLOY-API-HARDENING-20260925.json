@@ -21,8 +21,8 @@
   ],
   "startedAt": "2026-09-25T21:10:00Z",
   "baseBranch": "main",
-  "baseSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
-  "lastSyncedMainSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+  "baseSha": "15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac",
+  "lastSyncedMainSha": "15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac",
   "branch": "agent/operations-security-posture-deploy-api-hardening-20260926",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925.json",
