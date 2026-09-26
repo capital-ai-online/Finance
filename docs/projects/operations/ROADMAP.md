@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`
+**Baseline:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-26 — CURRENT_MAIN `36fd8502178f42fd3b20562f4f60290fcbb2d11f`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466 OPS closure drift is smoothed, #1465 remains an owner-correct GOV handoff, and open #1467 is file-disjoint.
+**Reconciliation:** 2026-09-26 — CURRENT_MAIN `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -144,7 +144,7 @@ reuses the canonical repository-projection lane and remains Human-merge gated.
 - PR #1463 / OPS Security Posture: repository implementation merged; `MERGED_MAIN / EVIDENCE_GATE` because provider readback exits remain open.
 - PR #1466 / OPS Auth Session: exact-head required evidence PASS + Human merge; `DONE_MAIN / TERMINAL`.
 - PR #1465 / GOV Release Authority: merged evidence observed; package/claim closure is foreign-owner and remains `OWNER_CORRECT_HANDOFF`.
-- PR #1467 / OPS Supabase Ledger: currently open independent writer; no closure is derived before merge.
+- PR #1467 / OPS Supabase Ledger: repository reconciliation is merged; `MERGED_MAIN / EVIDENCE_GATE` because the explicit Supabase Preview check was observed `skipped` and therefore is not proven.
 
 
 ### OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01 — Supabase Auth control recovery
