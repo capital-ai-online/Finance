@@ -32,9 +32,10 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-PAY-STRIPE-WEBHOOK-001 | Stripe Webhook | webhook | Render/Supabase | `STRIPE_WEBHOOK_SECRET` | webhook routes / Edge Function | PARTIAL | KEEP |
 | API-SUPABASE-AUTH-001 | Supabase Auth | auth | browser/backend | `VITE_SUPABASE_URL`, publishable/anon key + JWT | auth client/middleware | PARTIAL | KEEP |
 | API-SUPABASE-DATA-001 | Supabase PostgREST/Data API | database | browser/backend | `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, client keys depending path | production project | PARTIAL | KEEP |
-| API-SUPABASE-EF-STRIPE-SETUP | Edge Function `stripe-setup` | edge-function | Supabase | `verify_jwt=false`; alternative control to verify | production function v3 | NOT_TESTED | EVALUATE |
-| API-SUPABASE-EF-STRIPE-WEBHOOK | Edge Function `stripe-webhook` | edge-function/webhook | Supabase | `verify_jwt=false`; Stripe signature expected | production function v4 | NOT_TESTED | EVALUATE |
-| API-SUPABASE-EF-STRIPE-WORKER | Edge Function `stripe-worker` | edge-function | Supabase | `verify_jwt=false`; alternative control to verify | production function v3 | NOT_TESTED | EVALUATE |
+| API-SUPABASE-OPS-001 | Supabase Hosted PostgreSQL / Recovery | database/recovery | Supabase + GitHub Actions | `SUPABASE_DB_URL`, age recipient/identity; weekly Drive OAuth secrets stay external | `.github/workflows/ops-recovery-evidence.yml`, `docs/projects/operations/work-packages/OPS_08_SUPABASE_RESILIENCE_2026-09-25.md` | PARTIAL_LIVE | KEEP |
+| API-SUPABASE-EF-STRIPE-SETUP | Edge Function `stripe-setup` | edge-function | Supabase | `verify_jwt=false`; Bearer setup secret validated against Supabase Vault | production function v8 live readback 2026-09-25 | VERIFIED_ALT_AUTH | KEEP |
+| API-SUPABASE-EF-STRIPE-WEBHOOK | Edge Function `stripe-webhook` | edge-function/webhook | Supabase | `verify_jwt=false`; requires `stripe-signature` and validates with Stripe `constructEventAsync` | production function v9 live readback 2026-09-25 | VERIFIED_ALT_AUTH | KEEP |
+| API-SUPABASE-EF-STRIPE-WORKER | Edge Function `stripe-worker` | edge-function | Supabase | `verify_jwt=false`; Bearer `stripe_sync_worker_secret` validated against Supabase Vault | production function v8 live readback 2026-09-25 | VERIFIED_ALT_AUTH | KEEP |
 | API-MAIL-IONOS-001 | IONOS SMTP | email | Render backend | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `server/mailer.ts`, `.env.example`, `render.yaml` | PARTIAL | KEEP/EVALUATE |
 | API-OAUTH-GOOGLE-001 | Google OAuth via Supabase | auth | browser/Supabase | OAuth2 / Supabase configuration | auth flow | PARTIAL | KEEP |
 | API-GOOGLE-MARKETING-001 | Google Marketing/Analytics integration | marketing | browser/backend/MCP profile | `VITE_GA_MEASUREMENT_ID` + governed service credentials | ESS-0014 / ADR-0035 | IN_PROGRESS | EVALUATE |
@@ -43,6 +44,12 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-SOCIAL-003 | Instagram OAuth | social publishing | backend | `INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-SOCIAL-004 | X OAuth | social publishing | backend | `X_CLIENT_ID`, `X_CLIENT_SECRET` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-SOCIAL-005 | Facebook OAuth | social publishing | backend | `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
+
+## 1.1 Supabase operational classification — 2026-09-25
+
+The productive Supabase platform is catalogued operationally as **`CAPITAL-AI-OPS` / alias `OPS` / `PVC-08 — Production Operations` / `docs/projects/operations/`**. This is an operational ownership projection only: FINTECH remains the productive owner for `PVC-09..17` domain/data/scoring semantics, while Security, Quality and Compliance remain cross-cutting assurance.
+
+Current live readback: project `AIFINANCIAL`, region `eu-west-1`, PostgreSQL `17.6`, healthy; recovery/retention evidence is specified in `OPS_08_SUPABASE_RESILIENCE_2026-09-25.md` and data-platform alternatives in `OPS_08_DATA_PLATFORM_CATALOG_2026-09-25.md`.
 
 ### SC-MD-SPT / ADR-0032 internal read contract (2026-08-20)
 
