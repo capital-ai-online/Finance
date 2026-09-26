@@ -15,8 +15,12 @@ on:
         options:
           - backup-only
           - backup-and-restore-drill
+          - backup-and-cron-archive
   schedule:
-    - cron: '17 2 * * *'
+    # GitHub cron is UTC. Two lightweight trigger slots plus the schedule-gate
+    # below preserve 04:00 Europe/Berlin across CET/CEST.
+    - cron: '0 2 * * *'
+    - cron: '0 3 * * *'
 
 permissions:
   contents: read
@@ -31,11 +35,49 @@ env:
   RPO_TARGET_SECONDS: '86400'
   DATABASE_RESTORE_RTO_TARGET_SECONDS: '3600'
   ARTIFACT_RETENTION_DAYS: '35'
+  OPS_RECOVERY_GDRIVE_FOLDER_ID: '13HiWDBT2WAID_7l0TL2SjS2DiI5HlP_e'
 
 jobs:
+  schedule-gate:
+    name: 04:00 Europe/Berlin schedule gate
+    runs-on: ubuntu-latest
+    outputs:
+      execute: ${{ steps.gate.outputs.execute }}
+      weekly: ${{ steps.gate.outputs.weekly }}
+      local_date: ${{ steps.gate.outputs.local_date }}
+    steps:
+      - id: gate
+        name: Local-time and weekly cadence resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != 'schedule' ]; then
+            echo 'execute=true' >> "$GITHUB_OUTPUT"
+            echo 'weekly=false' >> "$GITHUB_OUTPUT"
+            echo "local_date=$(TZ=Europe/Berlin date +%F)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LOCAL_HOUR="$(TZ=Europe/Berlin date +%H)"
+          LOCAL_WEEKDAY="$(TZ=Europe/Berlin date +%u)"
+          echo "local_date=$(TZ=Europe/Berlin date +%F)" >> "$GITHUB_OUTPUT"
+          if [ "$LOCAL_HOUR" = '04' ]; then
+            echo 'execute=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'execute=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$LOCAL_HOUR" = '04' ] && [ "$LOCAL_WEEKDAY" = '1' ]; then
+            echo 'weekly=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'weekly=false' >> "$GITHUB_OUTPUT"
+          fi
+
   backup-and-evidence:
     name: Encrypted backup and isolated recovery evidence
-    if: ${{ github.ref == 'refs/heads/main' && vars.OPS_RECOVERY_EXECUTION_ENABLED == 'true' }}
+    needs: schedule-gate
+    if: >-
+      ${{ github.ref == 'refs/heads/main'
+          && vars.OPS_RECOVERY_EXECUTION_ENABLED == 'true'
+          && needs.schedule-gate.outputs.execute == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -73,7 +115,7 @@ jobs:
           if ref not in url:
               raise SystemExit('SUPABASE_DB_URL does not correlate to the approved source project ref.')
           PY
-          echo 'Execution gate is enabled for the current main ref. No Production write operation is defined by this workflow.'
+          echo 'Execution gate is enabled for current main. Production mutation is limited to archive-verified pg_cron retention in backup-and-cron-archive mode.'
 
       - name: Supabase CLI einrichten
         uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
@@ -90,6 +132,161 @@ jobs:
           psql --version
           supabase --version
           node --version
+
+      - name: Supabase Security-Posture read-only erfassen
+        id: security_posture
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/supabase-security-posture.json"
+          psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 > "$OUT" <<'SQL'
+          select jsonb_pretty(jsonb_build_object(
+            'observedAt', now(),
+            'serverVersion', current_setting('server_version'),
+            'databaseSizeBytes', pg_database_size(current_database()),
+            'replicationSlots', (select count(*) from pg_replication_slots),
+            'appTablesWithoutRls', (
+              select count(*)
+              from pg_class c join pg_namespace n on n.oid=c.relnamespace
+              where c.relkind in ('r','p')
+                and n.nspname in ('public','fintech_core')
+                and not c.relrowsecurity
+            ),
+            'appTablesWithoutPrimaryKey', (
+              select count(*)
+              from pg_class c
+              join pg_namespace n on n.oid=c.relnamespace
+              where c.relkind in ('r','p')
+                and n.nspname in ('public','fintech_core')
+                and not exists (
+                  select 1 from pg_constraint k
+                  where k.conrelid=c.oid and k.contype='p'
+                )
+            ),
+            'invalidIndexes', (
+              select count(*)
+              from pg_index i
+              join pg_class c on c.oid=i.indrelid
+              join pg_namespace n on n.oid=c.relnamespace
+              where not i.indisvalid and n.nspname in ('public','fintech_core')
+            ),
+            'publicExecutableSecurityDefinerFunctions', (
+              select count(*)
+              from pg_proc p
+              join pg_namespace n on n.oid=p.pronamespace
+              where n.nspname in ('public','fintech_core')
+                and p.prosecdef
+                and has_function_privilege('public',p.oid,'EXECUTE')
+            ),
+            'securityEvents24h', (
+              select count(*) from public.security_events
+              where created_at >= now() - interval '24 hours'
+            ),
+            'blockedSuspiciousRequests24h', (
+              select count(*) from public.security_events
+              where created_at >= now() - interval '24 hours'
+                and event_type='suspicious_request'
+                and outcome='blocked'
+            ),
+            'storageObjects', (select count(*) from storage.objects),
+            'publicStorageBuckets', (select count(*) from storage.buckets where public),
+            'cronHistoryRows', (select count(*) from cron.job_run_details),
+            'cronHistoryBytes', pg_total_relation_size('cron.job_run_details')
+          ))::text;
+          SQL
+          test -s "$OUT"
+          node -e "
+            const fs=require('fs');
+            const v=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+            for (const key of ['appTablesWithoutRls','appTablesWithoutPrimaryKey','invalidIndexes','publicExecutableSecurityDefinerFunctions']) {
+              if (Number(v[key]) !== 0) throw new Error('Supabase security posture failed: '+key+'='+v[key]);
+            }
+          " "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Abgeschlossene pg_cron-Wochen komprimieren und verschlüsseln
+        id: cron_archive
+        if: >-
+          ${{ needs.schedule-gate.outputs.weekly == 'true'
+              || (github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-cron-archive') }}
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          AGE_RECIPIENT: ${{ vars.OPS_RECOVERY_AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          ARCHIVE_DIR="$RUNNER_TEMP/ops-cron-archive"
+          mkdir -p "$ARCHIVE_DIR"
+          chmod 700 "$ARCHIVE_DIR"
+          MANIFEST="$ARCHIVE_DIR/manifest.jsonl"
+          : > "$MANIFEST"
+
+          CURRENT_WEEK_LOCAL="$(TZ=Europe/Berlin date -d "$(TZ=Europe/Berlin date +%F)" +%Y-%m-%d)"
+          CURRENT_WEEK_LOCAL="$(TZ=Europe/Berlin date -d "$CURRENT_WEEK_LOCAL - $((10#$(TZ=Europe/Berlin date +%u)-1)) days" +%F)"
+          ARCHIVE_BEFORE="$(TZ=Europe/Berlin date -d "$CURRENT_WEEK_LOCAL 00:00" --iso-8601=seconds)"
+
+          mapfile -t WEEKS < <(
+            psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "
+              select distinct to_char(date_trunc('week', start_time at time zone 'Europe/Berlin'),'YYYY-MM-DD')
+              from cron.job_run_details
+              where start_time < '$ARCHIVE_BEFORE'::timestamptz
+              order by 1
+            "
+          )
+
+          for WEEK_START in "${WEEKS[@]}"; do
+            [ -n "$WEEK_START" ] || continue
+            WEEK_END="$(TZ=Europe/Berlin date -d "$WEEK_START + 7 days" +%F)"
+            START_ISO="$(TZ=Europe/Berlin date -d "$WEEK_START 00:00" --iso-8601=seconds)"
+            END_ISO="$(TZ=Europe/Berlin date -d "$WEEK_END 00:00" --iso-8601=seconds)"
+            CSV="$ARCHIVE_DIR/cron-job-run-details_${WEEK_START}_to_${WEEK_END}.csv"
+            GZ="$CSV.gz"
+            AGE="$GZ.age"
+
+            psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "\copy (
+              select jobid,runid,job_pid,database,username,encode(extensions.digest(command,'sha256'),'hex') as command_sha256,status,return_message,start_time,end_time
+              from cron.job_run_details
+              where start_time >= '$START_ISO'::timestamptz
+                and start_time < '$END_ISO'::timestamptz
+              order by start_time,runid
+            ) to stdout with (format csv, header true)" > "$CSV"
+
+            ROWS="$(psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "
+              select count(*)
+              from cron.job_run_details
+              where start_time >= '$START_ISO'::timestamptz
+                and start_time < '$END_ISO'::timestamptz
+            ")"
+            test "$ROWS" -gt 0
+            test "$(( $(wc -l < "$CSV") - 1 ))" -eq "$ROWS"
+
+            gzip -9 -n "$CSV"
+            COMPRESSED_SHA="$(sha256sum "$GZ" | awk '{print $1}')"
+            COMPRESSED_BYTES="$(stat -c %s "$GZ")"
+            age -r "$AGE_RECIPIENT" -o "$AGE" "$GZ"
+            rm -f "$GZ"
+            test -s "$AGE"
+            ENCRYPTED_SHA="$(sha256sum "$AGE" | awk '{print $1}')"
+
+            node - "$MANIFEST" "$WEEK_START" "$WEEK_END" "$ROWS" "$COMPRESSED_BYTES" "$COMPRESSED_SHA" "$ENCRYPTED_SHA" "$(basename "$AGE")" <<'NODE'
+          const fs=require('fs');
+          const [manifest,weekStart,weekEnd,rows,bytes,compressedSha,encryptedSha,file]=process.argv.slice(2);
+          fs.appendFileSync(manifest, JSON.stringify({
+            weekStart, weekEnd, rows:Number(rows), compressedBytes:Number(bytes),
+            compressedSha256:compressedSha, encryptedSha256:encryptedSha, file
+          })+'\n');
+          NODE
+          done
+
+          ARCHIVE_COUNT="$(find "$ARCHIVE_DIR" -maxdepth 1 -name '*.csv.gz.age' -type f | wc -l | tr -d ' ')"
+          {
+            echo "archive_dir=$ARCHIVE_DIR"
+            echo "manifest=$MANIFEST"
+            echo "archive_count=$ARCHIVE_COUNT"
+            echo "archive_before=$ARCHIVE_BEFORE"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Logisches Backup erzeugen
         id: dump
@@ -312,6 +509,7 @@ jobs:
                   'provider': 'supabase',
                   'projectRef': os.environ['SOURCE_PROJECT_REF'],
                   'readOnlyBackup': True,
+                  'boundedMaintenanceMutation': 'pg_cron_retention_after_dual-offsite-archive',
               },
               'repository': {
                   'repository': os.environ['GITHUB_REPOSITORY'],
@@ -350,6 +548,7 @@ jobs:
                   'encryptedSha256': os.environ['ENCRYPTED_SHA'],
                   'encryption': 'age-x25519',
                   'offsiteSink': 'github-actions-artifact',
+                  'secondaryWeeklyMirror': 'google-drive',
                   'retentionDays': int(os.environ['ARTIFACT_RETENTION_DAYS']),
               },
               'restoreDrill': {
@@ -371,6 +570,7 @@ jobs:
           echo "evidence_path=$EVIDENCE" >> "$GITHUB_OUTPUT"
 
       - name: Verschlüsseltes Off-site-Artefakt und Evidence ablegen
+        id: offsite_artifact
         if: ${{ always() && steps.encrypt.outcome == 'success' && steps.evidence.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -378,9 +578,64 @@ jobs:
           path: |
             ${{ steps.encrypt.outputs.encrypted_path }}
             ${{ steps.evidence.outputs.evidence_path }}
+            ${{ steps.security_posture.outputs.path }}
+            ${{ steps.cron_archive.outputs.archive_dir }}
           retention-days: 35
           compression-level: 0
           if-no-files-found: error
+
+      - name: Wöchentliches verschlüsseltes Backup nach Google Drive spiegeln
+        id: drive_mirror
+        if: >-
+          ${{ always()
+              && steps.offsite_artifact.outcome == 'success'
+              && (needs.schedule-gate.outputs.weekly == 'true'
+                  || (github.event_name == 'workflow_dispatch' && inputs.mode == 'backup-and-cron-archive')) }}
+        shell: bash
+        env:
+          OPS_RECOVERY_GDRIVE_CLIENT_ID: ${{ secrets.OPS_RECOVERY_GDRIVE_CLIENT_ID }}
+          OPS_RECOVERY_GDRIVE_CLIENT_SECRET: ${{ secrets.OPS_RECOVERY_GDRIVE_CLIENT_SECRET }}
+          OPS_RECOVERY_GDRIVE_REFRESH_TOKEN: ${{ secrets.OPS_RECOVERY_GDRIVE_REFRESH_TOKEN }}
+          OPS_RECOVERY_GDRIVE_FOLDER_ID: ${{ env.OPS_RECOVERY_GDRIVE_FOLDER_ID }}
+          ENCRYPTED_PATH: ${{ steps.encrypt.outputs.encrypted_path }}
+          CRON_ARCHIVE_DIR: ${{ steps.cron_archive.outputs.archive_dir }}
+        run: |
+          set -euo pipefail
+          test -n "$OPS_RECOVERY_GDRIVE_CLIENT_ID"
+          test -n "$OPS_RECOVERY_GDRIVE_CLIENT_SECRET"
+          test -n "$OPS_RECOVERY_GDRIVE_REFRESH_TOKEN"
+          test -n "$OPS_RECOVERY_GDRIVE_FOLDER_ID"
+          FILES=("$ENCRYPTED_PATH")
+          if [ -n "${CRON_ARCHIVE_DIR:-}" ] && [ -d "$CRON_ARCHIVE_DIR" ]; then
+            while IFS= read -r -d '' file; do FILES+=("$file"); done < <(
+              find "$CRON_ARCHIVE_DIR" -maxdepth 1 -name '*.csv.gz.age' -type f -print0 | sort -z
+            )
+          fi
+          node scripts/operations/googleDriveBackupUpload.mjs "${FILES[@]}"
+
+      - name: Archivierte pg_cron-Historie aus Hot Storage entfernen
+        id: cron_retention
+        if: >-
+          ${{ always()
+              && steps.cron_archive.outcome == 'success'
+              && steps.cron_archive.outputs.archive_count != '0'
+              && steps.offsite_artifact.outcome == 'success'
+              && steps.drive_mirror.outcome == 'success' }}
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          ARCHIVE_BEFORE: ${{ steps.cron_archive.outputs.archive_before }}
+        run: |
+          set -euo pipefail
+          test -n "$ARCHIVE_BEFORE"
+          BEFORE="$(psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from cron.job_run_details where start_time < '$ARCHIVE_BEFORE'::timestamptz")"
+          psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "delete from cron.job_run_details where start_time < '$ARCHIVE_BEFORE'::timestamptz"
+          AFTER="$(psql "$SUPABASE_DB_URL" -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from cron.job_run_details where start_time < '$ARCHIVE_BEFORE'::timestamptz")"
+          test "$AFTER" -eq 0
+          {
+            echo "deleted_rows=$BEFORE"
+            echo "archive_before=$ARCHIVE_BEFORE"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Recovery-Evidence zusammenfassen
         if: ${{ always() && steps.evidence.outcome == 'success' }}
@@ -433,6 +688,7 @@ jobs:
           fi
           rm -rf \
             "$RUNNER_TEMP/ops-recovery-source" \
+            "$RUNNER_TEMP/ops-cron-archive" \
             "$RUNNER_TEMP/ops-recovery-drill" \
             "$RUNNER_TEMP/ops-recovery-target" \
             "$RUNNER_TEMP/ops-recovery-age-identity.txt" \
