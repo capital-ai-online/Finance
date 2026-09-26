@@ -23,7 +23,7 @@
   "baseBranch": "main",
   "baseSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
   "lastSyncedMainSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
-  "branch": "operations/security-posture-deploy-api-hardening-20260925",
+  "branch": "agent/operations-security-posture-deploy-api-hardening-20260926",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-OPS-SECURITY-POSTURE-DEPLOY-API-HARDENING-20260925.json",
     ".github/workflows/ci.yml",
@@ -52,7 +52,7 @@
     "SEC retains independent verification authority; this OPS slice implements affected runtime/deployment controls only.",
     "Do not touch PR #1460 files server/logger.ts, src/platform/Security/edgeTrust.ts or tests/unit/edgeTrustTelemetryProductIntelligence.test.ts.",
     "Render cleanup must verify missing allowlisted services through exact-ID provider reads or return NOT_OBSERVABLE/BLOCKED; list omission alone is never proof of deletion.",
-    "Finance PR previews may only be disabled through the existing bounded Render Management workflow with exact service identity, exact confirmation and immediate after-readback."
+    "Finance PR previews may only be disabled after Human/CODEOWNER merge through the existing bounded Render Management workflow with exact service identity, exact confirmation and immediate after-readback."
   ],
   "exitEvidence": [
     "Fresh CURRENT_MAIN is an ancestor of the exact branch head.",
