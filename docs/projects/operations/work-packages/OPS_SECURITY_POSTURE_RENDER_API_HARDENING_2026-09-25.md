@@ -8,7 +8,7 @@ Project: `CAPITAL-AI-OPS`
 Primary PVC: `PVC-02`
 Supporting PVC: `PVC-07 / PVC-08 / PVC-18`
 Branch: `agent/operations-security-posture-deploy-api-hardening-20260926`
-Base: `main@1e8904dfec75a2ebb03bae8654133137708f1e3b`
+Base: `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac`
 
 ## Trigger
 
