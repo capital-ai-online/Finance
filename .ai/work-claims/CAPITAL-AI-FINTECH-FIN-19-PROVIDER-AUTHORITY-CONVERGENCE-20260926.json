@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-FIN-19-PROVIDER-AUTHORITY-CONVERGENCE-20260926",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..12 provider capability mapping, canonical provider metadata authority and feature/model requirement coverage.",
+  "workItem": "FIN-19 Provider Capability Mapping: converge legacy adaptive provider metadata onto ProviderMatrix and bind all AnalysisConnectionRegistry contracts to machine-checkable provider capability requirements without activating new providers or changing scoring semantics.",
+  "workItemDE": "FIN-19 Provider Capability Mapping: Legacy-Provider-Metadaten auf die kanonische ProviderMatrix konvergieren und alle AnalysisConnectionRegistry-Verträge maschinenprüfbar an Provider-Capabilities binden, ohne neue Provider zu aktivieren oder Scoring-Semantik zu ändern.",
+  "startedAt": "2026-09-26T10:18:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+  "branch": "agent/fintech-fin19-provider-authority-convergence-20260926",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/projects/fintech/ROADMAP.md FIN-19",
+    "docs/projects/fintech/WORK_PACKAGES.md FIN-19",
+    "src/platform/Scoring/AnalysisConnectionRegistry.ts",
+    "src/platform/MarketData/ProviderMatrix.ts"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-FIN-19-PROVIDER-AUTHORITY-CONVERGENCE-20260926.json",
+    "src/platform/MarketData/contracts.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/MarketData/AnalysisProviderCapabilityCoverage.ts",
+    "src/services/marketDataProviderRegistry.ts",
+    "tests/unit/providerMatrix.test.ts",
+    "tests/unit/marketDataProviderRegistry.test.ts",
+    "tests/unit/analysisProviderCapabilityCoverage.test.ts",
+    "docs/projects/fintech/PROVIDER_CAPABILITY_MATRIX.md"
+  ],
+  "protectedBoundaries": [
+    "No new provider activation, credential, secret, subscription, billing, Render, Supabase or external provider mutation.",
+    "No scoring formula, model promotion, ranking, entitlement or execution-authority change.",
+    "ProviderMatrix remains the single provider metadata authority; compatibility routing is a projection only.",
+    "Compatibility/evidence-only capability coverage must never be reported as canonical gateway coverage.",
+    "Candidate providers Finnhub and Massive remain disabled/not_wired.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "overlapReadback": {
+    "currentMain": "1e8904dfec75a2ebb03bae8654133137708f1e3b",
+    "openPullRequests": [
+      1460
+    ],
+    "directChangedFileOverlap": false,
+    "note": "PR #1460 changes Security edge-trust files only; historical DATA provider claims touching ProviderMatrix/legacy registry are released/non-exclusive."
+  },
+  "exitGate": "38/38 analysis contracts have deterministic provider-requirement coverage; ProviderMatrix compatibility projection tests pass; TypeScript/build/required checks pass on exact head; fresh CURRENT_MAIN/writer correlation remains clean; no provider is newly activated; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

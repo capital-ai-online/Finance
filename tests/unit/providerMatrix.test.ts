@@ -3,6 +3,8 @@ import {
   PROVIDER_MATRIX,
   PROVIDER_MATRIX_VERSION,
   getProviderMatrixEntry,
+  providerCapabilityGatewayStatus,
+  providerSupportsCapability,
   providersBehindGateway,
   providersLegacyOffGateway,
   rateLimitOverridesFromMatrix,
@@ -44,7 +46,7 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.10.0');
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.11.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
@@ -66,6 +68,24 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(providersBehindGateway().some((entry) => ['binance-public', 'kraken-futures-public'].includes(entry.id))).toBe(false);
   });
 
+  it('keeps capability asset scope and route state explicit instead of cross-product inference', () => {
+    const twelveData = getProviderMatrixEntry('twelvedata');
+    const eodhd = getProviderMatrixEntry('eodhd');
+    expect(twelveData).toBeDefined();
+    expect(eodhd).toBeDefined();
+
+    expect(providerSupportsCapability(twelveData!, 'quote', 'stock')).toBe(true);
+    expect(providerSupportsCapability(twelveData!, 'quote', 'commodity')).toBe(false);
+    expect(providerSupportsCapability(twelveData!, 'history', 'commodity')).toBe(true);
+    expect(providerCapabilityGatewayStatus(twelveData!, 'history', 'commodity')).toBe('history_gateway_only');
+    expect(providerCapabilityGatewayStatus(twelveData!, 'history', 'stock')).toBe('legacy_off_gateway');
+    expect(providerCapabilityGatewayStatus(twelveData!, 'quote', 'stock')).toBe('behind_gateway');
+
+    expect(providerSupportsCapability(eodhd!, 'snapshot', 'bond')).toBe(false);
+    expect(providerSupportsCapability(eodhd!, 'history', 'bond')).toBe(true);
+    expect(providerCapabilityGatewayStatus(eodhd!, 'history', 'bond')).toBe('legacy_off_gateway');
+  });
+
   it('exposes rate-limit overrides only for gateway-relevant providers', () => {
     const overrides = rateLimitOverridesFromMatrix();
     expect(overrides.twelvedata?.capacity).toBe(30);
@@ -74,6 +94,7 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(overrides.coingecko?.capacity).toBe(25);
     expect(overrides.coinapi?.capacity).toBe(20);
     expect(overrides.eodhd?.capacity).toBe(15);
+    expect(overrides['binance-spot-bars']?.capacity).toBe(24);
     expect(overrides.stooq).toBeUndefined();
     for (const id of ['defillama', 'binance-public', 'goplus', 'kraken-futures-public', 'dexscreener', 'sourcify', 'dune', 'gdelt']) {
       expect(overrides[id]).toBeUndefined();
@@ -111,6 +132,56 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot')?.diagnosticCode).toBe('rate_limited');
   });
 
+  it('inventories existing stock-fundamental and macro/rate evidence lanes without activating candidates', () => {
+    expect(getProviderMatrixEntry('alpha-vantage')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'not_wired',
+      assetClasses: ['stock'],
+    });
+    expect(getProviderMatrixEntry('alpha-vantage')?.capabilities).toEqual(
+      expect.arrayContaining(['fundamentals', 'history', 'quote']),
+    );
+
+    expect(getProviderMatrixEntry('fmp-traditional')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'not_wired',
+      assetClasses: ['stock'],
+      capabilities: ['fundamentals'],
+    });
+
+    expect(getProviderMatrixEntry('fred')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'not_wired',
+      assetClasses: ['macro', 'bond'],
+      capabilities: ['macro-series'],
+    });
+    expect(getProviderMatrixEntry('ecb')?.capabilities).toEqual(['macro-series']);
+
+    for (const id of ['finnhub', 'massive']) {
+      expect(getProviderMatrixEntry(id)).toMatchObject({
+        enabled: false,
+        gatewayStatus: 'not_wired',
+      });
+    }
+  });
+
+  it('records current compatibility history coverage for crypto/traditional/bond providers', () => {
+    expect(getProviderMatrixEntry('coingecko')?.capabilities).toContain('history');
+    expect(getProviderMatrixEntry('coinapi')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'orderbook']),
+    );
+    expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('index');
+    expect(getProviderMatrixEntry('eodhd')?.assetClasses).toEqual(
+      expect.arrayContaining(['crypto', 'stock', 'forex', 'bond']),
+    );
+    expect(getProviderMatrixEntry('binance-public')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'bars', 'orderbook']),
+    );
+    expect(getProviderMatrixEntry('kraken-futures-public')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'bars', 'orderbook']),
+    );
+  });
+
   it('registers DeFiLlama as not_wired evidence only', () => {
     const entry = getProviderMatrixEntry('defillama');
     expect(entry?.gatewayStatus).toBe('not_wired');
@@ -120,8 +191,8 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
 
   it('keeps all extended evidence suppliers outside MarketDataGateway authority', () => {
     const expected = {
-      'binance-public': ['snapshot', 'quote', 'bars', 'derivatives'],
-      'kraken-futures-public': ['derivatives', 'bars', 'quote'],
+      'binance-public': ['snapshot', 'quote', 'history', 'bars', 'derivatives', 'orderbook'],
+      'kraken-futures-public': ['derivatives', 'history', 'bars', 'quote', 'orderbook'],
       goplus: ['security', 'onchain'],
       dexscreener: ['snapshot', 'quote', 'onchain'],
       sourcify: ['security', 'onchain'],

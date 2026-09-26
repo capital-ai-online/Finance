@@ -12,7 +12,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.10.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.11.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -32,6 +32,12 @@ export interface ProviderCircuitBreakerPolicy {
   cooldownMs: number;
 }
 
+export interface ProviderCapabilityRoute {
+  capability: ProviderCapability;
+  assetClasses?: MarketDataAssetClass[];
+  gatewayStatus: ProviderGatewayStatus;
+}
+
 export interface ProviderMatrixEntry {
   id: string;
   displayName: string;
@@ -43,6 +49,8 @@ export interface ProviderMatrixEntry {
   rateLimit: ProviderRateLimitPolicy;
   circuitBreaker: ProviderCircuitBreakerPolicy;
   gatewayStatus: ProviderGatewayStatus;
+  capabilityAssetClasses?: Partial<Record<ProviderCapability, readonly MarketDataAssetClass[]>>;
+  capabilityRoutes?: readonly ProviderCapabilityRoute[];
   notes?: string;
 }
 
@@ -62,13 +70,22 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     displayName: 'TwelveData',
     role: 'primary',
     capabilities: ['snapshot', 'quote', 'history'],
-    assetClasses: ['stock', 'forex', 'crypto', 'commodity'],
+    assetClasses: ['stock', 'forex', 'crypto', 'commodity', 'index'],
     enabled: true,
     priority: 10,
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
-    notes: 'Traditional stock/forex/crypto quotes use MarketDataGateway. Commodity daily history is mapped through TwelveDataCommodityHistoryProvider -> MarketDataHistoryGateway and the shared governed research-evidence HTTP transport; no direct scoring-route HTTP access.',
+    capabilityAssetClasses: {
+      snapshot: ['stock', 'forex', 'crypto'],
+      quote: ['stock', 'forex', 'crypto'],
+      history: ['stock', 'forex', 'crypto', 'commodity', 'index'],
+    },
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['commodity'], gatewayStatus: 'history_gateway_only' },
+      { capability: 'history', assetClasses: ['stock', 'forex', 'crypto', 'index'], gatewayStatus: 'legacy_off_gateway' },
+    ],
+    notes: 'Traditional stock/forex/crypto quotes use MarketDataGateway. Commodity daily history is mapped through TwelveDataCommodityHistoryProvider -> MarketDataHistoryGateway. Stock/forex/index/crypto history also exists on the compatibility adapter and remains off the canonical history gateway until migrated; no direct scoring-route HTTP access is authorized by this matrix.',
   },
   {
     id: 'fmp-index',
@@ -87,14 +104,17 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     id: 'coingecko',
     displayName: 'CoinGecko',
     role: 'primary',
-    capabilities: ['snapshot', 'quote'],
+    capabilities: ['snapshot', 'quote', 'history'],
     assetClasses: ['crypto'],
     enabled: true,
     priority: 10,
     rateLimit: { capacity: 25, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
-    notes: 'SC-5 Phase A–C: coins/{id} market_data via CoinGeckoMarketDataProvider → CanonicalMarketDataSnapshot (price + optional marketCap/supply). cryptoQuoteEvidence + multi-field cryptoSnapshotProvider share matrix RL/CB. executionPriceEligible still false.',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+    ],
+    notes: 'SC-5 Phase A–C: coins/{id} market_data via CoinGeckoMarketDataProvider → CanonicalMarketDataSnapshot (price + optional marketCap/supply). cryptoQuoteEvidence + multi-field cryptoSnapshotProvider share matrix RL/CB. A separate compatibility history path still performs direct CoinGecko market_chart reads; that history capability is inventoried here but is not promoted to MarketDataHistoryGateway by metadata alone. executionPriceEligible still false.',
   },
   {
     id: 'alpaca',
@@ -126,40 +146,129 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     id: 'coinapi',
     displayName: 'CoinAPI',
     role: 'secondary',
-    capabilities: ['snapshot', 'quote'],
+    capabilities: ['snapshot', 'quote', 'history', 'orderbook'],
     assetClasses: ['crypto'],
     enabled: true,
     priority: 20,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
-    notes: 'SC-5 Phase D: CoinAPIMarketDataProvider registered (matrix RL/CB) for a future gateway-hardened crypto quorum. Still consumed directly by cryptoSpotConsensus; cryptoQuoteEvidence still pins allowedProviderIds to [coingecko]. executionPriceEligible unchanged.',
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+      { capability: 'orderbook', assetClasses: ['crypto'], gatewayStatus: 'legacy_off_gateway' },
+    ],
+    notes: 'SC-5 Phase D: CoinAPIMarketDataProvider registered (matrix RL/CB) for a future gateway-hardened crypto quorum. Compatibility history and historical order-book metadata remain direct/off-gateway; cryptoSpotConsensus also consumes CoinAPI directly. cryptoQuoteEvidence still pins allowedProviderIds to [coingecko]. executionPriceEligible unchanged.',
   },
   {
     id: 'eodhd',
     displayName: 'EODHD',
     role: 'secondary',
     capabilities: ['snapshot', 'history'],
-    assetClasses: ['crypto'],
+    assetClasses: ['crypto', 'stock', 'forex', 'bond'],
     enabled: true,
     priority: 40,
     rateLimit: { capacity: 15, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
-    notes: 'SC-5 Phase D: EODHDMarketDataProvider registered (matrix RL/CB), snapshot labelled HISTORICAL (EOD close, never LIVE/DELAYED) so it cannot masquerade as a current execution price.',
+    capabilityAssetClasses: {
+      snapshot: ['crypto'],
+      history: ['crypto', 'stock', 'forex', 'bond'],
+    },
+    capabilityRoutes: [
+      { capability: 'history', assetClasses: ['crypto', 'stock', 'forex', 'bond'], gatewayStatus: 'legacy_off_gateway' },
+    ],
+    notes: 'SC-5 Phase D: EODHDMarketDataProvider registers crypto snapshots behind MarketDataGateway. Direct compatibility history adapters also serve crypto/stock/forex plus explicit *.GBOND sovereign-yield evidence. Those direct history lanes remain off the canonical history gateway and EOD observations must never masquerade as current execution prices.',
   },
   {
     id: 'stooq',
     displayName: 'Stooq',
     role: 'secondary',
     capabilities: ['snapshot', 'history'],
-    assetClasses: ['stock', 'index'],
+    assetClasses: ['stock', 'forex', 'index'],
     enabled: false,
     priority: 50,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'not_wired',
     notes: 'Productive direct Stooq network access is retired. Future use requires an explicit canonical MarketDataGateway adapter and governed re-authorization.',
+  },
+  {
+    id: 'alpha-vantage',
+    displayName: 'Alpha Vantage',
+    role: 'primary',
+    capabilities: ['fundamentals', 'history', 'quote'],
+    assetClasses: ['stock'],
+    enabled: true,
+    priority: 20,
+    rateLimit: { capacity: 3, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Existing server-side stock fundamentals/evidence adapter; OVERVIEW fundamentals are primary in stockFundamentals and ALPHA_VANTAGE_API_KEY remains the sole credential identity. Matrix presence records the evidence lane but does not grant MarketDataGateway authority.',
+  },
+  {
+    id: 'fmp-traditional',
+    displayName: 'FMP Traditional Fundamentals',
+    role: 'secondary',
+    capabilities: ['fundamentals'],
+    assetClasses: ['stock'],
+    enabled: true,
+    priority: 20,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Existing FMP ratios-ttm fallback/enrichment for stock fundamentals. This is an evidence adapter outside MarketDataGateway; index quote/history lanes remain represented separately by fmp-index and fmp-index-history.',
+  },
+  {
+    id: 'finnhub',
+    displayName: 'Finnhub',
+    role: 'secondary',
+    capabilities: ['snapshot', 'quote', 'history', 'fundamentals'],
+    assetClasses: ['stock', 'forex', 'index', 'crypto'],
+    enabled: false,
+    priority: 40,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Candidate only. Adapter and licensing approval are required before activation; matrix presence is inventory, not authorization.',
+  },
+  {
+    id: 'massive',
+    displayName: 'Massive',
+    role: 'secondary',
+    capabilities: ['snapshot', 'quote', 'history'],
+    assetClasses: ['stock', 'forex', 'index', 'crypto'],
+    enabled: false,
+    priority: 40,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Candidate only. Adapter, exchange entitlements and redistribution licensing remain prerequisites before activation.',
+  },
+  {
+    id: 'fred',
+    displayName: 'FRED',
+    role: 'primary',
+    capabilities: ['macro-series'],
+    assetClasses: ['macro', 'bond'],
+    enabled: true,
+    priority: 10,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Existing allow-listed macro/rate evidence adapter outside MarketDataGateway. FRED observations are context/rate evidence only and never execution-price eligible.',
+  },
+  {
+    id: 'ecb',
+    displayName: 'ECB Data API',
+    role: 'secondary',
+    capabilities: ['macro-series'],
+    assetClasses: ['macro', 'forex', 'bond'],
+    enabled: true,
+    priority: 10,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Existing keyless ECB reference-rate evidence adapter outside MarketDataGateway. Reference FX/rate observations are informational and never execution-price eligible.',
   },
   {
     id: 'defillama',
@@ -240,10 +349,23 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     notes: 'Governed EUR-Lex/JRC-derived criticality evidence. Economic Importance and Supply Risk remain separate context dimensions and are never silently added to benchmark market score.',
   },
   {
+    id: 'binance-spot-bars',
+    displayName: 'Binance Spot Bars',
+    role: 'primary',
+    capabilities: ['history', 'bars'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 10,
+    rateLimit: { capacity: 24, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'history_gateway_only',
+    notes: 'Canonical crypto bars/history provider used by MarketDataHistoryGateway for /api/market-data/history/:symbol. Venue-specific provenance remains explicit; no consolidated execution-price authority.',
+  },
+  {
     id: 'binance-public',
     displayName: 'Binance Public Market Analytics',
     role: 'primary',
-    capabilities: ['snapshot', 'quote', 'bars', 'derivatives'],
+    capabilities: ['snapshot', 'quote', 'history', 'bars', 'derivatives', 'orderbook'],
     assetClasses: ['crypto'],
     enabled: true,
     priority: 40,
@@ -256,7 +378,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     id: 'kraken-futures-public',
     displayName: 'Kraken Futures Public Analytics',
     role: 'primary',
-    capabilities: ['derivatives', 'bars', 'quote'],
+    capabilities: ['derivatives', 'history', 'bars', 'quote', 'orderbook'],
     assetClasses: ['crypto'],
     enabled: true,
     priority: 45,
@@ -345,8 +467,176 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
   },
 ] as const;
 
+
+export type ProviderCompatibilityActivation = 'active' | 'candidate' | 'reference-only';
+
+export interface ProviderCompatibilityBinding {
+  readonly legacyId: string;
+  readonly matrixEntryIds: readonly string[];
+  readonly basePriority: number;
+  readonly activation: ProviderCompatibilityActivation;
+  readonly environmentVariable?: string;
+  readonly requiresApiKey?: boolean;
+  readonly purpose: string;
+  readonly governanceNotes: string;
+}
+
+/**
+ * Compatibility projection for the older adaptive provider router.
+ *
+ * All market-data capabilities, asset classes and enabled state are materialized from
+ * PROVIDER_MATRIX. These bindings retain only legacy identity/credential/purpose metadata
+ * needed by existing callers while those callers migrate to the canonical gateways.
+ */
+export const LEGACY_PROVIDER_COMPATIBILITY_BINDINGS: readonly ProviderCompatibilityBinding[] = Object.freeze([
+  {
+    legacyId: 'CoinGecko',
+    matrixEntryIds: ['coingecko'],
+    basePriority: 1,
+    activation: 'active',
+    purpose: 'Crypto history and market snapshot',
+    governanceNotes: 'Compatibility history remains direct; canonical quote/snapshot paths stay behind MarketDataGateway.',
+  },
+  {
+    legacyId: 'Binance',
+    matrixEntryIds: ['binance-public'],
+    basePriority: 2,
+    activation: 'active',
+    purpose: 'Crypto venue history and market-structure evidence',
+    governanceNotes: 'Venue-specific evidence must retain Binance identity and must not be represented as consolidated market truth.',
+  },
+  {
+    legacyId: 'Kraken',
+    matrixEntryIds: ['kraken-futures-public'],
+    basePriority: 3,
+    activation: 'active',
+    purpose: 'Crypto venue history and market-structure evidence',
+    governanceNotes: 'Venue-specific provenance is mandatory; compatibility history does not promote Kraken into canonical consolidated-price authority.',
+  },
+  {
+    legacyId: 'CoinAPI',
+    matrixEntryIds: ['coinapi'],
+    basePriority: 2,
+    activation: 'active',
+    environmentVariable: 'COIN_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Normalized multi-exchange crypto redundancy',
+    governanceNotes: 'Server-side keyed compatibility history/consensus paths remain bounded by provenance and licensing/redistribution terms.',
+  },
+  {
+    legacyId: 'TwelveData',
+    matrixEntryIds: ['twelvedata'],
+    basePriority: 3,
+    activation: 'active',
+    environmentVariable: 'TWELVEDATA_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Global multi-asset quote/history redundancy',
+    governanceNotes: 'Canonical quote and commodity-history gateways coexist with compatibility history paths; null/rate-limit responses remain fail-closed.',
+  },
+  {
+    legacyId: 'EODHD',
+    matrixEntryIds: ['eodhd'],
+    basePriority: 4,
+    activation: 'active',
+    environmentVariable: 'EODHD_API_KEY',
+    requiresApiKey: true,
+    purpose: 'EOD/historical multi-asset redundancy and explicit government-bond evidence',
+    governanceNotes: 'Sovereign mappings remain explicit and EOD observations never become current execution prices.',
+  },
+  {
+    legacyId: 'Stooq',
+    matrixEntryIds: ['stooq'],
+    basePriority: 2,
+    activation: 'reference-only',
+    purpose: 'Retired legacy traditional-market reference source',
+    governanceNotes: 'Productive direct network access remains disabled; reintroduction requires explicit canonical adapter authorization.',
+  },
+  {
+    legacyId: 'AlphaVantage',
+    matrixEntryIds: ['alpha-vantage'],
+    basePriority: 2,
+    activation: 'active',
+    environmentVariable: 'ALPHA_VANTAGE_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Stock fundamentals and compatibility market data',
+    governanceNotes: 'Existing keyed provider; provenance, rate-limit and freshness metadata remain mandatory.',
+  },
+  {
+    legacyId: 'FMP',
+    matrixEntryIds: ['fmp-index', 'fmp-index-history', 'fmp-traditional'],
+    basePriority: 2,
+    activation: 'active',
+    environmentVariable: 'FMP_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Approved index mappings plus stock-fundamentals fallback',
+    governanceNotes: 'Index and stock-fundamental lanes remain semantically separate; customer-facing redistribution remains licensing-dependent.',
+  },
+  {
+    legacyId: 'Finnhub',
+    matrixEntryIds: ['finnhub'],
+    basePriority: 4,
+    activation: 'candidate',
+    environmentVariable: 'FINNHUB_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Candidate global market/fundamental redundancy',
+    governanceNotes: 'Disabled until adapter and licensing gates are satisfied.',
+  },
+  {
+    legacyId: 'Massive',
+    matrixEntryIds: ['massive'],
+    basePriority: 4,
+    activation: 'candidate',
+    environmentVariable: 'MASSIVE_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Candidate low-latency market-data redundancy',
+    governanceNotes: 'Disabled until adapter, exchange-entitlement and redistribution gates are satisfied.',
+  },
+  {
+    legacyId: 'FRED',
+    matrixEntryIds: ['fred'],
+    basePriority: 1,
+    activation: 'active',
+    environmentVariable: 'FRED_API_KEY',
+    requiresApiKey: true,
+    purpose: 'Macroeconomic and interest-rate evidence',
+    governanceNotes: 'Allow-listed series only; fail closed without FRED_API_KEY and never treat macro observations as execution prices.',
+  },
+  {
+    legacyId: 'ECB',
+    matrixEntryIds: ['ecb'],
+    basePriority: 1,
+    activation: 'reference-only',
+    purpose: 'Official EUR reference FX and euro-area reference evidence',
+    governanceNotes: 'Keyless reference evidence only; never execution-price eligible.',
+  },
+]);
+
 export function getProviderMatrixEntry(id: string): ProviderMatrixEntry | undefined {
   return PROVIDER_MATRIX.find((entry) => entry.id === id);
+}
+
+export function providerSupportsCapability(
+  entry: ProviderMatrixEntry,
+  capability: ProviderCapability,
+  assetClass: MarketDataAssetClass,
+): boolean {
+  if (!entry.capabilities.includes(capability)) return false;
+  const scopedAssetClasses = entry.capabilityAssetClasses?.[capability];
+  return scopedAssetClasses
+    ? scopedAssetClasses.includes(assetClass)
+    : entry.assetClasses.includes(assetClass);
+}
+
+export function providerCapabilityGatewayStatus(
+  entry: ProviderMatrixEntry,
+  capability: ProviderCapability,
+  assetClass: MarketDataAssetClass,
+): ProviderGatewayStatus {
+  const override = entry.capabilityRoutes?.find(route =>
+    route.capability === capability
+    && (!route.assetClasses || route.assetClasses.includes(assetClass)),
+  );
+  return override?.gatewayStatus ?? entry.gatewayStatus;
 }
 
 export function rateLimitOverridesFromMatrix(): Record<string, ProviderRateLimitPolicy> {
