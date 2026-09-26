@@ -53,7 +53,7 @@ describe('GitHub enterprise settings read client', () => {
           return jsonResponse([{ id: 1, target_type: 'global', enforcement: 'enforced' }]);
         }
         if (parsed.pathname === `/enterprises/${ENTERPRISE}/actions/runner-groups`) {
-          return jsonResponse({ total_count: 1, groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
+          return jsonResponse({ total_count: 1, runner_groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
         }
         if (parsed.pathname === `/enterprises/${ENTERPRISE}/actions/runners`) {
           return jsonResponse({ total_count: 1, runners: [{ id: 1, name: 'runner', status: 'online', busy: false }] });
@@ -62,10 +62,15 @@ describe('GitHub enterprise settings read client', () => {
       }) as typeof fetch,
     });
 
+    const results: Record<string, unknown> = {};
     for (const capability of Object.keys(GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES)) {
-      await client.read(capability);
+      results[capability] = await client.read(capability);
     }
 
+    expect(results['enterprise.actions.runner_groups.list']).toMatchObject({
+      total_count: 1,
+      items: [{ id: 1, name: 'default', visibility: 'selected' }],
+    });
     expect(calls).toHaveLength(Object.keys(GITHUB_ENTERPRISE_SETTINGS_READ_CAPABILITIES).length);
     expect(calls.every((call) => call.method === 'GET')).toBe(true);
     expect(calls.every((call) => call.authorization === `Bearer ${TOKEN}`)).toBe(true);
