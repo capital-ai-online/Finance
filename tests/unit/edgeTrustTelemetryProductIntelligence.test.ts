@@ -8,6 +8,7 @@ import {
   createProductIntelligenceEvent,
   parseTraceParent,
   PRODUCT_INTELLIGENCE_SCHEMA_VERSION,
+  redactTelemetryAttributes,
 } from '../../src/platform/Telemetry';
 
 const EDGE_SECRET = '0123456789abcdef0123456789abcdef';
@@ -39,9 +40,41 @@ describe('Cloudflare -> Render edge trust', () => {
       reason: 'trusted',
       clientIp: '203.0.113.7',
       edgeRayId: '230b030023ae2822-FRA',
+      evidence: {
+        renderRuntime: true,
+        proofConfigured: true,
+        canonicalHost: true,
+        forwardedProtoHttps: true,
+        proofPresented: true,
+        proofMatched: true,
+        clientIpPresent: true,
+        clientIpValid: true,
+        rayIdPresent: true,
+        rayIdValid: true,
+      },
     });
     expect(getClientIp(renderRequest(), { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('203.0.113.7');
+  });
+
+  it('fails closed instead of throwing when an internal request has no headers bag', () => {
+    const edge = resolveCloudflareRenderEdgeTrust({} as any, {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
+    });
+
+    expect(edge.state).toBe('untrusted');
+    expect(edge.reason).toBe('invalid-host');
+    expect(edge.evidence).toMatchObject({
+      proofConfigured: true,
+      canonicalHost: false,
+      forwardedProtoHttps: false,
+      proofPresented: false,
+      clientIpPresent: false,
+      clientIpValid: false,
+      rayIdPresent: false,
+      rayIdValid: false,
+    });
   });
 
   it('denies direct onrender-origin spoofing even when Cloudflare-looking headers are supplied', () => {
@@ -53,23 +86,74 @@ describe('Cloudflare -> Render edge trust', () => {
 
     expect(edge.state).toBe('untrusted');
     expect(edge.reason).toBe('invalid-host');
+    expect(edge.evidence).toMatchObject({ canonicalHost: false, proofMatched: true });
     expect(getClientIp(request, { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('10.0.0.7');
   });
 
   it('fails closed when the edge secret is missing or mismatched', () => {
-    expect(resolveCloudflareRenderEdgeTrust(renderRequest(), {
+    const missingSecret = resolveCloudflareRenderEdgeTrust(renderRequest(), {
       isRender: true,
       sharedSecret: undefined,
-    }).reason).toBe('missing-shared-secret');
+    });
+    expect(missingSecret.reason).toBe('missing-shared-secret');
+    expect(missingSecret.evidence).toMatchObject({
+      proofConfigured: false,
+      canonicalHost: true,
+      forwardedProtoHttps: true,
+      proofPresented: true,
+      proofMatched: null,
+      clientIpValid: true,
+      rayIdValid: true,
+    });
 
     const request = renderRequest({ [EDGE_TRUST_HEADER]: 'attacker-controlled-token-value!!' });
-    expect(resolveCloudflareRenderEdgeTrust(request, {
+    const mismatched = resolveCloudflareRenderEdgeTrust(request, {
       isRender: true,
       sharedSecret: EDGE_SECRET,
-    }).reason).toBe('edge-token-mismatch');
+    });
+    expect(mismatched.reason).toBe('edge-token-mismatch');
+    expect(mismatched.evidence.proofMatched).toBe(false);
     expect(getClientIp(request, { isRender: true, sharedSecret: EDGE_SECRET }))
       .toBe('10.0.0.7');
+  });
+
+  it('keeps fail-closed evidence useful when the edge token is absent', () => {
+    const edge = resolveCloudflareRenderEdgeTrust(renderRequest({
+      [EDGE_TRUST_HEADER]: undefined,
+    }), { isRender: true, sharedSecret: EDGE_SECRET });
+
+    expect(edge.reason).toBe('missing-edge-token');
+    expect(edge.evidence).toMatchObject({
+      renderRuntime: true,
+      proofConfigured: true,
+      canonicalHost: true,
+      forwardedProtoHttps: true,
+      proofPresented: false,
+      proofMatched: null,
+      clientIpPresent: true,
+      clientIpValid: true,
+      rayIdPresent: true,
+      rayIdValid: true,
+    });
+  });
+
+  it('keeps edge trust evidence observable through telemetry redaction', () => {
+    const edge = resolveCloudflareRenderEdgeTrust(renderRequest(), {
+      isRender: true,
+      sharedSecret: EDGE_SECRET,
+    });
+
+    const redacted = redactTelemetryAttributes({ edgeTrustEvidence: edge.evidence });
+    expect(redacted?.edgeTrustEvidence).toMatchObject({
+      proofConfigured: true,
+      proofPresented: true,
+      proofMatched: true,
+      clientIpValid: true,
+      rayIdValid: true,
+    });
+    expect(Object.keys(edge.evidence).some((key) => /secret|token/i.test(key))).toBe(false);
+    expect(JSON.stringify(redacted)).not.toContain(EDGE_SECRET);
   });
 
   it('rejects malformed Cloudflare identity metadata', () => {
