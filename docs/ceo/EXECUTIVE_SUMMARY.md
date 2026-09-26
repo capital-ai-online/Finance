@@ -1,6 +1,6 @@
 # 👔 Executive Summary & Strategic Vision (CEO Perspective)
 **Project: CAPITAL-AI**  
-**Version:** 0.6.4 (Beta-Phase)
+**Version:** 0.6.5 (Beta-Phase)
 **Classification:** Confidential / Board Approved  
 
 ---
@@ -20,22 +20,22 @@ CAPITAL-AI is the underlying neural core of the platform, engineered to democrat
 The enterprise software stack is designed for extreme scalability, data integrity, and low-latency execution:
 
 ```
-┌────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────┐
 │                      React 19 SPA                      │
 │        (Vite 6, Tailwind CSS 4, ShadCN, Recharts)      │
 └──────────────────────────┬─────────────────────────────┘
                            │ HTTPS / WebSockets
                            ▼
-┌────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────┐
 │                     Express REST API                   │
 │         (Node.js, Supabase Integration, Redis)         │
-└──────────────┬───────────────────────────┬─────────────┘
+└─────────────┬───────────────────────────┬─────────────┘
                │                           │
                ▼                           ▼
-┌─────────────────────────────┐ ┌────────────────────────┐
+┌────────────────────────────┐ ┌────────────────────────┐
 │     Supabase / Postgres     │ │   Intelligent Router   │
-│ (Row-Level Security, JWT)   │ │  (Gemini, Claude, GPT) │
-└─────────────────────────────┘ └────────────────────────┘
+│ (Row-Level Security, JWT) │ │  (Gemini, Claude, GPT) │
+└────────────────────────────┘ └────────────────────────┘
 ```
 
 ### Core Technology Stack:
