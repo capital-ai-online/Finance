@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@12f002fff4af85071a224a49a30e3bce90831c3c`
+**Baseline:** `main@36fd8502178f42fd3b20562f4f60290fcbb2d11f`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-24 — fresh CURRENT_MAIN correlation includes the exact-CURRENT_MAIN live Roadmap projection and Owner-directed SH-02.13 planning for evidence-bound post-merge work-package closure; held SH-2/SH-3 actions remain unchanged.
+**Reconciliation:** 2026-09-26 — CURRENT_MAIN `36fd8502178f42fd3b20562f4f60290fcbb2d11f`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466 OPS closure drift is smoothed, #1465 remains an owner-correct GOV handoff, and open #1467 is file-disjoint.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -120,7 +120,7 @@ Any later SH-02.12 execution capability still requires fresh CURRENT_MAIN + cano
 
 ### SH-02.13 — Post-Merge Roadmap Closure Correlation
 
-**State:** `PLANNED / OWNER-DIRECTED / IMPLEMENTATION_NOT_STARTED`  
+**State:** `IMPLEMENTATION_ON_BRANCH / CURRENT_MAIN_CORRELATED / HUMAN_MERGE_REQUIRED`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-18`  
 **Source package:** `work-packages/OPS_SH02_POST_MERGE_ROADMAP_CLOSURE_2026-09-24.md`
 
@@ -136,6 +136,16 @@ direct-main mutation path is introduced.
 **Exit:** deterministic tests cover full/partial/ambiguous/foreign/evidence-gated
 closure, idempotent replay and recursion prevention; persistent reconciliation
 reuses the canonical repository-projection lane and remains Human-merge gated.
+
+
+**Current implementation materialization:** pure contract `src/platform/Supervisor/postMergeRoadmapClosure.ts` plus the existing post-merge continuation workflow. The workflow remains read-only for repository contents and may write only non-authorizing drift/handoff Issues. It never checks out candidate code, writes `main`, approves or merges.
+
+**Bootstrap reconciliation:**
+- PR #1463 / OPS Security Posture: repository implementation merged; `MERGED_MAIN / EVIDENCE_GATE` because provider readback exits remain open.
+- PR #1466 / OPS Auth Session: exact-head required evidence PASS + Human merge; `DONE_MAIN / TERMINAL`.
+- PR #1465 / GOV Release Authority: merged evidence observed; package/claim closure is foreign-owner and remains `OWNER_CORRECT_HANDOFF`.
+- PR #1467 / OPS Supabase Ledger: currently open independent writer; no closure is derived before merge.
+
 
 ### OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01 — Supabase Auth control recovery
 
