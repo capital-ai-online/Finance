@@ -1,7 +1,7 @@
 # CAPITAL-AI-FINTECH — Provider Capability Matrix
 
-**Baseline:** `main@6ace37bffa7912ec4f224feb69dd62ff9c629192`  
-**Canonical provider source:** `src/platform/MarketData/ProviderMatrix.ts` (`provider-matrix/1.10.0`)  
+**Baseline:** `main@1e8904dfec75a2ebb03bae8654133137708f1e3b`  
+**Canonical provider source:** `src/platform/MarketData/ProviderMatrix.ts` (`provider-matrix/1.11.0`)  
 **Role:** FINTECH capability-requirement projection only; not a second provider registry or DATA authority.
 
 Static `enabled=true`, provider registration or a declared capability is not proof of credentials, entitlement, subscription, freshness, semantic fallback equivalence or runtime health. FINTECH consumes provider capability evidence only through the ownership boundaries below.
@@ -10,22 +10,28 @@ Static `enabled=true`, provider registration or a declared capability is not pro
 
 | Provider | Role | Asset classes | Declared capabilities | Current integration state |
 |---|---|---|---|---|
-| TwelveData | primary | stock, forex, crypto, commodity | snapshot, quote, history | `behind_gateway` |
+| TwelveData | primary | stock, forex, crypto, commodity, index | snapshot, quote, history | canonical quote + commodity-history gateway; traditional/crypto history compatibility lane remains off-gateway |
 | FMP Index | primary | index | snapshot, quote | `behind_gateway` |
-| CoinGecko | primary | crypto | snapshot, quote | `behind_gateway` |
+| CoinGecko | primary | crypto | snapshot, quote, history | `behind_gateway` for canonical snapshot/quote; direct compatibility history remains separately bounded |
 | Alpaca | shadow | stock | snapshot, trade | `shadow_only` |
 | FMP Index History | primary | index | history | `history_gateway_only` |
-| CoinAPI | secondary | crypto | snapshot, quote | `behind_gateway`; direct crypto-consensus use still noted in canonical source |
-| EODHD | secondary | crypto | snapshot, history | `behind_gateway`; snapshot is historical/EOD semantics |
-| Stooq | secondary | stock, index | snapshot, history | `not_wired`, `enabled=false`; productive direct network access retired |
+| CoinAPI | secondary | crypto | snapshot, quote, history, orderbook | `behind_gateway` for canonical snapshot/quote; compatibility history/consensus remain direct |
+| EODHD | secondary | crypto, stock, forex, bond | snapshot, history | crypto snapshot behind gateway; compatibility history and explicit GBOND evidence remain direct/off-gateway |
+| Stooq | secondary | stock, forex, index | snapshot, history | `not_wired`, `enabled=false`; productive direct network access retired |
+| Alpha Vantage | primary | stock | fundamentals, history, quote | `legacy_off_gateway`; existing keyed stock fundamentals/history/quote compatibility lane |
+| FMP Traditional Fundamentals | secondary | stock | fundamentals | `legacy_off_gateway`; ratios-ttm stock-fundamental fallback/enrichment |
+| Finnhub | secondary | stock, forex, index, crypto | snapshot, quote, history, fundamentals | `not_wired`, `enabled=false`; candidate only |
+| Massive | secondary | stock, forex, index, crypto | snapshot, quote, history | `not_wired`, `enabled=false`; candidate only |
+| FRED | primary | macro, bond | macro-series | `legacy_off_gateway`; allow-listed macro/rate evidence, never execution-price eligible |
+| ECB Data API | secondary | macro, forex, bond | macro-series | `legacy_off_gateway`; reference evidence only |
 | DeFiLlama | secondary | crypto | fundamentals | `not_wired` / evidence-only |
 | EIA | primary | commodity | fundamentals | `not_wired` / governed research evidence |
 | USDA FAS PSD | primary | commodity | fundamentals | `not_wired` / governed research evidence |
 | CFTC COT | secondary | commodity | derivatives | `not_wired` / context/challenger evidence |
 | USGS MCS | primary | commodity | fundamentals | `not_wired` / governed research evidence |
 | EU CRMA | secondary | commodity | fundamentals | `not_wired` / context evidence |
-| Binance Public | primary | crypto | snapshot, quote, bars, derivatives | `not_wired` / keyless research evidence |
-| Kraken Futures Public | primary | crypto | quote, bars, derivatives | `not_wired` / keyless research evidence |
+| Binance Public | primary | crypto | snapshot, quote, history, bars, derivatives, orderbook | `not_wired` analytics/evidence; compatibility history is recorded but not promoted to consolidated-price authority |
+| Kraken Futures Public | primary | crypto | quote, history, bars, derivatives, orderbook | `not_wired` analytics/evidence; compatibility history preserves venue provenance |
 | GoPlus | secondary | crypto | security, on-chain | `not_wired` / evidence-only |
 | DEX Screener | secondary | crypto | snapshot, quote, on-chain | `not_wired` / evidence-only |
 | Sourcify | secondary | crypto | security, on-chain | `not_wired` / verification evidence only |
@@ -33,15 +39,17 @@ Static `enabled=true`, provider registration or a declared capability is not pro
 | GDELT | secondary | crypto, stock, forex, commodity, index, bond, macro | news | `not_wired` / discovery-provenance lane |
 | Dune | secondary | crypto | on-chain, governance | `not_wired` / governed read-results evidence |
 
-Provider count: **22**.
+Matrix integration-lane count: **28**. Provider-family count is lower because FMP keeps separate index quote/history and stock-fundamental lanes.
 
 ## Changes from the previous FINTECH projection
 
-1. Canonical provider version is now `provider-matrix/1.10.0`, not `1.9.1`.
-2. Stooq is explicitly `enabled=false` and `gatewayStatus='not_wired'`; productive direct Stooq network access is retired. The old FINTECH label `legacy_off_gateway` is stale and must not be used as current-state evidence.
-3. TwelveData commodity daily history is documented by the canonical source as routed through `TwelveDataCommodityHistoryProvider -> MarketDataHistoryGateway` and the shared governed research-evidence HTTP transport.
-4. CoinAPI remains registered behind the gateway but the canonical source still records direct `cryptoSpotConsensus` consumption. FINTECH treats this as a boundary observation requiring DATA/gateway assessment, not as permission to normalize a direct provider path.
-5. EODHD crypto snapshots are historical/EOD semantics and must never masquerade as live execution-price evidence.
+1. Canonical provider version is now `provider-matrix/1.11.0`.
+2. Existing runtime provider families that previously existed only in `src/services/marketDataProviderRegistry.ts` are now represented in the canonical matrix: Alpha Vantage, FMP stock fundamentals, FRED and ECB. Finnhub and Massive remain disabled candidates.
+3. The older adaptive provider registry is now a **compatibility projection derived from ProviderMatrix**. Asset classes, capabilities and enabled state are no longer independently authored there.
+4. Existing direct compatibility history lanes for CoinGecko, Binance, Kraken, CoinAPI, TwelveData and EODHD are inventoried without promoting them to canonical gateway authority.
+5. EODHD explicitly covers existing stock/forex history and `*.GBOND` sovereign-yield evidence; those observations remain historical/evidence semantics.
+6. Stooq remains `enabled=false` and productive direct access remains retired.
+7. Static registration or matrix presence remains non-authorizing: credentials, licensing, runtime health, freshness, DQ and semantic fallback equivalence must still be proven independently.
 
 ## Asset-class capability projection
 
@@ -52,13 +60,15 @@ Provider count: **22**.
 | crypto | fundamentals | DeFiLlama | EVIDENCE ONLY |
 | crypto | security / on-chain | GoPlus, Sourcify, DEX Screener, Dune | EVIDENCE / RESEARCH |
 | crypto | news | Free Crypto News, GDELT | RESEARCH / PROVENANCE REQUIRED |
-| stock | snapshot / quote | TwelveData; Alpaca shadow; Stooq disabled/not wired | SUPPORTED / SHADOW BOUNDARY |
-| forex | snapshot / quote | TwelveData | SUPPORTED |
+| stock | snapshot / quote | TwelveData; Alpaca shadow; Alpha Vantage compatibility; Stooq disabled/not wired | SUPPORTED / SHADOW + COMPATIBILITY BOUNDARY |
+| stock | fundamentals | Alpha Vantage primary OVERVIEW; FMP ratios-ttm bounded fallback | SUPPORTED / LEGACY_OFF_GATEWAY; provenance and freshness required |
+| forex | snapshot / quote | TwelveData; ECB reference evidence is separate/non-execution | SUPPORTED |
 | index | snapshot / quote | FMP Index; Stooq disabled/not wired | SUPPORTED |
 | index | history | FMP Index History; Stooq disabled/not wired | PARTIAL |
 | commodity | quote / history | TwelveData; commodity history through governed history gateway | PARTIAL / CAPABILITY PRESENT |
 | commodity | fundamentals | EIA, USDA FAS PSD, USGS MCS, EU CRMA | PARTIAL / EVIDENCE LANE |
 | commodity | derivatives | CFTC COT | CONTEXT / CHALLENGER EVIDENCE |
+| macro / bond | macro-series / rate evidence | FRED allow-list; ECB reference series | SUPPORTED EVIDENCE / NON-EXECUTION |
 | bond | news / context | GDELT | PARTIAL |
 | bond | scoring input | bounded sovereign-benchmark-yield scoring exists; ProviderMatrix alone does not prove a quote source | PARTIAL / CONTRACT-BOUND |
 
@@ -86,7 +96,7 @@ FINTECH owns the mapping:
 
 ## Correlated open work
 
-1. `FIN-19` must bind model/feature requirements to canonical DATA capability contracts rather than direct provider calls.
-2. Direct provider-consensus or adapter paths discovered in productive FINTECH execution must be assessed for DATA/gateway bypass and routed to the owning project before remediation if ownership is foreign.
+1. `FIN-19` now converges provider metadata authority on `ProviderMatrix`; the remaining step is to bind each AnalysisConnectionRegistry contract to machine-checkable capability requirements derived from this matrix.
+2. Direct provider-consensus or compatibility adapter paths discovered in productive FINTECH execution remain migration targets inside `CAPITAL-AI-FINTECH / PVC-09..11`; they do not authorize a second provider/DQ plane.
 3. Runtime health/entitlement remains unverified until exact provider/runtime evidence is captured.
 4. This project matrix must be refreshed whenever `PROVIDER_MATRIX_VERSION` or material gateway/enabled semantics change.
