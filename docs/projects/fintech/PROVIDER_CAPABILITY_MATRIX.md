@@ -18,12 +18,12 @@ Static `enabled=true`, provider registration or a declared capability is not pro
 | CoinAPI | secondary | crypto | snapshot, quote, history, orderbook | `behind_gateway` for canonical snapshot/quote; compatibility history/consensus remain direct |
 | EODHD | secondary | crypto, stock, forex, bond | snapshot, history | crypto snapshot behind gateway; compatibility history and explicit GBOND evidence remain direct/off-gateway |
 | Stooq | secondary | stock, forex, index | snapshot, history | `not_wired`, `enabled=false`; productive direct network access retired |
-| Alpha Vantage | primary | stock | fundamentals, history, quote | `legacy_off_gateway`; existing keyed stock fundamentals/history/quote compatibility lane |
-| FMP Traditional Fundamentals | secondary | stock | fundamentals | `legacy_off_gateway`; ratios-ttm stock-fundamental fallback/enrichment |
+| Alpha Vantage | primary | stock | fundamentals, history, quote | `not_wired`; existing stock fundamentals/evidence adapter, no MarketDataGateway authority |
+| FMP Traditional Fundamentals | secondary | stock | fundamentals | `not_wired`; ratios-ttm stock-fundamental evidence fallback/enrichment |
 | Finnhub | secondary | stock, forex, index, crypto | snapshot, quote, history, fundamentals | `not_wired`, `enabled=false`; candidate only |
 | Massive | secondary | stock, forex, index, crypto | snapshot, quote, history | `not_wired`, `enabled=false`; candidate only |
-| FRED | primary | macro, bond | macro-series | `legacy_off_gateway`; allow-listed macro/rate evidence, never execution-price eligible |
-| ECB Data API | secondary | macro, forex, bond | macro-series | `legacy_off_gateway`; reference evidence only |
+| FRED | primary | macro, bond | macro-series | `not_wired`; allow-listed macro/rate evidence, never execution-price eligible |
+| ECB Data API | secondary | macro, forex, bond | macro-series | `not_wired`; reference evidence only |
 | DeFiLlama | secondary | crypto | fundamentals | `not_wired` / evidence-only |
 | EIA | primary | commodity | fundamentals | `not_wired` / governed research evidence |
 | USDA FAS PSD | primary | commodity | fundamentals | `not_wired` / governed research evidence |
