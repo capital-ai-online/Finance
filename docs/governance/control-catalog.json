@@ -170,7 +170,7 @@
       "evidence": [
         "AGENTS.md",
         "docs/adr/ADR-0107-production-release-version-authority-supersession.md",
-        "docs/adr/ADR-0030-platform-version-release-lifecycle.md"
+        "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
       ]
     },
     {
