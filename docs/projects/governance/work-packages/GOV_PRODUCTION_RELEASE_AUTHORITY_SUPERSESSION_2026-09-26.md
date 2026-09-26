@@ -20,6 +20,7 @@ Supersede package metadata as the released Production-version authority and reti
 - preserve the current five-merge Render promotion cadence;
 - create an owner-correct OPS migration handoff;
 - record separate Quality and Security development-chain reviews.
+- converge the Governance Control Catalog and regression tests on the superseded Production-version semantics.
 
 ## Out of scope
 
@@ -65,4 +66,5 @@ Minimum migration surface observed on the baseline:
 - QM report identifies migration/test risks independently from implementation claims;
 - SEC report identifies trust/supply-chain/rollback risks independently from implementation claims;
 - no package/provider/runtime mutation occurs in this GOV slice;
+- Control Catalog plus cadence/governance regressions pass without preserving the retired ten-merge Production-version authority;
 - PR creation occurs only when the mandatory project label can be supplied at create time.

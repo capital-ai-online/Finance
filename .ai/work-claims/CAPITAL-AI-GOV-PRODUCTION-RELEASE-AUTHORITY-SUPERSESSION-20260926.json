@@ -24,10 +24,12 @@
     "docs/projects/governance/work-packages/GOV_PRODUCTION_RELEASE_AUTHORITY_SUPERSESSION_2026-09-26.md",
     "docs/projects/governance/evidence/GOV_PRODUCTION_RELEASE_SUPERSESSION_QM_REVIEW_2026-09-26.md",
     "docs/projects/governance/evidence/GOV_PRODUCTION_RELEASE_SUPERSESSION_SEC_REVIEW_2026-09-26.md",
-    ".ai/work-claims/CAPITAL-AI-GOV-PRODUCTION-RELEASE-AUTHORITY-SUPERSESSION-20260926.json"
+    ".ai/work-claims/CAPITAL-AI-GOV-PRODUCTION-RELEASE-AUTHORITY-SUPERSESSION-20260926.json",
+    "docs/governance/control-catalog.json",
+    "tests/unit/deployBatchGovernance.test.ts"
   ],
   "scopeBoundary": [
-    "Governance/trust-root supersession and read-only assurance evidence only.",
+    "Governance/trust-root supersession, control-catalog convergence, regression-test alignment and read-only assurance evidence only.",
     "No productive OPS Release runtime/tool/provider mutation.",
     "No package.json or package-lock.json mutation.",
     "No Render, Supabase, Stripe, IAM, secret, billing, DNS, tag or direct-main mutation.",
@@ -48,7 +50,8 @@
     "ADR-0107 defines one immutable released Production-version authority and exact Production identity tuple.",
     "Separate QM and Security reviews record conditional findings without manufacturing Production PASS.",
     "Owner-correct OPS handoff identifies current consumer migration surface.",
-    "No provider/package/runtime mutation occurs in the Governance slice."
+    "No provider/package/runtime mutation occurs in the Governance slice.",
+    "Governance Control Catalog and cadence regression tests converge on the superseded ten-merge Production-version semantics without mutating productive OPS code."
   ],
   "acceptanceCriteria": [
     "No duplicate Release/Deployment/version authority is introduced.",

@@ -30,44 +30,24 @@ describe('application-wide merge cadence governance', () => {
     expect(read('.github/workflows/ops-exact-sha-runtime-recovery.yml')).toContain("workflows: ['CI', 'Post-Merge Production Correlation']");
   });
 
-  it('defines a non-retroactive cadence epoch and truthful dashboard projection', () => {
+  it('defines a non-retroactive deployment cadence and retires merge-count release versioning', () => {
     expect(agents).toContain('non-retroactive `cadenceEpoch`');
     expect(agents).toContain('Pull Requests merged before the epoch');
     expect(agents).toContain('deployment progress `x/5`');
-    expect(agents).toContain('version progress `x/10`');
-    expect(agents).toContain('deterministic next PATCH target');
+    expect(agents).toContain('former package-version and `x/10` Production-version cadence projection is retired');
+    expect(agents).toContain('No merge count by itself may mutate package metadata or manufacture a Production Release version');
   });
 
-  it('requires the tenth merged pull request to carry the next patch before merge', () => {
-    expect(agents).toContain('ten-merge version cadence');
-    expect(agents).toContain('current ordinal is `9 mod 10`');
-    expect(agents).toContain('Example: `0.6.0 → 0.6.1`');
-    expect(versionContract.automaticMaterializationPolicy.singleVersionAuthority).toBe('package.json#version');
-    expect(versionContract.automaticMaterializationPolicy.governedMirrors).toContain('package-lock.json#packages[""]#version');
+  it('binds Production Release version to immutable acceptance evidence instead of merge count', () => {
+    expect(agents).toContain('former fixed **10-merge PATCH cadence is retired**');
+    expect(agents).toContain('five-merge deployment boundary is therefore also the normal Release-candidate assembly point');
+    expect(agents).toContain('immutable accepted Release Manifest');
+    expect(agents).toContain('protected final Git tag `vMAJOR.MINOR.PATCH`');
+    expect(agents).toContain('productionReleaseVersion + sourceSha + artifactDigest + deploymentGeneration/providerDeploymentId');
+    expect(agents).toContain('existing package-version runtime/tool implementation remains historical/current implementation evidence');
+    // The productive OPS implementation is intentionally migrated only after this Governance supersession merges.
     expect(versionContract.version).toBe('1.1.0');
-    expect(versionContract.branchMaterialization.allowedAfterAuthorityEffective).toBe(true);
-    expect(versionContract.branchMaterialization.reactivationCondition).toContain('PR_1338');
-    expect(versionContract.branchMaterialization.reactivationCondition).toContain('currentMergeOrdinal_%_10_==_9');
-    const cadenceRuntime = read('scripts/operations/mergeCadence.mjs');
-    const cadenceRepairer = read('scripts/pr/repairers/mergeCadencePatchV1.mjs');
-    expect(cadenceRuntime).toContain("MERGED_PR_CADENCE_PATCH");
-    expect(cadenceRuntime).toContain("POSITIVE_MULTIPLES_OF_10");
-    expect(cadenceRepairer).toContain("cadence.mergeOrdinal % 10 !== 9");
-    expect(cadenceRepairer).toContain("MERGE_CADENCE_PATCH_V1");
-    expect(versionContract.automaticMaterializationPolicy).toMatchObject({
-      mode: 'MERGED_PR_CADENCE_PATCH',
-      retroactiveCounting: false,
-      mergedPullRequestsPerPatch: 10,
-      candidatePreparationAtPriorMergedCount: 9,
-      mergeOrdinalBoundaries: 'POSITIVE_MULTIPLES_OF_10',
-      explicitHigherReleaseShiftsCadence: false,
-      bumpType: 'PATCH',
-      targetRule: 'STRICT_NEXT_PATCH',
-      materializeBeforeHumanMerge: true,
-      directMainMutation: 'DENY',
-      automaticMerge: 'DENY',
-      automaticDeployment: 'DENY',
-    });
+    expect(versionContract.automaticMaterializationPolicy.singleVersionAuthority).toBe('package.json#version');
   });
 
   it('preserves one deploy authority and one version authority', () => {
@@ -76,7 +56,9 @@ describe('application-wide merge cadence governance', () => {
     expect(deploy).toHaveLength(1);
     expect(version).toHaveLength(1);
     expect(deploy[0].requirement).toContain('every fifth merged Pull Request');
-    expect(version[0].requirement).toContain('every tenth merged Pull Request');
-    expect(version[0].requirement).toContain('package.json remains the sole authority');
+    expect(version[0].requirement).toContain('protected final `vMAJOR.MINOR.PATCH` Git tag');
+    expect(version[0].requirement).toContain('immutable accepted Release Manifest');
+    expect(version[0].requirement).toContain('ten-merge package PATCH materialization is retired');
+    expect(version[0].requirement).toContain('package/tooling metadata only');
   });
 });
