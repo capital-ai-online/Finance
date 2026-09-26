@@ -38,6 +38,7 @@ describe('Private security posture workflow', () => {
     expect(ci).toContain('VERIFIED_COMMIT_SHA');
     expect(ci).toContain('live_main_sha');
     expect(render).toContain('autoDeployTrigger: off');
+    expect(render).toContain('previews:\n      generation: off');
   });
 
   it('implements the current Sitelemetry browser hardening findings without breaking popup auth', () => {
