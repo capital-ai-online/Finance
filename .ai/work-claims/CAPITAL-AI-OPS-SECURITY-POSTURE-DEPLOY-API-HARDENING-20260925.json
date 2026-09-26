@@ -48,6 +48,7 @@
     "server.application.ts",
     "tests/unit/githubSecurityPostureEvidenceClient.test.ts",
     "tests/unit/privateSecurityPostureWorkflow.test.ts",
+    "tests/unit/productionCiRunnerConsolidation.test.ts",
     "tests/unit/renderManagementAdapter.test.ts",
     "tests/unit/securityWebBaselineProjection.test.ts"
   ],
@@ -71,7 +72,8 @@
     "Human/CODEOWNER merge remains required; SEC runtime verification remains independent.",
     "Render cleanup no longer reports PASS from list omission alone; exact-ID readback distinguishes PRESENT, ABSENT and NOT_OBSERVABLE.",
     "Render preview contract is machine-tested and Finance converges to pullRequestPreviewsEnabled=no and previews.generation=off before the provider finding is closed.",
-    "package.json and package-lock.json plus governed version mirrors materialize exactly 0.6.5."
+    "package.json and package-lock.json plus governed version mirrors materialize exactly 0.6.5.",
+    "Production CI consolidation regression coverage asserts the exact-commit Render API trigger and rejects the retired deploy-hook ref=main expectation."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
 }
