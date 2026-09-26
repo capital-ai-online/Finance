@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-GITHUB-SETTINGS-RUNNER-GROUPS-20260927",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Complete the existing OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-01 by correcting the Enterprise runner-groups pagination field and revalidating the redacted read-only inventory.",
+  "workItemDE": "OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-01 abschließen: das Feld der paginierten Enterprise-Runnergruppen-Antwort korrigieren und das redigierte read-only Inventar erneut validieren.",
+  "priority": "P1",
+  "priorityReason": "Manual workflow run #18 on CURRENT_MAIN reproduced a deterministic API response-shape mismatch that prevents the four-scope settings inventory and its dependent storage report from completing.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "startedAt": "2026-09-27T00:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "f961ce6c9a15a4c627b7e6a21adf840f1584b5e9",
+  "lastSyncedMainSha": "f961ce6c9a15a4c627b7e6a21adf840f1584b5e9",
+  "branch": "operations/github-enterprise-runner-groups-20260927",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-SETTINGS-RUNNER-GROUPS-20260927.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-GITHUB-MANAGEMENT-SETTINGS-INVENTORY-20260924.json",
+    ".github/workflows/private-github-billing-read.yml",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_GITHUB_MANAGEMENT_SETTINGS_INVENTORY_01_2026-09-24.md",
+    "scripts/operations/githubEnterpriseSettingsReadClient.mjs",
+    "tests/unit/githubEnterpriseSettingsReadClient.test.ts"
+  ],
+  "scopeBoundary": [
+    "GET-only Enterprise settings read; no provider setting, IAM, secret, billing, production or deployment mutation.",
+    "Use GitHub's documented `runner_groups` response key for enterprise runner-group pagination.",
+    "Preserve `NOT_OBSERVABLE` for genuinely unavailable or unauthorized capabilities and preserve fail-closed behavior for malformed responses.",
+    "Do not expose or modify Enterprise PAT, GitHub App private key, user data, raw runner metadata or any secret value."
+  ],
+  "exitEvidence": [
+    "Focused unit test verifies the documented runner_groups payload is projected into inventory items.",
+    "Existing Enterprise client tests continue to prove GET-only allowlisted requests, redacted diagnostics and fail-closed unsupported capabilities.",
+    "Exact-head Governance, CI, Security and required checks pass; Human/CODEOWNER merge remains required.",
+    "After Human/CODEOWNER merge, rerun Private GitHub Billing Read on main and verify the settings inventory and dependent storage report outcomes."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
