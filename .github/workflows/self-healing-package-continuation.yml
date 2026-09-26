@@ -36,6 +36,378 @@ jobs:
       issues: write
 
     steps:
+      - name: Post-merge Roadmap and work-package closure drift correlate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
+        with:
+          script: |
+            const crypto = require('crypto');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const source = context.payload.workflow_run;
+            const sourceSha = String(source.head_sha || '').toLowerCase();
+            const marker = '<!-- CAPITAL_AI_ROADMAP_CLOSURE_V1 -->';
+            const leadingRoadmapPath = 'docs/architecture/ROADMAP.md';
+            const workPackagePattern = /^docs\/projects\/[^/]+\/work-packages\/[^/]+\.md$/;
+            const claimPattern = /^\.ai\/work-claims\/[^/]+\.json$/;
+            const tick = String.fromCharCode(96);
+
+            if (!/^[0-9a-f]{40}$/.test(sourceSha)) {
+              throw new Error('Roadmap closure source did not provide an immutable main SHA.');
+            }
+
+            async function currentMainSha() {
+              const { data } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+              return String(data.commit.sha || '').toLowerCase();
+            }
+
+            async function readText(path) {
+              const response = await github.rest.repos.getContent({
+                owner, repo, path, ref: sourceSha,
+              });
+              const data = response.data;
+              if (Array.isArray(data) || data.type !== 'file' || !data.content) {
+                throw new Error('Roadmap closure source is not a readable file: ' + path);
+              }
+              return Buffer.from(data.content, data.encoding || 'base64').toString('utf8');
+            }
+
+            if (await currentMainSha() !== sourceSha) {
+              core.notice('Roadmap closure source is stale before correlation; no evidence mutation.');
+              return;
+            }
+
+            const associated = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha: sourceSha, per_page: 100 },
+            );
+            const merged = [];
+            for (const candidate of associated) {
+              if (!candidate.number) continue;
+              const { data: pr } = await github.rest.pulls.get({
+                owner, repo, pull_number: candidate.number,
+              });
+              if (
+                pr.state === 'closed' &&
+                pr.merged_at &&
+                String(pr.merge_commit_sha || '').toLowerCase() === sourceSha
+              ) merged.push(pr);
+            }
+
+            if (merged.length !== 1) {
+              core.notice(
+                'Roadmap closure requires exactly one merged PR for CURRENT_MAIN; observed=' +
+                  merged.length +
+                  '.',
+              );
+              return;
+            }
+
+            const mergedPr = merged[0];
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: mergedPr.number, per_page: 100 },
+            );
+            const changedPaths = files.map(file => String(file.filename || ''));
+            const directPackages = changedPaths.filter(path => workPackagePattern.test(path));
+            const claimPaths = changedPaths.filter(path => claimPattern.test(path));
+
+            const claims = [];
+            for (const claimPath of claimPaths) {
+              let claim;
+              try {
+                claim = JSON.parse(await readText(claimPath));
+              } catch (error) {
+                claims.push({
+                  path: claimPath,
+                  parseError: error instanceof Error ? error.message : String(error),
+                  claimedPaths: [],
+                  projectId: null,
+                  status: null,
+                  exclusive: null,
+                  closureSync: false,
+                });
+                continue;
+              }
+              claims.push({
+                path: claimPath,
+                parseError: null,
+                claimedPaths: Array.isArray(claim.claimedPaths) ? claim.claimedPaths : [],
+                projectId:
+                  typeof claim.projectId === 'string' && /^CAPITAL-AI-[A-Z0-9-]+$/.test(claim.projectId)
+                    ? claim.projectId
+                    : null,
+                status: typeof claim.status === 'string' ? claim.status : null,
+                exclusive: typeof claim.exclusive === 'boolean' ? claim.exclusive : null,
+                closureSync: claim.closureSync === true,
+              });
+            }
+
+            if (claims.some(claim => claim.closureSync)) {
+              core.notice(
+                'Roadmap closure synchronization PR detected; recursion suppressed for this generation.',
+              );
+              return;
+            }
+
+            const packagePaths = new Set(directPackages);
+            for (const claim of claims) {
+              for (const claimedPath of claim.claimedPaths) {
+                if (typeof claimedPath === 'string' && workPackagePattern.test(claimedPath)) {
+                  packagePaths.add(claimedPath);
+                }
+              }
+            }
+
+            if (packagePaths.size === 0) {
+              core.notice(
+                'Merged PR #' +
+                  mergedPr.number +
+                  ' carries no canonical work-package identity; no Roadmap closure mutation is inferred.',
+              );
+              return;
+            }
+
+            const leadingRoadmap = await readText(leadingRoadmapPath);
+            const findings = [];
+
+            function packageStatus(markdown) {
+              const field =
+                markdown.match(/^\*\*(?:Status|State):\*\*\s*[\x60]?([^\x60\n]+)[\x60]?\s*$/im);
+              if (field) return field[1].trim();
+              const section = markdown.match(
+                /^##\s+Status\s*$([\s\S]*?)(?=^##\s|$)/im,
+              );
+              if (section) {
+                const code = section[1].match(/\x60([^\x60\n]+)\x60/);
+                if (code) return code[1].trim();
+              }
+              return null;
+            }
+
+            const terminalOrPostMerge =
+              /\bDONE_MAIN\b|\bTERMINAL\b|\bMERGED_MAIN\b|\bEVIDENCE_GATE\b|\bPARTIAL_MAIN\b/i;
+            const staleBranchState =
+              /IMPLEMENTED_ON_BRANCH|VALIDATION_PENDING|HUMAN_MERGE_REQUIRED|IMPLEMENTATION_NOT_STARTED/i;
+
+            for (const workPackagePath of [...packagePaths].sort()) {
+              let markdown;
+              try {
+                markdown = await readText(workPackagePath);
+              } catch (error) {
+                findings.push({
+                  workPackagePath,
+                  code: 'WORK_PACKAGE_DOCUMENTATION_MISSING',
+                  detail: error instanceof Error ? error.message : String(error),
+                  projectId: null,
+                });
+                continue;
+              }
+
+              const status = packageStatus(markdown);
+              const relatedClaims = claims.filter(claim =>
+                claim.claimedPaths.includes(workPackagePath),
+              );
+              const projectFromDoc =
+                markdown.match(/^\*\*Project:\*\*\s*[\x60]?(CAPITAL-AI-[A-Z0-9-]+)[\x60]?\s*$/im)?.[1] ||
+                null;
+              const projectId =
+                relatedClaims.find(claim => claim.projectId)?.projectId || projectFromDoc;
+              const claimOpen = relatedClaims.some(
+                claim =>
+                  claim.parseError ||
+                  claim.status === 'active' ||
+                  claim.exclusive === true,
+              );
+              const roadmapPresent = leadingRoadmap.includes(workPackagePath);
+              const statusConverged =
+                Boolean(status) &&
+                terminalOrPostMerge.test(status) &&
+                !staleBranchState.test(status);
+
+              if (!statusConverged) {
+                findings.push({
+                  workPackagePath,
+                  code: 'WORK_PACKAGE_POST_MERGE_STATE_DRIFT',
+                  detail: 'Observed status=' + (status || 'MISSING'),
+                  projectId,
+                });
+              }
+              if (claimOpen) {
+                findings.push({
+                  workPackagePath,
+                  code: 'WORK_CLAIM_LIFECYCLE_DRIFT',
+                  detail: 'Merged work package still has active/exclusive or unreadable claim metadata.',
+                  projectId,
+                });
+              }
+              if (!roadmapPresent) {
+                findings.push({
+                  workPackagePath,
+                  code: 'LEADING_ROADMAP_CLOSURE_MISSING',
+                  detail:
+                    'Leading Roadmap does not reference the merged work-package documentation path.',
+                  projectId,
+                });
+              }
+            }
+
+            const canonical = [
+              'schema=capital-ai-roadmap-closure-generation/1.0.0',
+              'repository=' + owner.toLowerCase() + '/' + repo.toLowerCase(),
+              'main=' + sourceSha,
+              'pr=' + mergedPr.number,
+              'merge=' + String(mergedPr.merge_commit_sha || '').toLowerCase(),
+              ...findings
+                .map(
+                  finding =>
+                    finding.workPackagePath +
+                    '|' +
+                    finding.code +
+                    '|' +
+                    String(finding.projectId || 'UNRESOLVED'),
+                )
+                .sort(),
+            ].join('\n') + '\n';
+            const fingerprint =
+              'sha256:' + crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              { owner, repo, state: 'all', per_page: 100 },
+            );
+            const existing = issues.find(
+              issue =>
+                !issue.pull_request &&
+                String(issue.body || '').includes(marker) &&
+                String(issue.body || '').includes('- Merged PR: #' + mergedPr.number),
+            ) || null;
+
+            if (await currentMainSha() !== sourceSha) {
+              core.notice(
+                'Roadmap closure generation drifted before issue mutation; no evidence handoff written.',
+              );
+              return;
+            }
+
+            if (findings.length === 0) {
+              if (existing && existing.state === 'open') {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  body:
+                    '✅ Roadmap closure re-correlation PASS for PR #' +
+                    mergedPr.number +
+                    ' on CURRENT_MAIN ' +
+                    tick +
+                    sourceSha +
+                    tick +
+                    '. Work-package documentation, claim lifecycle and leading Roadmap reference are converged.',
+                });
+                await github.rest.issues.update({
+                  owner, repo, issue_number: existing.number, state: 'closed',
+                });
+              }
+              core.notice(
+                'Roadmap closure PASS for PR #' +
+                  mergedPr.number +
+                  ': package documentation and leading Roadmap are converged.',
+              );
+              return;
+            }
+
+            if (
+              existing &&
+              existing.state === 'open' &&
+              String(existing.body || '').includes(
+                '- Closure fingerprint: ' + tick + fingerprint + tick,
+              )
+            ) {
+              core.notice(
+                'Identical Roadmap closure fingerprint already recorded; duplicate handoff suppressed.',
+              );
+              return;
+            }
+
+            const projects = [...new Set(findings.map(item => item.projectId).filter(Boolean))];
+            const issuePrefix = projects.length === 1 ? '[' + projects[0] + '] ' : '';
+            const issueTitle =
+              issuePrefix + 'Roadmap-Abschluss nach PR #' + mergedPr.number + ' korrelieren';
+            const findingRows = findings
+              .map(
+                finding =>
+                  '- ' +
+                  tick +
+                  finding.code +
+                  tick +
+                  ' — ' +
+                  tick +
+                  finding.workPackagePath +
+                  tick +
+                  ' — Owner: ' +
+                  tick +
+                  String(finding.projectId || 'UNRESOLVED') +
+                  tick +
+                  ' — ' +
+                  finding.detail,
+              )
+              .join('\n');
+            const foreignOwners = projects.filter(projectId => projectId !== 'CAPITAL-AI-OPS');
+
+            const body = [
+              marker,
+              '# DevelopmentChain Roadmap closure — DRIFT',
+              '',
+              '- Merged PR: #' + mergedPr.number,
+              '- Merge / CURRENT_MAIN SHA: ' + tick + sourceSha + tick,
+              '- Closure fingerprint: ' + tick + fingerprint + tick,
+              '- Finding class: ' + tick + 'REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT' + tick,
+              '- Existing action: ' + tick + 'RECONCILE_REPOSITORY_PROJECTION' + tick,
+              '- Leading Roadmap: ' + tick + leadingRoadmapPath + tick,
+              '- Foreign-owner handoff: ' +
+                tick +
+                (foreignOwners.length ? foreignOwners.join(', ') : 'none') +
+                tick,
+              '',
+              '## Findings',
+              findingRows,
+              '',
+              '## Required convergence',
+              'Every processed canonical work package must finish with the same evidence-bound post-merge state in:',
+              '1. its owner-correct work-package documentation;',
+              '2. the repository leading Live Roadmap;',
+              '3. its merged work-claim lifecycle (' + tick + 'released / exclusive=false' + tick + ').',
+              '',
+              'Owner-local deterministic drift may use the existing bounded ' +
+                tick +
+                'RECONCILE_REPOSITORY_PROJECTION' +
+                tick +
+                ' lane. Foreign-owner files remain an ' +
+                tick +
+                'OWNER_CORRECT_HANDOFF' +
+                tick +
+                '; this workflow does not mutate them.',
+              '',
+              'This issue is non-authorizing evidence/orchestration only. It creates no repository writer, no direct-main mutation, no provider mutation, no approval and no merge authority.',
+              '',
+            ].join('\n');
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                state: 'open',
+                title: issueTitle,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({ owner, repo, title: issueTitle, body });
+            }
+            core.warning(
+              'Roadmap/work-package closure drift recorded for PR #' + mergedPr.number + '.',
+            );
+
       - name: Current-main Self-Healing work graph correlate and hand off
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 / Node 24
         with:
