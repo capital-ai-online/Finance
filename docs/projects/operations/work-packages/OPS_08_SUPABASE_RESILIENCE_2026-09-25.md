@@ -223,8 +223,11 @@ provider: `ACTIVE_HEALTHY -> PAUSING -> INACTIVE -> restore -> COMING_UP -> ACTI
 The database remained PostgreSQL `17.6` / bundle `17.6.1.127`; no newer minor bundle was
 offered/applied by the restore path. Application/database invariants survived the refresh.
 
-One post-restore drift is now explicit: remote migration history ends at
-`20260924161429`; repository main already contains
-`20260924171500_index_stripe_managed_webhooks_account_fk.sql`. Supabase's live Performance
-Advisor therefore still reports the associated missing covering FK index. Repair must use
-the canonical migration-ledger path; direct one-off DDL is intentionally not used.
+A fresh 2026-09-26 provider readback closes the earlier migration-ledger drift:
+remote history now contains `20260924171500_index_stripe_managed_webhooks_account_fk`,
+and the previous Stripe managed-webhook FK advisor finding is no longer present.
+
+Current Performance Advisor follow-up is separate from this recovery slice: three
+unindexed owner-authorization/device foreign keys, four social-media RLS initplan
+performance warnings and unused-index INFO findings. They remain owner-correct
+maintenance candidates and are not changed ad hoc by this package.
