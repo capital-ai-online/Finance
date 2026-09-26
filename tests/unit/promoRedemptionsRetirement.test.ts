@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const migrationPath = new URL(
-  '../../supabase/migrations/20260917154500_remove_promo_redemptions.sql',
+  '../../supabase/migrations/20260920161216_remove_promo_redemptions.sql',
   import.meta.url,
 );
 const migration = readFileSync(migrationPath, 'utf8');

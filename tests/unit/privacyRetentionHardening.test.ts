@@ -9,8 +9,8 @@ function read(relativePath: string): string {
 }
 
 describe('privacy retention hardening (ADR-0092)', () => {
-  const migration = read('supabase/migrations/20260819103000_privacy_retention_lifecycle_hardening.sql');
-  const advisorFollowUp = read('supabase/migrations/20260819104500_privacy_retention_advisor_indexes.sql');
+  const migration = read('supabase/migrations/20260819084254_privacy_retention_lifecycle_hardening.sql');
+  const advisorFollowUp = read('supabase/migrations/20260819084451_privacy_retention_advisor_indexes.sql');
 
   it('repairs all social-media persistence tables idempotently', () => {
     expect(migration).toContain('create table if not exists public.social_media_accounts');

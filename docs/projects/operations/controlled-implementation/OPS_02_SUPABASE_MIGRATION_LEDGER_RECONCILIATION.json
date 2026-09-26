@@ -5,233 +5,233 @@
   "primary_pvc": "PVC-02",
   "primary_owner": "CAPITAL-AI-OPS",
   "repository": "capital-ai-online/Finance",
-  "repository_baseline": "29cd7b339be0aca587549f3a27a3658ea16fa59c",
+  "repository_baseline": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
   "supabase_project_ref": "ryzywoktpmyhwzxmstyu",
   "classification_policy": {
-    "EXACT_MATCH": "Remote version equals a current local migration timestamp. The local migration file is recorded.",
-    "TIMESTAMP_ALIAS": "Remote migration name exactly equals the normalized current local migration name, but the timestamp differs. No SQL equivalence beyond this identity rule is inferred.",
-    "REMOTE_ONLY_HISTORY": "No current local migration has the same remote timestamp or normalized migration name. Consolidated/catch-up schema may exist elsewhere, but is not treated as an alias without exact migration-name identity."
+    "EXACT_MATCH": "Remote version and normalized name equal the checked-in local migration path.",
+    "TIMESTAMP_ALIAS": "Legacy classification retained for validator compatibility; current exact reconciliation requires zero aliases.",
+    "REMOTE_ONLY_HISTORY": "Legacy classification retained for validator compatibility; current exact reconciliation requires zero remote-only rows."
   },
   "summary": {
     "remote_total": 78,
-    "local_total": 61,
-    "exact_match": 19,
-    "timestamp_alias": 32,
-    "remote_only_history": 27,
+    "local_total": 85,
+    "exact_match": 78,
+    "timestamp_alias": 0,
+    "remote_only_history": 0,
     "unknown": 0,
-    "mapped_current_local": 51,
-    "local_only": 10
+    "mapped_current_local": 78,
+    "local_only": 7
   },
   "remote_migrations": [
     {
       "remote_version": "20260709160230",
       "remote_name": "subscriptions_allow_null_stripe_id",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709160230",
+      "local_path": "supabase/migrations/20260709160230_subscriptions_allow_null_stripe_id.sql"
     },
     {
       "remote_version": "20260709160236",
       "remote_name": "fix_handle_new_user_trigger",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709160236",
+      "local_path": "supabase/migrations/20260709160236_fix_handle_new_user_trigger.sql"
     },
     {
       "remote_version": "20260709160242",
       "remote_name": "backfill_missing_profiles_and_subscriptions",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709160242",
+      "local_path": "supabase/migrations/20260709160242_backfill_missing_profiles_and_subscriptions.sql"
     },
     {
       "remote_version": "20260709160708",
       "remote_name": "add_address_fields_to_profiles",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709160708",
+      "local_path": "supabase/migrations/20260709160708_add_address_fields_to_profiles.sql"
     },
     {
       "remote_version": "20260709205910",
       "remote_name": "cleanup_users_and_set_enterprise",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709205910",
+      "local_path": "supabase/migrations/20260709205910_cleanup_users_and_set_enterprise.sql"
     },
     {
       "remote_version": "20260709210142",
       "remote_name": "add_email_column_to_subscriptions",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260709210142",
+      "local_path": "supabase/migrations/20260709210142_add_email_column_to_subscriptions.sql"
     },
     {
       "remote_version": "20260711031050",
       "remote_name": "iam_foundation_v2_separate_column",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260711031050",
+      "local_path": "supabase/migrations/20260711031050_iam_foundation_v2_separate_column.sql"
     },
     {
       "remote_version": "20260711031101",
       "remote_name": "assign_owner_iam_role",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260711031101",
+      "local_path": "supabase/migrations/20260711031101_assign_owner_iam_role.sql"
     },
     {
       "remote_version": "20260711103935",
       "remote_name": "add_phone_identifier_for_break_glass",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260711103935",
+      "local_path": "supabase/migrations/20260711103935_add_phone_identifier_for_break_glass.sql"
     },
     {
       "remote_version": "20260711110308",
       "remote_name": "phone_stepup_infrastructure",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260711110308",
+      "local_path": "supabase/migrations/20260711110308_phone_stepup_infrastructure.sql"
     },
     {
       "remote_version": "20260712055148",
       "remote_name": "create_security_events_log",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260712055148",
+      "local_path": "supabase/migrations/20260712055148_create_security_events_log.sql"
     },
     {
       "remote_version": "20260712055159",
       "remote_name": "harden_security_events_grants",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260712055159",
+      "local_path": "supabase/migrations/20260712055159_harden_security_events_grants.sql"
     },
     {
       "remote_version": "20260714190146",
       "remote_name": "add_totp_stepup_breakglass",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260714190146",
+      "local_path": "supabase/migrations/20260714190146_add_totp_stepup_breakglass.sql"
     },
     {
       "remote_version": "20260715014840",
       "remote_name": "iam_access_log_add_context",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260715014840",
+      "local_path": "supabase/migrations/20260715014840_iam_access_log_add_context.sql"
     },
     {
       "remote_version": "20260715055908",
       "remote_name": "create_internal_user_lookup_view",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260715055908",
+      "local_path": "supabase/migrations/20260715055908_create_internal_user_lookup_view.sql"
     },
     {
       "remote_version": "20260730173550",
       "remote_name": "fix_sven_capitalai_subscription_tier",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260730173550",
+      "local_path": "supabase/migrations/20260730173550_fix_sven_capitalai_subscription_tier.sql"
     },
     {
       "remote_version": "20260730174158",
       "remote_name": "fix_stripe_subscription_sync_trigger",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260730174158",
+      "local_path": "supabase/migrations/20260730174158_fix_stripe_subscription_sync_trigger.sql"
     },
     {
       "remote_version": "20260731091117",
       "remote_name": "user_quota",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260730000000",
-      "local_path": "supabase/migrations/20260730000000_user_quota.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260731091117",
+      "local_path": "supabase/migrations/20260731091117_user_quota.sql"
     },
     {
       "remote_version": "20260731091129",
       "remote_name": "add_missing_service_role_rls_policies",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260731000000",
-      "local_path": "supabase/migrations/20260731000000_add_missing_service_role_rls_policies.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260731091129",
+      "local_path": "supabase/migrations/20260731091129_add_missing_service_role_rls_policies.sql"
     },
     {
       "remote_version": "20260731091140",
       "remote_name": "harden_handle_new_user_search_path",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260731000100",
-      "local_path": "supabase/migrations/20260731000100_harden_handle_new_user_search_path.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260731091140",
+      "local_path": "supabase/migrations/20260731091140_harden_handle_new_user_search_path.sql"
     },
     {
       "remote_version": "20260731091646",
       "remote_name": "compliance_runs",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260731000200",
-      "local_path": "supabase/migrations/20260731000200_compliance_runs.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260731091646",
+      "local_path": "supabase/migrations/20260731091646_compliance_runs.sql"
     },
     {
       "remote_version": "20260801122306",
       "remote_name": "iam_access_log_context_repo_catchup",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801122306",
+      "local_path": "supabase/migrations/20260801122306_iam_access_log_context_repo_catchup.sql"
     },
     {
       "remote_version": "20260801122318",
       "remote_name": "security_events_stepup_totp_repo_catchup",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801122318",
+      "local_path": "supabase/migrations/20260801122318_security_events_stepup_totp_repo_catchup.sql"
     },
     {
       "remote_version": "20260801143612",
       "remote_name": "score_snapshots",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260801143614",
-      "local_path": "supabase/migrations/20260801143614_score_snapshots.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801143612",
+      "local_path": "supabase/migrations/20260801143612_score_snapshots.sql"
     },
     {
       "remote_version": "20260801171055",
       "remote_name": "alert_subscriptions",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260801171030",
-      "local_path": "supabase/migrations/20260801171030_alert_subscriptions.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801171055",
+      "local_path": "supabase/migrations/20260801171055_alert_subscriptions.sql"
     },
     {
       "remote_version": "20260801174512",
       "remote_name": "subscription_confirmations_sent",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260801174455",
-      "local_path": "supabase/migrations/20260801174455_subscription_confirmations_sent.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801174512",
+      "local_path": "supabase/migrations/20260801174512_subscription_confirmations_sent.sql"
     },
     {
       "remote_version": "20260801220541",
       "remote_name": "agent_evaluation_runs",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260801220519",
-      "local_path": "supabase/migrations/20260801220519_agent_evaluation_runs.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260801220541",
+      "local_path": "supabase/migrations/20260801220541_agent_evaluation_runs.sql"
     },
     {
       "remote_version": "20260802164705",
       "remote_name": "screening_slo_evidence",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260802160000",
-      "local_path": "supabase/migrations/20260802160000_screening_slo_evidence.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260802164705",
+      "local_path": "supabase/migrations/20260802164705_screening_slo_evidence.sql"
     },
     {
       "remote_version": "20260802172425",
       "remote_name": "harden_stripe_function_search_paths",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260802172425",
+      "local_path": "supabase/migrations/20260802172425_harden_stripe_function_search_paths.sql"
     },
     {
       "remote_version": "20260804195902",
       "remote_name": "issue_92_security_hardening",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260804211000",
-      "local_path": "supabase/migrations/20260804211000_issue_92_security_hardening.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260804195902",
+      "local_path": "supabase/migrations/20260804195902_issue_92_security_hardening.sql"
     },
     {
       "remote_version": "20260804200909",
@@ -243,30 +243,30 @@
     {
       "remote_version": "20260808090343",
       "remote_name": "stripe_event_inbox",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260808013000",
-      "local_path": "supabase/migrations/20260808013000_stripe_event_inbox.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260808090343",
+      "local_path": "supabase/migrations/20260808090343_stripe_event_inbox.sql"
     },
     {
       "remote_version": "20260810003921",
       "remote_name": "capability_grants",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260810002100",
-      "local_path": "supabase/migrations/20260810002100_capability_grants.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260810003921",
+      "local_path": "supabase/migrations/20260810003921_capability_grants.sql"
     },
     {
       "remote_version": "20260810003927",
       "remote_name": "agent_action_approvals",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260810002200",
-      "local_path": "supabase/migrations/20260810002200_agent_action_approvals.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260810003927",
+      "local_path": "supabase/migrations/20260810003927_agent_action_approvals.sql"
     },
     {
       "remote_version": "20260810172028",
       "remote_name": "extend_iam_roles_for_ai_admin_control_plane",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260810172028",
+      "local_path": "supabase/migrations/20260810172028_extend_iam_roles_for_ai_admin_control_plane.sql"
     },
     {
       "remote_version": "20260811230540",
@@ -285,44 +285,44 @@
     {
       "remote_version": "20260814151417",
       "remote_name": "purge_unused_break_glass_codes",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260814151200",
-      "local_path": "supabase/migrations/20260814151200_purge_unused_break_glass_codes.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814151417",
+      "local_path": "supabase/migrations/20260814151417_purge_unused_break_glass_codes.sql"
     },
     {
       "remote_version": "20260814152303",
       "remote_name": "registration_consent_log_and_mfa_enrollment",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260814153000",
-      "local_path": "supabase/migrations/20260814153000_registration_consent_log_and_mfa_enrollment.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814152303",
+      "local_path": "supabase/migrations/20260814152303_registration_consent_log_and_mfa_enrollment.sql"
     },
     {
       "remote_version": "20260814152341",
       "remote_name": "user_consents_grants",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260814153500",
-      "local_path": "supabase/migrations/20260814153500_user_consents_grants.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814152341",
+      "local_path": "supabase/migrations/20260814152341_user_consents_grants.sql"
     },
     {
       "remote_version": "20260814152556",
       "remote_name": "rename_mfa_enrollment_required_to_onboarding",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260814154500",
-      "local_path": "supabase/migrations/20260814154500_rename_mfa_enrollment_required_to_onboarding.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814152556",
+      "local_path": "supabase/migrations/20260814152556_rename_mfa_enrollment_required_to_onboarding.sql"
     },
     {
       "remote_version": "20260814153521",
       "remote_name": "mfa_required_account_last_factor_guard",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260814160000",
-      "local_path": "supabase/migrations/20260814160000_mfa_required_account_last_factor_guard.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814153521",
+      "local_path": "supabase/migrations/20260814153521_mfa_required_account_last_factor_guard.sql"
     },
     {
       "remote_version": "20260814221830",
       "remote_name": "outbox_jobs",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260810160000",
-      "local_path": "supabase/migrations/20260810160000_outbox_jobs.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260814221830",
+      "local_path": "supabase/migrations/20260814221830_outbox_jobs.sql"
     },
     {
       "remote_version": "20260815010000",
@@ -355,65 +355,65 @@
     {
       "remote_version": "20260817024129",
       "remote_name": "m10_passkey_owner_enrollment",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260817020000",
-      "local_path": "supabase/migrations/20260817020000_m10_passkey_owner_enrollment.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260817024129",
+      "local_path": "supabase/migrations/20260817024129_m10_passkey_owner_enrollment.sql"
     },
     {
       "remote_version": "20260817030342",
       "remote_name": "m10_passkey_service_role_grants",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260817030000",
-      "local_path": "supabase/migrations/20260817030000_m10_passkey_service_role_grants.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260817030342",
+      "local_path": "supabase/migrations/20260817030342_m10_passkey_service_role_grants.sql"
     },
     {
       "remote_version": "20260818232108",
       "remote_name": "privacy_governance_and_requests",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819010000",
-      "local_path": "supabase/migrations/20260819010000_privacy_governance_and_requests.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260818232108",
+      "local_path": "supabase/migrations/20260818232108_privacy_governance_and_requests.sql"
     },
     {
       "remote_version": "20260819001943",
       "remote_name": "ai_governance_evaluations",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819010800",
-      "local_path": "supabase/migrations/20260819010800_ai_governance_evaluations.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819001943",
+      "local_path": "supabase/migrations/20260819001943_ai_governance_evaluations.sql"
     },
     {
       "remote_version": "20260819021420",
       "remote_name": "m10_pr_ci_authorization",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819040000",
-      "local_path": "supabase/migrations/20260819040000_m10_pr_ci_authorization.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819021420",
+      "local_path": "supabase/migrations/20260819021420_m10_pr_ci_authorization.sql"
     },
     {
       "remote_version": "20260819030221",
       "remote_name": "m10_phase6_shadow_evidence",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819050000",
-      "local_path": "supabase/migrations/20260819050000_m10_phase6_shadow_evidence.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819030221",
+      "local_path": "supabase/migrations/20260819030221_m10_phase6_shadow_evidence.sql"
     },
     {
       "remote_version": "20260819035020",
       "remote_name": "supabase_advisor_policy_hardening",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819020000",
-      "local_path": "supabase/migrations/20260819020000_supabase_advisor_policy_hardening.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819035020",
+      "local_path": "supabase/migrations/20260819035020_supabase_advisor_policy_hardening.sql"
     },
     {
       "remote_version": "20260819084254",
       "remote_name": "privacy_retention_lifecycle_hardening",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819103000",
-      "local_path": "supabase/migrations/20260819103000_privacy_retention_lifecycle_hardening.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819084254",
+      "local_path": "supabase/migrations/20260819084254_privacy_retention_lifecycle_hardening.sql"
     },
     {
       "remote_version": "20260819084451",
       "remote_name": "privacy_retention_advisor_indexes",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260819104500",
-      "local_path": "supabase/migrations/20260819104500_privacy_retention_advisor_indexes.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260819084451",
+      "local_path": "supabase/migrations/20260819084451_privacy_retention_advisor_indexes.sql"
     },
     {
       "remote_version": "20260821000550",
@@ -460,16 +460,16 @@
     {
       "remote_version": "20260826183019",
       "remote_name": "f05_explicit_deny_policies_for_service_role_only_tables",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260826183019",
+      "local_path": "supabase/migrations/20260826183019_f05_explicit_deny_policies_for_service_role_only_tables.sql"
     },
     {
       "remote_version": "20260826213740",
       "remote_name": "security_events_allow_honeytoken_touched",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260826213740",
+      "local_path": "supabase/migrations/20260826213740_security_events_allow_honeytoken_touched.sql"
     },
     {
       "remote_version": "20260827135000",
@@ -481,23 +481,23 @@
     {
       "remote_version": "20260827201209",
       "remote_name": "commodity_shadow_evidence",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260827201209",
+      "local_path": "supabase/migrations/20260827201209_commodity_shadow_evidence.sql"
     },
     {
       "remote_version": "20260827201328",
       "remote_name": "commodity_shadow_evidence_explicit_deny_policy",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260827201328",
+      "local_path": "supabase/migrations/20260827201328_commodity_shadow_evidence_explicit_deny_policy.sql"
     },
     {
       "remote_version": "20260828143506",
       "remote_name": "tighten_user_consents_policy_role",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260828143506",
+      "local_path": "supabase/migrations/20260828143506_tighten_user_consents_policy_role.sql"
     },
     {
       "remote_version": "20260901144312",
@@ -509,30 +509,30 @@
     {
       "remote_version": "20260905103413",
       "remote_name": "user_lifecycle_subscription_identity_authority",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260901162000",
-      "local_path": "supabase/migrations/20260901162000_user_lifecycle_subscription_identity_authority.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260905103413",
+      "local_path": "supabase/migrations/20260905103413_user_lifecycle_subscription_identity_authority.sql"
     },
     {
       "remote_version": "20260915235453",
       "remote_name": "privacy_notice_version_guard",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260915172400",
-      "local_path": "supabase/migrations/20260915172400_privacy_notice_version_guard.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260915235453",
+      "local_path": "supabase/migrations/20260915235453_privacy_notice_version_guard.sql"
     },
     {
       "remote_version": "20260920161056",
       "remote_name": "outbox_worker_recovery",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260920141000",
-      "local_path": "supabase/migrations/20260920141000_outbox_worker_recovery.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260920161056",
+      "local_path": "supabase/migrations/20260920161056_outbox_worker_recovery.sql"
     },
     {
       "remote_version": "20260920161216",
       "remote_name": "remove_promo_redemptions",
-      "classification": "TIMESTAMP_ALIAS",
-      "local_version": "20260917154500",
-      "local_path": "supabase/migrations/20260917154500_remove_promo_redemptions.sql"
+      "classification": "EXACT_MATCH",
+      "local_version": "20260920161216",
+      "local_path": "supabase/migrations/20260920161216_remove_promo_redemptions.sql"
     },
     {
       "remote_version": "20260920161445",
@@ -551,9 +551,9 @@
     {
       "remote_version": "20260922042903",
       "remote_name": "revoke_trigger_only_security_definer_execute",
-      "classification": "REMOTE_ONLY_HISTORY",
-      "local_version": null,
-      "local_path": null
+      "classification": "EXACT_MATCH",
+      "local_version": "20260922042903",
+      "local_path": "supabase/migrations/20260922042903_revoke_trigger_only_security_definer_execute.sql"
     },
     {
       "remote_version": "20260924011545",
@@ -571,21 +571,6 @@
     }
   ],
   "local_only_migrations": [
-    {
-      "local_version": "20260711000000",
-      "local_name": "iam",
-      "local_path": "supabase/migrations/20260711000000_iam.sql"
-    },
-    {
-      "local_version": "20260731000300",
-      "local_name": "iam_access_log_context",
-      "local_path": "supabase/migrations/20260731000300_iam_access_log_context.sql"
-    },
-    {
-      "local_version": "20260731000400",
-      "local_name": "security_events_stepup_totp",
-      "local_path": "supabase/migrations/20260731000400_security_events_stepup_totp.sql"
-    },
     {
       "local_version": "20260801150000",
       "local_name": "social_media_publishing",
@@ -623,9 +608,9 @@
     }
   ],
   "provider_readback": {
-    "observed_at": "2026-09-24T16:55:00Z",
-    "source": "Supabase list_migrations",
+    "observed_at": "2026-09-26T16:57:21Z",
+    "source": "Supabase list_migrations plus read-only schema_migrations statement readback",
     "remote_total": 78,
-    "note": "Remote ledger contains 20260924161429_profile_identity_settings; repository migration identity is reconciled to that exact remote version. The later 20260924171500_index_stripe_managed_webhooks_account_fk migration is repository-local pending canonical post-merge Supabase application."
+    "note": "All 78 remote versions now have exact repository paths. Seven repository-local migrations remain explicitly pending; no provider history, schema, data, roles, secrets, or configuration were mutated."
   }
 }
