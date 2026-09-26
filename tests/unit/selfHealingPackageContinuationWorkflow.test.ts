@@ -30,6 +30,28 @@ describe('Self-Healing package continuation workflow', () => {
     expect(workflow).toContain('READY_FOR_FRESH_CURRENT_MAIN_CORRELATION');
   });
 
+  it('correlates merged canonical work packages against documentation, claim lifecycle and the leading Roadmap', () => {
+    expect(workflow).toContain('CAPITAL_AI_ROADMAP_CLOSURE_V1');
+    expect(workflow).toContain("const leadingRoadmapPath = 'docs/architecture/ROADMAP.md'");
+    expect(workflow).toContain('workPackagePattern');
+    expect(workflow).toContain('WORK_PACKAGE_POST_MERGE_STATE_DRIFT');
+    expect(workflow).toContain('WORK_CLAIM_LIFECYCLE_DRIFT');
+    expect(workflow).toContain('LEADING_ROADMAP_CLOSURE_MISSING');
+    expect(workflow).toContain('REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT');
+    expect(workflow).toContain('RECONCILE_REPOSITORY_PROJECTION');
+    expect(workflow).toContain('OWNER_CORRECT_HANDOFF');
+  });
+
+  it('generation-binds and deduplicates Roadmap closure evidence without creating a second writer', () => {
+    expect(workflow).toContain('capital-ai-roadmap-closure-generation/1.0.0');
+    expect(workflow).toContain('Roadmap closure generation drifted before issue mutation');
+    expect(workflow).toContain('Identical Roadmap closure fingerprint already recorded');
+    expect(workflow).toContain('closureSync');
+    expect(workflow).toContain('recursion suppressed');
+    expect(workflow).toContain('issues: write');
+    expect(workflow).not.toContain('contents: write');
+  });
+
   it('never reselects a completed slice from a stale QUEUED work-graph projection', () => {
     expect(workflow).toContain("row.state === 'QUEUED' && completed.has(row.number)");
     expect(workflow).toContain("row.state === 'QUEUED' && !completed.has(row.number)");
