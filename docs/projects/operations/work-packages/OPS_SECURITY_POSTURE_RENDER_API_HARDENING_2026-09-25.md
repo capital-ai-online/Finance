@@ -2,13 +2,15 @@
 
 ## Status
 
-`IMPLEMENTED_ON_BRANCH / PROVIDER_READBACK_PENDING / HUMAN_MERGE_REQUIRED`
+`MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING`
 
 Project: `CAPITAL-AI-OPS`
 Primary PVC: `PVC-02`
 Supporting PVC: `PVC-07 / PVC-08 / PVC-18`
 Branch: `agent/operations-security-posture-deploy-api-hardening-20260926`
-Base: `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac`
+Implementation base: `main@15e1e0e3dc6f127419b92e38aeb06e09da2bc7ac`
+Merged PR: `#1463`
+Merged main: `82f50a97db513cab02e0a342c19230badb0b3ade`
 
 ## Trigger
 
@@ -103,3 +105,15 @@ The following remain external/provider actions and are not mutated by this branc
 - Full required CI/Governance/Security checks remain to be run on the exact PR head.
 - After Human/CODEOWNER merge, the manual posture workflow can be started from `main`.
 - Provider findings become `VERIFIED` only after workflow/readback evidence; missing evidence remains `NOT_OBSERVABLE`.
+
+## Post-merge closure — 2026-09-26
+
+Repository implementation is merged and exact-head validation is proven, but this package is **not terminal** because its own provider/readback exit conditions remain explicit:
+
+- PR #1463 exact head `987b41baf59860808fadf13a7172b186615e4039` completed CI #6580, Governance #6094, Container Security #3563, Project Execution Directive #877 and OSS/PR evidence #963 successfully;
+- Human/CODEOWNER merged #1463 as `82f50a97db513cab02e0a342c19230badb0b3ade`;
+- Render preview disable/readback, residual exact-ID cleanup where still applicable, Enterprise read-scope observations and provider posture evidence remain separate real-provider gates;
+- missing provider evidence remains `NOT_OBSERVABLE` / open and is never promoted to PASS;
+- the implementation claim is released because the implementation PR is merged; release of the claim does not close the remaining evidence gate.
+
+**Closure disposition:** `MERGED_MAIN / EVIDENCE_GATE / PROVIDER_READBACK_PENDING`.
