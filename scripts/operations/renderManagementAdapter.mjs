@@ -563,6 +563,14 @@ export async function buildRenderSettingsInventory({
   });
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   serviceId?: string | null;
+ *   commitId?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
 export async function triggerRenderExactCommitDeploy({
   apiKey,
   serviceId = EXPECTED_FINANCE_SERVICE.id,
@@ -658,6 +666,13 @@ function exactSuspendedValidationIdentity(expected, observed) {
   );
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   workspaceId?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
 export async function buildVerifiedSuspendedValidationServiceDeletionPlan({
   apiKey,
   workspaceId,
@@ -802,6 +817,13 @@ export async function deleteSuspendedValidationServices({
   });
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   confirmation?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
 export async function deleteExactStaleStaticSite({
   apiKey,
   confirmation,
@@ -866,6 +888,13 @@ function exactFinanceIdentity(service) {
   );
 }
 
+/**
+ * @param {{
+ *   apiKey?: string | null;
+ *   confirmation?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
 export async function disableFinancePrPreviews({
   apiKey,
   confirmation,
