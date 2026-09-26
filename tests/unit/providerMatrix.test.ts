@@ -44,7 +44,7 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.10.0');
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.11.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
@@ -109,6 +109,56 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     const blocked = await gateway.getSnapshot(request);
     expect(blocked.skippedProviders[0]?.reason).toBe('rate_limit_budget_exhausted');
     expect(getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot')?.diagnosticCode).toBe('rate_limited');
+  });
+
+  it('inventories existing stock-fundamental and macro/rate evidence lanes without activating candidates', () => {
+    expect(getProviderMatrixEntry('alpha-vantage')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'legacy_off_gateway',
+      assetClasses: ['stock'],
+    });
+    expect(getProviderMatrixEntry('alpha-vantage')?.capabilities).toEqual(
+      expect.arrayContaining(['fundamentals', 'history', 'quote']),
+    );
+
+    expect(getProviderMatrixEntry('fmp-traditional')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'legacy_off_gateway',
+      assetClasses: ['stock'],
+      capabilities: ['fundamentals'],
+    });
+
+    expect(getProviderMatrixEntry('fred')).toMatchObject({
+      enabled: true,
+      gatewayStatus: 'legacy_off_gateway',
+      assetClasses: ['macro', 'bond'],
+      capabilities: ['macro-series'],
+    });
+    expect(getProviderMatrixEntry('ecb')?.capabilities).toEqual(['macro-series']);
+
+    for (const id of ['finnhub', 'massive']) {
+      expect(getProviderMatrixEntry(id)).toMatchObject({
+        enabled: false,
+        gatewayStatus: 'not_wired',
+      });
+    }
+  });
+
+  it('records current compatibility history coverage for crypto/traditional/bond providers', () => {
+    expect(getProviderMatrixEntry('coingecko')?.capabilities).toContain('history');
+    expect(getProviderMatrixEntry('coinapi')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'orderbook']),
+    );
+    expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('index');
+    expect(getProviderMatrixEntry('eodhd')?.assetClasses).toEqual(
+      expect.arrayContaining(['crypto', 'stock', 'forex', 'bond']),
+    );
+    expect(getProviderMatrixEntry('binance-public')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'bars', 'orderbook']),
+    );
+    expect(getProviderMatrixEntry('kraken-futures-public')?.capabilities).toEqual(
+      expect.arrayContaining(['history', 'bars', 'orderbook']),
+    );
   });
 
   it('registers DeFiLlama as not_wired evidence only', () => {
