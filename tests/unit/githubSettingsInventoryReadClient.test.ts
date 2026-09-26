@@ -65,7 +65,7 @@ describe('GitHub settings inventory read client', () => {
       }
 
       if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/actions/runner-groups`) {
-        return jsonResponse({ total_count: 1, groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
+        return jsonResponse({ total_count: 1, runner_groups: [{ id: 1, name: 'default', visibility: 'selected' }] });
       }
 
       if (method === 'GET' && parsed.pathname === `/orgs/${ORGANIZATION}/rulesets`) {
