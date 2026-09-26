@@ -143,6 +143,15 @@ function projectAuditLog(payload) {
   });
 }
 
+/**
+ * @param {{
+ *   enterprise?: string | null;
+ *   organization?: string | null;
+ *   repository?: string | null;
+ *   enterpriseReadPat?: string | null;
+ *   fetchImpl?: typeof fetch;
+ * }} [options]
+ */
 export async function readGitHubSecurityPostureEvidence({
   enterprise,
   organization,
@@ -184,6 +193,7 @@ export async function readGitHubSecurityPostureEvidence({
     },
   ];
 
+  /** @type {Record<string, any>} */
   const entries = {};
   for (const read of reads) {
     try {
