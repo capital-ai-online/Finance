@@ -40,7 +40,13 @@ test('Supabase migration reconciliation fails closed when a remote row is unclas
 
 test('Supabase migration reconciliation fails closed when a timestamp alias points at a different migration name', () => {
   const ledger = structuredClone(loadSupabaseMigrationLedger());
-  const alias = ledger.remote_migrations.find((entry) => entry.classification === 'TIMESTAMP_ALIAS');
+  const alias = ledger.remote_migrations[0];
+  assert.ok(alias, 'fixture requires at least one remote migration');
+
+  // The canonical ledger intentionally contains zero aliases after exact reconciliation.
+  // Build an invalid synthetic alias so this negative test remains independent of live drift.
+  alias.classification = 'TIMESTAMP_ALIAS';
+  alias.remote_version = '29991231235959';
   alias.remote_name = `${alias.remote_name}_drift`;
 
   const errors = validateSupabaseMigrationLedgerObject(process.cwd(), ledger);
