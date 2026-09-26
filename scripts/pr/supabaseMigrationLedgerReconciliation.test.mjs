@@ -17,6 +17,9 @@ test('OPS/PVC-02 Supabase migration reconciliation classifies the full checked-i
     ledger.summary.remote_total,
   );
   assert.equal(ledger.summary.unknown, 0);
+  assert.equal(ledger.summary.exact_match, ledger.summary.remote_total);
+  assert.equal(ledger.summary.timestamp_alias, 0);
+  assert.equal(ledger.summary.remote_only_history, 0);
 });
 
 test('Supabase migration reconciliation fails closed when provider readback cardinality disagrees with the snapshot', () => {

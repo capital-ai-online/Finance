@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-SUPABASE-LEDGER-EXACT-RECONCILIATION-20260926",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Materialize every applied Supabase migration under its exact provider-ledger timestamp so Supabase Preview can reproduce the current history.",
+  "workItemDE": "Jede angewandte Supabase-Migration unter dem exakten Provider-Ledger-Zeitstempel materialisieren, damit Supabase Preview die Historie reproduzieren kann.",
+  "startedAt": "2026-09-26T16:57:21Z",
+  "baseBranch": "main",
+  "baseSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
+  "lastSyncedMainSha": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
+  "branch": "operations/supabase-ledger-exact-reconciliation-20260926",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation with supporting PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "priority": "P0",
+  "priorityReason": "The merged authentication fix cannot proceed through the release path while Supabase Preview rejects remote migration versions missing from the repository.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-SUPABASE-LEDGER-EXACT-RECONCILIATION-20260926.json",
+    "docs/projects/operations/work-packages/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.md",
+    "docs/projects/operations/evidence/OPS_02_SUPABASE_MIGRATION_LEDGER_EXACT_RECONCILIATION_2026-09-26.md",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json",
+    "supabase/migrations/*.sql",
+    "scripts/pr/supabaseMigrationLedgerReconciliation.test.mjs",
+    "tests/unit/privacyRetentionHardening.test.ts"
+  ],
+  "scopeBoundary": [
+    "Repository-only migration-history path reconciliation.",
+    "No Supabase migration repair, db push, apply_migration, DDL, DML, provider setting, secret, role, or Production mutation.",
+    "Already-applied provider history is copied from read-only schema_migrations statement evidence.",
+    "Seven current repository-local migrations remain pending and are not applied by this work item.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "acceptanceCriteria": [
+    "All 78 provider ledger versions have exact version/name paths in supabase/migrations.",
+    "Timestamp aliases and remote-only repository gaps are both zero.",
+    "The canonical reconciliation ledger validates with 78 exact matches and seven explicit local-only migrations.",
+    "Supabase Preview no longer reports remote migration versions missing locally.",
+    "Exact-head CI, Governance, Security, and Supabase checks pass.",
+    "No provider or Production mutation occurs."
+  ],
+  "evidence": {
+    "currentMain": "36fd8502178f42fd3b20562f4f60290fcbb2d11f",
+    "remoteProjectRef": "ryzywoktpmyhwzxmstyu",
+    "remoteReadback": "78 version/name rows; latest 20260924161429 profile_identity_settings.",
+    "before": "61 local files; 19 exact matches; 32 timestamp aliases; 27 remote-only history rows; 10 local-only files.",
+    "plannedAfter": "85 local files; 78 exact matches; zero aliases; zero remote-only rows; seven local-only files.",
+    "openWriterOverlap": "No open pull request at pre-create correlation.",
+    "ownerDirection": "Continue explaining the ledger and complete its fix in a separate repository PR."
+  },
+  "releaseCondition": "Release after Human/CODEOWNER merge, PR closure, supersession, or abandonment; agent self-merge remains prohibited."
+}
