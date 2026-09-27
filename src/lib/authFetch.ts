@@ -1,23 +1,16 @@
 // OPS-AUTH-BACKEND-01 — authenticated browser transport.
 //
 // Browser code no longer reads, refreshes or forwards Supabase tokens. The backend owns the
-// Supabase session in HttpOnly cookies. On a 401, one bounded /api/auth/session refresh/readback is
+// Supabase session in HttpOnly cookies. On a 401, one bounded /api/auth/session readback is
 // attempted before retrying the original same-origin request exactly once.
 
-const UNAUTHENTICATED_RESPONSE_BODY = JSON.stringify({ error: 'Anmeldung erforderlich.' });
+type SessionReadback = 'authenticated' | 'unauthenticated' | 'unavailable';
 
-let sessionRefreshInFlight: Promise<boolean> | null = null;
+let sessionRefreshInFlight: Promise<SessionReadback> | null = null;
 
 function notifyUnauthorized(url: string): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
-}
-
-function unauthenticatedResponse(): Response {
-  return new Response(UNAUTHENTICATED_RESPONSE_BODY, {
-    status: 401,
-    headers: { 'Content-Type': 'application/json' },
-  });
 }
 
 function isSameOriginPath(url: string): boolean {
@@ -40,7 +33,7 @@ async function sendSameOrigin(url: string, options: RequestInit): Promise<Respon
   });
 }
 
-async function refreshBackendSession(): Promise<boolean> {
+async function refreshBackendSession(): Promise<SessionReadback> {
   if (!sessionRefreshInFlight) {
     sessionRefreshInFlight = (async () => {
       try {
@@ -50,11 +43,15 @@ async function refreshBackendSession(): Promise<boolean> {
           cache: 'no-store',
           headers: { Accept: 'application/json' },
         });
-        if (!response.ok) return false;
+        if (response.status === 401 || response.status === 403) return 'unauthenticated';
+        if (!response.ok) return 'unavailable';
+
         const payload = await response.json().catch(() => null);
-        return payload?.authenticated === true;
+        if (payload?.authenticated === true) return 'authenticated';
+        if (payload?.authenticated === false) return 'unauthenticated';
+        return 'unavailable';
       } catch {
-        return false;
+        return 'unavailable';
       }
     })().finally(() => {
       sessionRefreshInFlight = null;
@@ -64,26 +61,19 @@ async function refreshBackendSession(): Promise<boolean> {
 }
 
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  let firstResponse: Response;
-  try {
-    firstResponse = await sendSameOrigin(url, options);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'AUTH_FETCH_CROSS_ORIGIN_BLOCKED') {
-      throw error;
-    }
-    notifyUnauthorized(url);
-    return unauthenticatedResponse();
-  }
-
+  const firstResponse = await sendSameOrigin(url, options);
   if (firstResponse.status !== 401) return firstResponse;
 
-  const refreshed = await refreshBackendSession();
-  if (!refreshed) {
+  const sessionState = await refreshBackendSession();
+  if (sessionState === 'unauthenticated') {
     notifyUnauthorized(url);
     return firstResponse;
   }
 
-  const retryResponse = await sendSameOrigin(url, options);
-  if (retryResponse.status === 401) notifyUnauthorized(url);
-  return retryResponse;
+  if (sessionState === 'unavailable') return firstResponse;
+
+  // A second 401 after a verified session is endpoint-specific authorization evidence. It must
+  // not clear the global session or redirect an authenticated user away from the current route.
+  return sendSameOrigin(url, options);
 }
+// end of authenticated transport
