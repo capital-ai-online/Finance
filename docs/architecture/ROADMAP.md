@@ -2,8 +2,8 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
-**Status date:** `2026-09-26`  
-**Baseline:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`  
+**Status date:** `2026-09-27`  
+**Baseline:** `main@bba1cfbda80f42071242992a725e4abc1d83143e`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -35,17 +35,17 @@ Canonical ownership is resolved from:
 
 Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..17` FINTECH. `CAPITAL-AI-DATA` is superseded as an independent productive owner. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
 
-## Bounded package audit — 2026-09-27
+## Begrenzte Arbeitspaket-Prüfung — 2026-09-27
 
-**Audit generation:** `main@6ca4df2e7cca8d8b723c3402bc1237183d9b8e73` (PR #1471 merged). This supplements the older full Roadmap correlation below; it does not assert that every owner projection or provider exit gate has been reconciled.
+**Prüfstand:** `main@6ca4df2e7cca8d8b723c3402bc1237183d9b8e73` nach dem Merge von PR #1471. Der [Paket-Abgleich](./evidence/ROADMAP_PACKAGE_CORRELATION_2026-09-27.md) dokumentiert 105 direkte Paketdateien aus sieben Projektordnern mit Quellstatus, Abhängigkeitsauszug und Exit-Anforderung. Drei Einträge sind durch die Owner-Roadmap als terminal belegt, einer hat ein offenes Evidence-Gate, einer ist abhängigkeitsgehalten und 100 bleiben in diesem begrenzten Prüfstand `UNGEKLÄRT`. Diese Zahlen zählen geprüfte Dateien, keine aktiven Aufgaben oder Fertigstellungsquote.
 
-The [exact-main package correlation](./evidence/ROADMAP_PACKAGE_CORRELATION_2026-09-27.md) enumerates 105 direct work-package files from seven project folders and records each source label, dependency excerpt and exit requirement. Three are corroborated terminal on their current owner Roadmap, one has an explicit open evidence gate, one is dependency-held, and 100 remain `UNGEKLÄRT` in this bounded audit. These figures count audited files, not live work items or completion percentage. CLIENT, SEC, SEO and SOCIAL current package identities live in their Roadmaps or this Live Roadmap rather than in those seven direct file directories; they are still consumed by `/api/roadmap/state` where recognized.
+**Main-Korrelation:** `main@bba1cfbda80f42071242992a725e4abc1d83143e` enthält den Merge von FE-PR #1472. Die öffentliche `/roadmap`-Komponente ist damit auf Main; ein Runtime-/Produktions-Readback wurde hier nicht durchgeführt. CLIENT, SEC, SEO und SOCIAL besitzen aktuelle Paketidentitäten in ihren Roadmaps beziehungsweise in dieser führenden Projektion, außerhalb der sieben direkt inventarisierten Dateiordner.
 
-**Known drift:** `OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md` still describes an on-branch Human-merge gate after PR #1471 reached Main. The merged code is established; successful provider inventory/storage readback is not. The owner-correct OPS package and claim must be reconciled before closure. The read-only API currently projects non-terminal owner Roadmap states from one exact `CURRENT_MAIN`, but does not carry each package's terminal history or exit-evidence verdict. Draft PR #1472 owns `RoadmapDashboard.tsx`; its exact-head checks and Production/cadence baseline remain independent gates. Do not create a competing FE writer for that file.
+**Bekannte Abweichung:** `OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md` nennt nach dem Merge von PR #1471 weiterhin einen Branch-/Human-Merge-Zustand. Die Code-Integration ist belegt; erfolgreicher Provider-Readback für Einstellungsinventar und Storage-Bericht ist durch diesen Prüfstand nicht belegt. OPS muss Paket und Claim owner-korrekt korrelieren. Die lesende API projiziert nichtterminale Owner-Roadmap-Zustände auf einem gemeinsamen CURRENT_MAIN, enthält jedoch nicht die terminale Paketgeschichte und keinen Exit-Evidenz-Verdict je Paket.
 
-## Current correlation — 2026-09-26
+## Historische Korrelation — 2026-09-26
 
-- CURRENT_MAIN for this projection is `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`, Human/CODEOWNER merge of PR #1467.
+- Der damalige Korrelationsstand war `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0` nach dem Human/CODEOWNER-Merge von PR #1467. Der aktuelle Main-Stand steht im Kopf dieses Dokuments.
 - Recent merged implementation evidence relevant to closure correlation is #1463 (OPS Security Posture/Render API hardening), #1465 (GOV Production Release Authority supersession) and #1466 (OPS Auth-Session/Profile convergence).
 - PR #1467 is now Human/CODEOWNER-merged. Its repository migration-ledger reconciliation is on main, while the explicit Supabase Preview exit criterion remains evidence-gated because the observed provider check was `skipped`.
 - `CAPITAL-AI-SEC` and `CAPITAL-AI-QM` remain migrated to this Live Roadmap for current status. Other projects retain owner-correct project Roadmaps until their own migration is Human/CODEOWNER-merged.
