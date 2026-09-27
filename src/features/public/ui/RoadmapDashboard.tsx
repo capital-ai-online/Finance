@@ -5,9 +5,7 @@ import {
   ArrowLeft,
   CircleDot,
   Clock3,
-  ExternalLink,
   GitBranch,
-  GitPullRequest,
   Layers3,
   Radio,
   ShieldCheck,
@@ -20,7 +18,6 @@ import {
   type RoadmapIntegrationItem,
   type RoadmapIntegrationState,
   type RoadmapQueueState,
-  type RoadmapWorkPackage,
   type RoadmapWorkState,
 } from './roadmapSnapshot';
 import {
@@ -35,6 +32,8 @@ import {
   parseRoadmapLiveProjection,
   splitRoadmapLiveItems,
   type RoadmapLiveClientState,
+  type RoadmapLiveItem,
+  type RoadmapLiveState,
 } from './roadmapLiveState';
 
 type ProductionIdentityState =
@@ -140,11 +139,184 @@ function shortSha(value: string | null | undefined) {
   return value ? value.slice(0, 8) : 'nicht verfügbar';
 }
 
-function statusIcon(state: RoadmapWorkState) {
-  if (state === 'in-flight') return <GitPullRequest className="h-4 w-4" aria-hidden="true" />;
-  if (state === 'evidence-gate') return <ShieldCheck className="h-4 w-4" aria-hidden="true" />;
-  if (state === 'in-progress') return <Activity className="h-4 w-4" aria-hidden="true" />;
-  return <CircleDot className="h-4 w-4" aria-hidden="true" />;
+const LIVE_COLUMNS: Array<{ state: RoadmapLiveState; label: string }> = [
+  { state: 'QUEUED', label: 'Queued' },
+  { state: 'HELD', label: 'Held' },
+  { state: 'READY', label: 'Ready' },
+  { state: 'EVIDENCE_GATE', label: 'Evidence' },
+  { state: 'IN_PROGRESS', label: 'In Progress' },
+  { state: 'ACTIVE', label: 'Active' },
+];
+
+const LIVE_STATE_STYLE: Record<RoadmapLiveState, string> = {
+  QUEUED: QUEUE_STYLE.queued,
+  HELD: QUEUE_STYLE.held,
+  READY: QUEUE_STYLE.ready,
+  EVIDENCE_GATE: STATE_STYLE['evidence-gate'],
+  IN_PROGRESS: STATE_STYLE['in-progress'],
+  ACTIVE: STATE_STYLE.active,
+};
+
+function liveColumnIcon(state: RoadmapLiveState) {
+  if (state === 'HELD' || state === 'EVIDENCE_GATE') {
+    return <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />;
+  }
+  if (state === 'IN_PROGRESS') return <Activity className="h-3.5 w-3.5" aria-hidden="true" />;
+  if (state === 'ACTIVE' || state === 'READY') return <CircleDot className="h-3.5 w-3.5" aria-hidden="true" />;
+  return <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />;
+}
+
+function buildOwnerLanes(items: RoadmapLiveItem[]) {
+  const grouped = new Map<string, RoadmapLiveItem[]>();
+  for (const item of items) {
+    const bucket = grouped.get(item.projectId);
+    if (bucket) bucket.push(item);
+    else grouped.set(item.projectId, [item]);
+  }
+
+  const known = PROJECT_ROUTES.map((route) => route.projectId);
+  const ordered = [
+    ...known.filter((projectId) => grouped.has(projectId)),
+    ...[...grouped.keys()].filter((projectId) => !known.includes(projectId)).sort(),
+  ];
+
+  return ordered.map((projectId) => ({
+    projectId,
+    route: PROJECT_ROUTES.find((route) => route.projectId === projectId) ?? null,
+    items: grouped.get(projectId) ?? [],
+  }));
+}
+
+function OwnerStateTimeline({
+  items,
+  selectedId,
+  onSelect,
+}: {
+  items: RoadmapLiveItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const lanes = buildOwnerLanes(items);
+
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div
+        className="grid min-w-[68rem] gap-2"
+        style={{ gridTemplateColumns: 'minmax(11rem, 14rem) repeat(6, minmax(9.25rem, 1fr))' }}
+        role="table"
+        aria-label="Owner-Timeline nach Work-State"
+      >
+        <div role="row" className="contents">
+          <div role="columnheader" className="px-2 py-2 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-white/40">
+            Project Owner
+          </div>
+          {LIVE_COLUMNS.map((column) => (
+            <div
+              key={column.state}
+              role="columnheader"
+              className="flex items-center gap-1.5 px-2 py-2 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-white/55"
+            >
+              {liveColumnIcon(column.state)}
+              {column.label}
+            </div>
+          ))}
+        </div>
+
+        {lanes.map((lane) => (
+          <div key={lane.projectId} role="row" className="contents">
+            <div role="rowheader" className="rounded-xl border border-white/8 bg-black/25 px-3 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+                {lane.route ? `${lane.route.symbol} ${lane.route.displayName}` : 'Unmapped'}
+              </p>
+              <p className="mt-1 break-words text-xs font-black text-white" style={{ color: lane.route?.color }}>
+                {lane.projectId}
+              </p>
+              <p className="mt-2 font-mono text-[10px] text-white/40">{lane.items.length} Pakete</p>
+            </div>
+            {LIVE_COLUMNS.map((column) => {
+              const cellItems = lane.items.filter((item) => item.state === column.state);
+              return (
+                <div
+                  key={`${lane.projectId}-${column.state}`}
+                  role="cell"
+                  className="min-h-16 rounded-xl border border-white/8 bg-black/15 p-1.5"
+                >
+                  {cellItems.length === 0 ? (
+                    <span className="block px-2 py-3 text-center font-mono text-[10px] text-white/20" aria-hidden="true">
+                      —
+                    </span>
+                  ) : (
+                    <div className="flex flex-col gap-1.5">
+                      {cellItems.map((item) => {
+                        const selected = selectedId === item.id;
+                        return (
+                          <button
+                            key={`${item.id}-${item.state}`}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => onSelect(item.id)}
+                            className={`min-h-11 rounded-lg border px-2 py-1.5 text-left ${LIVE_STATE_STYLE[item.state]} ${
+                              selected ? 'ring-1 ring-brand-primary' : ''
+                            }`}
+                          >
+                            <span className="block font-mono text-[10px] font-black">{item.id}</span>
+                            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-white/90">
+                              {item.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LiveItemDetail({ item }: { item: RoadmapLiveItem }) {
+  return (
+    <LandingPanel elevated className="mt-4 flex flex-col gap-3 border-white/8 bg-surface/75 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
+            {item.projectId} · {item.projectFolder}
+          </p>
+          <h3 className="mt-1 break-words text-base font-extrabold text-white">{item.id}</h3>
+          <p className="mt-1 text-sm font-semibold text-white/75">{item.title}</p>
+        </div>
+        <span
+          className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${LIVE_STATE_STYLE[item.state]}`}
+        >
+          {liveColumnIcon(item.state)}
+          <span className="break-words">{item.stateLabel}</span>
+        </span>
+      </div>
+      {item.detail ? <p className="text-sm leading-6 text-text-secondary">{item.detail}</p> : null}
+      <div className="space-y-2 border-t border-white/8 pt-3">
+        <p className="text-[11px] leading-5 text-white/55">
+          <span className="font-bold text-white/70">Owner-Boundary:</span> {item.pvcRelationship}
+        </p>
+        <p className="text-[11px] leading-5 text-white/55">
+          <span className="font-bold text-white/70">Execution Group:</span> {item.executionGroup}
+          {item.workerCandidate ? ' · Worker Candidate' : ''}
+        </p>
+        {item.dependencies.length > 0 ? (
+          <p className="text-[11px] leading-5 text-white/55">
+            <span className="font-bold text-white/70">Abhängigkeiten:</span> {item.dependencies.join(' · ')}
+          </p>
+        ) : null}
+        <ProjectMetadata owner={item.projectId} />
+        <p className="break-all font-mono text-[10px] leading-5 text-white/40">
+          {item.source} · {shortSha(item.sourceSha)}
+        </p>
+      </div>
+    </LandingPanel>
+  );
 }
 
 function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
@@ -178,49 +350,6 @@ function IntegrationCard({ item }: { item: RoadmapIntegrationItem }) {
   );
 }
 
-function WorkPackageCard({ item }: { item: RoadmapWorkPackage }) {
-  return (
-    <LandingPanel elevated className="flex h-full flex-col gap-4 border-white/8 bg-surface/75 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-            {item.owner} · {item.phase}
-          </p>
-          <h3 className="mt-1 break-words text-base font-extrabold text-white">{item.id}</h3>
-          <p className="mt-1 text-sm font-semibold text-white/75">{item.title}</p>
-        </div>
-        <span
-          className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${STATE_STYLE[item.state]}`}
-        >
-          {statusIcon(item.state)}
-          <span className="break-words">{item.stateLabel}</span>
-        </span>
-      </div>
-
-      <p className="text-sm leading-6 text-text-secondary">{item.detail}</p>
-
-      <div className="mt-auto space-y-2 border-t border-white/8 pt-3">
-        <p className="text-[11px] leading-5 text-white/55">
-          <span className="font-bold text-white/70">Owner-Boundary:</span> {item.relationship}
-        </p>
-        <ProjectMetadata owner={item.owner} />
-        <p className="break-all font-mono text-[10px] leading-5 text-white/40">{item.source}</p>
-        {item.prNumber ? (
-          <a
-            href={`https://github.com/capital-ai-online/Finance/pull/${item.prNumber}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-brand-primary transition hover:text-aif-gold-light"
-          >
-            PR #{item.prNumber} öffnen
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
-        ) : null}
-      </div>
-    </LandingPanel>
-  );
-}
-
 export function RoadmapDashboard() {
   const [production, setProduction] = useState<ProductionIdentityState>({
     status: 'loading',
@@ -235,6 +364,7 @@ export function RoadmapDashboard() {
     error: null,
   });
   const [projectFilters, setProjectFilters] = useState<RoadmapProjectFilters>(EMPTY_FILTERS);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -305,6 +435,11 @@ export function RoadmapDashboard() {
     [liveProjection, projectFilters],
   );
 
+  const selectedLiveItem = useMemo(
+    () => filteredLiveItems.find((item) => item.id === selectedItemId) ?? null,
+    [filteredLiveItems, selectedItemId],
+  );
+
   const liveWork = useMemo(
     () => splitRoadmapLiveItems(filteredLiveItems),
     [filteredLiveItems],
@@ -354,8 +489,8 @@ export function RoadmapDashboard() {
       title="CAPITAL-AI Roadmap"
       description={
         <>
-          Aktive Arbeitspakete, Owner-Grenzen und Runtime-Evidence aus dem
-          Live-Work-State von <code>/api/roadmap/state</code>. Produktivstatus wird separat über <code>/healthz</code> gelesen.
+          Owner-Timeline des Live-Work-State von <code>/api/roadmap/state</code>.
+          Die Spalten sind Zustände, keine Termine. Produktivstatus wird separat über <code>/healthz</code> gelesen.
         </>
       }
       actions={
@@ -673,40 +808,52 @@ export function RoadmapDashboard() {
           </div>
         </section>
 
-        <section aria-labelledby="active-work-title">
+        <section aria-labelledby="owner-timeline-title">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-brand-primary">
-                Current Work Graph
+                Owner-Timeline
               </p>
-              <h2 id="active-work-title" className="mt-1 text-xl font-black text-white sm:text-2xl">
-                Aktive bearbeitete Arbeitspakete
+              <h2 id="owner-timeline-title" className="mt-1 text-xl font-black text-white sm:text-2xl">
+                Work-State nach Project Owner
               </h2>
             </div>
-            <p className="text-xs text-white/45">
+            <p className="max-w-xl text-xs leading-5 text-white/45">
               {liveRoadmap.status === 'available'
-                ? `${metrics.owners} beteiligte Owner · ${liveRoadmap.projection.stale ? 'STALE' : 'LIVE'} ${shortSha(liveCurrentMainSha)}`
+                ? `${metrics.owners} beteiligte Owner · ${filteredLiveItems.length} Pakete · ${liveRoadmap.projection.stale ? 'STALE' : 'LIVE'} ${shortSha(liveCurrentMainSha)}`
                 : 'Live Work-State nicht verfügbar'}
             </p>
           </div>
+          <p className="mb-4 max-w-3xl text-xs leading-5 text-white/50">
+            Keine Kalenderachse. Live-Items tragen keine Start- oder Enddaten. Queued, Held und Ready stehen in derselben
+            Owner-Zeile wie Evidence, In Progress und Active.
+          </p>
 
-          <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {liveRoadmap.status === 'loading' ? (
-              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
-                Live Work-State wird geladen…
-              </LandingPanel>
-            ) : liveRoadmap.status === 'unavailable' ? (
-              <LandingPanel className="border-score-warning/20 bg-score-warning/5 p-4 text-sm text-score-warning">
-                Live Work-State nicht verfügbar — aktive Arbeit wird fail-closed ausgeblendet.
-              </LandingPanel>
-            ) : visibleWorkPackages.length === 0 ? (
-              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
-                Keine aktiven Arbeitspakete im aktuellen Filter.
-              </LandingPanel>
-            ) : (
-              visibleWorkPackages.map((item) => <WorkPackageCard key={item.id} item={item} />)
-            )}
-          </div>
+          {liveRoadmap.status === 'loading' ? (
+            <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+              Live Work-State wird geladen…
+            </LandingPanel>
+          ) : liveRoadmap.status === 'unavailable' ? (
+            <LandingPanel className="border-score-warning/20 bg-score-warning/5 p-4 text-sm text-score-warning">
+              Live Work-State nicht verfügbar — aktive Arbeit wird fail-closed ausgeblendet.
+            </LandingPanel>
+          ) : filteredLiveItems.length === 0 ? (
+            <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+              Keine Live-Items im aktuellen Filter.
+            </LandingPanel>
+          ) : (
+            <>
+              <p className="mb-2 text-[11px] text-white/40 lg:hidden">Seitlich wischen, um alle Zustände zu sehen.</p>
+              <OwnerStateTimeline
+                items={filteredLiveItems}
+                selectedId={selectedLiveItem?.id ?? null}
+                onSelect={(id) => setSelectedItemId((current) => (current === id ? null : id))}
+              />
+              {selectedLiveItem ? <LiveItemDetail item={selectedLiveItem} /> : (
+                <p className="mt-3 text-xs text-white/40">Ein Paket wählen, um Quelle, Gate und Owner-Grenze zu lesen.</p>
+              )}
+            </>
+          )}
         </section>
 
         <section aria-labelledby="integration-ledger-title" className="landing-page-panel landing-page-panel--elevated">
@@ -729,51 +876,6 @@ export function RoadmapDashboard() {
             {visibleIntegrations.map((item) => (
               <IntegrationCard key={item.id} item={item} />
             ))}
-          </div>
-        </section>
-
-        <section aria-labelledby="queue-title" className="landing-page-panel">
-          <div className="flex items-center gap-3">
-            <Clock3 className="h-5 w-5 text-brand-primary" aria-hidden="true" />
-            <div>
-              <p className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary">
-                Dependency Queue
-              </p>
-              <h2 id="queue-title" className="text-lg font-black text-white">
-                Ready / Held / Queued
-              </h2>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            {liveRoadmap.status === 'loading' ? (
-              <p className="text-xs text-text-secondary">Live Queue wird geladen…</p>
-            ) : liveRoadmap.status === 'unavailable' ? (
-              <p className="text-xs font-semibold text-score-warning">
-                Live Queue nicht verfügbar — keine statische Queue wird als aktuell dargestellt.
-              </p>
-            ) : visibleQueuedItems.length === 0 ? (
-              <p className="text-xs text-text-secondary">Keine Ready/Held/Queued-Items im aktuellen Filter.</p>
-            ) : (
-              visibleQueuedItems.map((item) => (
-                <div key={item.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">{item.owner}</p>
-                      <h3 className="mt-1 text-sm font-black text-white">{item.id}</h3>
-                    </div>
-                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase ${QUEUE_STYLE[item.state]}`}>
-                      {item.stateLabel}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-xs leading-5 text-text-secondary">{item.gate}</p>
-                  <div className="mt-3">
-                    <ProjectMetadata owner={item.owner} />
-                  </div>
-                  <p className="mt-3 break-all font-mono text-[10px] text-white/35">{item.source}</p>
-                </div>
-              ))
-            )}
           </div>
         </section>
 
