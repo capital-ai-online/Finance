@@ -1,21 +1,21 @@
-# Roadmap package correlation audit — 2026-09-27
+# Roadmap-Arbeitspakete: Korrelationsprüfung vom 27.09.2026
 
-**Baseline:** `main@6ca4df2e7cca8d8b723c3402bc1237183d9b8e73`  
-**Role:** one-time, non-authorizing evidence snapshot; never a second task registry.  
-**Scope:** 105 markdown/YAML files directly under seven project `work-packages/` folders. Nested Documentary package folders, package identities present only in ROADMAP.md, provider readbacks and runtime exit evidence are outside this bounded file enumeration.  
-**Open PR at readback:** #1472 (CAPITAL-AI-FE, `RoadmapDashboard.tsx`).
+**Prüfstand:** `main@6ca4df2e7cca8d8b723c3402bc1237183d9b8e73`  
+**Rolle:** einmaliger, nicht autorisierender Evidenz-Snapshot; kein zweites Aufgabenregister.  
+**Umfang:** 105 Markdown-/YAML-Dateien direkt unter sieben Projektordnern `work-packages/`. Verschachtelte Documentary-Paketordner, ausschließlich in `ROADMAP.md` geführte Identitäten, Provider-Readbacks und Runtime-Exit-Evidenz sind nicht Teil dieser Dateizählung.  
+**Damals offener PR:** #1472 (`CAPITAL-AI-FE`, `RoadmapDashboard.tsx`); inzwischen auf `main@bba1cfbda80f42071242992a725e4abc1d83143e` gemergt.
 
-## Method and interpretation
+## Methode und Aussagegrenze
 
-The source label, dependency excerpt and exit excerpt below are taken from each file at the same exact Main SHA. They are not independent proof that an exit gate passed. `VERIFIED` is used only where the current owner or leading Roadmap additionally records a terminal main outcome. `OFFEN` means an explicit evidence gate remains. `GEHALTEN` means a current owner Roadmap declares a dependency hold. Every other file is `UNGEKLÄRT`, including historical “on branch” labels without an open matching PR. This conservative classification deliberately does not reopen terminal work.
+Quellstatus, Abhängigkeits- und Exit-Auszug stammen aus jeder Datei am selben Main-SHA. Sie beweisen für sich genommen keinen bestandenen Exit-Gate. `VERIFIED` wird nur verwendet, wenn die aktuelle Owner- oder führende Roadmap zusätzlich einen terminalen Main-Zustand festhält. `OFFEN` bezeichnet ein ausdrücklich verbleibendes Evidenz-Gate. `GEHALTEN` bezeichnet eine in der Owner-Roadmap ausgewiesene Abhängigkeit. Alle übrigen Dateien bleiben `UNGEKLÄRT`, darunter alte Branch-Angaben ohne passenden offenen PR. Die Einstufung aktiviert abgeschlossene Arbeit nicht erneut.
 
-**Counts within this bounded enumeration:** VERIFIED 3; OFFEN 1; GEHALTEN 1; UNGEKLÄRT 100. These are audit dispositions of files, not product-readiness percentages or live task counts.
+**Dateizählung:** VERIFIED 3; OFFEN 1; GEHALTEN 1; UNGEKLÄRT 100. Das sind Einstufungen der inventarisierten Dateien, weder Produktreife-Prozente noch die Anzahl laufender Aufgaben.
 
-**Specific reconciliation:** PR #1471 is merged at this baseline, while `OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md` still says `SECOND_FOLLOW_UP_ON_BRANCH`. Code merge is established; successful post-merge Settings Inventory, redacted export and Storage Capability report are not established by this audit. The parent remains evidence-gated. PR #1472 owns the public FE component and is blocked on its own required checks and Production/cadence baseline; this audit does not overwrite that writer.
+**Konkrete Abweichung:** PR #1471 ist auf dem gebundenen Main-Stand gemergt; `OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md` nennt weiter `SECOND_FOLLOW_UP_ON_BRANCH`. Die Code-Integration ist belegt. Erfolgreiche Nachweise für Einstellungsinventar, redigierten Export und Storage-Bericht wurden in dieser Prüfung nicht gefunden. Das Elternpaket bleibt evidenzgebunden.
 
-## Per-file evidence index
+## Evidenzindex je Datei
 
-| Project · source file | Disposition | Source label on Main | Dependency excerpt | Exit-evidence requirement excerpt |
+| Projekt · Quelldatei | Einstufung | Quellstatus auf Main | Auszug zur Abhängigkeit | Auszug zur Exit-Anforderung |
 |---|---|---|---|---|
 | compliance · [COMP_ISSUE_1327_PRICING_ARCHIVE_LEGAL_CONVERGENCE_2026-09-23.md](../../projects/compliance/work-packages/COMP_ISSUE_1327_PRICING_ARCHIVE_LEGAL_CONVERGENCE_2026-09-23.md) | UNGEKLÄRT | FE_1325_TERMINAL / SYNCED_TO_CURRENT_MAIN / VALIDATION_PENDING / HUMAN_MERGE_REQUIRED | FE PR #1325 is Human-merged on `main@5acdac23acce3999394ea05949fc9cd2479ffc63`. This Compliance slice is freshly synchronized on top of | 1. No current AGB table advertises Starter/Pro/Enterprise prices as newly orderable. 2. FAQ truthfully states that the previous catalog |
 | documentary · [DOC_AUTOSYNC_BRANCH_COLLISION_INTEGRITY_01_2026-09-24.md](../../projects/documentary/work-packages/DOC_AUTOSYNC_BRANCH_COLLISION_INTEGRITY_01_2026-09-24.md) | UNGEKLÄRT | IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED | nicht explizit dokumentiert | - Workflow no longer trusts branch existence by itself. - Existing branch reuse is bound to exact source SHA, one-commit ancestry, fres |
@@ -123,9 +123,9 @@ The source label, dependency excerpt and exit excerpt below are taken from each 
 | quality-management · [QM_OSS_CODE_QUALITY_02_COST_CONVERGENCE.md](../../projects/quality-management/work-packages/QM_OSS_CODE_QUALITY_02_COST_CONVERGENCE.md) | UNGEKLÄRT | TERMINAL_EVIDENCE / DONE_MAIN / MERGED_PR_1244 / PR_FAST_EXECUTION_VERIFIED | Open PRs were correlated against CURRENT_MAIN before branch creation. No open PR currently writes either OSS Quality workflow, the Unif | 1. branch contains then-current main and has no writer overlap; 2. repository TypeScript/tests remain green; |
 | quality-management · [QM_OSS_PR_FAST_RUNNER_DEDUP_01_2026-09-24.md](../../projects/quality-management/work-packages/QM_OSS_PR_FAST_RUNNER_DEDUP_01_2026-09-24.md) | UNGEKLÄRT | IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED | nicht explizit dokumentiert | 1. The fast workflow has exactly one hosted Ubuntu job. 2. Irrelevant paths do not start the optional PR_FAST workflow. |
 
-## Follow-up gates
+## Nachgelagerte Prüfschritte
 
-1. Re-read Main, open PRs and work claims before changing any project-owned package. Match each stale file to the canonical owner Roadmap and exact merge or provider evidence.
-2. Resolve the 100 unverified file dispositions owner-correctly; do not convert an old branch label into an active task or a terminal label into a fresh PASS.
-3. Keep `/api/roadmap/state` as a read-only current-main projection. It currently omits terminal package history and does not expose package exit evidence. Any API contract expansion belongs to OPS; #1472 owns the FE presentation file.
-4. After #1472 reaches exact-head checks, Security and Production/cadence baseline, Human/CODEOWNER decides its merge; then re-read Main and verify the /roadmap consumer against the API.
+1. Vor Änderungen an Owner-Paketen Main, offene PRs und Work Claims erneut lesen. Alte Dateizustände mit der kanonischen Owner-Roadmap und genauer Merge- oder Provider-Evidenz abgleichen.
+2. Die 100 ungeklärten Dateieinstufungen owner-korrekt auflösen. Ein alter Branch-Status erzeugt keine aktive Aufgabe, und ein terminales Label belegt keinen neuen PASS.
+3. `/api/roadmap/state` bleibt eine lesende Current-Main-Projektion. Terminale Paketgeschichte und Exit-Verdicts gehören derzeit nicht zum API-Vertrag. Eine Vertragserweiterung fällt in OPS-Zuständigkeit; die FE-Darstellung aus #1472 ist inzwischen auf Main.
+4. Die gemergte `/roadmap`-Ansicht gegen API, Runtime und Produktionsstand gesondert zurücklesen.
