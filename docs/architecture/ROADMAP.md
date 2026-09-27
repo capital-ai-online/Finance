@@ -35,6 +35,14 @@ Canonical ownership is resolved from:
 
 Primary productive ownership remains `PVC-01` CLIENT; `PVC-02/04/06/07/08/18` OPS; `PVC-03` DOC; `PVC-05` GOV; `PVC-09..17` FINTECH. `CAPITAL-AI-DATA` is superseded as an independent productive owner. Cross-cutting Security, Compliance, Quality, Frontend, SEO and Social roles do not acquire productive PVC ownership merely by observing, validating or presenting work.
 
+## Bounded package audit — 2026-09-27
+
+**Audit generation:** `main@6ca4df2e7cca8d8b723c3402bc1237183d9b8e73` (PR #1471 merged). This supplements the older full Roadmap correlation below; it does not assert that every owner projection or provider exit gate has been reconciled.
+
+The [exact-main package correlation](./evidence/ROADMAP_PACKAGE_CORRELATION_2026-09-27.md) enumerates 105 direct work-package files from seven project folders and records each source label, dependency excerpt and exit requirement. Three are corroborated terminal on their current owner Roadmap, one has an explicit open evidence gate, one is dependency-held, and 100 remain `UNGEKLÄRT` in this bounded audit. These figures count audited files, not live work items or completion percentage. CLIENT, SEC, SEO and SOCIAL current package identities live in their Roadmaps or this Live Roadmap rather than in those seven direct file directories; they are still consumed by `/api/roadmap/state` where recognized.
+
+**Known drift:** `OPS_GITHUB_SETTINGS_RUNNER_GROUPS_READBACK_FIX_2026-09-27.md` still describes an on-branch Human-merge gate after PR #1471 reached Main. The merged code is established; successful provider inventory/storage readback is not. The owner-correct OPS package and claim must be reconciled before closure. The read-only API currently projects non-terminal owner Roadmap states from one exact `CURRENT_MAIN`, but does not carry each package's terminal history or exit-evidence verdict. Draft PR #1472 owns `RoadmapDashboard.tsx`; its exact-head checks and Production/cadence baseline remain independent gates. Do not create a competing FE writer for that file.
+
 ## Current correlation — 2026-09-26
 
 - CURRENT_MAIN for this projection is `b4fe15600a20e22c0b5d58f8d358888491cdf0a0`, Human/CODEOWNER merge of PR #1467.
