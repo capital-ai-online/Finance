@@ -8,10 +8,6 @@ export const PUBLIC_READINESS_ENTERPRISE_RULESET = Object.freeze({
   enforcement: 'active',
   organization: 'capital-ai-online',
   repository: 'Finance',
-  requiredApprovingReviewCount: 1,
-  requireCodeOwnerReview: true,
-  requireLastPushApproval: false,
-  requiredReviewThreadResolution: true,
 });
 
 function fail(message) {
@@ -50,6 +46,26 @@ async function parseJson(response) {
   }
 }
 
+function safeProviderError(payload) {
+  if (!payload || typeof payload !== 'object') return '';
+  const message = typeof payload.message === 'string' ? payload.message.slice(0, 400) : '';
+  const documentationUrl =
+    typeof payload.documentation_url === 'string' ? payload.documentation_url.slice(0, 400) : '';
+  const errors = Array.isArray(payload.errors)
+    ? payload.errors.slice(0, 8).map((entry) => {
+        if (typeof entry === 'string') return entry.slice(0, 300);
+        if (!entry || typeof entry !== 'object') return String(entry).slice(0, 300);
+        return {
+          resource: String(entry.resource || '').slice(0, 120),
+          field: String(entry.field || '').slice(0, 120),
+          code: String(entry.code || '').slice(0, 120),
+          message: String(entry.message || '').slice(0, 300),
+        };
+      })
+    : [];
+  return JSON.stringify({ message, documentationUrl, errors });
+}
+
 function normalizeSet(value) {
   return {
     include: Array.isArray(value?.include) ? [...value.include].map(String).sort() : [],
@@ -57,37 +73,21 @@ function normalizeSet(value) {
   };
 }
 
-function projectRuleset(raw) {
-  if (!raw || typeof raw !== 'object') fail('provider ruleset response must be an object');
-  const pr = Array.isArray(raw.rules)
-    ? raw.rules.find((rule) => rule?.type === 'pull_request')?.parameters || {}
-    : {};
-  return Object.freeze({
-    id: Number(raw.id),
-    name: String(raw.name || ''),
-    target: String(raw.target || ''),
-    enforcement: String(raw.enforcement || ''),
-    sourceType: String(raw.source_type || ''),
-    bypassActors: Array.isArray(raw.bypass_actors) ? raw.bypass_actors : [],
-    organizationName: normalizeSet(raw.conditions?.organization_name),
-    repositoryName: normalizeSet(raw.conditions?.repository_name),
-    refName: normalizeSet(raw.conditions?.ref_name),
-    ruleTypes: Array.isArray(raw.rules)
-      ? raw.rules.map((rule) => String(rule?.type || '')).filter(Boolean).sort()
-      : [],
-    pullRequest: {
-      requiredApprovingReviewCount: Number(pr.required_approving_review_count),
-      dismissStaleReviewsOnPush: pr.dismiss_stale_reviews_on_push === true,
-      requireCodeOwnerReview: pr.require_code_owner_review === true,
-      requireLastPushApproval: pr.require_last_push_approval === true,
-      requiredReviewThreadResolution: pr.required_review_thread_resolution === true,
-      requireExtraApprovalForUnattributedChanges:
-        pr.require_extra_approval_for_unattributed_changes === true,
-      allowedMergeMethods: Array.isArray(pr.allowed_merge_methods)
-        ? [...pr.allowed_merge_methods].sort()
-        : [],
+function pullRequestParameters() {
+  return {
+    required_approving_review_count: 1,
+    dismiss_stale_reviews_on_push: true,
+    require_code_owner_review: true,
+    require_last_push_approval: false,
+    required_review_thread_resolution: true,
+    require_extra_approval_for_unattributed_changes: false,
+    required_reviewers: [],
+    dismissal_restriction: {
+      enabled: false,
+      allowed_actors: [],
     },
-  });
+    allowed_merge_methods: ['merge'],
+  };
 }
 
 function desiredBody({ organization, repository }) {
@@ -104,25 +104,50 @@ function desiredBody({ organization, repository }) {
     rules: [
       { type: 'deletion' },
       { type: 'non_fast_forward' },
-      {
-        type: 'pull_request',
-        parameters: {
-          required_approving_review_count: 1,
-          dismiss_stale_reviews_on_push: true,
-          require_code_owner_review: true,
-          require_last_push_approval: false,
-          required_review_thread_resolution: true,
-          require_extra_approval_for_unattributed_changes: false,
-          allowed_merge_methods: ['merge'],
-        },
-      },
+      { type: 'pull_request', parameters: pullRequestParameters() },
       { type: 'license_compliance_scanning' },
     ],
   };
 }
 
+function projectRuleset(raw) {
+  if (!raw || typeof raw !== 'object') fail('provider ruleset response must be an object');
+  const pull = Array.isArray(raw.rules)
+    ? raw.rules.find((rule) => rule?.type === 'pull_request')?.parameters || {}
+    : {};
+
+  return Object.freeze({
+    id: Number(raw.id),
+    name: String(raw.name || ''),
+    target: String(raw.target || ''),
+    enforcement: String(raw.enforcement || ''),
+    sourceType: String(raw.source_type || ''),
+    bypassActors: Array.isArray(raw.bypass_actors) ? raw.bypass_actors : [],
+    organizationName: normalizeSet(raw.conditions?.organization_name),
+    repositoryName: normalizeSet(raw.conditions?.repository_name),
+    refName: normalizeSet(raw.conditions?.ref_name),
+    ruleTypes: Array.isArray(raw.rules)
+      ? raw.rules.map((rule) => String(rule?.type || '')).filter(Boolean).sort()
+      : [],
+    pullRequest: {
+      requiredApprovingReviewCount: Number(pull.required_approving_review_count),
+      dismissStaleReviewsOnPush: pull.dismiss_stale_reviews_on_push === true,
+      requireCodeOwnerReview: pull.require_code_owner_review === true,
+      requireLastPushApproval: pull.require_last_push_approval === true,
+      requiredReviewThreadResolution: pull.required_review_thread_resolution === true,
+      requireExtraApprovalForUnattributedChanges:
+        pull.require_extra_approval_for_unattributed_changes === true,
+      requiredReviewers: Array.isArray(pull.required_reviewers) ? pull.required_reviewers : [],
+      dismissalRestrictionEnabled: pull.dismissal_restriction?.enabled === true,
+      allowedMergeMethods: Array.isArray(pull.allowed_merge_methods)
+        ? [...pull.allowed_merge_methods].sort()
+        : [],
+    },
+  });
+}
+
 function matchesDesired(projected, { organization, repository }) {
-  const pr = projected.pullRequest;
+  const pull = projected.pullRequest;
   return projected.name === PUBLIC_READINESS_ENTERPRISE_RULESET.name
     && projected.target === 'branch'
     && projected.enforcement === 'active'
@@ -136,20 +161,15 @@ function matchesDesired(projected, { organization, repository }) {
     && projected.refName.exclude.length === 0
     && JSON.stringify(projected.ruleTypes)
       === JSON.stringify(['deletion', 'license_compliance_scanning', 'non_fast_forward', 'pull_request'])
-    && pr.requiredApprovingReviewCount === 1
-    && pr.dismissStaleReviewsOnPush
-    && pr.requireCodeOwnerReview
-    && !pr.requireLastPushApproval
-    && pr.requiredReviewThreadResolution
-    && !pr.requireExtraApprovalForUnattributedChanges
-    && JSON.stringify(pr.allowedMergeMethods) === JSON.stringify(['merge']);
-}
-
-function oauthScopes(response) {
-  return String(response.headers.get('x-oauth-scopes') || '')
-    .split(',')
-    .map((scope) => scope.trim())
-    .filter(Boolean);
+    && pull.requiredApprovingReviewCount === 1
+    && pull.dismissStaleReviewsOnPush
+    && pull.requireCodeOwnerReview
+    && !pull.requireLastPushApproval
+    && pull.requiredReviewThreadResolution
+    && !pull.requireExtraApprovalForUnattributedChanges
+    && pull.requiredReviewers.length === 0
+    && !pull.dismissalRestrictionEnabled
+    && JSON.stringify(pull.allowedMergeMethods) === JSON.stringify(['merge']);
 }
 
 export function createGitHubPublicReadinessEnterpriseWriter({
@@ -157,7 +177,6 @@ export function createGitHubPublicReadinessEnterpriseWriter({
   organization = 'capital-ai-online',
   repository = 'Finance',
   enterpriseInstallationToken = '',
-  enterpriseAdminPat = '',
   fetchImpl = globalThis.fetch,
   apiBaseUrl = DEFAULT_API_BASE_URL,
 } = {}) {
@@ -166,29 +185,19 @@ export function createGitHubPublicReadinessEnterpriseWriter({
   assertSlug(repository, 'repository');
   if (typeof fetchImpl !== 'function') fail('fetchImpl is required');
 
-  const appToken = typeof enterpriseInstallationToken === 'string'
-    ? enterpriseInstallationToken.trim()
-    : '';
-  const adminPat = typeof enterpriseAdminPat === 'string'
-    ? enterpriseAdminPat.trim()
-    : '';
-  if (appToken.length < 20 && adminPat.length < 20) {
-    fail('enterpriseInstallationToken or enterpriseAdminPat is required');
-  }
-
+  const token =
+    typeof enterpriseInstallationToken === 'string' ? enterpriseInstallationToken.trim() : '';
+  if (token.length < 20) fail('enterpriseInstallationToken is required');
   const baseUrl = normalizeBaseUrl(apiBaseUrl);
-  let activeAuth = appToken.length >= 20
-    ? { source: 'ENTERPRISE_APP_INSTALLATION', token: appToken, patScopeVerified: false }
-    : { source: 'ENTERPRISE_ADMIN_PAT', token: adminPat, patScopeVerified: false };
 
-  async function perform(auth, method, path, body) {
+  async function request(method, path, body) {
     let response;
     try {
       response = await fetchImpl(`${baseUrl}${path}`, {
         method,
         headers: {
           Accept: 'application/vnd.github+json',
-          Authorization: `Bearer ${auth.token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
           'X-GitHub-Api-Version': API_VERSION,
         },
@@ -198,50 +207,15 @@ export function createGitHubPublicReadinessEnterpriseWriter({
     } catch (error) {
       fail(`GitHub API network request failed: ${error?.name || 'unknown error'}`);
     }
-    return { response, payload: await parseJson(response) };
-  }
 
-  function verifyAdminPatScope(response) {
-    const scopes = oauthScopes(response);
-    if (!scopes.includes('admin:enterprise')) {
-      fail('enterprise admin PAT fallback is missing verified admin:enterprise OAuth scope');
-    }
-    activeAuth = { ...activeAuth, patScopeVerified: true };
-  }
-
-  async function request(method, path, body) {
-    let attempt = await perform(activeAuth, method, path, body);
-
-    if (
-      !attempt.response.ok
-      && attempt.response.status === 403
-      && method === 'GET'
-      && activeAuth.source === 'ENTERPRISE_APP_INSTALLATION'
-      && adminPat.length >= 20
-    ) {
-      activeAuth = {
-        source: 'ENTERPRISE_ADMIN_PAT_403_FALLBACK',
-        token: adminPat,
-        patScopeVerified: false,
-      };
-      attempt = await perform(activeAuth, method, path, body);
-      if (attempt.response.ok) verifyAdminPatScope(attempt.response);
-    }
-
-    if (
-      attempt.response.ok
-      && activeAuth.source.startsWith('ENTERPRISE_ADMIN_PAT')
-      && !activeAuth.patScopeVerified
-    ) {
-      verifyAdminPatScope(attempt.response);
-    }
-
-    if (!attempt.response.ok) {
+    const payload = await parseJson(response);
+    if (!response.ok) {
+      const detail = safeProviderError(payload);
       fail(
-        `GitHub API ${method} request failed with HTTP ${attempt.response.status} via ${activeAuth.source}`,
+        `GitHub API ${method} request failed with HTTP ${response.status} via ENTERPRISE_APP_INSTALLATION${detail ? `: ${detail}` : ''}`,
       );
     }
-    return attempt.payload;
+    return payload;
   }
 
   async function findTargetRuleset() {
@@ -273,11 +247,8 @@ export function createGitHubPublicReadinessEnterpriseWriter({
         repository,
         rulesetName: PUBLIC_READINESS_ENTERPRISE_RULESET.name,
         publicMethods: ['GET', 'PUT'],
-        authPreference: [
-          'ENTERPRISE_APP_INSTALLATION',
-          'ENTERPRISE_ADMIN_PAT_403_FALLBACK',
-        ],
-        adminPatFallbackOnlyAfterAppGet403: true,
+        authSource: 'ENTERPRISE_APP_INSTALLATION',
+        classicPatFallback: false,
         rawProxy: false,
         tokenPersistence: false,
         repositoryVisibilityMutation: false,
@@ -295,14 +266,14 @@ export function createGitHubPublicReadinessEnterpriseWriter({
         fail('precondition failed: target is not the expected Enterprise branch ruleset');
       }
       if (before.bypassActors.length !== 0) {
-        fail('precondition failed: target Enterprise branch ruleset contains bypass actors; no mutation performed');
+        fail('precondition failed: target Enterprise branch ruleset contains bypass actors');
       }
 
       if (matchesDesired(before, { organization, repository })) {
         return Object.freeze({
           status: 'NOOP_ALREADY_HARDENED',
           mutationPerformed: false,
-          authSource: activeAuth.source,
+          authSource: 'ENTERPRISE_APP_INSTALLATION',
           before,
           after: before,
         });
@@ -320,7 +291,7 @@ export function createGitHubPublicReadinessEnterpriseWriter({
       return Object.freeze({
         status: 'UPDATED_AND_VERIFIED',
         mutationPerformed: true,
-        authSource: activeAuth.source,
+        authSource: 'ENTERPRISE_APP_INSTALLATION',
         before,
         after,
       });
