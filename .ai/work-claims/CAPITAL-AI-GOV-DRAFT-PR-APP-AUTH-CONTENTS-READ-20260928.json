@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-20260928",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -40,5 +40,14 @@
     "Workflow security, zizmor, Governance and required hosted checks pass at exact head.",
     "After Human merge, a fresh autonomous Agent Branch Signal reaches the canonical writer and creates an App-authored Draft PR."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lifecycle": "merged",
+  "pullRequest": 1516,
+  "releasedAt": "2026-09-28T14:36:19Z",
+  "releaseReason": "Human/CODEOWNER merge of PR #1516 at ea78aa68e7df3ec50ab23efae06988787eff52f0; post-merge provider behavior remains an EVIDENCE_GATE in the work package.",
+  "mergeEvidence": {
+    "pullRequest": 1516,
+    "mergeCommit": "ea78aa68e7df3ec50ab23efae06988787eff52f0",
+    "mergedAt": "2026-09-28T14:36:19Z"
+  }
 }
