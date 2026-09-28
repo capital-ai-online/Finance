@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PR-LABEL-PERMISSION-REGRESSION-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Repair the stale prLabelClassification regression test introduced by the Draft-PR least-privilege permission change.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 Platform Director / cross-cutting Governance",
+  "startedAt": "2026-09-28T12:16:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "20b3d6320bcd3bc545d45ac3245807381469d8c6",
+  "branch": "agent/governance-pr-label-permission-regression-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PR-LABEL-PERMISSION-REGRESSION-20260928.json",
+    "scripts/pr/prLabelClassification.test.mjs",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs"
+  ],
+  "observedFailure": {
+    "pullRequest": 1510,
+    "workflowRun": 36410502815,
+    "failedStep": "Vollständige Test-Suite ausführen",
+    "assertion": "converge-project-labels expected issues: write while CURRENT_MAIN correctly uses pull-requests: write",
+    "secondary": {
+      "pullRequest": 1511,
+      "workflowRun": 36411164867,
+      "failedStep": "Vollständige Test-Suite ausführen",
+      "assertion": "documentaryConvergenceWorkflow still expected converge-project-labels issues: write after least-privilege change"
+    }
+  },
+  "scopeBoundary": [
+    "Test-only governance regression repair.",
+    "No workflow permission expansion.",
+    "No FE source mutation.",
+    "No merge-authority or production mutation."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
