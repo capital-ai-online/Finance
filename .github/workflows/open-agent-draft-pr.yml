@@ -18,7 +18,7 @@ on:
         required: true
         type: string
       trusted_handoff:
-        description: 'Nur für repository-interne, auf main laufende wiederverwendbare Handoffs'
+        description: 'Repository-interner trusted-main Handoff: documentary-autosync, agent-autocreate oder self-healing-recovery'
         required: false
         type: string
         default: ''
@@ -110,20 +110,151 @@ jobs:
             echo "Provider-Readback PASS für $project_id: $name #${observed_color^^}"
           done < <(jq -c '.labels[]' "$catalog")
 
-  preflight-and-open:
-    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
+  precreate-sync:
+    name: Agenten-Branch vor Draft-PR auf CURRENT_MAIN konvergieren
     permissions:
-      contents: read
-      pull-requests: write
+      contents: write
+      pull-requests: read
     if: >-
       (inputs.head_branch != '' &&
        inputs.trusted_handoff == 'documentary-autosync' &&
        github.event_name == 'push' &&
        github.ref == 'refs/heads/main') ||
       (inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'agent-autocreate' &&
+       github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'self-healing-recovery' &&
+       github.event_name == 'schedule' &&
+       github.ref == 'refs/heads/main') ||
+      (inputs.head_branch != '' &&
        inputs.trusted_handoff == '' &&
        github.triggering_actor == 'SvenKulessa' &&
        github.actor == 'SvenKulessa')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      existing_pr: ${{ steps.sync.outputs.existing_pr }}
+      main_sha: ${{ steps.sync.outputs.main_sha }}
+      head_sha: ${{ steps.sync.outputs.head_sha }}
+
+    steps:
+      - name: Branch-Namespace und bounded Pre-create-Sync validieren
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ inputs.head_branch }}
+          TRUSTED_HANDOFF: ${{ inputs.trusted_handoff }}
+        run: |
+          set -euo pipefail
+
+          git check-ref-format --branch "$HEAD_BRANCH" >/dev/null
+          case "$HEAD_BRANCH" in
+            agent/*|claude/*|grok/*|ai/*) ;;
+            *) echo "Agenten-Branch muss einen freigegebenen Präfix verwenden: agent/, claude/, grok/, ai/" >&2; exit 1 ;;
+          esac
+          if [ "$TRUSTED_HANDOFF" = "documentary-autosync" ]; then
+            case "$HEAD_BRANCH" in
+              agent/documentary-autosync-*) ;;
+              *) echo "Trusted Documentary AUTO_SYNC darf nur agent/documentary-autosync-* übergeben." >&2; exit 1 ;;
+            esac
+          fi
+
+          existing="$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --head "$HEAD_BRANCH" \
+            --json number \
+            --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/$HEAD_BRANCH" --jq '.object.sha')"
+            main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+            echo "existing_pr=true" >> "$GITHUB_OUTPUT"
+            echo "main_sha=$main_sha" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+            echo "Für $HEAD_BRANCH existiert bereits PR #$existing; Pre-create-Sync führt keine Branch-Mutation aus. Post-create Sync bleibt bei sync-agent-pr-branches.yml."
+            exit 0
+          fi
+          echo "existing_pr=false" >> "$GITHUB_OUTPUT"
+
+          live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/$HEAD_BRANCH" --jq '.object.sha')"
+          if ! printf '%s' "$live_main_sha" | grep -Eq '^[0-9a-f]{40}$' || \
+             ! printf '%s' "$head_sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "Pre-create-Sync konnte keine gültigen Main-/Head-SHAs auflösen." >&2
+            exit 1
+          fi
+
+          lineage="$(gh api "repos/${GITHUB_REPOSITORY}/compare/$live_main_sha...$head_sha" --jq '.status')"
+          case "$lineage" in
+            ahead|identical)
+              echo "Agenten-Branch enthält CURRENT_MAIN bereits: main=$live_main_sha head=$head_sha lineage=$lineage"
+              ;;
+            behind|diverged)
+              echo "Agenten-Branch ist stale: main=$live_main_sha head=$head_sha lineage=$lineage; bounded Merge wird ausgeführt."
+              if ! gh api --method POST \
+                -H 'Accept: application/vnd.github+json' \
+                "repos/${GITHUB_REPOSITORY}/merges" \
+                -f "base=$HEAD_BRANCH" \
+                -f "head=$live_main_sha" \
+                -f "commit_message=chore(pr): synchronize $HEAD_BRANCH with current main" \
+                > "$RUNNER_TEMP/precreate-branch-merge.json"; then
+                echo "Pre-create-Sync konnte CURRENT_MAIN nicht konfliktfrei in $HEAD_BRANCH mergen; keine PR-Erstellung." >&2
+                exit 1
+              fi
+              ;;
+            *)
+              echo "Unerwarteter Compare-Status '$lineage'; Pre-create-Sync fail-closed." >&2
+              exit 1
+              ;;
+          esac
+
+          after_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          after_head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/$HEAD_BRANCH" --jq '.object.sha')"
+          if [ "$after_main_sha" != "$live_main_sha" ]; then
+            echo "CURRENT_MAIN bewegte sich während Pre-create-Sync: before=$live_main_sha after=$after_main_sha. Frischer Workflow-Run erforderlich." >&2
+            exit 1
+          fi
+
+          after_lineage="$(gh api "repos/${GITHUB_REPOSITORY}/compare/$after_main_sha...$after_head_sha" --jq '.status')"
+          if [ "$after_lineage" != 'ahead' ] && [ "$after_lineage" != 'identical' ]; then
+            echo "Pre-create-Sync Readback beweist keine CURRENT_MAIN-Ancestry: main=$after_main_sha head=$after_head_sha lineage=$after_lineage." >&2
+            exit 1
+          fi
+
+          echo "main_sha=$after_main_sha" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$after_head_sha" >> "$GITHUB_OUTPUT"
+          echo "Pre-create-Sync PASS: main=$after_main_sha head=$after_head_sha lineage=$after_lineage"
+
+  preflight-and-open:
+    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung
+    needs: [precreate-sync]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    if: >-
+      needs.precreate-sync.result == 'success' &&
+      needs.precreate-sync.outputs.existing_pr != 'true' &&
+      ((inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'documentary-autosync' &&
+       github.event_name == 'push' &&
+       github.ref == 'refs/heads/main') ||
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'agent-autocreate' &&
+       github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == 'self-healing-recovery' &&
+       github.event_name == 'schedule' &&
+       github.ref == 'refs/heads/main') ||
+      (inputs.head_branch != '' &&
+       inputs.trusted_handoff == '' &&
+       github.triggering_actor == 'SvenKulessa' &&
+       github.actor == 'SvenKulessa'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -190,6 +321,7 @@ jobs:
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
           PR_HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_TRUSTED_HANDOFF: ${{ inputs.trusted_handoff }}
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
           PR_CORRELATION_OUTPUT: artifacts/pr/create-correlation.json
           PR_COORDINATION_FAIL_CLOSED: 'true'
@@ -223,7 +355,7 @@ jobs:
           PR_PROJECT_MAPPING_PATH: ../create-policy/docs/projects/README.md
         run: node ../create-policy/scripts/pr/prLabelClassification.mjs
 
-      - name: Final korrelieren, geordnete Agenten-Lane prüfen und Draft-PR öffnen
+      - name: Final korrelieren, Projekt-Lane triagieren und Draft-PR öffnen
         working-directory: candidate
         env:
           GH_TOKEN: ${{ github.token }}
@@ -233,6 +365,7 @@ jobs:
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
           PR_HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_TRUSTED_HANDOFF: ${{ inputs.trusted_handoff }}
           PR_BASELINE_OUTPUT: artifacts/pr/final-production-baseline.json
           PR_CORRELATION_OUTPUT: artifacts/pr/final-create-correlation.json
           PR_COORDINATION_FAIL_CLOSED: 'true'
@@ -240,6 +373,7 @@ jobs:
           PR_LABEL_NAME: ${{ steps.pr-label.outputs.label_name }}
           PR_LABEL_COLOR: ${{ steps.pr-label.outputs.label_color }}
           PR_LABEL_DESCRIPTION: ${{ steps.pr-label.outputs.label_description }}
+          PR_PROJECT_ID: ${{ steps.render.outputs.project_id }}
         run: |
           set -euo pipefail
 
@@ -247,26 +381,6 @@ jobs:
           if [ -n "$existing" ]; then
             echo "Für $HEAD_BRANCH existiert bereits der offene PR #$existing; es wird kein Duplikat erzeugt."
             exit 0
-          fi
-
-          blocking=""
-          while IFS=$'\t' read -r number head; do
-            [ -z "${number:-}" ] && continue
-            if [ "$head" != "$HEAD_BRANCH" ]; then
-              blocking="#${number} (${head})"
-              break
-            fi
-          done < <(gh pr list \
-            --repo "$GITHUB_REPOSITORY" \
-            --state open \
-            --base main \
-            --limit 100 \
-            --json number,headRefName \
-            --jq '.[] | select(.headRefName | test("^(agent|claude|grok|ai)/")) | [.number,.headRefName] | @tsv')
-
-          if [ -n "$blocking" ]; then
-            echo "Geordnete Agenten-PR-Lane blockiert: älterer aktiver Agenten-PR $blocking muss zuerst terminal werden." >&2
-            exit 1
           fi
 
           live_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
@@ -284,6 +398,38 @@ jobs:
 
           node ../create-policy/scripts/pr/productionPreflight.mjs
           node ../create-policy/scripts/pr/validateWorkClaim.mjs
+
+          open_prs_json="$RUNNER_TEMP/open-agent-prs.json"
+          gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --base main \
+            --limit 100 \
+            --json number,headRefName,createdAt,title,labels > "$open_prs_json"
+
+          claim_path="$(git diff --name-only --diff-filter=A origin/main...HEAD -- '.ai/work-claims/*.json' | head -n 1)"
+          pr_priority="P2"
+          pr_started_at=""
+          if [ -n "$claim_path" ] && [ -f "$claim_path" ]; then
+            pr_priority="$(jq -r '.priority // "P2"' "$claim_path")"
+            pr_started_at="$(jq -r '.startedAt // ""' "$claim_path")"
+          fi
+
+          PR_LANE_OPEN_PRS_PATH="$open_prs_json" \
+          PR_LANE_TRIAGE_OUTPUT="artifacts/pr/agent-lane-triage.json" \
+          PR_PROJECT_MAPPING_PATH="../create-policy/docs/projects/README.md" \
+          PR_PROJECT_ID="$PR_PROJECT_ID" \
+          PR_HEAD_BRANCH="$HEAD_BRANCH" \
+          PR_PRIORITY="$pr_priority" \
+          PR_STARTED_AT="$pr_started_at" \
+            node ../create-policy/scripts/pr/agentLaneTriage.mjs
+
+          lane_state="$(jq -r '.state' artifacts/pr/agent-lane-triage.json)"
+          if [ "$lane_state" != "LANE_AVAILABLE" ]; then
+            echo "Draft-PR deferred by deterministic project-lane triage: $lane_state"
+            cat artifacts/pr/agent-lane-triage.json
+            exit 0
+          fi
 
           if [ -z "$PR_LABEL_NAME" ] || [ -z "$PR_LABEL_COLOR" ] || [ -z "$PR_LABEL_DESCRIPTION" ]; then
             echo "Pre-create PR label classification did not resolve complete metadata." >&2
