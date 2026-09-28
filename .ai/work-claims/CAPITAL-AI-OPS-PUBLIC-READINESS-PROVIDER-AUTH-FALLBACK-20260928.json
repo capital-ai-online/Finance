@@ -47,5 +47,6 @@
     "After Human merge, GitHub Public Repository Readiness Hardening reports UPDATED_AND_VERIFIED or NOOP_ALREADY_HARDENED with post-write readback.",
     "Repository visibility remains private until the separately held Human public-cutover action."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "startedAt": "2026-09-28T14:03:18Z"
 }
