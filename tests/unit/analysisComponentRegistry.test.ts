@@ -7,10 +7,25 @@ import {
 } from '../../src/platform/MarketIntelligence/AnalysisComponentRegistry';
 import { validateAnalysisComponentRegistry } from '../../src/platform/MarketIntelligence/runtimeValidation';
 
+const EXPECTED_COMPONENT_IDS = new Set([
+  'market_integrity_gate','data_quality_scorer','liquidity_eligibility_scorer','spread_slippage_risk_scorer','tradability_gate',
+  'multi_timeframe_trend_regime_scorer','relative_strength_scorer','momentum_persistence_scorer','breakout_quality_scorer','mean_reversion_opportunity_scorer',
+  'volume_confirmation_scorer','volatility_regime_scorer','support_resistance_proximity_scorer','pattern_confidence_scorer','vwap_location_scorer',
+  'market_breadth_scorer','sector_rotation_scorer','correlation_diversification_scorer','cross_asset_regime_scorer','macro_surprise_scorer',
+  'economic_calendar_risk_scorer','entity_resolution_engine','news_relevance_scorer','financial_sentiment_scorer','sentiment_velocity_scorer',
+  'sentiment_dispersion_scorer','news_novelty_scorer','source_authority_scorer','event_detection_classification_engine','event_impact_scorer',
+  'catalyst_strength_scorer','market_reaction_validator','narrative_emergence_scorer','narrative_saturation_scorer','social_attention_velocity_scorer',
+  'social_engagement_quality_scorer','bot_manipulation_risk_scorer','fundamental_quality_scorer','growth_acceleration_scorer','valuation_peer_comparison_scorer',
+  'earnings_revision_scorer','earnings_surprise_guidance_scorer','financial_distress_scorer','insider_institutional_flow_scorer','options_positioning_gamma_scorer',
+  'open_interest_funding_regime_scorer','orderflow_liquidity_imbalance_scorer','onchain_flow_holder_behavior_scorer','protocol_fundamentals_tokenomics_scorer',
+  'final_rank_confidence_evidence_scorer',
+]);
+
 describe('FIN-MI-01 AnalysisComponentRegistry', () => {
   it('contains exactly 50 unique canonical component ids', () => {
     expect(ANALYSIS_COMPONENTS).toHaveLength(50);
     expect(new Set(ANALYSIS_COMPONENT_IDS).size).toBe(50);
+    expect(new Set(ANALYSIS_COMPONENT_IDS)).toEqual(EXPECTED_COMPONENT_IDS);
     expect(analysisComponentRegistryIdentity()).toBe('analysis-component-registry/1.0.0:50');
     expect(validateAnalysisComponentRegistry()).toEqual([]);
   });
