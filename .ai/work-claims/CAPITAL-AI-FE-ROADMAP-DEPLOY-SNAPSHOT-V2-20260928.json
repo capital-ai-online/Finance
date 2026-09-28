@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-DEPLOY-SNAPSHOT-V2-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "Codex GitHub connector"
+  },
+  "workItem": "Consume the build-bound roadmap snapshot on the existing mobile-friendly matrix; remove browser calls to the retired live roadmap API and branch feed.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "startedAt": "2026-09-28T20:01:58Z",
+  "baseBranch": "main",
+  "baseSha": "dcef421fe6e350a3a2ade61d0299aad9ecca213c",
+  "branch": "agent/frontend-roadmap-deploy-snapshot-v2-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-DEPLOY-SNAPSHOT-V2-20260928.json",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "tests/unit/roadmapLiveStateConsumer.test.ts"
+  ],
+  "dependencies": [
+    "OPS PR #1512 merged on main",
+    "GitHub-hosted required checks restored (OPS #1521)"
+  ],
+  "exitEvidence": [
+    "snapshot endpoint replaces browser roadmap API reads",
+    "mobile owner-state matrix from current main remains",
+    "exact-head required checks and deploy SHA readback"
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge or abandonment; OPS route retirement follows FE production readback.",
+  "versionImpact": "NONE"
+}
