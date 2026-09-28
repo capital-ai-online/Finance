@@ -65,7 +65,7 @@ occur from the PR branch and Human/CODEOWNER merge remains mandatory.
 
 ### OPS-MERGE-CADENCE-01 — 5-Merge Deploy / Release-Acceptance Versioning
 
-**State:** `DONE_MAIN / VERSION_CADENCE_SUPERSEDED / DEPLOY_CADENCE_ACTIVE`  
+**State:** `ACTIVE / VERSION_CADENCE_SUPERSEDED / DEPLOY_CADENCE_ACTIVE`  
 **Baseline:** `cadenceEpoch=PR #1336 / merge f340654adab7198c13fa82cc8f177846c1c66ece`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08`
 
