@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ROADMAP-BRANCH-EVIDENCE-20260928",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -52,5 +52,7 @@
     "The terminal predecessor OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01 remains excluded from active/current projection while OPS-ROADMAP-BRANCH-EVIDENCE-01 is projected as the current branch-evidence work item."
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
-  "lastSyncedMainSha": "00e51b0a238523d7ab809ad096806ba142f8d799"
+  "lastSyncedMainSha": "f0b9b9f3368b3c9cc241fadef3100af89dc5256a",
+  "releasedAt": "2026-09-28T06:20:00+02:00",
+  "releaseReason": "Associated PR #1479 was Human/CODEOWNER-merged as 8862857f962a681c7853268e15822c719654412f; exact-head CI/Governance/Container/Project/PR evidence completed successfully, FE successor PR #1476 is merged, and fresh CURRENT_MAIN contains the merge."
 }
