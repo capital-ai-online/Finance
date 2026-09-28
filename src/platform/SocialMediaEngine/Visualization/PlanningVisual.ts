@@ -82,7 +82,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function boundedText(value: unknown, limit = PLANNING_VISUAL_LIMITS.maxTextChars): value is string {
+function boundedText(
+  value: unknown,
+  limit: number = PLANNING_VISUAL_LIMITS.maxTextChars,
+): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.length <= limit;
 }
 
