@@ -13,7 +13,7 @@
 
 This package prepares the repository and existing GitHub Enterprise control surfaces for a later `private -> public` change without performing that visibility mutation. The proprietary `LICENSE` and `package.json#license=UNLICENSED` remain unchanged; public visibility is not treated as an open-source license grant.
 
-The existing Enterprise branch ruleset `capital-ai-finance-main-governance` is bounded to organization `capital-ai-online`, repository `Finance`, and the default branch. It is hardened to no bypass actors, deletion/non-fast-forward denial, pull-request-only changes, one approving review, Code Owner review, stale-review dismissal, resolved review threads, merge-commit-only, and license compliance scanning. `require_last_push_approval` stays false so the single Human Owner is not deadlocked.
+The existing Enterprise branch ruleset `capital-ai-finance-main-governance` is bounded to organization `capital-ai-online`, repository `Finance`, and the default branch. It is hardened to no bypass actors, deletion/non-fast-forward denial, pull-request-only changes, one approving review, Code Owner review, stale-review dismissal, resolved review threads, merge-commit-only, and license compliance scanning. Both `require_last_push_approval` and the additional approval for unattributed agent/Copilot PRs stay false so the single Human Owner is not deadlocked.
 
 The existing repository `main-production-protection` remains the required-status-check authority. This package does not duplicate its four checks at Enterprise scope.
 
@@ -31,4 +31,4 @@ GitHub App private-key material remains only in the existing secret store. Repos
 
 Repository exit: fresh-main branch, no writer overlap, focused validation PASS, App-authored future PR creation, FUNDING/security/current-tree preflight on main, visibility still private.
 
-Provider exit after Human merge: `GitHub Public Repository Readiness Hardening` reports `UPDATED_AND_VERIFIED` or `NOOP_ALREADY_HARDENED`, with one approval, Code Owner review on, last-push approval off, review-thread resolution on and no bypass actor. The later private-to-public change remains a separate Human Owner action.
+Provider exit after Human merge: `GitHub Public Repository Readiness Hardening` reports `UPDATED_AND_VERIFIED` or `NOOP_ALREADY_HARDENED`, with one approval, Code Owner review on, last-push approval off, extra unattributed-PR approval off, review-thread resolution on and no bypass actor. The later private-to-public change remains a separate Human Owner action.
