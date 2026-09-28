@@ -20,6 +20,14 @@ export interface CryptoSpotConsensusOptions {
   timeoutMs?: number;
   nowMs?: () => number;
   apiKeys?: Partial<Record<SpotPriceProviderId, string>>;
+  /** Optional upstream correlation identity; never used as provider or score authority. */
+  correlationId?: string;
+}
+
+export interface CryptoSpotConsensusResult extends MarketConsensusResult {
+  correlationId: string;
+  qualityState: 'LIVE' | 'DELAYED' | null;
+  unit: string | null;
 }
 
 export function isCryptoSpotConsensusProviderAuthorized(providerId: string): providerId is SpotPriceProviderId {
@@ -87,11 +95,13 @@ function createConsensusGateway(options: CryptoSpotConsensusOptions): MarketData
 export async function getCryptoSpotConsensus(
   symbol: string,
   options: CryptoSpotConsensusOptions = {},
-): Promise<MarketConsensusResult> {
+): Promise<CryptoSpotConsensusResult> {
   const gateway = createConsensusGateway(options);
   const observations: MarketObservation[] = [];
   const nowMs = options.nowMs ?? Date.now;
   const normalizedSymbol = symbol.toUpperCase().trim();
+  const correlationId = options.correlationId?.trim()
+    || `crypto-spot-consensus:${normalizedSymbol}:${nowMs()}`;
 
   for (const providerId of CRYPTO_SPOT_CONSENSUS_PROVIDER_IDS) {
     if (!isCryptoSpotConsensusProviderAuthorized(providerId)) continue;
@@ -99,7 +109,7 @@ export async function getCryptoSpotConsensus(
     const result = await gateway.getSnapshot({
       symbol: normalizedSymbol,
       assetClass: 'crypto',
-      correlationId: `crypto-spot-consensus:${normalizedSymbol}:${providerId}:${started}`,
+      correlationId: `${correlationId}:${providerId}`,
       allowedProviderIds: [providerId],
       maxAgeMs: 5 * 60 * 1000,
       allowStale: false,
@@ -114,9 +124,22 @@ export async function getCryptoSpotConsensus(
     });
   }
 
-  return evaluateMarketConsensus(observations, {
+  const consensus = evaluateMarketConsensus(observations, {
     minimumSources: 2,
     toleranceBps: 100,
     maxObservationSkewMs: 5 * 60 * 1000,
   });
+  const qualities = consensus.observations
+    .map(observation => observation.qualityState)
+    .filter((quality): quality is 'LIVE' | 'DELAYED' => quality === 'LIVE' || quality === 'DELAYED');
+  const units = [...new Set(consensus.observations.map(observation => observation.unit))];
+
+  return {
+    ...consensus,
+    correlationId,
+    qualityState: qualities.length === consensus.observations.length && qualities.length > 0
+      ? qualities.includes('DELAYED') ? 'DELAYED' : 'LIVE'
+      : null,
+    unit: units.length === 1 ? units[0] : null,
+  };
 }
