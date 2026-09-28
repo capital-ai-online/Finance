@@ -17,7 +17,7 @@
   "projectStage": "cross-cutting; no productive PVC",
   "startedAt": "2026-09-28T12:30:00+02:00",
   "baseBranch": "main",
-  "baseSha": "20b3d6320bcd3bc545d45ac3245807381469d8c6",
+  "baseSha": "a26828a7ddb9e25eb2407f7ec060316c7f432f37",
   "branch": "grok/finance-roadmap-timeline-only-20260928",
   "pullRequest": null,
   "productionBaseline": {
@@ -30,7 +30,6 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-TIMELINE-ONLY-20260928.json",
     "Dockerfile",
-    ".github/workflows/open-agent-draft-pr.yml",
     "server/ownerAuthorization/currentMain.ts",
     "server/routes/roadmapCadenceRoutes.ts",
     "server/routes/roadmapStateProjection.ts",

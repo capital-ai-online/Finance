@@ -40,7 +40,6 @@ jobs:
     name: Kanonische Projektlabel-Provider-Metadaten konvergieren
     permissions:
       contents: read
-      issues: write
       pull-requests: write
     if: >-
       github.event_name == 'push' &&
