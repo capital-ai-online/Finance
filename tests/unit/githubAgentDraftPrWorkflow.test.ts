@@ -30,7 +30,7 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('permissions: {}');
     expect(yaml).toContain('converge-project-labels:\n    name: Kanonische Projektlabel-Provider-Metadaten konvergieren\n    permissions:\n      contents: read\n      issues: write');
     expect(yaml).toContain('precreate-sync:\n    name: Agenten-Branch vor Draft-PR auf CURRENT_MAIN konvergieren\n    permissions:\n      contents: write\n      pull-requests: read');
-    expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    needs: [precreate-sync]\n    permissions:\n      contents: read\n      issues: write\n      pull-requests: write');
+    expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    needs: [precreate-sync]\n    permissions:\n      contents: read\n      pull-requests: write');
     expect(yaml.match(/contents: write/g)?.length).toBe(1);
     expect(yaml.match(/persist-credentials: false/g)?.length).toBe(4);
     expect(yaml).not.toContain('persist-credentials: true');
@@ -170,6 +170,8 @@ describe('autonomous agent Draft-PR intake', () => {
     expect(yaml).toContain("github.event.workflow_run.head_repository.full_name == github.repository");
     expect(yaml).toContain('uses: ./.github/workflows/open-agent-draft-pr.yml');
     expect(yaml).toContain('contents: write');
+    expect(yaml).toContain('pull-requests: write');
+    expect(yaml).not.toContain('issues: write');
     expect(yaml).toContain('trusted_handoff: agent-autocreate');
     expect(yaml).not.toContain('actions/checkout');
     expect(yaml).not.toContain('\n    steps:');
