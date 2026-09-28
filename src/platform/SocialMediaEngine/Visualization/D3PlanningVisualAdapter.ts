@@ -73,7 +73,11 @@ export function layoutPlanningVisualWithD3(spec: PlanningVisualSpec): PlanningVi
   const nodeHeight = Math.min(132, Math.max(92, Math.round(canvas.height * 0.09)));
 
   const declaredLanes = ordered(spec.lanes);
-  const laneIds = declaredLanes.length > 0 ? declaredLanes.map((lane) => lane.id) : [DEFAULT_LANE_ID];
+  const hasUnassignedNodes = spec.nodes.some((node) => node.laneId === undefined);
+  const laneIds = [
+    ...declaredLanes.map((lane) => lane.id),
+    ...(declaredLanes.length === 0 || hasUnassignedNodes ? [DEFAULT_LANE_ID] : []),
+  ];
   const laneX = scalePoint<string>()
     .domain(laneIds)
     .range([horizontalPadding + nodeWidth / 2, canvas.width - horizontalPadding - nodeWidth / 2])
