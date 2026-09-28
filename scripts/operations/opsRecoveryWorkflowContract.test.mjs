@@ -8,14 +8,14 @@ const workflow = fs.readFileSync(path.join(root, '.github/workflows/ops-recovery
 
 describe('OPS-08 Supabase recovery contract', () => {
   it('runs the daily backup at 04:00 Europe/Berlin across CET/CEST without trusting delayed runner time', () => {
-    assert.match(workflow, /cron: '0 2 \\* \\* \\*'/);
-    assert.match(workflow, /cron: '0 3 \\* \\* \\*'/);
-    assert.match(workflow, /github\\.event\\.schedule/);
-    assert.match(workflow, /UTC_OFFSET=.*Europe\\/Berlin date \\+%z/);
-    assert.match(workflow, /UTC_OFFSET.*\\+0200[\\s\\S]*SCHEDULE.*0 2 \\* \\* \\*/);
-    assert.match(workflow, /UTC_OFFSET.*\\+0100[\\s\\S]*SCHEDULE.*0 3 \\* \\* \\*/);
+    assert.match(workflow, /cron: '0 2 \* \* \*'/);
+    assert.match(workflow, /cron: '0 3 \* \* \*'/);
+    assert.match(workflow, /github\.event\.schedule/);
+    assert.match(workflow, /UTC_OFFSET=.*Europe\/Berlin date \+%z/);
+    assert.match(workflow, /UTC_OFFSET.*\+0200[\s\S]*SCHEDULE.*0 2 \* \* \*/);
+    assert.match(workflow, /UTC_OFFSET.*\+0100[\s\S]*SCHEDULE.*0 3 \* \* \*/);
     assert.doesNotMatch(workflow, /LOCAL_HOUR/);
-    assert.match(workflow, /EXECUTE.*true[\\s\\S]*LOCAL_WEEKDAY.*1/);
+    assert.match(workflow, /EXECUTE.*true[\s\S]*LOCAL_WEEKDAY.*1/);
   });
 
   it('keeps weekly cron history archival encrypted and immutable before retention', () => {
