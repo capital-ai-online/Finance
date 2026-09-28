@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-AUTONOMOUS-DRAFT-PR-TRIAGE-V2-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Evolve the existing correlation-gated Draft-PR writer into autonomous default-branch intake with one bounded lane per canonical project and deterministic triage when lanes are occupied, without creating a second queue or merge authority.",
+  "priority": "P1",
+  "startedAt": "2026-09-28T10:02:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "8542844df2f4044fa9fd793e04f034d508d74d46",
+  "branch": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05 Platform Director plus cross-cutting Governance",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-AUTONOMOUS-DRAFT-PR-TRIAGE-V2-20260928.json",
+    ".github/workflows/agent-branch-signal.yml",
+    ".github/workflows/agent-draft-pr-autocreate.yml",
+    ".github/workflows/open-agent-draft-pr.yml",
+    "docs/projects/governance/work-packages/GOV_AUTONOMOUS_DRAFT_PR_TRIAGE_V2_2026-09-28.md",
+    "scripts/pr/agentLaneTriage.mjs",
+    "scripts/pr/prCreateExecutionIdentity.mjs",
+    "scripts/pr/validateWorkClaim.mjs",
+    "tests/node/agentLaneTriage.test.mjs",
+    "tests/node/prCreateExecutionIdentity.test.mjs",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts"
+  ],
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/projects/README.md@CURRENT_MAIN",
+    "docs/projects/PROJECT_VALUE_CHAIN.md@CURRENT_MAIN",
+    "CTRL-SDLC-PR-CREATE-001",
+    ".github/workflows/open-agent-draft-pr.yml@CURRENT_MAIN",
+    "CAPITAL-AI-OPS Self-Healing recovery selector consumes this handoff only after Human/CODEOWNER merge"
+  ],
+  "exitEvidence": [
+    "autonomous intake uses unprivileged branch signal plus default-branch workflow_run listener",
+    "existing open-agent-draft-pr writer remains the sole external Draft-PR mutation writer",
+    "one active automated PR per canonical project lane while global overlap correlation remains fail-closed",
+    "ALL_LANES_OCCUPIED triage is tested with deterministic priority/startedAt/branch ordering",
+    "ambiguous project labels fail closed",
+    "exact-head required checks pass before Human/CODEOWNER merge",
+    "self-healing-recovery is accepted only from a scheduled trusted-main reusable-workflow context and still passes the canonical PR-create correlation",
+    "manual Owner dispatch and the three bounded trusted internal handoffs resolve through one tested create-execution identity classifier; unknown event/handoff/ref combinations fail closed",
+    "stale pre-create branches converge to exact CURRENT_MAIN without force-push before productionPreflight",
+    "pre-create sync refuses to mutate an already-open PR branch so sync-agent-pr-branches.yml remains the sole post-create branch-sync writer",
+    "CURRENT_MAIN movement during pre-create synchronization fails closed and requires a fresh run"
+  ],
+  "authorityBoundary": "No AGENTS.md mutation; no second DevelopmentChain, queue, project registry, merge authority, approval plane or branch-sync writer. Manual Owner identity remains valid; repository-internal handoffs resolve only through exact allowlisted handoff/event/main-ref tuples before the same fail-closed create correlation.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lifecycle": "superseded",
+  "releasedAt": "2026-09-28T09:52:00+02:00",
+  "releaseReason": "Branch drifted 180 commits behind CURRENT_MAIN and failed productionPreflight before PR creation; owner-correct work is reconstructed on a fresh CURRENT_MAIN successor.",
+  "supersededBy": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
+  "supersedes": [
+    "agent/governance-autonomous-draft-pr-triage-20260926 (released after 180-commit drift)",
+    "agent/governance-draft-pr-precreate-sync-20260928 (temporary overlapping diagnostic branch, released)"
+  ],
+  "observedFailure": {
+    "workflowRunId": 36392118935,
+    "failedStep": "Produktions-Baseline vor PR-Erstellung prüfen",
+    "staleHead": "c62f19f611cdbeac21c4cdc9ec28154bd1f8a0a2",
+    "currentMain": "8542844df2f4044fa9fd793e04f034d508d74d46",
+    "correction": "pre-create CURRENT_MAIN convergence before candidate checkout/preflight"
+  }
+}
