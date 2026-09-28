@@ -28,7 +28,10 @@
     "scripts/pr/classifyPrAutofixFailure.test.mjs",
     "docs/projects/operations/work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md",
     "docs/projects/operations/work-packages/OPS_RETIRED_MERGE_CADENCE_VERSION_GATE_2026-09-28.md",
-    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md"
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/architecture/ROADMAP.md",
+    "tests/unit/roadmapStateProjection.test.ts"
   ],
   "scopeBoundary": [
     "Retire only merge-count-driven package-version PR gating and its registered repairer.",
