@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-GOV-AUTONOMOUS-DRAFT-PR-TRIAGE-V2-20260928",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -69,14 +69,23 @@
     "branchBehind": 0,
     "claimCoverage": "PASS",
     "staticWorkflowSecurity": "PASS",
-    "providerSignalEvidence": "SUCCESS observed on predecessor exact heads; current exact-head hosted PR checks remain pending until PR creation",
-    "hostedPrChecks": "PENDING_PR_CREATE",
-    "productionPreflight": "PENDING_PR_CREATE",
-    "truthfulBoundary": "No hosted/production gate is represented as PASS before the canonical PR run."
+    "providerSignalEvidence": "PASS",
+    "hostedPrChecks": "PASS",
+    "productionPreflight": "PASS",
+    "postMergeCurrentMain": "7eaca6eab69857e99bfb54c2afb372c22d93d958",
+    "postMergeAutonomousIntake": "PENDING_CLOSURE_BRANCH_SIGNAL"
   },
-  "bootstrap": {
-    "mode": "PRECLASSIFIED_GITHUB_PR_CREATE",
-    "headBranch": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
-    "reason": "Owner explicitly authorized autonomous Draft-PR creation and the lane is free; project label must be verified before conversion to PR."
+  "lifecycle": "merged",
+  "pullRequest": 1506,
+  "releasedAt": "2026-09-28T12:03:00+02:00",
+  "releaseReason": "Human/CODEOWNER merge of PR #1506 verified on CURRENT_MAIN 7eaca6eab69857e99bfb54c2afb372c22d93d958.",
+  "mergeEvidence": {
+    "pullRequest": 1506,
+    "exactHead": "61bcde7637cdb7b1d7c578e9a7e0dea616f3b166",
+    "mergeCommit": "7eaca6eab69857e99bfb54c2afb372c22d93d958",
+    "mergedAt": "2026-09-28T10:01:53Z",
+    "requiredChecks": "PASS",
+    "productionBaseline": "PASS",
+    "decisionState": "READY_FOR_HUMAN_DECISION"
   }
 }
