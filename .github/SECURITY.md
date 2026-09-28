@@ -30,7 +30,7 @@ Use the most privileged private reporting path available to you:
 2. Other authorized collaborators should contact the repository Owner or designated Security maintainer through an already-authorized private channel and request a protected Security handling thread.
 3. If no private channel is available, send only a non-sensitive request to establish one. Do **not** include exploit details, secrets, personal data, production tokens, private keys, or reusable credentials in an untrusted or public channel.
 
-GitHub's public-repository private-vulnerability-reporting feature is not assumed to be available for this private repository. This policy therefore does not depend on that feature being enabled.
+When the repository is public and GitHub provider readback confirms private vulnerability reporting is enabled, reporters should prefer the repository's **Report a vulnerability** flow so details stay non-public. While the repository is private, or if that provider feature is unavailable, the protected Security Advisory / authorized private-channel paths above remain the fallback. This policy never treats public Issues or Pull Requests as acceptable channels for unremediated vulnerability details.
 
 ### Include in the report
 

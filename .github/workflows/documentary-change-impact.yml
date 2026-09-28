@@ -490,6 +490,8 @@ jobs:
     with:
       head_branch: ${{ needs.autosync-branch.outputs.branch }}
       trusted_handoff: documentary-autosync
+    secrets:
+      CAPITAL_AI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
 
   semantic-handoff:
     name: Semantischen Maintenance-Handoff fail-closed ausweisen

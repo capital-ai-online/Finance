@@ -22,6 +22,10 @@ on:
         required: false
         type: string
         default: ''
+    secrets:
+      CAPITAL_AI_GITHUB_APP_PRIVATE_KEY:
+        description: 'Private key for the existing repository-installed CAPITAL-AI GitHub App'
+        required: true
   workflow_dispatch:
     inputs:
       head_branch:
@@ -354,11 +358,22 @@ jobs:
           PR_PROJECT_MAPPING_PATH: ../create-policy/docs/projects/README.md
         run: node ../create-policy/scripts/pr/prLabelClassification.mjs
 
+      - name: GitHub-App-Token für kanonische PR-Autoridentität erzeugen
+        id: pr_app_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-pull-requests: write
+
       - name: Final korrelieren, Projekt-Lane triagieren und Draft-PR öffnen
         working-directory: candidate
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
+          PR_CREATE_TOKEN: ${{ steps.pr_app_token.outputs.token }}
           HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_TITLE: ${{ steps.render.outputs.pr_title }}
           PR_BASE_REF: origin/main
@@ -441,7 +456,8 @@ jobs:
             --description "$PR_LABEL_DESCRIPTION" \
             --force
 
-          gh pr create \
+          test -n "$PR_CREATE_TOKEN"
+          GH_TOKEN="$PR_CREATE_TOKEN" gh pr create \
             --repo "$GITHUB_REPOSITORY" \
             --draft \
             --base main \

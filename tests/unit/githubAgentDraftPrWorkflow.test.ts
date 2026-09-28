@@ -136,6 +136,23 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml.match(/PR_TRUSTED_HANDOFF: \$\{\{ inputs\.trusted_handoff \}\}/g)?.length).toBe(2);
   });
 
+  it('uses the existing GitHub App as PR author so the sole Human Owner can provide the required approval', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('CAPITAL_AI_GITHUB_APP_PRIVATE_KEY:');
+    expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
+    expect(yaml).toContain('permission-pull-requests: write');
+    expect(yaml).toContain('PR_CREATE_TOKEN: ${{ steps.pr_app_token.outputs.token }}');
+    expect(yaml).toContain('GH_TOKEN="$PR_CREATE_TOKEN" gh pr create');
+    expect(yaml).not.toContain('secrets: inherit');
+
+    const autonomous = fs.readFileSync(path.join(root, '.github/workflows/agent-draft-pr-autocreate.yml'), 'utf8');
+    const documentary = fs.readFileSync(path.join(root, '.github/workflows/documentary-change-impact.yml'), 'utf8');
+    for (const caller of [autonomous, documentary]) {
+      expect(caller).toContain('CAPITAL_AI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}');
+      expect(caller).not.toContain('secrets: inherit');
+    }
+  });
+
   it('prevents duplicate open PR creation and always opens as draft against main', () => {
     const yaml = workflow();
     expect(yaml).toContain('gh pr list --repo "$GITHUB_REPOSITORY" --state open --head "$HEAD_BRANCH"');
