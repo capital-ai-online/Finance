@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PRODUCTION-CORRELATION-API-EVIDENCE-FIX-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the Post-Merge Production Correlation observer after the canonical Render deployment migration to the exact-commit API trigger, and make final correlation evidence reflect converged Production state without creating a second deployment authority.",
+  "workItemDE": "Den Post-Merge-Production-Correlation-Observer nach der kanonischen Render-Migration auf den Exact-Commit-API-Trigger korrigieren und finale Correlation-Evidence auf den konvergierten Production-Zustand beziehen, ohne eine zweite Deployment-Authority zu erzeugen.",
+  "startedAt": "2026-09-28T00:38:00Z",
+  "baseBranch": "main",
+  "baseSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+  "lastSyncedMainSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+  "branch": "agent/operations-production-correlation-api-evidence-fix-20260928",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-08 / PVC-18",
+  "priority": "P1",
+  "priorityReason": "Issue #1464 reports false PRODUCTION_DRIFT because the observer still searches the retired deploy-hook step name after PR #1463 renamed the canonical CI trigger to the Render API step.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PRODUCTION-CORRELATION-API-EVIDENCE-FIX-20260928.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-POSTMERGE-CADENCE-EXPRESSION-FIX-20260924.json",
+    ".github/workflows/post-merge-production-correlation.yml",
+    "tests/unit/postMergeProductionCorrelationWorkflow.test.ts"
+  ],
+  "scopeBoundary": [
+    "Correlation/evidence repair only; do not trigger GitHub Actions, Render deployment, recovery, or provider mutation.",
+    "Keep .github/workflows/ci.yml as the sole GitHub-to-Render deployment lane and Render native auto-deploy off.",
+    "Do not change mergeCadence.mjs cadence authority or the exact-commit Render API trigger implementation.",
+    "Preserve least privilege, immutable pinned actions, branch-only mutation, and Human/CODEOWNER merge."
+  ],
+  "dependencies": [
+    "/AGENTS.md@14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+    "Human-merged PR #1463",
+    "Issue #1464 evidence"
+  ],
+  "exitEvidence": [
+    "Correlation observer matches the current canonical CI deployment step name used after PR #1463.",
+    "Regression test cross-checks the producer CI workflow and observer contract so a future step rename cannot silently create NOT_OBSERVED evidence.",
+    "When Production converges to CURRENT_MAIN during polling, reported relation/progress/remaining values reflect the final readback while the originally-due boundary still requires observed trigger evidence.",
+    "No Render/provider mutation or second recovery/deployment controller is introduced.",
+    "Exact-head required checks remain for the Pull Request; Human/CODEOWNER merge remains required."
+  ],
+  "acceptanceCriteria": [
+    "Issue #1464 false-negative root cause is removed.",
+    "Due deployments still fail closed when the canonical API trigger step is genuinely not observed.",
+    "Exact Production convergence reports CURRENT_MAIN rather than stale ANCESTOR evidence.",
+    "No agent self-merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-POSTMERGE-CADENCE-EXPRESSION-FIX-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -12,7 +12,7 @@
   "startedAt": "2026-09-24T00:14:00+02:00",
   "baseBranch": "main",
   "baseSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
-  "lastSyncedMainSha": "72a22038c88d3cc170cbecac6d04547d7226853d",
+  "lastSyncedMainSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
   "branch": "operations/postmerge-cadence-expression-fix-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -45,5 +45,9 @@
     "No cadence, version or Self-Healing authority expansion.",
     "No agent self-merge."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releasedAt": "2026-09-28T00:38:00Z",
+  "releaseReason": "Terminaler Coordination-Lease: PR #1339 wurde Human/CODEOWNER-gemergt und der zugehörige Branch existiert nicht mehr. Die Freigabe entfernt ausschließlich stale Writer-Metadaten; sie ändert keine Cadence-, Deployment- oder Production-Semantik.",
+  "terminalPullRequest": 1339,
+  "terminalMergeSha": "aaaa38480d8204d053cb4fcbaec8c872b403be02"
 }
