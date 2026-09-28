@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "project": "CAPITAL-AI-FINTECH",
   "projectFolder": "fintech",
   "ownerScope": "PVC-09..11 live provider ingress, evidence/DQ admission and Tier-3 fan-out transport; bounded Tier-4 contract compatibility correction only.",
@@ -56,5 +56,10 @@
     "note": "Merged Tier-3/Tier-4 claims were stale active/exclusive metadata and are released on this branch before the new bounded claim."
   },
   "exitGate": "Focused runtime/transport/client-contract tests plus TypeScript/build and Required Checks on exact PR head; fresh CURRENT_MAIN/writer correlation; activation remains fail-closed pending entitlement/provider evidence; Human/CODEOWNER merge.",
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseEvidence": {
+    "releasedAt": "2026-09-28",
+    "reason": "Associated live-transport implementation was Human/CODEOWNER-merged as PR #1452 and is present on CURRENT_MAIN; stale active/exclusive metadata must not block the Tier-4 projection continuation.",
+    "currentMain": "f61df72e717399e783824d0b12190f2e7f6a96fd"
+  }
 }
