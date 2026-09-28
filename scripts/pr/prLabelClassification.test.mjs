@@ -89,7 +89,8 @@ test('PR create workflow classifies before creation and converges provider metad
   assert.ok(ensureIndex > classifyIndex, 'repository label must be ensured after classification');
   assert.ok(createIndex > ensureIndex, 'PR must be created only after classification and label ensure');
   assert.match(workflow, /--label "\$PR_LABEL_NAME"/);
-  assert.match(workflow, /converge-project-labels:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*issues:\s*write/);
+  assert.match(workflow, /converge-project-labels:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*pull-requests:\s*write/);
+  assert.doesNotMatch(workflow, /converge-project-labels:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*issues:\s*write/);
   assert.match(workflow, /preflight-and-open:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*pull-requests:\s*write/);
   assert.doesNotMatch(workflow, /^permissions:\s*\n\s+pull-requests:\s*write/m);
   assert.doesNotMatch(workflow, /PR_LABELS_JSON/);
