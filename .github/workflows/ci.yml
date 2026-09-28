@@ -710,11 +710,13 @@ jobs:
       - name: Render-Deployment für verifizierten main-Commit per API auslösen
         env:
           CAPITAL_AI_RENDER_API_KEY: ${{ secrets.CAPITAL_AI_RENDER_API_KEY }}
+          CAPITAL_AI_RENDER_WORKSPACE_ID: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_ID }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           test -n "$CAPITAL_AI_RENDER_API_KEY"
+          test -n "$CAPITAL_AI_RENDER_WORKSPACE_ID"
 
           # Fail closed if main moved after this workflow's verified build.
           live_main_sha="$(
