@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@f0b9b9f3368b3c9cc241fadef3100af89dc5256a`
+**Baseline:** `main@f61df72e717399e783824d0b12190f2e7f6a96fd`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -77,6 +77,16 @@ CI, PR synchronization, Self-Healing continuation and the read-only live cadence
 Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
 
 **Exit:** dual-mode implementation is Human-merged and verified before GOV #1336 activation; no second controller/registry exists; FE can consume the read-only /api/roadmap/cadence projection in an owner-correct successor.
+
+## Terminal Version-Management evidence — Artifact Version Inventory
+
+### OPS-ARTIFACT-VERSION-INVENTORY — VAI-01..04
+
+**State:** `DONE_MAIN / TERMINAL / ISSUE_1429_CLOSURE_READY`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-06`; supporting `PVC-04, PVC-07`  
+**Source packages:** `OPS_ARTIFACT_VERSION_INVENTORY_VAI01_2026-09-24.md` through `OPS_ARTIFACT_VERSION_INVENTORY_VAI04_2026-09-25.md`
+
+VAI-01 (#1430), VAI-02 (#1443), VAI-03 (#1445) and VAI-04 (#1456) are Human/CODEOWNER-merged. The repository now has deterministic tracked-artifact classification, producer/consumer fingerprint evidence, Artifact-Version identity in the existing Self-Healing evidence generation and bounded drift routing onto the existing `RECONCILE_REPOSITORY_PROJECTION` writer. Unknown, ambiguous or unclassified evidence remains fail-closed `OBSERVE_ONLY`. VAI-03/VAI-04 stale claims are released by the #1429 closure slice; no second version or Self-Healing authority is introduced.
 
 ## Current execution priority — Owner-directed Self-Healing 2026-09-20
 
