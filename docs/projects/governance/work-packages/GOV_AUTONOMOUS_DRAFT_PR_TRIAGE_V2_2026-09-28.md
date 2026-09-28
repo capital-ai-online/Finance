@@ -6,7 +6,7 @@
 **Execution baseline:** `main@8542844df2f4044fa9fd793e04f034d508d74d46`  
 **Branch:** `agent/governance-autonomous-draft-pr-triage-v2-20260928`  
 **Priority:** `P1`  
-**Status:** `RECONSTRUCTED_ON_CURRENT_MAIN / VALIDATION_IN_PROGRESS / HUMAN_MERGE_REQUIRED`
+**Status:** `RECONSTRUCTED_ON_CURRENT_MAIN / STATIC_AND_SIGNAL_VALIDATION_PASS / BOOTSTRAP_PR_PENDING`
 
 ## Owner direction
 
@@ -165,3 +165,29 @@ der **bestehende** Draft-PR-Writer eine bounded Pre-create-Konvergenz:
 Observed failure evidence:
 `c62f19f611cdbeac21c4cdc9ec28154bd1f8a0a2` did not contain
 `8542844df2f4044fa9fd793e04f034d508d74d46`.
+
+## V2 Validierungsstand
+
+1. **Authority/Lineage:** PASS — Branch wurde direkt von
+   `CURRENT_MAIN 8542844df2f4044fa9fd793e04f034d508d74d46` rekonstruiert und
+   steht beim Readback `behind=0`.
+2. **Writer/Claim:** PASS — alle geänderten Pfade sind exakt vom einen aktiven
+   V2-Claim abgedeckt; die zwei überlappenden Vorgängerclaims wurden auf ihren
+   Branches `released/superseded`.
+3. **Workflow Security static:** PASS — kein `pull_request_target`, kein
+   `write-all`, kein Force-Push, keine persistierten Checkout-Credentials;
+   `contents: write` existiert ausschließlich im bounded `precreate-sync` Job.
+4. **GitHub parser/signal evidence:** PASS — `Agent Branch Signal` auf dem
+   Successor wurde providerseitig erfolgreich ausgeführt, zuletzt Run
+   `36394377353` / #45.
+5. **Hosted PR gates:** PENDING — Production-/Immutable-Identity-Preflight,
+   Workflow-Security, Governance, CI und Required Checks laufen erst auf dem
+   Bootstrap-PR-Exact-Head. Kein fehlendes Hosted-Gate wird als PASS dargestellt.
+
+Der Bootstrap-PR muss einmal über den bereits auf `CURRENT_MAIN` vorhandenen
+manuellen Owner-`workflow_dispatch` erzeugt werden. Dieser V2-Branch enthält
+`CURRENT_MAIN` bereits, sodass der beobachtete Fehler aus Run
+`36392118935` (staler Head vor Production-Preflight) für diesen Bootstrap
+nicht vorliegt. Nach Human/CODEOWNER-Merge aktiviert erst `main` den
+autonomen `workflow_run`-Intake; der V2-Branch darf sich nicht selbst als
+Default-Branch-Workflow autorisieren.
