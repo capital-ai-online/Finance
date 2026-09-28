@@ -170,11 +170,19 @@ Repository configuration is merged through PR #1342. Human OAuth plus read-only 
 
 ### OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01 — Application-wide CURRENT_MAIN Roadmap projection
 
-**State:** `IN_PROGRESS / READ_ONLY_CURRENT_MAIN_PROJECTION`  
+**State:** `DONE_MAIN / PR_1356_MERGED`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
 **Source package:** `work-packages/OPS_LIVE_ROADMAP_CURRENT_MAIN_STATE_2026-09-24.md`
 
 The existing `/api/roadmap` runtime is extended with one exact-SHA-bound current-state projection so the public Roadmap can follow latest CURRENT_MAIN even while healthy Production intentionally lags between five-merge deployment boundaries. Canonical project Roadmaps remain the task sources; this runtime is read-only and non-authorizing.
+
+### OPS-ROADMAP-BRANCH-EVIDENCE-01 — Live Branch Readback
+
+**State:** `IN_PROGRESS / IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
+**Source package:** `work-packages/OPS_ROADMAP_BRANCH_EVIDENCE_2026-09-28.md`
+
+Fresh Human/Owner direction adds a subordinate `GET /api/roadmap/branches` projection. It reads repository branches and GitHub comparisons against one exact CURRENT_MAIN and returns only descendants with `behindBy=0` and `aheadBy>0`. Project Owner/Folder/Label are resolved from the canonical branch slug mapping; unresolved branch ownership remains explicit. The projection is read-only, cached, non-authorizing and cannot activate work, mutate branches or expose provider credentials.
 
 SH-02.0..02.7, SH-02.9A and SH-02.9 are Human-merged on main; SH-02.9 post-merge convergence is terminal through PR #1271 (`886486e057fea2fe833104b23f7a36d05d0b9b58`). SH-02.10 is now terminal for implementation generation `bc7edc096450be6b368ea706b97479567cc6ee55`: Security PR #1311 and QM PR #1312 independently verified that same generation and are Human/CODEOWNER-merged. Current main `db4ad93bb3bac7d4f31242b7f74f8f300d24e757` completed main CI #5849, Container Security #2851 and Post-Merge Production Correlation #246 successfully, and Render deployment `dep-daptgsad0e5s73acahjg` is live on the same exact SHA. The currently enabled action set is limited to five bounded SH-0/SH-1 actions with one-attempt budgets, kill switches and verification probes; all generic retry/quarantine plus SH-2/SH-3 actions remain HELD. SH-02.11 remains `DEPENDENCY_READY / ACTIVATION_NOT_STARTED`. The current child `SH-02.11A` prepares only `RETRY_SAFE_OPERATION`; it remains `HELD` until fresh independent Security and QM assurance passes for the exact pre-activation generation.
 
