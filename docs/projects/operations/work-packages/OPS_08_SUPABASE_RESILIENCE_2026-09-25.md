@@ -252,3 +252,22 @@ maintenance candidates and are not changed ad hoc by this package.
 - Recovery exit evidence remains pending until a successful encrypted recovery artifact
   is observed and, for weekly retention, the encrypted Google Drive mirror is verified
   before any `pg_cron` deletion.
+
+
+## Recovery schedule delay defect — 2026-09-28
+
+Observed GitHub scheduled runs `#23` and `#24` completed successfully but skipped
+`Encrypted backup and isolated recovery evidence`. They started at 07:53Z and 08:49Z,
+hours after the nominal cron slots, while the schedule gate evaluated the runner's actual
+Europe/Berlin wall-clock hour and required it to equal `04`.
+
+The last pre-gate recovery run `#22` produced
+`ops-recovery-20260926T074010Z.tar.gz.age` with 1,116,486 bytes and SHA-256
+`9b9f07b4b09a55ec6475fb3769fedf26fa1165f0d42b5dc7144ede00d5f06581`,
+proving the dump/encryption/artifact path was functional before this scheduling regression.
+
+The bounded remediation keeps both UTC cron slots but chooses the valid slot from
+`github.event.schedule` plus the current Europe/Berlin UTC offset
+(`+0200 -> 02:00 UTC`, `+0100 -> 03:00 UTC`). Delayed runner start time no longer
+suppresses the backup. Weekly Monday archival still requires the selected slot and local
+weekday Monday.
