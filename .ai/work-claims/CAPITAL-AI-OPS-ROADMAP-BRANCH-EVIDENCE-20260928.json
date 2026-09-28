@@ -28,7 +28,8 @@
     "docs/projects/operations/work-packages/OPS_ROADMAP_BRANCH_EVIDENCE_2026-09-28.md",
     "server/routes/roadmapStateProjection.ts",
     "server/routes/roadmapCadenceRoutes.ts",
-    "tests/unit/roadmapCadenceRoutes.test.ts"
+    "tests/unit/roadmapCadenceRoutes.test.ts",
+    "tests/unit/roadmapStateProjection.test.ts"
   ],
   "dependencies": [
     "Existing /api/roadmap router and authenticated GitHub read path",
@@ -47,7 +48,9 @@
     "Branch evidence contains branch name/head SHA/ahead/behind and canonical project owner metadata when resolvable.",
     "Diverged/behind/identical branches are not presented as Live.",
     "Cache is bounded and stale state is explicit.",
-    "Focused tests cover eligible, diverged and unresolved-owner branches."
+    "Focused tests cover eligible, diverged and unresolved-owner branches.",
+    "The terminal predecessor OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01 remains excluded from active/current projection while OPS-ROADMAP-BRANCH-EVIDENCE-01 is projected as the current branch-evidence work item."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "lastSyncedMainSha": "00e51b0a238523d7ab809ad096806ba142f8d799"
 }
