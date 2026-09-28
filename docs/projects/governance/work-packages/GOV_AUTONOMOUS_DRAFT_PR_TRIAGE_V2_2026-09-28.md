@@ -6,7 +6,7 @@
 **Execution baseline:** `main@8542844df2f4044fa9fd793e04f034d508d74d46`  
 **Branch:** `agent/governance-autonomous-draft-pr-triage-v2-20260928`  
 **Priority:** `P1`  
-**Status:** `MERGED / EXIT_VERIFIED / POST_MERGE_AUTONOMOUS_INTAKE_VALIDATION_IN_PROGRESS`
+**Status:** `MERGED_MAIN / EVIDENCE_GATE / POST_MERGE_AUTONOMOUS_INTAKE_READBACK_PENDING`
 
 ## Owner direction
 
@@ -229,3 +229,10 @@ Bounded correction:
 - no new token, actor, queue, PR writer or merge authority is introduced;
 - regression coverage denies reintroduction of `issues: write` in this
   reusable workflow.
+
+## Closure correlation — PR #1508
+
+- PR #1506 merged at `7eaca6eab69857e99bfb54c2afb372c22d93d958`; the original V2 claim is `released / exclusive=false`.
+- PR #1508 merged at `20b3d6320bcd3bc545d45ac3245807381469d8c6` and corrected the reusable writer permission ceiling after the observed `startup_failure`.
+- The repository implementation and startup correction are merged. Successful provider-created Draft-PR intake after that correction remains an explicit readback gate; this document does not claim that missing provider evidence as PASS.
+- Closure disposition: `MERGED_MAIN / EVIDENCE_GATE`. The leading Roadmap carries the same nonterminal state. Issues #1507 and #1509 are one package-level reconciliation, not two independent implementations.
