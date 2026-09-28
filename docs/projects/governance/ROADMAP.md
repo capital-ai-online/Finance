@@ -1,6 +1,6 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@be33bde31d9e96d8cb306086428f90036350d8ea`
+**Baseline:** `main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
@@ -16,6 +16,21 @@
 This file remains a temporary project status projection until the separately requested Roadmap-removal Pull Request after completion of the Social Roadmap. Historical, pre-consolidation, non-terminal, branch-only, chat-derived or superseded entries are ledger/evidence only and are not executable merely because they were previously open.
 
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
+
+
+## GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-01 — Canonical App-author recovery
+
+**State:** `IMPLEMENTATION_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Priority:** `P1 🟠 Hoch`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Baseline:** `main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71`  
+**Branch:** `agent/governance-draft-pr-app-author-contents-read-fix-20260928`
+
+The merged canonical Draft-PR writer now separates PR author identity from the sole Human Owner by minting a repository GitHub App token for `gh pr create`. Provider evidence from the OPS Public-Readiness continuation proves that `Pull requests: write` alone is insufficient: the GitHub CLI first queries `repository.defaultBranchRef` and receives `Resource not accessible by integration`.
+
+The bounded repair adds only `Contents: read` to the same Finance-scoped short-lived token. No write permission outside Pull Requests, no new PR writer, no merge/ruleset/deployment authority and no secret inheritance are introduced.
+
+**Exit:** Human/CODEOWNER merge after exact-head validation; then autonomous provider-created Draft-PR intake succeeds and the Human Owner can supply the required one approval because the App, not `@SvenKulessa`, authors the PR.
 
 ## GOV-DEPLOY-BATCH-01 — 5-Merge Deployment / 10-Merge Version Cadence
 
