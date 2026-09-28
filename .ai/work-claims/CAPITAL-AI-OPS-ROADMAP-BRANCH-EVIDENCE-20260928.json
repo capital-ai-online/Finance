@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ROADMAP-BRANCH-EVIDENCE-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "OPS-ROADMAP-BRANCH-EVIDENCE-01 — extend the existing /api/roadmap runtime with read-only behind=0 branch evidence bound to exact CURRENT_MAIN.",
+  "workItemDE": "OPS-ROADMAP-BRANCH-EVIDENCE-01 — bestehende /api/roadmap-Runtime um read-only Branch-Evidence mit behind=0, gebunden an exakten CURRENT_MAIN, erweitern.",
+  "priority": "P1",
+  "priorityReason": "The public Control Center Roadmap needs a truthful Live mode for current branches without moving GitHub credentials or repository authority into the browser.",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 Controlled Implementation / PVC-08 Production Operations",
+  "primaryOwner": "CAPITAL-AI-OPS",
+  "startedAt": "2026-09-28T03:01:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+  "branch": "agent/operations-roadmap-branch-evidence-20260928",
+  "issue": 1474,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ROADMAP-BRANCH-EVIDENCE-20260928.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-20260924.json",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_ROADMAP_BRANCH_EVIDENCE_2026-09-28.md",
+    "server/routes/roadmapStateProjection.ts",
+    "server/routes/roadmapCadenceRoutes.ts",
+    "tests/unit/roadmapCadenceRoutes.test.ts",
+    "tests/unit/roadmapStateProjection.test.ts"
+  ],
+  "dependencies": [
+    "Existing /api/roadmap router and authenticated GitHub read path",
+    "Canonical project routing in docs/projects/README.md",
+    "FE successor PR #1476 consumes this evidence only after merge"
+  ],
+  "scopeBoundary": [
+    "GET-only GitHub branch and compare reads; no branch/PR/workflow/deploy/provider mutation.",
+    "CURRENT_MAIN remains the sole base authority; a live branch is eligible only when behindBy=0 and aheadBy>0.",
+    "Project/label attribution is derived from canonical project branchSlug routing; unresolved branches remain explicit and non-authorizing.",
+    "No GitHub token or raw provider response is returned to the browser.",
+    "No second Roadmap task-state registry or lifecycle plane."
+  ],
+  "acceptanceCriteria": [
+    "GET /api/roadmap/branches returns exact currentMainSha plus only ahead>0 / behind=0 branch evidence.",
+    "Branch evidence contains branch name/head SHA/ahead/behind and canonical project owner metadata when resolvable.",
+    "Diverged/behind/identical branches are not presented as Live.",
+    "Cache is bounded and stale state is explicit.",
+    "Focused tests cover eligible, diverged and unresolved-owner branches.",
+    "The terminal predecessor OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01 remains excluded from active/current projection while OPS-ROADMAP-BRANCH-EVIDENCE-01 is projected as the current branch-evidence work item."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "lastSyncedMainSha": "00e51b0a238523d7ab809ad096806ba142f8d799"
+}
