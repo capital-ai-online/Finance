@@ -16,6 +16,7 @@ import {
   validateClaimShape,
   writeJsonFile,
 } from './lib.mjs';
+import { resolvePrCreateExecutionIdentity } from './prCreateExecutionIdentity.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
@@ -95,9 +96,17 @@ function writeCreateCorrelationEvidence({ blocking, uncoveredFiles }) {
   const branchName = String(process.env.PR_HEAD_BRANCH || process.env.HEAD_BRANCH || '').trim();
   const actor = String(process.env.GITHUB_ACTOR || '').trim();
   const triggeringActor = String(process.env.GITHUB_TRIGGERING_ACTOR || actor).trim();
+  const trustedHandoff = String(process.env.PR_TRUSTED_HANDOFF || '').trim();
+  const executionIdentity = resolvePrCreateExecutionIdentity({
+    actor,
+    triggeringActor,
+    trustedHandoff,
+    eventName: process.env.GITHUB_EVENT_NAME,
+    ref: process.env.GITHUB_REF,
+  });
   const baseline = fs.existsSync(baselinePath) ? readJsonFile(baselinePath) : null;
   const namespaceCorrelationPass = approvedAgentBranch(branchName);
-  const authorityResolved = actor === 'SvenKulessa' && triggeringActor === 'SvenKulessa';
+  const authorityResolved = executionIdentity.authorityResolved === true;
   const openWriterCorrelationPass = blocking.length === 0;
   const semanticCorrelationPass = !claim || uncoveredFiles.length === 0;
   const validationStatus =
@@ -125,6 +134,9 @@ function writeCreateCorrelationEvidence({ blocking, uncoveredFiles }) {
     branchName,
     actor,
     triggeringActor,
+    executionIdentityMode: executionIdentity.mode,
+    trustedInternalHandoff: executionIdentity.trustedInternalHandoff,
+    trustedHandoff: executionIdentity.trustedHandoff,
     failClosed,
     correlationResult,
     authorityResolved,

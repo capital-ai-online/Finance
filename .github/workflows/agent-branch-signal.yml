@@ -1,0 +1,42 @@
+name: Agent Branch Signal
+run-name: >-
+  Agent-Branch-Signal – ${{ github.ref_name }} @ ${{ github.sha }}
+
+on:
+  push:
+    branches:
+      - 'agent/**'
+      - 'claude/**'
+      - 'grok/**'
+      - 'ai/**'
+
+# This workflow is deliberately unprivileged. It emits only a trusted GitHub Actions
+# workflow_run event. The privileged Draft-PR listener runs from default-branch code,
+# treats this run/branch as untrusted input and performs fresh CURRENT_MAIN correlation.
+permissions: {}
+
+concurrency:
+  group: agent-branch-signal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  signal:
+    name: Signal bounded agent branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate event shape without checking out branch code
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.ref_name }}
+          HEAD_SHA: ${{ github.sha }}
+          EVENT_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          case "$HEAD_BRANCH" in
+            agent/*|claude/*|grok/*|ai/*) ;;
+            *) echo "Unsupported agent branch namespace." >&2; exit 1 ;;
+          esac
+          [[ "$HEAD_SHA" =~ ^[0-9a-fA-F]{40}$ ]]
+          test -n "$EVENT_REPOSITORY"
+          echo "Agent branch signal accepted for downstream trusted-main correlation."

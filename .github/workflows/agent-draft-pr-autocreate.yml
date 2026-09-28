@@ -1,0 +1,39 @@
+name: Autonomous Agent Draft PR Intake
+run-name: >-
+  Autonomous Draft-PR intake – ${{ github.event.workflow_run.head_branch || github.ref_name }}
+
+on: # zizmor: ignore[dangerous-triggers] — trusted default-branch listener; candidate code is never executed here
+  workflow_run:
+    workflows: ['Agent Branch Signal']
+    types: [completed]
+
+# GitHub workflow_run executes this listener from the default-branch workflow definition.
+# It MUST NOT check out or execute code from the signaled branch. The reusable trusted-main
+# PR writer performs candidate checkout with persisted credentials disabled and validates
+# current main, work claim, overlap, project label and lane state before any PR mutation.
+permissions: {}
+
+concurrency:
+  group: autonomous-agent-draft-pr-intake
+  cancel-in-progress: false
+
+jobs:
+  autocreate:
+    name: Correlate signaled branch and request canonical Draft-PR writer
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (startsWith(github.event.workflow_run.head_branch, 'agent/') ||
+       startsWith(github.event.workflow_run.head_branch, 'claude/') ||
+       startsWith(github.event.workflow_run.head_branch, 'grok/') ||
+       startsWith(github.event.workflow_run.head_branch, 'ai/'))
+    permissions:
+      # The reusable writer isolates contents:write to its bounded precreate-sync job.
+      # Candidate code is still never checked out or executed by this listener.
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/open-agent-draft-pr.yml
+    with:
+      head_branch: ${{ github.event.workflow_run.head_branch }}
+      trusted_handoff: agent-autocreate
