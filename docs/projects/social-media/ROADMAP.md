@@ -87,6 +87,22 @@ Durable evidence/persistence that formerly referenced a separate DATA project no
 
 **Exit:** real publication identity/content/package/approval correlation plus real analytics source, metric definition, measurement window, purpose and applicable privacy/compliance disposition are reproducible; durable evidence is owner-correct; no publication or analytics authority is inferred from this Roadmap.
 
+
+### SOCIAL-P4 — Planning Visualization Toolkit
+
+**State:** `IN_PROGRESS / IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`.
+
+Fresh Human/Owner direction from 2026-09-28 adds a bounded planning-visualization slice for Roadmaps, Maps and dependency/process graphics that can be consumed by the existing SocialMediaEngine.
+
+The implementation remains subordinate to `MediaProjectV2`: a validated `PlanningVisualSpec` is deterministically laid out through the already-installed D3 dependency and adapted into an offline, `publishReady=false` MediaProject draft. It does not create a second Roadmap, Brand, Publishing or Task-State authority.
+
+Mermaid, React Flow, Frappe Gantt and vis-timeline are recorded as evaluated OSS candidates only. They are not activated as runtime dependencies until a separate lockfile/license/lifecycle supply-chain gate is satisfied. Current work-state does not fabricate dates to make a Gantt/timeline renderer fit.
+
+**Work package:** `docs/projects/social-media/work-packages/SOCIAL_PLANNING_VISUALIZATION_TOOLKIT_2026-09-28.md`  
+**Issue:** #1475  
+**Exit:** exact-head validation and Human/CODEOWNER merge; then release the exclusive work claim and correlate this item to DONE_MAIN.
+
+
 ## Provider action boundary
 
 Every direct social-provider upload/post/permission/credential action requires explicit current authorization for the exact provider action/account/permission. Content preparation, export, a completed package, a Roadmap state or a terminal Social task never implies publication authority.
