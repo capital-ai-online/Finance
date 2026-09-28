@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-TIER4-LIVE-PROJECTIONS-RESUME-20260928",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..16 verified quote/evidence/Data Quality/scoring projection over the existing Tier-3/4 transport.",
+  "workItem": "Resume and complete issues #1455 and #1450 after OPS #1495 retired the obsolete merge-count package-version CI gate.",
+  "startedAt": "2026-09-28",
+  "baseBranch": "main",
+  "baseSha": "4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0",
+  "branch": "agent/fintech-tier4-live-projections-resume-20260928",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Human/CODEOWNER-merged PR #1497 / CURRENT_MAIN 4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0",
+    "Existing Tier-3 fan-out + Tier-4 client contract + authenticated WebSocket transport",
+    "Existing crypto consensus / Traditional verified quote authorities",
+    "Existing ScoringModelRegistry -> ScoringDispatcher -> Domain Executor -> CanonicalScoreResult authority",
+    "Explicit provider display/redistribution entitlement attestation before productive activation",
+    "CAPITAL-AI-FE #1447 remains downstream browser consumer ownership"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-TIER4-LIVE-PROJECTIONS-RESUME-20260928.json",
+    ".ai/work-claims/CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925.json",
+    ".env.example",
+    "docs/projects/fintech/work-packages/FIN_TIER4_LIVE_PROJECTIONS_2026-09-28.md",
+    "server.application.ts",
+    "server/marketData/liveTier4ProjectionRuntime.ts",
+    "src/platform/MarketData/Fanout/MarketDataFanoutHub.ts",
+    "src/platform/MarketData/Fanout/MarketDataWebSocketRoomMultiplexer.ts",
+    "src/platform/MarketData/LiveClientFeedContract.ts",
+    "src/routes/cryptoRoutes.ts",
+    "src/services/cryptoSpotConsensus.ts",
+    "src/services/externalSpotPriceAdapters.ts",
+    "src/services/marketDataConsensus.ts",
+    "src/services/traditionalQuoteEvidence.ts",
+    "tests/unit/externalSpotPriceAdapters.test.ts",
+    "tests/unit/liveClientFeedContract.test.ts",
+    "tests/unit/liveTier4ProjectionRuntime.test.ts",
+    "tests/unit/traditionalQuoteEvidence.test.ts"
+  ],
+  "protectedBoundaries": [
+    "Raw Tier-3 ticks remain alertEligible=false/scoringEligible=false and are scheduling signals only.",
+    "ScoringModelRegistry/ScoringDispatcher remain the only productive model-selection/execution authority.",
+    "No provider, Render, Redis, secret, IAM, billing or external control-plane mutation.",
+    "No second quote, DQ, room/fan-out, scoring or release authority.",
+    "Runtime/redistribution remains fail-closed unless explicit entitlement attestation is true.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "overlapReadback": {
+    "currentMain": "4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0",
+    "openPullRequests": [
+      "#1499 CAPITAL-AI-OPS service_role migration; no direct changed-file overlap"
+    ],
+    "directChangedFileOverlap": false,
+    "mainDeltaOverlapFromPreviousFintechBase": false
+  },
+  "exitGate": "TypeScript + focused Tier-3/Tier-4/quote/consensus tests + exact-head CI/Governance/Security PASS; fresh CURRENT_MAIN/overlap correlation; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
