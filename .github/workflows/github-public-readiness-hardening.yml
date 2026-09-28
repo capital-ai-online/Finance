@@ -47,8 +47,8 @@ jobs:
 
       - name: Enterprise-Installation-Token erzeugen
         id: enterprise_app_token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
-        with: # zizmor: ignore[github-app] GitHub enterprise installation tokens cannot be permission-downscoped; this installation is dedicated to Enterprise administration: write.
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # zizmor: ignore[github-app] GitHub enterprise installation tokens cannot be permission-downscoped; the Enterprise installation is least-privilege.
+        with:
           client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
           enterprise: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
