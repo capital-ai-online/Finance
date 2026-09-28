@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { getDeploymentIdentity, type DeploymentIdentity } from '../deploymentIdentity';
-import { loadRoadmapStateProjection } from './roadmapStateProjection';
+import {
+  loadRoadmapStateProjection,
+  parseRoadmapProjectRouting,
+  type RoadmapProjectRoute,
+} from './roadmapStateProjection';
 import {
   computeMergeCadence,
   isCadenceContractActive,
@@ -12,6 +16,11 @@ const ACTIVATION_PR = 1336;
 const CACHE_MS = 120_000;
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_COMMIT_PAGES = 5;
+const BRANCH_CACHE_MS = 300_000;
+const MAX_BRANCH_PAGES = 2;
+const MAX_BRANCH_CANDIDATES = 120;
+const BRANCH_COMPARE_CONCURRENCY = 12;
+const PROJECT_MAPPING_PATH = 'docs/projects/README.md';
 
 type FetchLike = typeof fetch;
 
@@ -299,6 +308,244 @@ export async function loadRoadmapCadenceProjection(fetchImpl: FetchLike = fetch)
   }
 }
 
+
+export interface RoadmapLiveBranch {
+  name: string;
+  headSha: string;
+  currentMainSha: string;
+  aheadBy: number;
+  behindBy: 0;
+  relation: 'LIVE_CURRENT_MAIN_DESCENDANT';
+  projectId: string | null;
+  projectFolder: string | null;
+  projectLabel: string | null;
+  ownerResolution: 'RESOLVED' | 'UNRESOLVED';
+}
+
+export interface RoadmapBranchProjection {
+  schemaVersion: 'roadmap-branch-evidence/1.0.0';
+  role: 'NON_AUTHORIZING_LIVE_PROJECTION';
+  observedAt: string;
+  stale: boolean;
+  repository: {
+    currentMainSha: string;
+  };
+  scan: {
+    candidateCount: number;
+    comparedCount: number;
+    excludedCount: number;
+    comparisonFailures: number;
+    truncated: boolean;
+  };
+  branches: RoadmapLiveBranch[];
+}
+
+let branchCache: { at: number; value: RoadmapBranchProjection } | null = null;
+
+async function repositoryTextAtRef(
+  fetchImpl: FetchLike,
+  path: string,
+  ref: string,
+): Promise<string> {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const url =
+    'https://api.github.com/repos/' +
+    REPOSITORY +
+    '/contents/' +
+    encodedPath +
+    '?ref=' +
+    encodeURIComponent(ref);
+  const payload = await json(fetchImpl, url, githubHeaders());
+  if (payload?.encoding !== 'base64' || typeof payload?.content !== 'string') {
+    throw new Error('GitHub Contents response is not base64 text for ' + path + '@' + ref);
+  }
+  return Buffer.from(payload.content.replace(/\n/g, ''), 'base64').toString('utf8');
+}
+
+async function resolveRepositoryCurrentMain(fetchImpl: FetchLike): Promise<string> {
+  const payload = await json(
+    fetchImpl,
+    'https://api.github.com/repos/' + REPOSITORY + '/commits/main',
+    githubHeaders(),
+  );
+  const sha = String(payload?.sha || '').toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error('Live GitHub CURRENT_MAIN is unavailable.');
+  return sha;
+}
+
+async function listRepositoryBranchHeads(
+  fetchImpl: FetchLike,
+): Promise<{ branches: Array<{ name: string; headSha: string }>; truncated: boolean }> {
+  const rows: Array<{ name: string; headSha: string }> = [];
+  for (let page = 1; page <= MAX_BRANCH_PAGES; page += 1) {
+    const payload = await json(
+      fetchImpl,
+      'https://api.github.com/repos/' +
+        REPOSITORY +
+        '/branches?per_page=100&page=' +
+        String(page),
+      githubHeaders(),
+    );
+    if (!Array.isArray(payload)) throw new Error('GitHub branches response must be an array.');
+    for (const branch of payload) {
+      const name = String(branch?.name || '');
+      const headSha = String(branch?.commit?.sha || '').toLowerCase();
+      if (!name || name === 'main' || !/^[0-9a-f]{40}$/.test(headSha)) continue;
+      rows.push({ name, headSha });
+    }
+    if (payload.length < 100) break;
+  }
+  return {
+    branches: rows.slice(0, MAX_BRANCH_CANDIDATES),
+    truncated: rows.length > MAX_BRANCH_CANDIDATES,
+  };
+}
+
+function resolveBranchProject(
+  branchName: string,
+  routes: RoadmapProjectRoute[],
+): RoadmapProjectRoute | null {
+  const normalized = branchName.toLowerCase();
+  const remainder = normalized.includes('/') ? normalized.slice(normalized.indexOf('/') + 1) : normalized;
+  const candidates = routes.filter((route) => {
+    const slug = route.branchSlug.toLowerCase();
+    return (
+      remainder === slug ||
+      remainder.startsWith(slug + '-') ||
+      remainder.startsWith(slug + '/') ||
+      normalized === slug ||
+      normalized.startsWith(slug + '-') ||
+      normalized.startsWith(slug + '/')
+    );
+  });
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+async function compareBranchToCurrentMain(
+  fetchImpl: FetchLike,
+  currentMainSha: string,
+  branch: { name: string; headSha: string },
+  routes: RoadmapProjectRoute[],
+): Promise<RoadmapLiveBranch | null> {
+  const comparison = await json(
+    fetchImpl,
+    'https://api.github.com/repos/' +
+      REPOSITORY +
+      '/compare/' +
+      currentMainSha +
+      '...' +
+      branch.headSha,
+    githubHeaders(),
+  );
+  const aheadBy = Number(comparison?.ahead_by);
+  const behindBy = Number(comparison?.behind_by);
+  if (!Number.isInteger(aheadBy) || !Number.isInteger(behindBy)) {
+    throw new Error('GitHub compare response is missing ahead_by/behind_by.');
+  }
+  if (behindBy !== 0 || aheadBy <= 0) return null;
+
+  const route = resolveBranchProject(branch.name, routes);
+  return {
+    name: branch.name,
+    headSha: branch.headSha,
+    currentMainSha,
+    aheadBy,
+    behindBy: 0,
+    relation: 'LIVE_CURRENT_MAIN_DESCENDANT',
+    projectId: route?.projectId ?? null,
+    projectFolder: route?.folder ?? null,
+    projectLabel: route?.label ?? null,
+    ownerResolution: route ? 'RESOLVED' : 'UNRESOLVED',
+  };
+}
+
+export async function buildRoadmapBranchProjection(
+  fetchImpl: FetchLike = fetch,
+): Promise<RoadmapBranchProjection> {
+  const currentMainSha = await resolveRepositoryCurrentMain(fetchImpl);
+  const [mappingMarkdown, listed] = await Promise.all([
+    repositoryTextAtRef(fetchImpl, PROJECT_MAPPING_PATH, currentMainSha),
+    listRepositoryBranchHeads(fetchImpl),
+  ]);
+  const routes = parseRoadmapProjectRouting(mappingMarkdown);
+  const branches: RoadmapLiveBranch[] = [];
+  let comparedCount = 0;
+  let comparisonFailures = 0;
+
+  for (let offset = 0; offset < listed.branches.length; offset += BRANCH_COMPARE_CONCURRENCY) {
+    const batch = listed.branches.slice(offset, offset + BRANCH_COMPARE_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async (candidate) => {
+        try {
+          const value = await compareBranchToCurrentMain(
+            fetchImpl,
+            currentMainSha,
+            candidate,
+            routes,
+          );
+          return { ok: true as const, value };
+        } catch {
+          return { ok: false as const, value: null };
+        }
+      }),
+    );
+    for (const result of results) {
+      comparedCount += 1;
+      if (!result.ok) {
+        comparisonFailures += 1;
+        continue;
+      }
+      if (result.value) branches.push(result.value);
+    }
+  }
+
+  if (listed.branches.length > 0 && comparisonFailures === listed.branches.length) {
+    throw new Error('All GitHub branch comparisons failed.');
+  }
+
+  branches.sort((left, right) => {
+    const project = String(left.projectId || 'ZZZ').localeCompare(String(right.projectId || 'ZZZ'));
+    return project !== 0 ? project : left.name.localeCompare(right.name);
+  });
+
+  return {
+    schemaVersion: 'roadmap-branch-evidence/1.0.0',
+    role: 'NON_AUTHORIZING_LIVE_PROJECTION',
+    observedAt: new Date().toISOString(),
+    stale: false,
+    repository: { currentMainSha },
+    scan: {
+      candidateCount: listed.branches.length,
+      comparedCount,
+      excludedCount: comparedCount - comparisonFailures - branches.length,
+      comparisonFailures,
+      truncated: listed.truncated,
+    },
+    branches,
+  };
+}
+
+export async function loadRoadmapBranchProjection(
+  fetchImpl: FetchLike = fetch,
+): Promise<RoadmapBranchProjection> {
+  const now = Date.now();
+  if (branchCache && now - branchCache.at < BRANCH_CACHE_MS) return branchCache.value;
+  try {
+    const value = await buildRoadmapBranchProjection(fetchImpl);
+    branchCache = { at: now, value };
+    return value;
+  } catch (error) {
+    if (branchCache) {
+      return {
+        ...branchCache.value,
+        stale: true,
+        observedAt: new Date().toISOString(),
+      };
+    }
+    throw error;
+  }
+}
+
 export const roadmapCadenceRouter = Router();
 
 roadmapCadenceRouter.get('/cadence', async (_req, res) => {
@@ -322,6 +569,20 @@ roadmapCadenceRouter.get('/state', async (_req, res) => {
   } catch (error) {
     res.status(503).json({
       schemaVersion: 'roadmap-live-state/1.0.0',
+      role: 'NON_AUTHORIZING_LIVE_PROJECTION',
+      state: 'EVIDENCE_UNAVAILABLE',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+roadmapCadenceRouter.get('/branches', async (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=90');
+    res.json(await loadRoadmapBranchProjection());
+  } catch (error) {
+    res.status(503).json({
+      schemaVersion: 'roadmap-branch-evidence/1.0.0',
       role: 'NON_AUTHORIZING_LIVE_PROJECTION',
       state: 'EVIDENCE_UNAVAILABLE',
       message: error instanceof Error ? error.message : String(error),
