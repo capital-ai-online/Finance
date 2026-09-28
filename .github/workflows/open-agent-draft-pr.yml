@@ -233,7 +233,6 @@ jobs:
     needs: [precreate-sync]
     permissions:
       contents: read
-      issues: write
       pull-requests: write
     if: >-
       needs.precreate-sync.result == 'success' &&
