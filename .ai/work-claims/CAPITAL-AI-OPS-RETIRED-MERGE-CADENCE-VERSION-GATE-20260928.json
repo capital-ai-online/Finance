@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-RETIRED-MERGE-CADENCE-VERSION-GATE-20260928",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -36,5 +36,7 @@
     "Do not create a second release/version authority.",
     "No provider, deployment, database or direct-main mutation."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0",
+  "releaseReason": "Associated PR #1497 was Human/CODEOWNER-merged as 4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0; exact-head CI/Governance/Container/Project/PR/zizmor evidence passed and fresh CURRENT_MAIN contains the retired-gate removal."
 }
