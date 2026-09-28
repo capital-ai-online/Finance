@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-TIMELINE-DESIGN-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector"
+  },
+  "workItem": "Show the owner work-state matrix as the roadmap at every viewport width.",
+  "workItemDE": "Die Owner-Zustandsmatrix auf jeder Breite als Roadmap anzeigen.",
+  "priority": "P2",
+  "priorityReason": "Unter 1024 px ersetzt die Seite die Timeline durch gestapelte Owner-Karten. Die Roadmap soll die Zustandsmatrix selbst sein, ohne Kalenderdaten und ohne den Phasen-Blueprint.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "startedAt": "2026-09-28T16:56:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "ea78aa68e7df3ec50ab23efae06988787eff52f0",
+  "branch": "grok/finance-roadmap-timeline-design-20260928",
+  "pullRequest": null,
+  "productionBaseline": {
+    "checkedAt": "2026-09-28T15:00:01Z",
+    "version": "0.6.7",
+    "commitSha": "4401263460575914cc1d08fc9075699f7df8e184",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-TIMELINE-DESIGN-20260928.json",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "tests/unit/roadmapDashboardProjection.test.ts"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "versionImpact": "PATCH",
+  "versionImpactReason": "Darstellungskorrektur der bestehenden Roadmap. Kein neuer Vertrag, kein Secret und keine Authorization-Entscheidung. Der 10er-Merge-Version-Gate ist auf CURRENT_MAIN terminal und erzwingt hier keinen package.json-Write."
+}
