@@ -102,22 +102,23 @@ describe('Roadmap live-state consumer', () => {
     ).toEqual(['OPS-LIVE-01']);
   });
 
-  it('uses /api/roadmap/state as primary current-work truth and fails closed without it', () => {
+  it('uses the deploy artifact and does not request live roadmap endpoints', () => {
     const dashboard = fs.readFileSync(
       path.join(process.cwd(), 'src/features/public/ui/RoadmapDashboard.tsx'),
       'utf8',
     );
 
-    expect(dashboard).toContain("fetch('/api/roadmap/state'");
-    expect(dashboard).toContain("fetch('/api/roadmap/branches'");
+    expect(dashboard).toContain("fetch('/roadmap-deploy-snapshot.json'");
+    expect(dashboard).not.toContain("fetch('/api/roadmap/state'");
+    expect(dashboard).not.toContain("fetch('/api/roadmap/branches'");
     expect(dashboard).toContain("cache: 'no-store'");
     expect(dashboard).toContain("fetch('/healthz'");
     expect(dashboard).toContain("data-roadmap-live-state");
-    expect(dashboard).toContain('STALE · letzte bestätigte Repository-Generation');
-    expect(dashboard).toContain('aktive Arbeit wird fail-closed ausgeblendet');
+    expect(dashboard).toContain('STALE · Deploy-Snapshot prüfen');
+    expect(dashboard).toContain('Arbeitspakete werden fail-closed ausgeblendet');
     expect(dashboard).not.toContain('ROADMAP_DASHBOARD_SNAPSHOT.activeWorkPackages.filter');
     expect(dashboard).not.toContain('ROADMAP_DASHBOARD_SNAPSHOT.queuedItems.filter');
     expect(dashboard).not.toContain('ROADMAP_DASHBOARD_SNAPSHOT.currentMainSha');
-    expect(dashboard).toContain('ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter');
+    expect(dashboard).not.toContain('ROADMAP_DASHBOARD_SNAPSHOT.integrationLedger.filter');
   });
 });
