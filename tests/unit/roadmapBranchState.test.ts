@@ -3,7 +3,7 @@ import { parseRoadmapBranchProjection } from '../../src/features/public/ui/roadm
 
 const currentMainSha = '14677ea3acc5316e025d784c7dc35d3a6b2dfe1a';
 
-function projection() {
+function projection(): any {
   return {
     schemaVersion: 'roadmap-branch-evidence/1.0.0',
     role: 'NON_AUTHORIZING_LIVE_PROJECTION',
