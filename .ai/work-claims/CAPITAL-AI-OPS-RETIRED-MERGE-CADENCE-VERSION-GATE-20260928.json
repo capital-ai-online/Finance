@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RETIRED-MERGE-CADENCE-VERSION-GATE-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Issue #1495 — retire the obsolete 10-merge package-version PR CI gate and MERGE_CADENCE_PATCH_V1 autofix writer.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-06",
+  "supportingStages": [
+    "PVC-07",
+    "PVC-02"
+  ],
+  "baseBranch": "main",
+  "baseSha": "73bdf0c295a5f23754d9a088891e17b6c8cbe349",
+  "branch": "agent/operations-retire-10-merge-version-gate-1495-20260928",
+  "claimedPaths": [
+    ".github/workflows/ci.yml",
+    "scripts/pr/prAutofixRepairRegistry.mjs",
+    "scripts/pr/repairers/mergeCadencePatchV1.mjs",
+    "scripts/pr/issueRepairEligibility.test.mjs",
+    "scripts/pr/classifyPrAutofixFailure.test.mjs",
+    "docs/projects/operations/work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md",
+    "docs/projects/operations/work-packages/OPS_RETIRED_MERGE_CADENCE_VERSION_GATE_2026-09-28.md",
+    "docs/architecture/AUTONOMOUS_SELF_HEALING_PLATFORM.md"
+  ],
+  "scopeBoundary": [
+    "Retire only merge-count-driven package-version PR gating and its registered repairer.",
+    "Preserve the existing 5-merge deployment cadence.",
+    "Do not create a second release/version authority.",
+    "No provider, deployment, database or direct-main mutation."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

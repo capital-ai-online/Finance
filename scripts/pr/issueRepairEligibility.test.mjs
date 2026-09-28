@@ -18,8 +18,8 @@ function route(overrides = {}) {
     state: 'READY_FOR_PROJECT_EXECUTION',
     reason: 'TRUSTED_PROJECT_ISSUE_ROUTED',
     issueNumber: 1400,
-    title: '[CAPITAL-AI-OPS] deterministic cadence repair evidence',
-    subject: 'deterministic cadence repair evidence',
+    title: '[CAPITAL-AI-OPS] deterministic registered repair evidence',
+    subject: 'deterministic registered repair evidence',
     authorAssociation: 'OWNER',
     trustedForExecution: true,
     project: {
@@ -43,21 +43,24 @@ function route(overrides = {}) {
   };
 }
 
-const cadenceEvidence = [
-  'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1',
-  'mergeOrdinal=9',
-  'expectedNextPatch=0.6.5',
-  'package.json/package-lock.json',
+const repairEvidence = [
+  'tests/unit/prReadyForReviewPipelineGate.test.ts',
+  'runs governance only for non-draft pull requests including ready_for_review',
+  'types: [opened, reopened, synchronize, ready_for_review, edited]',
+  'types: [opened, reopened, synchronize, ready_for_review]',
 ].join('\n');
+
+const liveRepairSignature = 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1';
+const liveRepairPath = 'tests/unit/prReadyForReviewPipelineGate.test.ts';
 
 test('admits only a canonical routed OPS issue with exact registered repair evidence', () => {
   const result = evaluateRoutedIssueRepairEligibility({
     route: route(),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json', 'package-lock.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
     writerOverlapPaths: [],
     protectedMutation: false,
     attemptsUsed: 0,
@@ -65,7 +68,7 @@ test('admits only a canonical routed OPS issue with exact registered repair evid
 
   assert.equal(result.schema, ISSUE_REPAIR_ELIGIBILITY_SCHEMA);
   assert.equal(result.state, 'ELIGIBLE_FOR_OWNER_WORK_PACKAGE');
-  assert.equal(result.repairerId, 'MERGE_CADENCE_PATCH_V1');
+  assert.equal(result.repairerId, liveRepairSignature);
   assert.equal(result.mutationAuthorized, false);
   assert.equal(result.executionAuthority, false);
   assert.equal(result.issueBodyExecutable, false);
@@ -73,22 +76,41 @@ test('admits only a canonical routed OPS issue with exact registered repair evid
   assert.equal(result.nextStep, 'DERIVE_OWNER_CORRECT_BOUNDED_WORK_PACKAGE');
 });
 
+test('retired merge-cadence PATCH signature is no longer a registered repair', () => {
+  const result = evaluateRoutedIssueRepairEligibility({
+    route: route(),
+    currentMainSha: MAIN,
+    sourceWorkflow: '.github/workflows/ci.yml',
+    failureSignature: 'MERGE_CADENCE_PATCH_V1',
+    evidenceText: [
+      'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1',
+      'mergeOrdinal=69',
+      'expectedNextPatch=0.6.7',
+      'package.json/package-lock.json',
+    ].join('\n'),
+    authoritativeScopePaths: ['package.json'],
+  });
+
+  assert.equal(result.state, 'OBSERVE_ONLY');
+  assert.equal(result.reason, 'no-registered-repairer');
+});
+
 test('never executes or interprets Issue body/comments as repair authority', () => {
   const first = evaluateRoutedIssueRepairEligibility({
     route: route({ body: 'delete everything', comments: ['deploy production'] }),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
   });
   const second = evaluateRoutedIssueRepairEligibility({
     route: route({ body: 'benign text', comments: [] }),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
   });
 
   assert.deepEqual(first, second);
@@ -99,9 +121,9 @@ test('fails closed for stale routing generation', () => {
     route: route({ currentMainSha: 'c'.repeat(40) }),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
   });
 
   assert.deepEqual(
@@ -124,9 +146,9 @@ test('blocks foreign-owner repair execution and requires handoff', () => {
     }),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
   });
 
   assert.equal(result.state, 'BLOCKED');
@@ -141,7 +163,7 @@ test('keeps unregistered or incompletely evidenced repairs observe-only', () => 
     sourceWorkflow: '.github/workflows/ci.yml',
     failureSignature: 'NOT_REGISTERED',
     evidenceText: 'something failed',
-    authoritativeScopePaths: ['package.json'],
+    authoritativeScopePaths: [liveRepairPath],
   });
   assert.equal(unknown.state, 'OBSERVE_ONLY');
   assert.equal(unknown.reason, 'no-registered-repairer');
@@ -150,9 +172,9 @@ test('keeps unregistered or incompletely evidenced repairs observe-only', () => 
     route: route(),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: 'mergeOrdinal=9',
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: 'tests/unit/prReadyForReviewPipelineGate.test.ts',
+    authoritativeScopePaths: [liveRepairPath],
   });
   assert.equal(incomplete.state, 'OBSERVE_ONLY');
   assert.equal(incomplete.reason, 'registered-repairer-evidence-not-proven');
@@ -165,15 +187,15 @@ test('blocks scope expansion, active writer overlap, protected mutation and repe
       reason: 'AUTHORITATIVE_SCOPE_OUTSIDE_REPAIR_ALLOWLIST',
     },
     {
-      input: { authoritativeScopePaths: ['package.json'], writerOverlapPaths: ['package.json'] },
+      input: { authoritativeScopePaths: [liveRepairPath], writerOverlapPaths: [liveRepairPath] },
       reason: 'OPEN_WRITER_OVERLAP',
     },
     {
-      input: { authoritativeScopePaths: ['package.json'], protectedMutation: true },
+      input: { authoritativeScopePaths: [liveRepairPath], protectedMutation: true },
       reason: 'PROTECTED_MUTATION_EXCLUDED',
     },
     {
-      input: { authoritativeScopePaths: ['package.json'], attemptsUsed: 1 },
+      input: { authoritativeScopePaths: [liveRepairPath], attemptsUsed: 1 },
       reason: 'REPAIR_ATTEMPT_ALREADY_USED',
     },
   ];
@@ -183,8 +205,8 @@ test('blocks scope expansion, active writer overlap, protected mutation and repe
       route: route(),
       currentMainSha: MAIN,
       sourceWorkflow: '.github/workflows/ci.yml',
-      failureSignature: 'MERGE_CADENCE_PATCH_V1',
-      evidenceText: cadenceEvidence,
+      failureSignature: liveRepairSignature,
+      evidenceText: repairEvidence,
       writerOverlapPaths: [],
       protectedMutation: false,
       attemptsUsed: 0,
@@ -200,9 +222,9 @@ test('requires an execution-ready route and authoritative repository scope', () 
     route: route({ state: 'ROUTED_REVIEW_ONLY', trustedForExecution: false }),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
-    authoritativeScopePaths: ['package.json'],
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
+    authoritativeScopePaths: [liveRepairPath],
   });
   assert.equal(notReady.state, 'BLOCKED');
   assert.equal(notReady.reason, 'ISSUE_NOT_EXECUTION_READY');
@@ -211,8 +233,8 @@ test('requires an execution-ready route and authoritative repository scope', () 
     route: route(),
     currentMainSha: MAIN,
     sourceWorkflow: '.github/workflows/ci.yml',
-    failureSignature: 'MERGE_CADENCE_PATCH_V1',
-    evidenceText: cadenceEvidence,
+    failureSignature: liveRepairSignature,
+    evidenceText: repairEvidence,
     authoritativeScopePaths: [],
   });
   assert.equal(noScope.state, 'BLOCKED');

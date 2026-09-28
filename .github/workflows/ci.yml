@@ -277,14 +277,6 @@ jobs:
             echo "planner_available=false" >> "$GITHUB_OUTPUT"
             echo "Base-Snapshot enthält den Planner noch nicht; Bootstrap läuft fail-closed mit vollständiger Test-/Analyseentscheidung."
           fi
-          if git cat-file -e "$PR_BASE_SHA:scripts/operations/mergeCadence.mjs" 2>/dev/null; then
-            git show "$PR_BASE_SHA:scripts/operations/mergeCadence.mjs" > "$policy_dir/mergeCadence.mjs"
-            echo "cadence_available=true" >> "$GITHUB_OUTPUT"
-            echo "cadence_path=$policy_dir/mergeCadence.mjs" >> "$GITHUB_OUTPUT"
-          else
-            echo "cadence_available=false" >> "$GITHUB_OUTPUT"
-            echo "Base-Snapshot enthält noch keinen Merge-Cadence-Helper; Bootstrap bleibt vor Aktivierung ohne 10er-Mutationsgate."
-          fi
 
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
@@ -338,42 +330,6 @@ jobs:
               echo 'reason=bootstrap-base-without-trusted-planner'
             } >> "$GITHUB_OUTPUT"
           fi
-
-      - name: 10er-Merge-Version-Gate gegen trusted CURRENT_MAIN prüfen
-        if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.trusted_policy.outputs.cadence_available == 'true'
-        shell: bash
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.expected_base_sha }}
-          TRUSTED_CADENCE_PATH: ${{ steps.trusted_policy.outputs.cadence_path }}
-        run: |
-          set -euo pipefail
-          cadence_json="$RUNNER_TEMP/merge-cadence-pr.json"
-          node "$TRUSTED_CADENCE_PATH" --repo-root=. --ref="$PR_BASE_SHA" > "$cadence_json"
-          node - "$cadence_json" <<'NODE'
-          const fs = require('node:fs');
-          const cadence = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          if (!cadence.active || !cadence.nextVersionDue) {
-            console.log('Merge cadence: kein 10er-PATCH für diesen Kandidaten.');
-            process.exit(0);
-          }
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
-          const expected = cadence.nextPatchVersion;
-          const converged =
-            pkg.version === expected &&
-            lock.version === expected &&
-            lock?.packages?.['']?.version === expected;
-          if (!converged) {
-            console.error('ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1');
-            console.error(
-              'mergeOrdinal=' + cadence.mergeOrdinal +
-              '; expectedNextPatch=' + expected +
-              '; package.json/package-lock.json must be materialized atomically on the candidate branch before Human/CODEOWNER merge.',
-            );
-            process.exit(1);
-          }
-          console.log('10er-Merge-Version-Gate PASS: next merge ordinal=' + (cadence.mergeOrdinal + 1) + ', version=' + expected + '.');
-          NODE
 
       - name: Scope-Zusammenfassung
         if: steps.cost_control.outputs.current_snapshot != 'false' && steps.cost_control.outputs.reuse_exact_snapshot != 'true'
