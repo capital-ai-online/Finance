@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ROADMAP-CLOSURE-DEDUP-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Deduplicate post-merge Roadmap closure findings by canonical work-package set across distinct merged PRs and close converged handoffs.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/08",
+  "startedAt": "2026-09-28T13:44:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "23ec8398e855094eea51268c555f506cdb822f9a",
+  "branch": "agent/operations-roadmap-closure-dedup-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ROADMAP-CLOSURE-DEDUP-20260928.json",
+    ".github/workflows/self-healing-package-continuation.yml"
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge or abandonment.",
+  "versionImpact": "NONE"
+}
