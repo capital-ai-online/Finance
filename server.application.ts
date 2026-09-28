@@ -25,6 +25,7 @@ import {
   createLiveMarketDataRuntime,
 } from './server/marketData/liveMarketDataRuntime';
 import { attachMarketDataWebSocketTransport } from './server/marketData/marketDataWebSocketTransport';
+import { createLiveTier4ProjectionRuntime } from './server/marketData/liveTier4ProjectionRuntime';
 import {
   enrichStandardCryptoWithCanonicalScore,
   isStandardCryptoMarketDataAsset,
@@ -1202,6 +1203,27 @@ async function startServer() {
       },
     },
   });
+  const liveClientRequested = process.env.MARKET_DATA_LIVE_CLIENT_ENABLED?.trim().toLowerCase() === 'true';
+  const liveTier4ProjectionRequested = process.env.MARKET_DATA_TIER4_PROJECTION_ENABLED?.trim().toLowerCase() === 'true';
+  const liveEntitlementAttested = process.env.MARKET_DATA_LIVE_ENTITLEMENT_ATTESTED?.trim().toLowerCase() === 'true';
+  const liveTier4Projection = createLiveTier4ProjectionRuntime({
+    fanoutHub: liveMarketDataRuntime.fanoutHub,
+    enabled: liveClientRequested && liveTier4ProjectionRequested,
+    entitlementAttested: liveEntitlementAttested,
+    onError: (kind, error, signal) => serverLogger.warn('Tier 4 live projection error', {
+      kind,
+      assetClass: signal.assetClass,
+      symbol: signal.symbol,
+      correlationId: signal.correlationId,
+      error: error instanceof Error ? error.message : String(error),
+    }),
+  });
+  const stopLiveTier4ProjectionObservation = liveTier4Projection.active()
+    ? liveMarketDataRuntime.fanoutHub.observeLocalAcceptedTicks(tick => {
+      void liveTier4Projection.projectFromMarketTick(tick);
+    })
+    : () => undefined;
+
   const liveMarketDataIngress = createBinanceBookTickerIngressFromEnv(
     liveMarketDataRuntime,
     (state, detail) => serverLogger.info('Binance public market stream state', { state, detail }),
@@ -1256,6 +1278,12 @@ async function startServer() {
         .map(value => value.trim())
         .filter(Boolean).length,
     });
+    serverLogger.info('Tier 4 live projection activation gate', {
+      liveClientRequested,
+      liveTier4ProjectionRequested,
+      entitlementAttested: liveEntitlementAttested,
+      active: liveTier4Projection.active(),
+    });
     
     // Production remains immutable/read-only; the watcher only starts in writable non-production runtimes.
     startRecursiveFileWatcher();
@@ -1292,7 +1320,7 @@ async function startServer() {
     httpServer,
     liveMarketDataRuntime.fanoutHub,
     {
-      enabled: process.env.MARKET_DATA_LIVE_CLIENT_ENABLED?.trim().toLowerCase() === 'true',
+      enabled: liveClientRequested && liveEntitlementAttested,
       isProduction: isProductionEnv,
       onError: (error) => serverLogger.warn('Live market client transport error', {
         error: error instanceof Error ? error.message : String(error),
@@ -1309,6 +1337,7 @@ async function startServer() {
     serverLogger.info('Graceful shutdown initiated', { signal });
 
     liveMarketDataIngress.stop();
+    stopLiveTier4ProjectionObservation();
     liveMarketDataTransport.close();
 
     if (marketDataRefreshTimer) {
