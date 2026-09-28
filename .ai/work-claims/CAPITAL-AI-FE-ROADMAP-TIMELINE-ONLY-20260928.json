@@ -30,6 +30,7 @@
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-TIMELINE-ONLY-20260928.json",
     "Dockerfile",
+    ".github/workflows/open-agent-draft-pr.yml",
     "server/ownerAuthorization/currentMain.ts",
     "server/routes/roadmapCadenceRoutes.ts",
     "server/routes/roadmapStateProjection.ts",
