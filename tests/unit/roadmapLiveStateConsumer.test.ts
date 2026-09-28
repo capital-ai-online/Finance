@@ -109,6 +109,7 @@ describe('Roadmap live-state consumer', () => {
     );
 
     expect(dashboard).toContain("fetch('/api/roadmap/state'");
+    expect(dashboard).toContain("fetch('/api/roadmap/branches'");
     expect(dashboard).toContain("cache: 'no-store'");
     expect(dashboard).toContain("fetch('/healthz'");
     expect(dashboard).toContain("data-roadmap-live-state");

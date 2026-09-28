@@ -48,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isControlCenterOpen, setIsControlCenterOpen] = useState(true);
   const [expandedClass, setExpandedClass] = useState<MainCategory | null>('KRYPTO');
   const authenticatedProfile = useLandingSessionProfile();
   const logout = useLandingSessionLogout();
@@ -357,19 +358,49 @@ export const Header: React.FC<HeaderProps> = ({
                       <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                     </a>
 
-                    <a
-                      href="/roadmap"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="w-full flex min-h-11 items-center justify-between py-2.5 px-3 rounded-xl text-sm text-slate-200 hover:text-white bg-[#8D26FF]/5 hover:bg-[#8D26FF]/10 border border-[#8D26FF]/20 hover:border-[#8D26FF]/40 text-left transition-all"
-                      data-public-navigation="roadmap"
-                      aria-label="Live Roadmap öffnen"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <GitBranch className="w-4 h-4 text-[#E879F9]" />
-                        Live Roadmap
-                      </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                    </a>
+                    <div className="rounded-xl border border-[#8D26FF]/20 bg-[#8D26FF]/5 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setIsControlCenterOpen((current) => !current)}
+                        className="w-full flex min-h-11 items-center justify-between py-2.5 px-3 text-sm text-slate-100 hover:text-white hover:bg-[#8D26FF]/10 text-left transition-all"
+                        data-public-navigation="control-center"
+                        aria-expanded={isControlCenterOpen}
+                        aria-controls="control-center-navigation"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <GitBranch className="w-4 h-4 text-[#E879F9]" />
+                          Control Center
+                        </span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isControlCenterOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isControlCenterOpen && (
+                          <motion.div
+                            id="control-center-navigation"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden border-t border-[#8D26FF]/15 bg-black/20"
+                          >
+                            <a
+                              href="/roadmap"
+                              onClick={() => setIsMenuOpen(false)}
+                              className="w-full flex min-h-11 items-center justify-between py-2.5 pl-9 pr-3 text-sm text-slate-200 hover:text-white hover:bg-[#8D26FF]/10 text-left transition-all"
+                              data-public-navigation="roadmap"
+                              aria-label="Control Center Roadmap öffnen"
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <Activity className="w-4 h-4 text-[#44DE88]" />
+                                Roadmap
+                              </span>
+                              <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                            </a>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                     {/* MARKET VOCABULARY MODULE */}
                     <button
