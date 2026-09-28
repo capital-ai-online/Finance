@@ -5,7 +5,6 @@ import { createGitHubPublicReadinessEnterpriseWriter } from '../../scripts/opera
 
 const root = path.resolve(__dirname, '../..');
 const APP_TOKEN = 'enterprise_installation_token_for_unit_test_1234567890';
-const ADMIN_PAT = 'ghp_admin_enterprise_pat_for_unit_test_1234567890';
 
 const response = (
   body: unknown,
@@ -68,7 +67,6 @@ describe('GitHub public-readiness Enterprise writer', () => {
 
     const result = await createGitHubPublicReadinessEnterpriseWriter({
       enterpriseInstallationToken: APP_TOKEN,
-      enterpriseAdminPat: ADMIN_PAT,
       fetchImpl: fetchImpl as typeof fetch,
     }).ensure();
 
@@ -77,100 +75,18 @@ describe('GitHub public-readiness Enterprise writer', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
-  it('falls back to verified admin:enterprise PAT only after App GET returns 403', async () => {
-    const calls: Array<{ method: string; url: string; auth: string; body?: string }> = [];
-    let patDetailReads = 0;
-
-    const fetchImpl = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const method = String(init?.method || 'GET');
-      const url = String(input);
-      const auth = String(new Headers(init?.headers).get('Authorization') || '');
-      calls.push({
-        method,
-        url,
-        auth,
-        body: typeof init?.body === 'string' ? init.body : undefined,
-      });
-
-      if (auth === `Bearer ${APP_TOKEN}`) {
-        expect(method).toBe('GET');
-        return response({ message: 'Resource not accessible by integration' }, 403);
-      }
-
-      expect(auth).toBe(`Bearer ${ADMIN_PAT}`);
-      const scopeHeaders = { 'x-oauth-scopes': 'admin:enterprise' };
-
-      if (method === 'GET' && url.endsWith('/rulesets')) {
-        return response(
-          [{ id: 24109163, name: 'capital-ai-finance-main-governance', target: 'branch' }],
-          200,
-          scopeHeaders,
-        );
-      }
-
-      if (method === 'GET') {
-        patDetailReads += 1;
-        return response(
-          ruleset({
-            approvals: patDetailReads === 1 ? 0 : 1,
-            codeOwner: patDetailReads !== 1,
-          }),
-          200,
-          scopeHeaders,
-        );
-      }
-
-      if (method === 'PUT') {
-        return response(ruleset(), 200, scopeHeaders);
-      }
-
-      throw new Error('unexpected provider call');
-    });
-
-    const result = await createGitHubPublicReadinessEnterpriseWriter({
-      enterpriseInstallationToken: APP_TOKEN,
-      enterpriseAdminPat: ADMIN_PAT,
-      fetchImpl: fetchImpl as typeof fetch,
-    }).ensure();
-
-    expect(result.status).toBe('UPDATED_AND_VERIFIED');
-    expect(result.authSource).toBe('ENTERPRISE_ADMIN_PAT_403_FALLBACK');
-    expect(calls.filter((call) => call.auth === `Bearer ${APP_TOKEN}`)).toHaveLength(1);
-
-    const put = calls.find((call) => call.method === 'PUT');
-    expect(put?.url.endsWith('/enterprises/capital-ai-online/rulesets/24109163')).toBe(true);
-    const body = JSON.parse(put?.body || '{}');
-    expect(body.bypass_actors).toEqual([]);
-    const pr = body.rules.find((rule: { type: string }) => rule.type === 'pull_request');
-    expect(pr.parameters).toMatchObject({
-      required_approving_review_count: 1,
-      require_code_owner_review: true,
-      require_last_push_approval: false,
-      require_extra_approval_for_unattributed_changes: false,
-      required_review_thread_resolution: true,
-    });
-  });
-
-  it('rejects PAT fallback when admin:enterprise scope is not proven', async () => {
-    const fetchImpl = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
-      const auth = String(new Headers(init?.headers).get('Authorization') || '');
-      if (auth === `Bearer ${APP_TOKEN}`) {
-        return response({ message: 'Resource not accessible by integration' }, 403);
-      }
-      return response(
-        [{ id: 24109163, name: 'capital-ai-finance-main-governance', target: 'branch' }],
-        200,
-        { 'x-oauth-scopes': 'read:enterprise' },
-      );
-    });
+  it('fails closed on Enterprise App 403 without any Classic-PAT fallback', async () => {
+    const fetchImpl = vi.fn(async () =>
+      response({ message: 'Resource not accessible by integration' }, 403),
+    );
 
     await expect(
       createGitHubPublicReadinessEnterpriseWriter({
         enterpriseInstallationToken: APP_TOKEN,
-        enterpriseAdminPat: ADMIN_PAT,
         fetchImpl: fetchImpl as typeof fetch,
       }).ensure(),
-    ).rejects.toThrow(/missing verified admin:enterprise/);
+    ).rejects.toThrow(/HTTP 403 via ENTERPRISE_APP_INSTALLATION/);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
   it('fails closed on existing bypass actors', async () => {
@@ -190,16 +106,17 @@ describe('GitHub public-readiness Enterprise writer', () => {
 });
 
 describe('public repository readiness workflow', () => {
-  it('uses Enterprise App first, bounded admin PAT fallback, and never changes visibility', () => {
+  it('uses App-only repository/Enterprise writers and never changes visibility', () => {
     const yaml = fs.readFileSync(
       path.join(root, '.github/workflows/github-public-readiness-hardening.yml'),
       'utf8',
     );
     expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
     expect(yaml).toContain('enterprise: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}');
-    expect(yaml).toContain(
-      'CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}',
-    );
+    expect(yaml).toContain('permission-administration: write');
+    expect(yaml).toContain('CAPITAL_AI_GITHUB_REPOSITORY_ADMIN_TOKEN: ${{ steps.repository_app_token.outputs.token }}');
+    expect(yaml).not.toContain('CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT');
+    expect(yaml).not.toContain('CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT');
     expect(yaml).toContain('Repository visibility mutation: `NOT_PERFORMED`');
     expect(yaml).not.toMatch(/visibility:\s*public|gh\s+repo\s+edit.*visibility/i);
   });
