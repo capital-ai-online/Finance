@@ -205,3 +205,27 @@ Default-Branch-Workflow autorisieren.
 - This closure branch is intentionally used as the first post-merge provider
   validation of that path. Successful provider-created Draft-PR intake closes
   the final behavioral exit evidence; Human/CODEOWNER merge remains unchanged.
+
+
+## Post-Merge Provider Failure — autonomous intake startup
+
+Provider validation on closure branch
+`agent/governance-draft-pr-v2-postmerge-closure-20260928` exposed:
+
+- Agent Branch Signal reached the provider path;
+- Autonomous Draft-PR intake run `36407585596` terminated as
+  `startup_failure` before any job was created;
+- the reusable writer still declared `issues: write` on its dormant
+  project-label convergence job while the autonomous caller intentionally
+  delegated only `contents: write + pull-requests: write`;
+- GitHub validates reusable-workflow permission ceilings before job-level
+  conditions, so the dormant higher permission prevented startup.
+
+Bounded correction:
+
+- project-label convergence uses `pull-requests: write`, which is already
+  delegated by the caller and sufficient for repository-label mutation in
+  this existing workflow contract;
+- no new token, actor, queue, PR writer or merge authority is introduced;
+- regression coverage denies reintroduction of `issues: write` in this
+  reusable workflow.
