@@ -1,6 +1,6 @@
 # CAPITAL-AI-SOCIAL — Canonical Roadmap
 
-**Baseline:** `main@a328f9cfdb1dba2845aa0e5c2c78e5a286a0e64d`
+**Baseline:** `main@314cc14e3345573ee86b969ca84cf98e5c2d858a`
 
 **Project:** `CAPITAL-AI-SOCIAL`  
 **Folder:** `docs/projects/social-media/`  
@@ -86,6 +86,22 @@ Human-merged PR #930 provides the Social-owned deterministic Publication/Analyti
 Durable evidence/persistence that formerly referenced a separate DATA project now resolves to **`CAPITAL-AI-FINTECH / PVC-10`** under the DATA ownership supersession. Protected runtime/provider handling remains OPS-owned where applicable. SEC/COMP/privacy boundaries remain independent.
 
 **Exit:** real publication identity/content/package/approval correlation plus real analytics source, metric definition, measurement window, purpose and applicable privacy/compliance disposition are reproducible; durable evidence is owner-correct; no publication or analytics authority is inferred from this Roadmap.
+
+
+### SOCIAL-P4 — Planning Visualization Toolkit
+
+**State:** `IN_PROGRESS / IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`.
+
+Fresh Human/Owner direction from 2026-09-28 adds a bounded planning-visualization slice for Roadmaps, Maps and dependency/process graphics that can be consumed by the existing SocialMediaEngine.
+
+The implementation remains subordinate to `MediaProjectV2`: a validated `PlanningVisualSpec` is deterministically laid out through the already-installed D3 dependency and adapted into an offline, `publishReady=false` MediaProject draft. It does not create a second Roadmap, Brand, Publishing or Task-State authority.
+
+Mermaid, React Flow, Frappe Gantt and vis-timeline are recorded as evaluated OSS candidates only. They are not activated as runtime dependencies until a separate lockfile/license/lifecycle supply-chain gate is satisfied. Current work-state does not fabricate dates to make a Gantt/timeline renderer fit.
+
+**Work package:** `docs/projects/social-media/work-packages/SOCIAL_PLANNING_VISUALIZATION_TOOLKIT_2026-09-28.md`  
+**Issue:** #1475  
+**Exit:** exact-head validation and Human/CODEOWNER merge; then release the exclusive work claim and correlate this item to DONE_MAIN.
+
 
 ## Provider action boundary
 
