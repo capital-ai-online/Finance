@@ -7,7 +7,7 @@
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
 **Branch:** `agent/operations-supabase-resilience-postmerge-20260928`  
 **Base:** `main@075c152dca639a9c238a94234295a16cb2f2f4c4`  
-**State:** `IMPLEMENTED_ON_MAIN / PROVIDER_REFRESH_VALIDATED / RECOVERY_LIVE_EVIDENCE_PENDING / GDRIVE_CREDENTIALS_REQUIRED`
+**State:** `MERGED_MAIN / EVIDENCE_GATE / RECOVERY_LIVE_EVIDENCE_PENDING / GDRIVE_CREDENTIALS_REQUIRED`
 
 ## Business outcome
 
@@ -271,3 +271,14 @@ The bounded remediation keeps both UTC cron slots but chooses the valid slot fro
 (`+0200 -> 02:00 UTC`, `+0100 -> 03:00 UTC`). Delayed runner start time no longer
 suppresses the backup. Weekly Monday archival still requires the selected slot and local
 weekday Monday.
+
+
+## PR #1486 post-merge closure — 2026-09-28
+
+- Human/CODEOWNER merge: PR #1486 → `314cc14e3345573ee86b969ca84cf98e5c2d858a`.
+- Implementation head: `ede12a8272aca2d8cc72fc48d8e69825df5e2694`.
+- Exact-head evidence before merge: CI #6660, Governance #6155, Container Security #3640, Project Directive #919, PR #1015 and zizmor #766 completed successfully.
+- Fresh CURRENT_MAIN readback: `d6fa99aa0980f72744855cf0d111c9cb91df0e38`; the PR #1486 merge is an ancestor of this generation with `behind=0`.
+- Recovery schedule-gate claim is released/non-exclusive by issue #1488 closure.
+- Repository implementation is therefore merged, but the package remains intentionally **EVIDENCE_GATE**: a successful encrypted recovery artifact and the weekly encrypted Google-Drive mirror must still be observed before retention/deletion exit evidence can be claimed.
+- No Supabase, Google Drive, secret, IAM, retention or Production mutation is performed by this closure.
