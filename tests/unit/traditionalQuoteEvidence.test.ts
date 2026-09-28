@@ -19,6 +19,8 @@ describe('traditional quote evidence contract', () => {
     expect(quote.evidenceIds[0]).toContain('quote:twelvedata:AAPL');
     expect(quote.alertEligible).toBe(true);
     expect(quote.executionPriceEligible).toBe(false);
+    expect(quote.correlationId).toContain('traditional-quote:stock:AAPL');
+    expect(quote.qualityState).toBe('LIVE');
     expect(quote.reason).toBeUndefined();
   });
 
