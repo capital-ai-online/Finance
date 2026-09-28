@@ -239,14 +239,15 @@ describe('Roadmap dashboard projection', () => {
     expect(dashboard).toContain('Nach Arbeitspaket, Status, Project Owner und Label filtern');
     expect(dashboard).toContain("type RoadmapStatusFilter = 'active' | 'live' | 'pending'");
     expect(dashboard).toContain('Branches · behind 0');
-    expect(dashboard).toContain('OwnerStateMobileCards');
-    expect(dashboard).toContain('space-y-3 lg:hidden');
+    expect(dashboard).not.toContain('OwnerStateMobileCards');
+    expect(dashboard).not.toContain('space-y-3 lg:hidden');
+    expect(dashboard).toContain('Die Zustandsmatrix ist auf jeder Breite die Roadmap');
     expect(dashboard).toContain("fetch('/api/roadmap/branches'");
     expect(dashboard).toContain('LiveBranchCards');
     expect(dashboard).toContain('behind=0');
     expect(dashboard).toContain('ahead&gt;0');
     expect(dashboard).toContain('Branch-Evidence und CURRENT_MAIN sind nicht korreliert');
-    expect(dashboard).toContain('hidden lg:block');
+    expect(dashboard).not.toContain('hidden lg:block');
     expect(dashboard).toContain('Parallel Worker Projection');
     expect(dashboard).toContain('parallelisierbare Worker-Lanes');
   });

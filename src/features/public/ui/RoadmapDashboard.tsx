@@ -200,7 +200,10 @@ function OwnerStateTimeline({
         aria-label="Owner-Timeline nach Work-State"
       >
         <div role="row" className="contents">
-          <div role="columnheader" className="px-2 py-2 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-brand-primary">
+        <div
+          role="columnheader"
+          className="sticky left-0 z-20 bg-[#090D1C] px-2 py-2 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-brand-primary"
+        >
             Project Owner
           </div>
           {LIVE_COLUMNS.map((column) => (
@@ -219,7 +222,7 @@ function OwnerStateTimeline({
           <div key={lane.projectId} role="row" className="contents">
             <div
               role="rowheader"
-              className="rounded-xl border border-white/10 bg-surface/80 px-3 py-3"
+              className="sticky left-0 z-10 rounded-xl border border-white/10 bg-[#090D1C] px-3 py-3"
               style={lane.route ? { boxShadow: `inset 3px 0 0 ${lane.route.color}` } : undefined}
             >
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-primary">
@@ -321,71 +324,6 @@ function LiveBranchCards({
           </LandingPanel>
         );
       })}
-    </div>
-  );
-}
-
-function OwnerStateMobileCards({
-  items,
-  selectedId,
-  onSelect,
-}: {
-  items: RoadmapLiveItem[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const lanes = buildOwnerLanes(items);
-
-  return (
-    <div className="space-y-3 lg:hidden" aria-label="Mobile Roadmap nach Project Owner">
-      {lanes.map((lane) => (
-        <section
-          key={lane.projectId}
-          className="landing-page-panel p-3"
-          style={lane.route ? { boxShadow: `inset 3px 0 0 ${lane.route.color}` } : undefined}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
-                {lane.route ? `${lane.route.symbol} ${lane.route.displayName}` : 'Unmapped'}
-              </p>
-              <h3 className="mt-1 break-words text-xs font-black text-white">
-                {lane.projectId}
-              </h3>
-            </div>
-            <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] text-white/55">
-              {lane.items.length}
-            </span>
-          </div>
-          <div className="mt-3 space-y-2">
-            {lane.items.map((item) => {
-              const selected = selectedId === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => onSelect(item.id)}
-                  className={`w-full rounded-xl border p-3 text-left ${LIVE_STATE_STYLE[item.state]} ${
-                    selected ? 'ring-1 ring-brand-primary' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-mono text-[10px] font-black">{item.id}</span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[9px] font-black uppercase">
-                      {liveColumnIcon(item.state)}
-                      {item.stateLabel}
-                    </span>
-                  </div>
-                  <span className="mt-1 block text-xs font-semibold leading-5 text-white/90">
-                    {item.title}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ))}
     </div>
   );
 }
@@ -1053,9 +991,9 @@ export function RoadmapDashboard() {
             </p>
           </div>
           <p className="mb-4 max-w-3xl text-xs leading-5 text-white/50">
-            Keine Kalenderachse. Die Matrix folgt dem Landingpage-Profil: Navy, Gold und Glasflächen.
-            Auf Smartphones werden Arbeitspakete als Owner-Karten gestapelt; die breite Zustandsmatrix
-            bleibt nur für Desktop. „Live“ bezeichnet ausschließlich Branch-Evidence mit behind=0 und ist nicht identisch mit ACTIVE.
+            Keine Kalenderachse. Die Zustandsmatrix ist auf jeder Breite die Roadmap: Navy, Gold und Glasflächen.
+            Schmale Viewports scrollen die Achse Queued → Active horizontal; der Project Owner bleibt links stehen.
+            „Live“ bezeichnet ausschließlich Branch-Evidence mit behind=0 und ist nicht identisch mit ACTIVE.
           </p>
 
           {liveRoadmap.status === 'loading' ? (
@@ -1074,18 +1012,14 @@ export function RoadmapDashboard() {
                 </LandingPanel>
               ) : (
                 <>
-                  <OwnerStateMobileCards
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400 lg:sr-only">
+                    Horizontal scrollen
+                  </p>
+                  <OwnerStateTimeline
                     items={visibleTimelineItems}
                     selectedId={selectedLiveItem?.id ?? null}
                     onSelect={(id) => setSelectedItemId((current) => (current === id ? null : id))}
                   />
-                  <div className="hidden lg:block">
-                    <OwnerStateTimeline
-                      items={visibleTimelineItems}
-                      selectedId={selectedLiveItem?.id ?? null}
-                      onSelect={(id) => setSelectedItemId((current) => (current === id ? null : id))}
-                    />
-                  </div>
                   {selectedLiveItem ? <LiveItemDetail item={selectedLiveItem} /> : (
                     <p className="mt-3 text-xs text-slate-400">Ein Paket wählen, um Quelle, Gate und Owner-Grenze zu lesen.</p>
                   )}
