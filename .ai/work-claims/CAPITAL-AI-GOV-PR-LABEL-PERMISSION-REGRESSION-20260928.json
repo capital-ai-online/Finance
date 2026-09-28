@@ -19,13 +19,20 @@
   "branch": "agent/governance-pr-label-permission-regression-20260928",
   "claimedPaths": [
     ".ai/work-claims/CAPITAL-AI-GOV-PR-LABEL-PERMISSION-REGRESSION-20260928.json",
-    "scripts/pr/prLabelClassification.test.mjs"
+    "scripts/pr/prLabelClassification.test.mjs",
+    "scripts/pr/documentaryConvergenceWorkflow.test.mjs"
   ],
   "observedFailure": {
     "pullRequest": 1510,
     "workflowRun": 36410502815,
     "failedStep": "Vollständige Test-Suite ausführen",
-    "assertion": "converge-project-labels expected issues: write while CURRENT_MAIN correctly uses pull-requests: write"
+    "assertion": "converge-project-labels expected issues: write while CURRENT_MAIN correctly uses pull-requests: write",
+    "secondary": {
+      "pullRequest": 1511,
+      "workflowRun": 36411164867,
+      "failedStep": "Vollständige Test-Suite ausführen",
+      "assertion": "documentaryConvergenceWorkflow still expected converge-project-labels issues: write after least-privilege change"
+    }
   },
   "scopeBoundary": [
     "Test-only governance regression repair.",
