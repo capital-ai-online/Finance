@@ -109,8 +109,18 @@ function validIsoDate(value: unknown): value is string {
   return nonEmptyString(value) && Number.isFinite(Date.parse(value));
 }
 
-function expectedMarketTopic(assetClass: MarketDataAssetClass, symbol: string): string {
+export function marketLiveClientTopic(assetClass: MarketDataAssetClass, symbol: string): string {
   return `asset:${assetClass}:${symbol.toUpperCase().trim()}`;
+}
+
+function validBaseEvent(event: MarketLiveClientEventBase): boolean {
+  const symbol = event.symbol.toUpperCase().trim();
+  return nonEmptyString(event.eventId)
+    && nonEmptyString(event.correlationId)
+    && nonEmptyString(symbol)
+    && event.assetId === `${event.assetClass}:${symbol}`
+    && event.topic === marketLiveClientTopic(event.assetClass, symbol)
+    && validIsoDate(event.emittedAt);
 }
 
 export function isMarketLiveVisualizationTick(
@@ -118,13 +128,11 @@ export function isMarketLiveVisualizationTick(
 ): event is MarketLiveVisualizationTickEvent {
   return event.kind === 'market-tick'
     && event.sourceContractVersion === MARKET_LIVE_CLIENT_TIER3_FANOUT_VERSION
-    && event.topic === expectedMarketTopic(event.assetClass, event.symbol)
-    && nonEmptyString(event.eventId)
+    && validBaseEvent(event)
     && nonEmptyString(event.provider)
     && nonEmptyString(event.evidenceId)
     && validIsoDate(event.observedAt)
     && validIsoDate(event.receivedAt)
-    && validIsoDate(event.emittedAt)
     && finitePositive(event.price)
     && finiteNullable(event.bid)
     && finiteNullable(event.ask)
@@ -137,22 +145,25 @@ export function isVerifiedMarketLiveQuote(
   event: MarketLiveClientEvent,
 ): event is MarketLiveVerifiedQuoteEvent {
   return event.kind === 'verified-quote'
+    && validBaseEvent(event)
     && event.verification === 'VERIFIED'
     && event.alertEligible === true
     && finitePositive(event.price)
+    && finiteNullable(event.bid)
+    && finiteNullable(event.ask)
+    && (event.currency === null || nonEmptyString(event.currency))
     && event.providers.length > 0
     && event.providers.every(nonEmptyString)
     && event.evidenceIds.length > 0
     && event.evidenceIds.every(nonEmptyString)
     && validIsoDate(event.observedAt)
-    && validIsoDate(event.emittedAt)
-    && nonEmptyString(event.eventId);
+    && (event.qualityState === 'LIVE' || event.qualityState === 'DELAYED');
 }
 
 export function isCanonicalMarketLiveScore(
   event: MarketLiveClientEvent,
 ): event is MarketLiveCanonicalScoreEvent {
-  if (event.kind !== 'canonical-score') return false;
+  if (event.kind !== 'canonical-score' || !validBaseEvent(event)) return false;
   if (!event.canonical || !event.canonical.integrity) return false;
   if (event.canonical.integrity.assetId !== event.assetId) return false;
   if (event.canonical.status === 'READY') {
