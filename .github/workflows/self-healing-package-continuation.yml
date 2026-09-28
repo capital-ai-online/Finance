@@ -283,7 +283,7 @@ jobs:
             function findingPaths(issue) {
               const body = String(issue.body || '');
               const matches = body.matchAll(
-                /^- \\x60[A-Z_]+\\x60 — \\x60(docs\\/projects\\/[^/]+\\/work-packages\\/[^\\x60\\n]+\\.md)\\x60/gm,
+                /^- \x60[A-Z_]+\x60 — \x60(docs\/projects\/[^/]+\/work-packages\/[^\x60\n]+\.md)\x60/gm,
               );
               return [...new Set([...matches].map(match => match[1]))].sort();
             }
