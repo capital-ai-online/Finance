@@ -59,7 +59,6 @@ describe('application-wide Roadmap CURRENT_MAIN projection', () => {
     for (const id of [
       'CLIENT-RUNTIME-01',
       'CLIENT-LF-01',
-      'OPS-MERGE-CADENCE-01',
       'OPS-AUTH-RENDER-MGMT-TOKEN-RECOVERY-01',
       'OPS-RENDER-MCP-AI-DEBUG-01',
       'GOV-DEPLOY-BATCH-01',
@@ -134,6 +133,7 @@ describe('application-wide Roadmap CURRENT_MAIN projection', () => {
       'SOCIAL-P0',
       'OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-01',
       'OPS-ROADMAP-BRANCH-EVIDENCE-01',
+      'OPS-MERGE-CADENCE-01',
     ]) {
       expect(ids.has(id), id + ' must remain non-active evidence').toBe(false);
     }
