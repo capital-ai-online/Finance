@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-RENDER-WORKSPACE-ENV-WIRING-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the canonical verified-main GitHub-to-Render deployment job so the exact-commit Render API trigger receives the required non-secret Render workspace identifier.",
+  "workItemDE": "Den kanonischen Verified-Main-GitHub→Render-Deploy-Job so korrigieren, dass der Exact-Commit-Render-API-Trigger die erforderliche nicht geheime Render-Workspace-ID erhält.",
+  "startedAt": "2026-09-28T02:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "075c152dca639a9c238a94234295a16cb2f2f4c4",
+  "lastSyncedMainSha": "075c152dca639a9c238a94234295a16cb2f2f4c4",
+  "branch": "agent/operations-render-workspace-env-wiring-20260928",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02 / PVC-08",
+  "priority": "P1",
+  "priorityReason": "CI Run #6636 Attempt 2 proves the canonical deployment step fails before provider mutation because CAPITAL_AI_RENDER_WORKSPACE_ID is not passed into triggerRenderExactCommit.mjs; Issue #1481 records the resulting DEPLOYMENT_DUE drift at merge ordinal 60.",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-RENDER-WORKSPACE-ENV-WIRING-20260928.json",
+    ".github/workflows/ci.yml",
+    "tests/unit/productionCiRunnerConsolidation.test.ts"
+  ],
+  "scopeBoundary": [
+    "Fix only the existing deploy-production environment wiring and regression coverage.",
+    "Keep .github/workflows/ci.yml as the sole GitHub-to-Render deployment authority and Render native auto-deploy off.",
+    "Do not change Render credentials, provider settings, cadence semantics, release authority, or triggerRenderExactCommit implementation.",
+    "No direct Render deploy bypass; Human/CODEOWNER merge remains required."
+  ],
+  "dependencies": [
+    "/AGENTS.md@075c152dca639a9c238a94234295a16cb2f2f4c4",
+    "Issue #1481 evidence",
+    "CI Run #6636 Attempt 2",
+    "Human Owner exact-SHA deployment direction in current interaction"
+  ],
+  "exitEvidence": [
+    "Canonical deploy step maps CAPITAL_AI_RENDER_WORKSPACE_ID from the repository Actions variable into triggerRenderExactCommit.mjs.",
+    "The deployment step fails closed when API key or workspace identifier is absent.",
+    "Regression coverage prevents removal of the workspace-id wiring.",
+    "No direct provider mutation is introduced by this PR; post-merge main CI remains the deployment authority."
+  ],
+  "acceptanceCriteria": [
+    "Focused regression test validates both Render API key and workspace-id wiring in deploy-production.",
+    "Exact-head required checks pass.",
+    "No changed-file overlap with another open writer remains before PR readiness.",
+    "No agent self-merge."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
