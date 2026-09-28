@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const workflowPath = new URL('../../.github/workflows/post-merge-production-correlation.yml', import.meta.url);
+const ciWorkflowPath = new URL('../../.github/workflows/ci.yml', import.meta.url);
 const workflow = readFileSync(workflowPath, 'utf8');
+const ciWorkflow = readFileSync(ciWorkflowPath, 'utf8');
 
 describe('post-merge production correlation workflow', () => {
   it('runs on main pushes and keeps the bounded low-frequency correlation watch', () => {
@@ -22,11 +24,15 @@ describe('post-merge production correlation workflow', () => {
     expect(workflow).toContain('DEPLOY_REMAINING:');
   });
 
-  it('preserves the legacy five-minute exact-main contract before cadence activation', () => {
+  it('tracks the canonical exact-commit Render API deploy step without stale hook naming', () => {
+    const deployStepName = 'Render-Deployment für verifizierten main-Commit per API auslösen';
     expect(workflow).toContain("SLA_MILLISECONDS: '300000'");
     expect(workflow).toContain("workflow_id: 'ci.yml'");
     expect(workflow).toContain("candidate.name === 'Deployment verifiziert / Render-Produktion'");
-    expect(workflow).toContain("candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen'");
+    expect(ciWorkflow).toContain(`- name: ${deployStepName}`);
+    expect(workflow).toContain(`const canonicalDeployStepName = '${deployStepName}'`);
+    expect(workflow).toContain('candidate.name === canonicalDeployStepName');
+    expect(workflow).not.toContain("candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen'");
     expect(workflow).toContain('Legacy deploy hook exceeded five-minute SLA.');
     expect(workflow).toContain('Legacy Production SHA does not equal CURRENT_MAIN');
   });
@@ -37,6 +43,17 @@ describe('post-merge production correlation workflow', () => {
     expect(workflow).toContain('DEPLOYMENT_DUE');
     expect(workflow).toContain('5-merge deployment boundary is due');
     expect(workflow).toContain('Expected cadence lag is not Production drift.');
+  });
+
+  it('reports final exact-main convergence instead of stale pre-poll cadence evidence', () => {
+    expect(workflow).toContain("const initialProductionRelation = process.env.PRODUCTION_RELATION || 'UNKNOWN'");
+    expect(workflow).toContain("const productionRelation = productionExactCurrentMain ? 'CURRENT_MAIN' : initialProductionRelation");
+    expect(workflow).toContain('const reportedDeployProgress = cadenceActive && productionExactCurrentMain');
+    expect(workflow).toContain('const reportedDeployRemaining = cadenceActive && productionExactCurrentMain');
+    expect(workflow).toContain("'- Deploy progress: ' + reportedDeployProgress + '/5'");
+    expect(workflow).toContain("'- Merges remaining: ' + reportedDeployRemaining");
+    expect(workflow).toContain("'- Deploy-trigger step started: ' + (triggerStartedAt || 'NOT_OBSERVED')");
+    expect(workflow).not.toContain('canonical deploy-hook step was not observed');
   });
 
   it('deduplicates real production-drift issues and closes them after queued or converged recovery', () => {
