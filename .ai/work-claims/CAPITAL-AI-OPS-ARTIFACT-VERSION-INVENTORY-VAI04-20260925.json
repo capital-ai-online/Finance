@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI04-20260925",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -39,5 +39,7 @@
     "ARTIFACT_VERSION_UNCLASSIFIED and every incomplete or ambiguous evidence shape remain OBSERVE_ONLY.",
     "No provider, database, deployment, protected recovery or direct-main mutation."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "f61df72e717399e783824d0b12190f2e7f6a96fd",
+  "releaseReason": "Associated PR #1456 was Human/CODEOWNER-merged as a503cea6b4ff9c72f8cf2a35113ab7a537922574; exact-head CI/Governance/Container/Project/PR evidence completed successfully, dependencies VAI-01..03 are merged, and fresh CURRENT_MAIN contains the merge."
 }
