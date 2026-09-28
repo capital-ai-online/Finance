@@ -53,10 +53,6 @@
   ],
   "authorityBoundary": "No AGENTS.md mutation; no second DevelopmentChain, queue, project registry, merge authority, approval plane or branch-sync writer. Manual Owner identity remains valid; repository-internal handoffs resolve only through exact allowlisted handoff/event/main-ref tuples before the same fail-closed create correlation.",
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
-  "lifecycle": "superseded",
-  "releasedAt": "2026-09-28T09:52:00+02:00",
-  "releaseReason": "Branch drifted 180 commits behind CURRENT_MAIN and failed productionPreflight before PR creation; owner-correct work is reconstructed on a fresh CURRENT_MAIN successor.",
-  "supersededBy": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
   "supersedes": [
     "agent/governance-autonomous-draft-pr-triage-20260926 (released after 180-commit drift)",
     "agent/governance-draft-pr-precreate-sync-20260928 (temporary overlapping diagnostic branch, released)"
@@ -73,18 +69,14 @@
     "branchBehind": 0,
     "claimCoverage": "PASS",
     "staticWorkflowSecurity": "PASS",
-    "providerSignalRun": {
-      "id": 36394377353,
-      "runNumber": 45,
-      "conclusion": "success"
-    },
-    "hostedPrChecks": "PENDING_BOOTSTRAP_PR",
-    "productionPreflight": "PENDING_BOOTSTRAP_PR",
+    "providerSignalEvidence": "SUCCESS observed on predecessor exact heads; current exact-head hosted PR checks remain pending until PR creation",
+    "hostedPrChecks": "PENDING_PR_CREATE",
+    "productionPreflight": "PENDING_PR_CREATE",
     "truthfulBoundary": "No hosted/production gate is represented as PASS before the canonical PR run."
   },
   "bootstrap": {
-    "mode": "HUMAN_OWNER_WORKFLOW_DISPATCH_ON_CURRENT_MAIN",
+    "mode": "PRECLASSIFIED_GITHUB_PR_CREATE",
     "headBranch": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
-    "reason": "Autonomous workflow definitions become authoritative only after Human/CODEOWNER merge; unmerged V2 must not self-bootstrap."
+    "reason": "Owner explicitly authorized autonomous Draft-PR creation and the lane is free; project label must be verified before conversion to PR."
   }
 }
