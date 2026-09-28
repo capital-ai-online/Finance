@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-RECOVERY-SCHEDULE-GATE-20260928",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -30,5 +30,7 @@
     "No second recovery controller.",
     "Preserve 04:00 Europe/Berlin intent across CET/CEST and Monday weekly archival semantics."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "lastSyncedMainSha": "d6fa99aa0980f72744855cf0d111c9cb91df0e38",
+  "releaseReason": "Associated PR #1486 was Human/CODEOWNER-merged as 314cc14e3345573ee86b969ca84cf98e5c2d858a; exact-head CI/Governance/Container/Project/PR evidence completed successfully and fresh CURRENT_MAIN contains the merge. Live recovery/Google-Drive evidence remains a separate runtime evidence gate."
 }
