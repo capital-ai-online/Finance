@@ -1,6 +1,6 @@
 # CAPITAL-AI-SOCIAL — Canonical Roadmap
 
-**Baseline:** `main@be5e1d8d2574c55677d2e3ac855ee0b137626305`
+**Baseline:** `main@314cc14e3345573ee86b969ca84cf98e5c2d858a`
 
 **Project:** `CAPITAL-AI-SOCIAL`  
 **Folder:** `docs/projects/social-media/`  
