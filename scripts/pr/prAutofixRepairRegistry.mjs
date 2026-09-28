@@ -1,31 +1,5 @@
 export const PR_AUTOFIX_REPAIR_REGISTRY = Object.freeze([
   Object.freeze({
-    id: 'MERGE_CADENCE_PATCH_V1',
-    owner: 'CAPITAL-AI-OPS',
-    sourceWorkflow: '.github/workflows/ci.yml',
-    exactSignatures: Object.freeze(['MERGE_CADENCE_PATCH_V1']),
-    repairerPath: 'scripts/pr/repairers/mergeCadencePatchV1.mjs',
-    allowedPaths: Object.freeze([
-      'package.json',
-      'package-lock.json',
-      'metadata.json',
-      'docs/code-quality/CODE_QUALITY_STANDARDS.md',
-      'docs/ceo/EXECUTIVE_SUMMARY.md',
-      'docs/API.md',
-      'index.html',
-      'README.md',
-    ]),
-    evidenceBinding: Object.freeze({
-      kind: 'EXACT_LOG_TOKENS_V1',
-      requiredTokens: Object.freeze([
-        'ERROR DETERMINISTIC_TEST_EXPECTATION_DRIFT: MERGE_CADENCE_PATCH_V1',
-        'mergeOrdinal=',
-        'expectedNextPatch=',
-        'package.json/package-lock.json',
-      ]),
-    }),
-  }),
-  Object.freeze({
     id: 'PR_GOVERNANCE_READY_EVENT_CONTRACT_V1',
     owner: 'CAPITAL-AI-OPS',
     sourceWorkflow: '.github/workflows/ci.yml',

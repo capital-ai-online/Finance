@@ -231,9 +231,9 @@ The current architecture reuses only existing repair ownership:
 
 - `REPOSITORY_CURRENT_STATE_PROJECTION_DRIFT -> RECONCILE_REPOSITORY_PROJECTION` for reproducible canonical project `ROADMAP.md` / `TASK_REGISTER.md` baseline drift;
 - `REPOSITORY_PR_DECISION_EVIDENCE_DRIFT -> RECONCILE_PR_DECISION_EVIDENCE` for canonical PR structure, Production baseline and Decision/Evidence projection drift;
-- the registered `MERGE_CADENCE_PATCH_V1` repairer through the existing Release Version Gate for fixed 10-merge PATCH materialization.
+- the former `MERGE_CADENCE_PATCH_V1` repairer is retired and unregistered; merge count no longer authorizes or requires package-version mutation.
 
-Observed PR #1371/#1373/#1374/#1375/#1376/#1380 evidence proves that these existing repairers can form a dependency chain across changing generations. A successful repository mutation that creates a new PR head must therefore cause fresh CURRENT_MAIN/generation readback, exact-head validation, any owner-specific current-state projection repair, and finally PR-body evidence rebind to the stable final head. A mutation result alone is never convergence.
+Historical PR #1371/#1373/#1374/#1375/#1376/#1380 evidence remains valid for its observation time. Current repair chains use only still-registered repairers; the retired merge-cadence PATCH writer cannot re-enter the chain. A successful repository mutation that creates a new PR head must therefore cause fresh CURRENT_MAIN/generation readback, exact-head validation, any owner-specific current-state projection repair, and finally PR-body evidence rebind to the stable final head. A mutation result alone is never convergence.
 
 The visible PR Decision projection is also generation-bound. If the latest exact-head Required Checks become terminal after an earlier body rendered `BLOCKED` or `EVIDENCE_PENDING`, the body must be reconciled from the latest exact-head evidence before that projection is treated as current merge-readiness evidence.
 
