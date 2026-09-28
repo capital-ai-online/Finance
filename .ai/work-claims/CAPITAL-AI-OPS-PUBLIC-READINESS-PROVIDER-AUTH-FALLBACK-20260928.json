@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-PUBLIC-READINESS-PROVIDER-AUTH-FALLBACK-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the post-merge Enterprise ruleset provider-auth 403 with an App-first, admin:enterprise-PAT-only-after-GET-403 fallback and close public-readiness provider evidence without changing repository visibility.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "supportingPvc": [
+    "PVC-08",
+    "PVC-18"
+  ],
+  "baseBranch": "main",
+  "baseSha": "c1a10880a96b7406970ab6aaf7ea2637a2f77d71",
+  "lastSyncedMainSha": "c1a10880a96b7406970ab6aaf7ea2637a2f77d71",
+  "branch": "agent/operations-public-readiness-provider-auth-fallback-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PUBLIC-REPOSITORY-READINESS-20260928.json",
+    ".ai/work-claims/CAPITAL-AI-OPS-PUBLIC-READINESS-PROVIDER-AUTH-FALLBACK-20260928.json",
+    ".github/workflows/github-public-readiness-hardening.yml",
+    "docs/projects/operations/ROADMAP.md",
+    "docs/projects/operations/work-packages/OPS_PUBLIC_REPOSITORY_READINESS_2026-09-28.md",
+    "scripts/operations/githubPublicReadinessEnterpriseWriter.mjs",
+    "scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs",
+    "tests/unit/githubPublicReadinessHardening.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No repository visibility mutation.",
+    "No license mutation.",
+    "No bypass actor may be added.",
+    "Enterprise App installation token remains the preferred provider identity.",
+    "The existing classic PAT may be used only after an Enterprise App GET returns HTTP 403.",
+    "Before the PAT can authorize any PUT, provider response headers must prove admin:enterprise.",
+    "Writer remains fixed to the named Enterprise ruleset GET/PUT/GET path and exposes no raw proxy.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "Exact branch head contains fresh CURRENT_MAIN and has no writer overlap.",
+    "TypeScript, focused tests, workflow security, Governance and required hosted checks pass.",
+    "After Human merge, GitHub Public Repository Readiness Hardening reports UPDATED_AND_VERIFIED or NOOP_ALREADY_HARDENED with post-write readback.",
+    "Repository visibility remains private until the separately held Human public-cutover action."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}

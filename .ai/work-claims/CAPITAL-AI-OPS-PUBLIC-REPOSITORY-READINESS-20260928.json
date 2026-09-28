@@ -1,21 +1,56 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-PUBLIC-REPOSITORY-READINESS-20260928",
-  "status": "active",
-  "exclusive": true,
-  "agent": {"provider":"OpenAI","model":"GPT-5.6 Sol","executionSurface":"ChatGPT GitHub Connector"},
+  "status": "released",
+  "exclusive": false,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
   "workItem": "Harden Finance for a later public-visibility cutover, use the existing GitHub App as canonical PR author, enforce one Human/CODEOWNER approval, and add GitHub Sponsors funding metadata without changing visibility or license.",
   "priority": "P1",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
   "projectStage": "PVC-02",
-  "supportingPvc": ["PVC-08","PVC-18"],
+  "supportingPvc": [
+    "PVC-08",
+    "PVC-18"
+  ],
   "startedAt": "2026-09-28T12:23:00Z",
   "baseBranch": "main",
   "baseSha": "2652185f8c06820f872c44b94372b2295ccb5146",
-  "lastSyncedMainSha": "2652185f8c06820f872c44b94372b2295ccb5146",
+  "lastSyncedMainSha": "c1a10880a96b7406970ab6aaf7ea2637a2f77d71",
   "branch": "agent/operations-public-repository-readiness-20260928",
-  "claimedPaths": [".ai/work-claims/CAPITAL-AI-OPS-PUBLIC-REPOSITORY-READINESS-20260928.json",".github/CODEOWNERS",".github/FUNDING.yml",".github/SECURITY.md",".github/workflows/agent-draft-pr-autocreate.yml",".github/workflows/documentary-change-impact.yml",".github/workflows/github-public-readiness-hardening.yml",".github/workflows/open-agent-draft-pr.yml","docs/projects/operations/work-packages/OPS_PUBLIC_REPOSITORY_READINESS_2026-09-28.md","scripts/operations/githubPublicReadinessEnterpriseWriter.mjs","scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs","scripts/security/verifyPublicRepositoryReadiness.mjs","tests/unit/githubAgentDraftPrWorkflow.test.ts","tests/unit/githubPublicReadinessHardening.test.ts"],
-  "protectedBoundaries": ["No repository visibility mutation.","No license mutation.","No bypass actor added.","Enterprise writer is fixed to the named ruleset GET/PUT/GET.","PR App token is used only for canonical PR creation.","Historical Git and Actions-log disclosure remain Human-review gates.","Human/CODEOWNER merge remains required."],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; provider hardening readback remains separate post-merge evidence."
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-PUBLIC-REPOSITORY-READINESS-20260928.json",
+    ".github/CODEOWNERS",
+    ".github/FUNDING.yml",
+    ".github/SECURITY.md",
+    ".github/workflows/agent-draft-pr-autocreate.yml",
+    ".github/workflows/documentary-change-impact.yml",
+    ".github/workflows/github-public-readiness-hardening.yml",
+    ".github/workflows/open-agent-draft-pr.yml",
+    "docs/projects/operations/work-packages/OPS_PUBLIC_REPOSITORY_READINESS_2026-09-28.md",
+    "scripts/operations/githubPublicReadinessEnterpriseWriter.mjs",
+    "scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs",
+    "scripts/security/verifyPublicRepositoryReadiness.mjs",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts",
+    "tests/unit/githubPublicReadinessHardening.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No repository visibility mutation.",
+    "No license mutation.",
+    "No bypass actor added.",
+    "Enterprise writer is fixed to the named ruleset GET/PUT/GET.",
+    "PR App token is used only for canonical PR creation.",
+    "Historical Git and Actions-log disclosure remain Human-review gates.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; provider hardening readback remains separate post-merge evidence.",
+  "releaseEvidence": [
+    "PR #1514 merged as main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71.",
+    "Post-merge provider hardening run #36431654977 reached repository preflight and Enterprise App token minting, then failed closed on GET /enterprises/capital-ai-online/rulesets with HTTP 403.",
+    "Provider-auth remediation continues only under successor claim CAPITAL-AI-OPS-PUBLIC-READINESS-PROVIDER-AUTH-FALLBACK-20260928."
+  ]
 }
