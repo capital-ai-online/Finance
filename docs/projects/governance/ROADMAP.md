@@ -1,12 +1,12 @@
 # CAPITAL-AI-GOV — Canonical Roadmap
 
-**Baseline:** `main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71`
+**Baseline:** `main@dcef421fe6e350a3a2ade61d0299aad9ecca213c`
 
 **Project:** `CAPITAL-AI-GOV`  
 **Folder:** `docs/projects/governance/`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-23 — Owner-directed deploy-batch correlation contract defined against fresh CURRENT_MAIN; productive CI/Render materialization remains owner-correct with CAPITAL-AI-OPS  
+**Reconciliation:** 2026-09-28 — Finance is PUBLIC on CURRENT_MAIN `dcef421fe6e350a3a2ade61d0299aad9ecca213c`; effective repository rulesets are the immediate protection surface while Enterprise write/readback converges through the GitHub App.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -18,13 +18,28 @@ This file remains a temporary project status projection until the separately req
 A work item is executable only when it is currently active under `/AGENTS.md@CURRENT_MAIN` with a canonical repository/project/Roadmap identity, or when the Human/Owner freshly defines or re-authorizes it in the current interaction. Terminal history remains ledger only and is not reopened.
 
 
-## GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-01 — Canonical App-author recovery
+
+## GOV-PUBLIC-RULESET-HARDENING-01 — Effective Public Main Protection
 
 **State:** `IMPLEMENTATION_ON_BRANCH / HUMAN_MERGE_REQUIRED`  
+**Priority:** `P0 🔴 Kritisch`  
+**Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
+**Baseline:** `main@dcef421fe6e350a3a2ade61d0299aad9ecca213c`  
+**Branch:** `agent/governance-public-repo-effective-ruleset-hardening-20260928`  
+**Source package:** `work-packages/GOV_PUBLIC_REPOSITORY_EFFECTIVE_RULESET_HARDENING_2026-09-28.md`
+
+Finance is public. The effective repository-owned `main-production-protection` ruleset already enforces strict Required Checks and no-bypass non-fast-forward protection, but live readback still reports zero required approvals, Code Owner review off and conversation resolution off. The canonical App-authored PR path is proven, so one Human/CODEOWNER approval can now be required without self-review deadlock.
+
+This slice adds one bounded repository-ruleset writer using the existing Finance GitHub App with repository Administration write, preserves the four strict checks, adds deletion protection to the no-bypass ruleset and converges review semantics to one approval + Code Owner + stale dismissal + conversation resolution while keeping last-push approval off. The Enterprise writer is simultaneously reduced to the supported App-only credential model; the Classic PAT write fallback is removed.
+
+**Exit:** exact-head validation + Human/CODEOWNER merge + provider readback proving the effective repository ruleset hardening. Enterprise readback is independently truthful and may remain blocked on provider IAM without weakening the repository-level protection.
+
+## GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-01 — Canonical App-author recovery
+
+**State:** `DONE_MAIN / PR_1516_MERGED / APP_AUTHORED_PR_PROVEN_BY_1518`  
 **Priority:** `P1 🟠 Hoch`  
 **Owner/PVC:** `CAPITAL-AI-GOV / PVC-05`  
-**Baseline:** `main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71`  
-**Branch:** `agent/governance-draft-pr-app-author-contents-read-fix-20260928`
+**Merged evidence:** PR #1516; subsequent PR #1518 author = `capital-ai-work-management[bot]`
 
 The merged canonical Draft-PR writer now separates PR author identity from the sole Human Owner by minting a repository GitHub App token for `gh pr create`. Provider evidence from the OPS Public-Readiness continuation proves that `Pull requests: write` alone is insufficient: the GitHub CLI first queries `repository.defaultBranchRef` and receives `Resource not accessible by integration`.
 
