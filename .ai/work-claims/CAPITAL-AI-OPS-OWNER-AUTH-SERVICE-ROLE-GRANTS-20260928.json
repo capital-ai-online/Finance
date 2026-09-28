@@ -23,7 +23,8 @@
     "supabase/migrations/20260928055300_owner_authorization_service_role_least_privilege.sql",
     "tests/unit/ownerAuthorizationServiceRoleGrantsMigration.test.ts",
     "docs/projects/operations/work-packages/OPS_OWNER_AUTH_SERVICE_ROLE_GRANTS_2026-09-28.md",
-    ".ai/work-claims/CAPITAL-AI-OPS-OWNER-AUTH-SERVICE-ROLE-GRANTS-20260928.json"
+    ".ai/work-claims/CAPITAL-AI-OPS-OWNER-AUTH-SERVICE-ROLE-GRANTS-20260928.json",
+    "docs/projects/operations/controlled-implementation/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.json"
   ],
   "scopeBoundary": [
     "Repository-first additive migration only.",
