@@ -140,6 +140,7 @@ describe('GitHub agent draft PR bot governance', () => {
     const yaml = workflow();
     expect(yaml).toContain('CAPITAL_AI_GITHUB_APP_PRIVATE_KEY:');
     expect(yaml).toContain('actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1');
+    expect(yaml).toContain('permission-contents: read');
     expect(yaml).toContain('permission-pull-requests: write');
     expect(yaml).toContain('PR_CREATE_TOKEN: ${{ steps.pr_app_token.outputs.token }}');
     expect(yaml).toContain('GH_TOKEN="$PR_CREATE_TOKEN" gh pr create');

@@ -236,3 +236,26 @@ Bounded correction:
 - PR #1508 merged at `20b3d6320bcd3bc545d45ac3245807381469d8c6` and corrected the reusable writer permission ceiling after the observed `startup_failure`.
 - The repository implementation and startup correction are merged. Successful provider-created Draft-PR intake after that correction remains an explicit readback gate; this document does not claim that missing provider evidence as PASS.
 - Closure disposition: `MERGED_MAIN / EVIDENCE_GATE`. The leading Roadmap carries the same nonterminal state. Issues #1507 and #1509 are one package-level reconciliation, not two independent implementations.
+
+
+## Post-Merge Provider Failure — App-authored PR GraphQL metadata read
+
+Post-merge Public-Readiness continuation exposed a second provider-level Draft-PR writer gap after the earlier reusable-workflow permission-ceiling correction:
+
+- OPS recovery branch `agent/operations-public-readiness-provider-auth-fallback-20260928` passed CURRENT_MAIN, production preflight, work-claim/overlap correlation, PR-body rendering and project-label classification.
+- The canonical repository GitHub App token was created successfully with `Pull requests: write`.
+- Final `gh pr create` failed before the PR mutation with:
+  `GraphQL: Resource not accessible by integration (repository.defaultBranchRef)`.
+- `gh pr create` resolves repository default-branch metadata before creating the PR, so the short-lived App token also requires repository `Contents: read`.
+
+Bounded correction:
+
+- add exactly `permission-contents: read` to the existing short-lived PR-author token;
+- retain `permission-pull-requests: write`;
+- do not add `contents: write`, `issues: write`, administration, Actions, merge, ruleset or deployment permissions;
+- token remains limited to repository `Finance`;
+- callers continue to pass only the existing private-key secret explicitly; `secrets: inherit` remains forbidden.
+
+**Recovery branch:** `agent/governance-draft-pr-app-author-contents-read-fix-20260928`  
+**Recovery baseline:** `main@c1a10880a96b7406970ab6aaf7ea2637a2f77d71`  
+**Exit:** exact-head workflow-security/Governance/CI evidence passes; Human/CODEOWNER merge; then a fresh autonomous same-repository Agent Branch Signal proves the App can create a Draft PR and the resulting PR author is not the Human Owner.

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Restore the canonical App-authored Draft-PR writer with the minimum Contents: read metadata permission and converge its pre-create label-order regression test to the App-authenticated gh pr create command.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-28T14:05:39Z",
+  "baseBranch": "main",
+  "baseSha": "c1a10880a96b7406970ab6aaf7ea2637a2f77d71",
+  "lastSyncedMainSha": "c1a10880a96b7406970ab6aaf7ea2637a2f77d71",
+  "branch": "agent/governance-draft-pr-app-author-contents-read-fix-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-DRAFT-PR-APP-AUTH-CONTENTS-READ-20260928.json",
+    ".github/workflows/open-agent-draft-pr.yml",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/governance/work-packages/GOV_AUTONOMOUS_DRAFT_PR_TRIAGE_V2_2026-09-28.md",
+    "scripts/pr/prLabelClassification.test.mjs",
+    "tests/unit/githubAgentDraftPrWorkflow.test.ts"
+  ],
+  "protectedBoundaries": [
+    "Only permission-contents: read is added to the existing Finance-scoped PR-author GitHub App token.",
+    "permission-pull-requests: write remains unchanged.",
+    "No contents: write, issues: write, administration, Actions, ruleset, merge, deployment or provider authority is added.",
+    "No secrets: inherit.",
+    "No second PR writer or queue.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "exitEvidence": [
+    "Fresh CURRENT_MAIN remains an ancestor of the exact branch head.",
+    "Work-claim/overlap validation passes for the bounded changed paths.",
+    "Workflow security, zizmor, Governance and required hosted checks pass at exact head.",
+    "After Human merge, a fresh autonomous Agent Branch Signal reaches the canonical writer and creates an App-authored Draft PR."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
