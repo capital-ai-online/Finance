@@ -45,6 +45,28 @@ type ProductionIdentityState =
 const PROJECT_ROUTES = parseRoadmapProjectRouting(projectMappingMarkdown);
 const EMPTY_FILTERS: RoadmapProjectFilters = { owner: '', folder: '', label: '' };
 
+type RoadmapStatusFilter = 'active' | 'live' | 'pending';
+
+const ROADMAP_STATUS_FILTERS: Array<{
+  id: RoadmapStatusFilter;
+  label: string;
+  detail: string;
+}> = [
+  { id: 'active', label: 'Aktiv', detail: 'CURRENT_MAIN' },
+  { id: 'live', label: 'Live', detail: 'Branches · behind 0' },
+  { id: 'pending', label: 'Pending', detail: 'Backlog / geplant' },
+];
+
+function matchesStatusFilter(item: RoadmapLiveItem, filter: RoadmapStatusFilter): boolean {
+  if (filter === 'active') {
+    return item.state === 'ACTIVE' || item.state === 'IN_PROGRESS' || item.state === 'EVIDENCE_GATE';
+  }
+  if (filter === 'pending') {
+    return item.state === 'READY' || item.state === 'HELD' || item.state === 'QUEUED';
+  }
+  return false;
+}
+
 function ProjectMetadata({ owner }: { owner: string }) {
   const projects = resolveRoadmapProjects(owner, PROJECT_ROUTES);
   if (projects.length === 0) {
@@ -278,6 +300,68 @@ function OwnerStateTimeline({
   );
 }
 
+
+function OwnerStateMobileCards({
+  items,
+  selectedId,
+  onSelect,
+}: {
+  items: RoadmapLiveItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const lanes = buildOwnerLanes(items);
+
+  return (
+    <div className="space-y-3 lg:hidden" aria-label="Mobile Roadmap nach Project Owner">
+      {lanes.map((lane) => (
+        <section key={lane.projectId} className="rounded-xl border border-white/8 bg-black/20 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+                {lane.route ? `${lane.route.symbol} ${lane.route.displayName}` : 'Unmapped'}
+              </p>
+              <h3 className="mt-1 break-words text-xs font-black" style={{ color: lane.route?.color }}>
+                {lane.projectId}
+              </h3>
+            </div>
+            <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] text-white/55">
+              {lane.items.length}
+            </span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {lane.items.map((item) => {
+              const selected = selectedId === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onSelect(item.id)}
+                  className={`w-full rounded-xl border p-3 text-left ${LIVE_STATE_STYLE[item.state]} ${
+                    selected ? 'ring-1 ring-brand-primary' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-mono text-[10px] font-black">{item.id}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[9px] font-black uppercase">
+                      {liveColumnIcon(item.state)}
+                      {item.stateLabel}
+                    </span>
+                  </div>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-white/90">
+                    {item.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function LiveItemDetail({ item }: { item: RoadmapLiveItem }) {
   return (
     <LandingPanel elevated className="mt-4 flex flex-col gap-3 border-white/8 bg-surface/75 p-5">
@@ -364,6 +448,8 @@ export function RoadmapDashboard() {
     error: null,
   });
   const [projectFilters, setProjectFilters] = useState<RoadmapProjectFilters>(EMPTY_FILTERS);
+  const [statusFilter, setStatusFilter] = useState<RoadmapStatusFilter>('active');
+  const [workPackageQuery, setWorkPackageQuery] = useState('');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -427,17 +513,28 @@ export function RoadmapDashboard() {
   const liveProjection =
     liveRoadmap.status === 'available' ? liveRoadmap.projection : null;
 
-  const filteredLiveItems = useMemo(
-    () =>
-      liveProjection?.items.filter((item) =>
-        matchesRoadmapLiveItemFilters(item, projectFilters),
-      ) ?? [],
-    [liveProjection, projectFilters],
+  const filteredLiveItems = useMemo(() => {
+    const query = workPackageQuery.trim().toLowerCase();
+    return (
+      liveProjection?.items.filter((item) => {
+        if (!matchesRoadmapLiveItemFilters(item, projectFilters)) return false;
+        if (!query) return true;
+        return [item.id, item.title, item.detail, item.executionGroup]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+      }) ?? []
+    );
+  }, [liveProjection, projectFilters, workPackageQuery]);
+
+  const visibleTimelineItems = useMemo(
+    () => filteredLiveItems.filter((item) => matchesStatusFilter(item, statusFilter)),
+    [filteredLiveItems, statusFilter],
   );
 
   const selectedLiveItem = useMemo(
-    () => filteredLiveItems.find((item) => item.id === selectedItemId) ?? null,
-    [filteredLiveItems, selectedItemId],
+    () => visibleTimelineItems.find((item) => item.id === selectedItemId) ?? null,
+    [selectedItemId, visibleTimelineItems],
   );
 
   const liveWork = useMemo(
@@ -484,13 +581,13 @@ export function RoadmapDashboard() {
 
   return (
     <LandingPageTemplate
-      eyebrow="Roadmap Live Dashboard"
+      eyebrow="Control Center · Roadmap"
       statusLabel="Derived · Non-authorizing"
-      title="CAPITAL-AI Roadmap"
+      title="Roadmap"
       description={
         <>
-          Owner-Timeline des Live-Work-State von <code>/api/roadmap/state</code>.
-          Die Spalten sind Zustände, keine Termine. Produktivstatus wird separat über <code>/healthz</code> gelesen.
+          Smartphone-first Control-Center-Projektion aus <code>/api/roadmap/state</code>.
+          Aktiv und Pending bleiben CURRENT_MAIN-gebunden; Branch-Live-Evidence wird getrennt und fail-closed behandelt.
         </>
       }
       actions={
@@ -652,7 +749,7 @@ export function RoadmapDashboard() {
                 </p>
               </div>
               <h2 id="roadmap-filters-title" className="mt-1 text-lg font-black text-white">
-                Nach Project Owner, Folder und Label filtern
+                Nach Arbeitspaket, Status, Project Owner und Label filtern
               </h2>
               <p className="mt-2 max-w-3xl text-xs leading-5 text-white/50">
                 Alle Optionen werden zur Build-Zeit direkt aus <code>docs/projects/README.md</code> gelesen.
@@ -662,13 +759,59 @@ export function RoadmapDashboard() {
             <button
               type="button"
               className="landing-page-button-secondary px-3 py-2 text-xs font-bold"
-              onClick={() => setProjectFilters(EMPTY_FILTERS)}
+              onClick={() => {
+                setProjectFilters(EMPTY_FILTERS);
+                setStatusFilter('active');
+                setWorkPackageQuery('');
+                setSelectedItemId(null);
+              }}
             >
               Filter zurücksetzen
             </button>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+          <div className="mt-5 space-y-4">
+            <div className="grid grid-cols-3 gap-2" role="group" aria-label="Roadmap Status">
+              {ROADMAP_STATUS_FILTERS.map((filter) => {
+                const active = statusFilter === filter.id;
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setStatusFilter(filter.id);
+                      setSelectedItemId(null);
+                    }}
+                    className={`min-h-12 rounded-xl border px-2 py-2 text-left transition ${
+                      active
+                        ? 'border-brand-primary/50 bg-brand-primary/15 text-white'
+                        : 'border-white/8 bg-black/20 text-white/55 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="block text-xs font-black">{filter.label}</span>
+                    <span className="mt-0.5 block font-mono text-[9px] leading-4 opacity-70">{filter.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <label className="block space-y-2 text-xs font-bold text-white/70">
+              <span>Arbeitspaket suchen</span>
+              <input
+                type="search"
+                value={workPackageQuery}
+                onChange={(event) => {
+                  setWorkPackageQuery(event.target.value);
+                  setSelectedItemId(null);
+                }}
+                placeholder="z. B. SEC-WEB-20, Auth, Pipeline …"
+                className="min-h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-xs text-white placeholder:text-white/30"
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
             <label className="space-y-2 text-xs font-bold text-white/70">
               <span>Project Owner</span>
               <select
@@ -820,13 +963,13 @@ export function RoadmapDashboard() {
             </div>
             <p className="max-w-xl text-xs leading-5 text-white/45">
               {liveRoadmap.status === 'available'
-                ? `${metrics.owners} beteiligte Owner · ${filteredLiveItems.length} Pakete · ${liveRoadmap.projection.stale ? 'STALE' : 'LIVE'} ${shortSha(liveCurrentMainSha)}`
+                ? `${metrics.owners} beteiligte Owner · ${visibleTimelineItems.length} sichtbar · Filter ${statusFilter.toUpperCase()} · ${liveRoadmap.projection.stale ? 'STALE' : 'CURRENT_MAIN'} ${shortSha(liveCurrentMainSha)}`
                 : 'Live Work-State nicht verfügbar'}
             </p>
           </div>
           <p className="mb-4 max-w-3xl text-xs leading-5 text-white/50">
-            Keine Kalenderachse. Live-Items tragen keine Start- oder Enddaten. Queued, Held und Ready stehen in derselben
-            Owner-Zeile wie Evidence, In Progress und Active.
+            Keine Kalenderachse. Auf Smartphones werden Arbeitspakete als Owner-Karten gestapelt; die breite Zustandsmatrix
+            bleibt nur für Desktop. „Live“ bezeichnet ausschließlich Branch-Evidence mit behind=0 und ist nicht identisch mit ACTIVE.
           </p>
 
           {liveRoadmap.status === 'loading' ? (
@@ -837,18 +980,34 @@ export function RoadmapDashboard() {
             <LandingPanel className="border-score-warning/20 bg-score-warning/5 p-4 text-sm text-score-warning">
               Live Work-State nicht verfügbar — aktive Arbeit wird fail-closed ausgeblendet.
             </LandingPanel>
-          ) : filteredLiveItems.length === 0 ? (
+          ) : statusFilter === 'live' ? (
+            <LandingPanel className="border-score-warning/25 bg-score-warning/5 p-4">
+              <p className="text-sm font-bold text-score-warning">Live Branch-Evidence ist fail-closed.</p>
+              <p className="mt-2 text-xs leading-5 text-white/55">
+                <code>/api/roadmap/state</code> ist CURRENT_MAIN-gebunden und enthält bewusst keine Branch-Liste.
+                Für „Live“ muss ein OPS-eigener read-only Vertrag Branches gegen CURRENT_MAIN vergleichen und nur
+                <code> behind=0 </code> projizieren. Der Browser erhält dafür keinen GitHub-Token und behauptet bis dahin
+                keine Branch-Aktivität.
+              </p>
+            </LandingPanel>
+          ) : visibleTimelineItems.length === 0 ? (
             <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
-              Keine Live-Items im aktuellen Filter.
+              Keine Arbeitspakete im aktuellen Status- und Project-Filter.
             </LandingPanel>
           ) : (
             <>
-              <p className="mb-2 text-[11px] text-white/40 lg:hidden">Seitlich wischen, um alle Zustände zu sehen.</p>
-              <OwnerStateTimeline
-                items={filteredLiveItems}
+              <OwnerStateMobileCards
+                items={visibleTimelineItems}
                 selectedId={selectedLiveItem?.id ?? null}
                 onSelect={(id) => setSelectedItemId((current) => (current === id ? null : id))}
               />
+              <div className="hidden lg:block">
+                <OwnerStateTimeline
+                  items={visibleTimelineItems}
+                  selectedId={selectedLiveItem?.id ?? null}
+                  onSelect={(id) => setSelectedItemId((current) => (current === id ? null : id))}
+                />
+              </div>
               {selectedLiveItem ? <LiveItemDetail item={selectedLiveItem} /> : (
                 <p className="mt-3 text-xs text-white/40">Ein Paket wählen, um Quelle, Gate und Owner-Grenze zu lesen.</p>
               )}
