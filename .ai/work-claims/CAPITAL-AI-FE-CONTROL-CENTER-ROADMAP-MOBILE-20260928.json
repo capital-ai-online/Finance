@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-CONTROL-CENTER-ROADMAP-MOBILE-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "FE-CONTROL-CENTER-ROADMAP-MOBILE-01 — make Roadmap a mobile-first Control Center sub-surface with owner/label/status filtering while preserving CURRENT_MAIN as the only task-state authority.",
+  "workItemDE": "FE-CONTROL-CENTER-ROADMAP-MOBILE-01 — Roadmap als smartphonefreundlichen Unterreiter des Control Centers mit Owner-, Label- und Statusfilterung darstellen; CURRENT_MAIN bleibt alleinige Task-State-Authority.",
+  "priority": "P1",
+  "priorityReason": "Die produktive Roadmap ist auf Mobilgeräten durch eine 68rem-Timeline primär horizontal navigierbar; Owner fordert kompakte Smartphone-Navigation und klar getrennte Active/Live/Pending-Sichten.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting presentation; no productive PVC",
+  "startedAt": "2026-09-28T03:01:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+  "branch": "agent/frontend-control-center-roadmap-mobile-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-CONTROL-CENTER-ROADMAP-MOBILE-20260928.json",
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-OWNER-TIMELINE-20260927.json",
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LIVE-STATE-CONSUMER-20260924.json",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "src/features/public/ui/frontend-port/components/Header.tsx",
+    "tests/unit/frontendExtendedWebdesign.test.ts",
+    "tests/unit/roadmapDashboardProjection.test.ts"
+  ],
+  "dependencies": [
+    "CURRENT_MAIN 14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+    "Existing read-only /api/roadmap/state contract",
+    "Existing /healthz Production identity",
+    "Owner-correct OPS successor required before browser may claim branch behind=0 evidence"
+  ],
+  "scopeBoundary": [
+    "Frontend presentation only: no server/GitHub token, Render, IAM, deployment, scoring or productive PVC mutation.",
+    "Active derives only from CURRENT_MAIN live-state items; Pending derives only from READY/HELD/QUEUED current roadmap items.",
+    "Live branch mode is exposed fail-closed until an OPS-owned read-only branch correlation contract supplies behind=0 evidence; no browser-side GitHub credential is introduced.",
+    "No third-party runtime dependency is added in this FE slice. OSS visualization adoption for Social remains a separate CAPITAL-AI-SOCIAL supply-chain-reviewed successor."
+  ],
+  "acceptanceCriteria": [
+    "Mobile sideboard exposes Control Center with Roadmap as a subordinate navigation item while preserving /roadmap.",
+    "Phone layout uses owner/status cards instead of requiring the 68rem desktop state matrix.",
+    "Roadmap offers Active, Live and Pending status controls plus canonical Project Owner/Folder/Label filters.",
+    "Live mode fails closed with an explicit OPS evidence requirement until branch correlation is available.",
+    "Existing desktop timeline remains available at large breakpoints.",
+    "Focused regression tests cover Control Center navigation, mobile cards and status semantics."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+}
