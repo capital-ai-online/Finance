@@ -122,7 +122,7 @@ jobs:
             const mergeOrdinal = Number(process.env.MERGE_ORDINAL || '0');
             const deployProgress = process.env.DEPLOY_PROGRESS || 'n/a';
             const deployRemaining = process.env.DEPLOY_REMAINING || 'n/a';
-            const productionRelation = process.env.PRODUCTION_RELATION || 'UNKNOWN';
+            const initialProductionRelation = process.env.PRODUCTION_RELATION || 'UNKNOWN';
             const marker = '<!-- CAPITAL_AI_PRODUCTION_DRIFT_AUTO -->';
             const issueTitle = process.env.DRIFT_ISSUE_TITLE;
             const issueLabel = process.env.DRIFT_ISSUE_LABEL;
@@ -173,7 +173,8 @@ jobs:
                 owner, repo, run_id: run.id, per_page: 100,
               });
               const job = jobs.find((candidate) => candidate.name === 'Deployment verifiziert / Render-Produktion') || null;
-              const step = job?.steps?.find((candidate) => candidate.name === 'Render-Deployment für verifizierten main-Commit auslösen') || null;
+              const canonicalDeployStepName = 'Render-Deployment für verifizierten main-Commit per API auslösen';
+              const step = job?.steps?.find((candidate) => candidate.name === canonicalDeployStepName) || null;
               return { run, job, step };
             }
 
@@ -208,6 +209,19 @@ jobs:
               production = await readProduction();
             }
 
+            const productionExactCurrentMain = production.reachable
+              && production.status === 'ok'
+              && production.sha === expectedSha
+              && (!production.branch || production.branch === 'main')
+              && (!production.repoSlug || production.repoSlug === owner + '/' + repo);
+            const productionRelation = productionExactCurrentMain ? 'CURRENT_MAIN' : initialProductionRelation;
+            const reportedDeployProgress = cadenceActive && productionExactCurrentMain
+              ? mergeOrdinal % 5
+              : deployProgress;
+            const reportedDeployRemaining = cadenceActive && productionExactCurrentMain
+              ? 5 - reportedDeployProgress
+              : deployRemaining;
+
             const violations = [];
             const triggerStartedAt = ciEvidence.step?.started_at || null;
             const triggerDeltaMs = triggerStartedAt ? Date.parse(triggerStartedAt) - commitTimeMs : null;
@@ -227,7 +241,7 @@ jobs:
               }
             } else if (deployDue) {
               if (context.eventName === 'push' && !triggerStartedAt) {
-                violations.push('5-merge deployment boundary is due but canonical deploy-hook step was not observed.');
+                violations.push('5-merge deployment boundary is due but canonical deploy-trigger step was not observed.');
               }
               if (production.sha !== expectedSha) {
                 violations.push('DEPLOYMENT_DUE did not converge Production to latest CURRENT_MAIN ' + expectedSha + '.');
@@ -256,11 +270,11 @@ jobs:
               '- Production SHA: ' + (production.sha || 'MISSING'),
               '- Cadence mode: ' + (process.env.CADENCE_MODE || 'UNKNOWN'),
               '- Merge ordinal: ' + String(mergeOrdinal),
-              '- Deploy progress: ' + deployProgress + '/5',
-              '- Merges remaining: ' + deployRemaining,
+              '- Deploy progress: ' + reportedDeployProgress + '/5',
+              '- Merges remaining: ' + reportedDeployRemaining,
               '- Production relation: ' + productionRelation,
               '- State: ' + state,
-              '- Deploy-hook step started: ' + (triggerStartedAt || 'NOT_OBSERVED'),
+              '- Deploy-trigger step started: ' + (triggerStartedAt || 'NOT_OBSERVED'),
               '',
               '## Current violations',
               violations.length ? violations.map((value) => '- ' + value).join('\n') : '- none',
@@ -314,5 +328,5 @@ jobs:
               'Post-Merge Production Correlation PASS: state=' + state +
               ' currentMain=' + expectedSha +
               ' ordinal=' + String(mergeOrdinal) +
-              ' progress=' + deployProgress + '/5 remaining=' + deployRemaining,
+              ' progress=' + reportedDeployProgress + '/5 remaining=' + reportedDeployRemaining,
             );

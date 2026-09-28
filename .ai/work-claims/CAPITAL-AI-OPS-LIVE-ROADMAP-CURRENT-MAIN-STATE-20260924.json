@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -46,5 +46,7 @@
     "Focused unit tests pass, followed by ordinary exact-head Governance/build/test/Security checks.",
     "Human/CODEOWNER merge remains required."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no agent self-merge.",
+  "releasedAt": "2026-09-28T03:01:00+02:00",
+  "releaseReason": "Associated PR #1356 was Human/CODEOWNER-merged on 2026-09-24; stale exclusive coordination metadata released before successor work."
 }

@@ -128,11 +128,13 @@ describe('extended FRONTEND webdesign sync', () => {
     expect(header).not.toContain('>\n                    #8D26FF\n                  </span>');
   });
 
-  it('exposes the public Live Roadmap in the mobile sideboard without creating a second route contract', () => {
+  it('exposes Roadmap as a Control Center sub-navigation without creating a second route contract', () => {
+    expect(header).toContain('data-public-navigation="control-center"');
+    expect(header).toContain('Control Center');
     expect(header).toContain('href="/roadmap"');
     expect(header).toContain('data-public-navigation="roadmap"');
-    expect(header).toContain('aria-label="Live Roadmap öffnen"');
-    expect(header).toContain('Live Roadmap');
+    expect(header).toContain('aria-label="Control Center Roadmap öffnen"');
+    expect(header).toContain('Roadmap');
     expect(routes).toContain("currentPath === '/roadmap'");
     expect(routes).toContain('<RoadmapDashboard />');
   });

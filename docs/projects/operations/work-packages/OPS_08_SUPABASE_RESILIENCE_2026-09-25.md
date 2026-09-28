@@ -5,9 +5,9 @@
 **Primary PVC:** `PVC-08 — Production Operations`  
 **Canonical project folder:** `docs/projects/operations/`  
 **Trust root:** `/AGENTS.md@CURRENT_MAIN`  
-**Branch:** `agent/operations-supabase-resilience-pvc08-v3-20260926`  
-**Base:** `main@b4fe15600a20e22c0b5d58f8d358888491cdf0a0`  
-**State:** `IMPLEMENTED_ON_BRANCH / PROVIDER_REFRESH_VALIDATED / HOSTED_CI_PENDING / HUMAN_MERGE_REQUIRED`
+**Branch:** `agent/operations-supabase-resilience-postmerge-20260928`  
+**Base:** `main@075c152dca639a9c238a94234295a16cb2f2f4c4`  
+**State:** `IMPLEMENTED_ON_MAIN / PROVIDER_REFRESH_VALIDATED / RECOVERY_LIVE_EVIDENCE_PENDING / GDRIVE_CREDENTIALS_REQUIRED`
 
 ## Business outcome
 
@@ -231,3 +231,24 @@ Current Performance Advisor follow-up is separate from this recovery slice: thre
 unindexed owner-authorization/device foreign keys, four social-media RLS initplan
 performance warnings and unused-index INFO findings. They remain owner-correct
 maintenance candidates and are not changed ad hoc by this package.
+
+
+## Post-merge live evidence — 2026-09-28
+
+- PR #1469 was Human/CODEOWNER merged on 2026-09-26 at merge commit
+  `f961ce6c9a15a4c627b7e6a21adf840f1584b5e9`.
+- Current repository baseline for this reconciliation:
+  `075c152dca639a9c238a94234295a16cb2f2f4c4`.
+- Google Drive folder `CAPITAL-AI Supabase Backups` exists and remains empty at the
+  2026-09-28 readback; no automatic Drive mirror is therefore claimed.
+- Supabase remains `ACTIVE_HEALTHY` on PostgreSQL 17 / bundle `17.6.1.127`.
+- Fresh database readback at 2026-09-28T02:05:56Z:
+  database size `93,482,131` bytes; `cron.job_run_details` `85,754` rows /
+  `60,579,840` bytes; no cron retention is claimed.
+- Security Advisor follow-up is separate from this recovery work package:
+  five RLS-enabled tables without policies, one mutable function search_path warning,
+  plus plan-constrained leaked-password protection. These findings require owner-correct
+  security/auth follow-up and are not silently remediated here.
+- Recovery exit evidence remains pending until a successful encrypted recovery artifact
+  is observed and, for weekly retention, the encrypted Google Drive mirror is verified
+  before any `pg_cron` deletion.
