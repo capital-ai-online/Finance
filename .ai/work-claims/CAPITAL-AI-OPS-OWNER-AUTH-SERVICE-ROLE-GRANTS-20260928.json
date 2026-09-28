@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-OWNER-AUTH-SERVICE-ROLE-GRANTS-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Issue #1487 — add least-privilege service_role table grants for Owner Authorization.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02",
+  "supportingStages": [
+    "PVC-08"
+  ],
+  "baseBranch": "main",
+  "baseSha": "73bdf0c295a5f23754d9a088891e17b6c8cbe349",
+  "branch": "agent/operations-owner-auth-service-role-grants-1487-20260928",
+  "claimedPaths": [
+    "supabase/migrations/20260928055300_owner_authorization_service_role_least_privilege.sql",
+    "tests/unit/ownerAuthorizationServiceRoleGrantsMigration.test.ts",
+    "docs/projects/operations/work-packages/OPS_OWNER_AUTH_SERVICE_ROLE_GRANTS_2026-09-28.md",
+    ".ai/work-claims/CAPITAL-AI-OPS-OWNER-AUTH-SERVICE-ROLE-GRANTS-20260928.json"
+  ],
+  "scopeBoundary": [
+    "Repository-first additive migration only.",
+    "Grant only direct table privileges required by current privileged server consumers.",
+    "Keep PUBLIC, anon and authenticated table access denied.",
+    "Do not weaken RLS or add browser policies.",
+    "Do not apply the migration to Supabase Production in this repository slice."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment. Provider application/readback remains a separate protected gate."
+}
