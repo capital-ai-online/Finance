@@ -5,6 +5,8 @@ export interface MarketObservation {
   retrievedAt: string;
   unit: string;
   evidenceId: string;
+  /** Current gateway quality when the observation originates from a live snapshot. */
+  qualityState?: 'LIVE' | 'DELAYED';
 }
 
 export type MarketConsensusStatus = 'CONSENSUS' | 'INSUFFICIENT_SOURCES' | 'SOURCE_CONFLICT' | 'INVALID_OBSERVATION';
