@@ -48,3 +48,11 @@ RLS und Security Advisor bleiben **separat autorisierte Provider-Mutationen/Evid
 - Danach: separat autorisierte Provider-Anwendung der neuen Migration.
 - Live Readback beweist exakt die Consumer-Matrix und weiterhin null Browser-DML.
 - Erst nach Provider-Readback kann Issue #1487 terminal geschlossen werden.
+
+
+## Migrations-Ledger-Projektion
+
+Der bestehende read-only Provider-Snapshot bleibt bei 78 Remote-Migrationen. Die neue
+Repository-Migration wird ausschließlich als zusätzlicher `local_only`-Eintrag geführt;
+`local_total=86` und `local_only=8`. Das ist keine Behauptung, dass die Migration bereits
+in Supabase Production angewendet wurde.
