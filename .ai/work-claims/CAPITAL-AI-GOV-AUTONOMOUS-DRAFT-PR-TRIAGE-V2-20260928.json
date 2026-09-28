@@ -67,5 +67,24 @@
     "staleHead": "c62f19f611cdbeac21c4cdc9ec28154bd1f8a0a2",
     "currentMain": "8542844df2f4044fa9fd793e04f034d508d74d46",
     "correction": "pre-create CURRENT_MAIN convergence before candidate checkout/preflight"
+  },
+  "validationState": {
+    "authorityLineage": "PASS",
+    "branchBehind": 0,
+    "claimCoverage": "PASS",
+    "staticWorkflowSecurity": "PASS",
+    "providerSignalRun": {
+      "id": 36394377353,
+      "runNumber": 45,
+      "conclusion": "success"
+    },
+    "hostedPrChecks": "PENDING_BOOTSTRAP_PR",
+    "productionPreflight": "PENDING_BOOTSTRAP_PR",
+    "truthfulBoundary": "No hosted/production gate is represented as PASS before the canonical PR run."
+  },
+  "bootstrap": {
+    "mode": "HUMAN_OWNER_WORKFLOW_DISPATCH_ON_CURRENT_MAIN",
+    "headBranch": "agent/governance-autonomous-draft-pr-triage-v2-20260928",
+    "reason": "Autonomous workflow definitions become authoritative only after Human/CODEOWNER merge; unmerged V2 must not self-bootstrap."
   }
 }
