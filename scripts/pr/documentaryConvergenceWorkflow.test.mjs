@@ -53,7 +53,11 @@ test('Documentary reusable Draft-PR handoff exposes the permission ceiling requi
 
   assert.match(
     calledWorkflow,
-    /converge-project-labels:[\s\S]*?permissions:[\s\S]*?issues:\s*write/,
+    /converge-project-labels:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*pull-requests:\s*write/,
+  );
+  assert.doesNotMatch(
+    calledWorkflow,
+    /converge-project-labels:[\s\S]*?permissions:\s*\n\s*contents:\s*read\s*\n\s*issues:\s*write/,
   );
   assert.match(
     workflow,
