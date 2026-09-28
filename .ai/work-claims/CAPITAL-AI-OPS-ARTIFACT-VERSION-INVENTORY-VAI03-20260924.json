@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-OPS-ARTIFACT-VERSION-INVENTORY-VAI03-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -12,7 +12,7 @@
   "startedAt": "2026-09-24T21:15:00Z",
   "baseBranch": "main",
   "baseSha": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
-  "lastSyncedMainSha": "4b93dd41f1e3368d42d003ff9a456e7135876c51",
+  "lastSyncedMainSha": "f61df72e717399e783824d0b12190f2e7f6a96fd",
   "branch": "operations/artifact-version-inventory-vai03-20260924",
   "projectId": "CAPITAL-AI-OPS",
   "projectFolder": "docs/projects/operations/",
@@ -42,5 +42,6 @@
     "package.json remains the sole PLATFORM_VERSION_AUTHORITY.",
     "Exact-head TypeScript, focused tests, CI, Governance and Security evidence pass."
   ],
-  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment.",
+  "releaseReason": "Associated PR #1445 was Human/CODEOWNER-merged as 9fec05d184794427eea384ae069f505f4b07a1e5; exact-head CI/Governance/Container/Project/PR evidence completed successfully and fresh CURRENT_MAIN contains the merge."
 }
