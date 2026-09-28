@@ -33,7 +33,50 @@ function component(seed: ComponentSeed): AnalysisComponentDescriptor {
 const marketAssets = ['stock', 'etf', 'index', 'crypto', 'forex', 'commodity', 'future', 'bond'] as const;
 const allAssets = [...marketAssets, 'option', 'macro', 'portfolio', 'multi-asset'] as const;
 const technicalInputs = ['validated-data/1.0.0', 'validated-financial-feature/1.0.0'] as const;
-const technicalConnections = ['crypto-technical-provenance', 'traditional-scoring-stock', 'traditional-scoring-fx-index', 'commodity-market-evidence'] as const;
+type TechnicalComponentSeed = readonly [
+  componentId: string,
+  displayName: string,
+  feature: string,
+  calculationVersion: string,
+  capabilities: readonly AnalysisProviderCapabilityDependency['capability'][],
+  analysisConnectionIds: readonly string[],
+];
+
+const technicalComponentSeeds: readonly TechnicalComponentSeed[] = [
+  ['multi_timeframe_trend_regime_scorer','Multi-Timeframe Trend Regime Scorer','trend','0.1.0',['history','bars'],['crypto-momentum-research','crypto-regime-research']],
+  ['relative_strength_scorer','Relative Strength Scorer','relative-strength','0.1.0',['history'],['crypto-technical-provenance','traditional-scoring-stock']],
+  ['momentum_persistence_scorer','Momentum Persistence Scorer','momentum','0.1.0',['history'],['crypto-momentum-research','traditional-scoring-fx-index']],
+  ['breakout_quality_scorer','Breakout Quality Scorer','breakout','0.1.0',['history','bars'],['crypto-pattern-confluence-research','commodity-market-evidence']],
+  ['volume_confirmation_scorer','Volume Confirmation Scorer','volume-confirmation','0.1.0',['bars','trade'],['crypto-technical-provenance','charts-technical-analysis-legacy']],
+  ['volatility_regime_scorer','Volatility Regime Scorer','volatility-regime','0.1.0',['history'],['crypto-regime-research','monte-carlo-risk-engine']],
+];
+
+type ResearchComponentSeed = readonly [
+  componentId: string,
+  displayName: string,
+  status: AnalysisComponentDescriptor['status'],
+  reasonCodeCatalog: string,
+  capabilities: readonly AnalysisProviderCapabilityDependency['capability'][],
+  analysisConnectionIds: readonly string[],
+];
+
+const researchComponentSeeds: readonly ResearchComponentSeed[] = [
+  ['news_relevance_scorer','News Relevance Scorer','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
+  ['financial_sentiment_scorer','Financial Sentiment Scorer','shadow','RC-SENT',['news'],['market-sentiment-evidence','legacy-market-sentiment-widget']],
+  ['sentiment_velocity_scorer','Sentiment Velocity Scorer','planned','RC-SENT',['news'],['legacy-sentiment-dashboard']],
+  ['sentiment_dispersion_scorer','Sentiment Dispersion Scorer','planned','RC-SENT',['news'],['legacy-sentiment-dashboard']],
+  ['news_novelty_scorer','News Novelty Scorer','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
+  ['source_authority_scorer','Source Authority Scorer','shadow','RC-NEWS',['news'],['market-sentiment-evidence']],
+  ['event_detection_classification_engine','Event Detection & Classification Engine','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
+  ['event_impact_scorer','Event Impact Scorer','planned','RC-NEWS',['news','history'],['market-sentiment-evidence']],
+  ['catalyst_strength_scorer','Catalyst Strength Scorer','planned','RC-NEWS',['news','fundamentals'],['traditional-scoring-stock']],
+  ['market_reaction_validator','Market Reaction Validator','planned','RC-NEWS',['history','news'],['quant-backtest-engine']],
+  ['narrative_emergence_scorer','Narrative Emergence Scorer','planned','RC-SENT',['news'],['market-sentiment-evidence']],
+  ['narrative_saturation_scorer','Narrative Saturation Scorer','planned','RC-SENT',['news'],['market-sentiment-evidence']],
+  ['social_attention_velocity_scorer','Social Attention Velocity Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
+  ['social_engagement_quality_scorer','Social Engagement Quality Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
+  ['bot_manipulation_risk_scorer','Bot / Manipulation Risk Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
+];
 
 export const ANALYSIS_COMPONENTS: readonly AnalysisComponentDescriptor[] = Object.freeze([
   component({ componentId:'market_integrity_gate', displayName:'Market Integrity Gate', domain:'risk-controls', assetClassScope:allAssets, status:'active', dataAvailability:['live','delayed','cached','degraded'], inputContracts:['market-tick-gate/1.0.0','market-data/1.0.0'], featureDependencies:['freshness','timestamp-order','provider-identity','spike-baseline'], providerDependencies:[provider('snapshot','EVIDENCE_INPUT','Canonical market observation.'),provider('trade','OPTIONAL_CONTEXT','Venue trade evidence.')], calculationVersion:'1.0.0', refreshPolicy:'event-driven', weightPolicy:'hard-gate', confidencePolicy:'data-sufficiency', riskPolicy:'hard-block', eligibilityPolicy:'hard-gated', reasonCodeCatalog:'RC-DQ', analysisConnectionIds:['crypto-technical-provenance','crypto-kill-switch-research'] }),
@@ -42,14 +85,7 @@ export const ANALYSIS_COMPONENTS: readonly AnalysisComponentDescriptor[] = Objec
   component({ componentId:'spread_slippage_risk_scorer', displayName:'Spread & Slippage Risk Scorer', domain:'risk-controls', assetClassScope:marketAssets, status:'shadow', dataAvailability:['live','cached','degraded','unavailable'], inputContracts:['market-tick-gate/1.0.0'], featureDependencies:['spreadBps','depth','expectedSlippage'], providerDependencies:[provider('orderbook','EVIDENCE_INPUT','BBO/depth evidence.')], calculationVersion:'0.1.0', refreshPolicy:'event-driven', weightPolicy:'fixed-versioned', confidencePolicy:'evidence-coverage', riskPolicy:'hard-block', eligibilityPolicy:'hard-gated', reasonCodeCatalog:'RC-LIQ', analysisConnectionIds:['realtime-risk-assessment-disabled','crypto-signal-fusion-research'] }),
   component({ componentId:'tradability_gate', displayName:'Tradability Gate', domain:'risk-controls', assetClassScope:marketAssets, status:'shadow', dataAvailability:['live','delayed','cached','degraded','unavailable'], inputContracts:['analysis-component-result/1.0.0','validated-data/1.0.0'], featureDependencies:['data-quality','liquidity','market-integrity'], providerDependencies:[provider('quote','EVIDENCE_INPUT','Current quote availability.')], calculationVersion:'0.1.0', refreshPolicy:'event-driven', weightPolicy:'hard-gate', confidencePolicy:'data-sufficiency', riskPolicy:'hard-block', eligibilityPolicy:'hard-gated', reasonCodeCatalog:'RC-LIQ', analysisConnectionIds:['market-screener-projection','legacy-screener','crypto-kill-switch-research'] }),
 
-  ...[
-    ['multi_timeframe_trend_regime_scorer','Multi-Timeframe Trend Regime Scorer','trend','0.1.0',['history','bars'],['crypto-momentum-research','crypto-regime-research']],
-    ['relative_strength_scorer','Relative Strength Scorer','relative-strength','0.1.0',['history'],['crypto-technical-provenance','traditional-scoring-stock']],
-    ['momentum_persistence_scorer','Momentum Persistence Scorer','momentum','0.1.0',['history'],['crypto-momentum-research','traditional-scoring-fx-index']],
-    ['breakout_quality_scorer','Breakout Quality Scorer','breakout','0.1.0',['history','bars'],['crypto-pattern-confluence-research','commodity-market-evidence']],
-    ['volume_confirmation_scorer','Volume Confirmation Scorer','volume-confirmation','0.1.0',['bars','trade'],['crypto-technical-provenance','charts-technical-analysis-legacy']],
-    ['volatility_regime_scorer','Volatility Regime Scorer','volatility-regime','0.1.0',['history'],['crypto-regime-research','monte-carlo-risk-engine']],
-  ].map(([componentId,displayName,feature,calculationVersion,capabilities,analysisConnectionIds]) => component({
+  ...technicalComponentSeeds.map(([componentId,displayName,feature,calculationVersion,capabilities,analysisConnectionIds]) => component({
     componentId: componentId as string,
     displayName: displayName as string,
     domain:'scoring',
@@ -58,7 +94,7 @@ export const ANALYSIS_COMPONENTS: readonly AnalysisComponentDescriptor[] = Objec
     dataAvailability:['cached','degraded','unavailable'],
     inputContracts:technicalInputs,
     featureDependencies:[feature as string],
-    providerDependencies:(capabilities as string[]).map(capability => provider(capability as AnalysisProviderCapabilityDependency['capability'],'EVIDENCE_INPUT',`${displayName} evidence.`)),
+    providerDependencies:capabilities.map(capability => provider(capability,'EVIDENCE_INPUT',`${displayName} evidence.`)),
     calculationVersion: calculationVersion as string,
     refreshPolicy:'bar-close',
     weightPolicy:'renormalized-versioned',
@@ -66,7 +102,7 @@ export const ANALYSIS_COMPONENTS: readonly AnalysisComponentDescriptor[] = Objec
     riskPolicy:'penalty',
     eligibilityPolicy:'canonical-score-only',
     reasonCodeCatalog:'RC-TECH',
-    analysisConnectionIds: analysisConnectionIds as string[],
+    analysisConnectionIds,
   })),
 
   component({ componentId:'mean_reversion_opportunity_scorer', displayName:'Mean Reversion Opportunity Scorer', domain:'scoring', assetClassScope:marketAssets, status:'planned', dataAvailability:['unavailable'], inputContracts:technicalInputs, featureDependencies:['normalized-deviation','volatility-regime'], providerDependencies:[provider('history','EVIDENCE_INPUT','Point-in-time price history.')], calculationVersion:'0.1.0', refreshPolicy:'bar-close', weightPolicy:'research-only', confidencePolicy:'not-calibrated', riskPolicy:'research-block', eligibilityPolicy:'research-only', reasonCodeCatalog:'RC-TECH', analysisConnectionIds:['charts-technical-analysis-legacy'] }),
@@ -81,40 +117,24 @@ export const ANALYSIS_COMPONENTS: readonly AnalysisComponentDescriptor[] = Objec
   component({ componentId:'economic_calendar_risk_scorer', displayName:'Economic Calendar Risk Scorer', domain:'risk-controls', assetClassScope:['macro','multi-asset'], status:'planned', dataAvailability:['unavailable'], inputContracts:['economic-calendar-evidence/1.0.0'], featureDependencies:['event-proximity','event-severity'], providerDependencies:[provider('macro-series','OPTIONAL_CONTEXT','Macro series context; calendar capability remains absent.')], calculationVersion:'0.1.0', refreshPolicy:'macro-release', weightPolicy:'hard-gate', confidencePolicy:'not-calibrated', riskPolicy:'hard-block', eligibilityPolicy:'hard-gated', reasonCodeCatalog:'RC-MACRO', analysisConnectionIds:['macro-risk-regime'] }),
   component({ componentId:'entity_resolution_engine', displayName:'Entity Resolution Engine', domain:'asset-master', assetClassScope:allAssets, status:'shadow', dataAvailability:['cached','degraded','unavailable'], inputContracts:['uai/1.0.0','news-evidence/1.0.0'], featureDependencies:['symbol-aliases','entity-aliases'], providerDependencies:[provider('news','OPTIONAL_CONTEXT','External entity/name observations.')], calculationVersion:'0.1.0', refreshPolicy:'news-event', weightPolicy:'hard-gate', confidencePolicy:'evidence-coverage', riskPolicy:'hard-block', eligibilityPolicy:'hard-gated', reasonCodeCatalog:'RC-NEWS', analysisConnectionIds:['market-sentiment-evidence','legacy-market-sentiment-widget'] }),
 
-  ...[
-    ['news_relevance_scorer','News Relevance Scorer','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
-    ['financial_sentiment_scorer','Financial Sentiment Scorer','shadow','RC-SENT',['news'],['market-sentiment-evidence','legacy-market-sentiment-widget']],
-    ['sentiment_velocity_scorer','Sentiment Velocity Scorer','planned','RC-SENT',['news'],['legacy-sentiment-dashboard']],
-    ['sentiment_dispersion_scorer','Sentiment Dispersion Scorer','planned','RC-SENT',['news'],['legacy-sentiment-dashboard']],
-    ['news_novelty_scorer','News Novelty Scorer','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
-    ['source_authority_scorer','Source Authority Scorer','shadow','RC-NEWS',['news'],['market-sentiment-evidence']],
-    ['event_detection_classification_engine','Event Detection & Classification Engine','planned','RC-NEWS',['news'],['market-sentiment-evidence']],
-    ['event_impact_scorer','Event Impact Scorer','planned','RC-NEWS',['news','history'],['market-sentiment-evidence']],
-    ['catalyst_strength_scorer','Catalyst Strength Scorer','planned','RC-NEWS',['news','fundamentals'],['traditional-scoring-stock']],
-    ['market_reaction_validator','Market Reaction Validator','planned','RC-NEWS',['history','news'],['quant-backtest-engine']],
-    ['narrative_emergence_scorer','Narrative Emergence Scorer','planned','RC-SENT',['news'],['market-sentiment-evidence']],
-    ['narrative_saturation_scorer','Narrative Saturation Scorer','planned','RC-SENT',['news'],['market-sentiment-evidence']],
-    ['social_attention_velocity_scorer','Social Attention Velocity Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
-    ['social_engagement_quality_scorer','Social Engagement Quality Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
-    ['bot_manipulation_risk_scorer','Bot / Manipulation Risk Scorer','planned','RC-SENT',[],['crypto-meme-integrity']],
-  ].map(([componentId,displayName,status,reasonCodeCatalog,capabilities,analysisConnectionIds]) => component({
+  ...researchComponentSeeds.map(([componentId,displayName,status,reasonCodeCatalog,capabilities,analysisConnectionIds]) => component({
     componentId: componentId as string,
     displayName: displayName as string,
     domain: componentId === 'bot_manipulation_risk_scorer' ? 'risk-controls' : 'market-intelligence',
     assetClassScope: componentId.startsWith('social_') || componentId.startsWith('bot_') ? ['crypto','stock'] : allAssets,
-    status: status as AnalysisComponentDescriptor['status'],
+    status,
     dataAvailability: status === 'shadow' ? ['delayed','cached','degraded','unavailable'] : ['unavailable'],
     inputContracts:['news-evidence/1.0.0','analysis-component-result/1.0.0'],
     featureDependencies:[componentId as string],
-    providerDependencies:(capabilities as string[]).map(capability => provider(capability as AnalysisProviderCapabilityDependency['capability'],'EVIDENCE_INPUT',`${displayName} evidence.`)),
+    providerDependencies:capabilities.map(capability => provider(capability,'EVIDENCE_INPUT',`${displayName} evidence.`)),
     calculationVersion:'0.1.0',
     refreshPolicy:'news-event',
     weightPolicy:'research-only',
     confidencePolicy: status === 'shadow' ? 'evidence-coverage' : 'not-calibrated',
     riskPolicy: componentId === 'bot_manipulation_risk_scorer' ? 'hard-block' : 'research-block',
     eligibilityPolicy:'research-only',
-    reasonCodeCatalog: reasonCodeCatalog as string,
-    analysisConnectionIds: analysisConnectionIds as string[],
+    reasonCodeCatalog,
+    analysisConnectionIds,
   })),
 
   component({ componentId:'fundamental_quality_scorer', displayName:'Fundamental Quality Scorer', domain:'scoring', assetClassScope:['stock','etf'], status:'shadow', dataAvailability:['delayed','cached','degraded','unavailable'], inputContracts:['validated-financial-feature/1.0.0'], featureDependencies:['profitability','balance-sheet-quality','cash-flow-quality'], providerDependencies:[provider('fundamentals','EVIDENCE_INPUT','Verified point-in-time fundamentals.')], calculationVersion:'0.1.0', refreshPolicy:'fundamental-release', weightPolicy:'fixed-versioned', confidencePolicy:'evidence-coverage', riskPolicy:'penalty', eligibilityPolicy:'canonical-score-only', reasonCodeCatalog:'RC-FUND', analysisConnectionIds:['traditional-scoring-stock','buffett-value-check'] }),
