@@ -366,6 +366,9 @@ jobs:
           private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
+          # gh pr create resolves repository.defaultBranchRef through GraphQL before the REST mutation.
+          # Read-only repository metadata/content access is therefore required in addition to PR write.
+          permission-contents: read
           permission-pull-requests: write
 
       - name: Final korrelieren, Projekt-Lane triagieren und Draft-PR öffnen
