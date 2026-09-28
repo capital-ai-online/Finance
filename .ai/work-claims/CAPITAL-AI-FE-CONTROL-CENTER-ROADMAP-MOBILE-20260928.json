@@ -26,18 +26,21 @@
     "src/features/public/ui/RoadmapDashboard.tsx",
     "src/features/public/ui/frontend-port/components/Header.tsx",
     "tests/unit/frontendExtendedWebdesign.test.ts",
-    "tests/unit/roadmapDashboardProjection.test.ts"
+    "tests/unit/roadmapDashboardProjection.test.ts",
+    "src/features/public/ui/roadmapBranchState.ts",
+    "tests/unit/roadmapBranchState.test.ts"
   ],
   "dependencies": [
     "CURRENT_MAIN 14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
     "Existing read-only /api/roadmap/state contract",
     "Existing /healthz Production identity",
-    "Owner-correct OPS successor required before browser may claim branch behind=0 evidence"
+    "Owner-correct OPS successor required before browser may claim branch behind=0 evidence",
+    "OPS PR #1479 — read-only /api/roadmap/branches with behind=0 evidence"
   ],
   "scopeBoundary": [
     "Frontend presentation only: no server/GitHub token, Render, IAM, deployment, scoring or productive PVC mutation.",
     "Active derives only from CURRENT_MAIN live-state items; Pending derives only from READY/HELD/QUEUED current roadmap items.",
-    "Live branch mode is exposed fail-closed until an OPS-owned read-only branch correlation contract supplies behind=0 evidence; no browser-side GitHub credential is introduced.",
+    "Live branch mode consumes only the OPS-owned read-only /api/roadmap/branches contract from PR #1479; no browser-side GitHub credential is introduced.",
     "No third-party runtime dependency is added in this FE slice. OSS visualization adoption for Social remains a separate CAPITAL-AI-SOCIAL supply-chain-reviewed successor."
   ],
   "acceptanceCriteria": [
