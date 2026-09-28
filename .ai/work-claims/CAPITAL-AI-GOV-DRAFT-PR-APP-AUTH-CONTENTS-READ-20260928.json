@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Restore the canonical App-authored Draft-PR writer by granting its Finance-scoped short-lived App token exactly Contents: read in addition to the existing Pull requests: write permission.",
+  "workItem": "Restore the canonical App-authored Draft-PR writer with the minimum Contents: read metadata permission and converge its pre-create label-order regression test to the App-authenticated gh pr create command.",
   "priority": "P1",
   "projectId": "CAPITAL-AI-GOV",
   "projectFolder": "docs/projects/governance/",
@@ -23,6 +23,7 @@
     ".github/workflows/open-agent-draft-pr.yml",
     "docs/projects/governance/ROADMAP.md",
     "docs/projects/governance/work-packages/GOV_AUTONOMOUS_DRAFT_PR_TRIAGE_V2_2026-09-28.md",
+    "scripts/pr/prLabelClassification.test.mjs",
     "tests/unit/githubAgentDraftPrWorkflow.test.ts"
   ],
   "protectedBoundaries": [

@@ -83,7 +83,7 @@ test('PR create workflow classifies before creation and converges provider metad
   const workflow = fs.readFileSync(createWorkflowPath, 'utf8');
   const classifyIndex = workflow.indexOf('node ../create-policy/scripts/pr/prLabelClassification.mjs');
   const ensureIndex = workflow.indexOf('gh label create "$PR_LABEL_NAME"');
-  const createIndex = workflow.indexOf('gh pr create');
+  const createIndex = workflow.indexOf('GH_TOKEN="$PR_CREATE_TOKEN" gh pr create');
 
   assert.ok(classifyIndex >= 0, 'pre-create label classification step missing');
   assert.ok(ensureIndex > classifyIndex, 'repository label must be ensured after classification');
