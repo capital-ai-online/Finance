@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-28`  
-**Baseline:** `main@f0b9b9f3368b3c9cc241fadef3100af89dc5256a`  
+**Baseline:** `main@f61df72e717399e783824d0b12190f2e7f6a96fd`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -90,6 +90,9 @@ This ledger is the repository-level **closure projection** for processed canonic
 
 | `docs/projects/operations/work-packages/OPS_LIVE_ROADMAP_CURRENT_MAIN_STATE_2026-09-24.md` | `CAPITAL-AI-OPS` | PR #1356 · merge `46a3339c3447470cfe2ee741960023643997505e` · CURRENT_MAIN readback `f0b9b9f3368b3c9cc241fadef3100af89dc5256a` | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim is `released / exclusive=false` |
 | `docs/projects/operations/work-packages/OPS_ROADMAP_BRANCH_EVIDENCE_2026-09-28.md` | `CAPITAL-AI-OPS` | PR #1479 · merge `8862857f962a681c7853268e15822c719654412f` · exact-head CI/Governance/Container/Project/PR PASS · FE successor #1476 merged | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim is `released / exclusive=false` |
+
+| `docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI03_2026-09-24.md` | `CAPITAL-AI-OPS` | PR #1445 · merge `9fec05d184794427eea384ae069f505f4b07a1e5` · exact-head CI/Governance/Container/Project/PR PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim `released / exclusive=false` |
+| `docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI04_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1456 · merge `a503cea6b4ff9c72f8cf2a35113ab7a537922574` · exact-head CI/Governance/Container/Project/PR PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; VAI-01..04 merged and claim `released / exclusive=false` |
 
 After every successful Human/CODEOWNER merge that carries a canonical work-package identity, the existing Post-Merge Production Correlation → Self-Healing continuation path must correlate:
 
