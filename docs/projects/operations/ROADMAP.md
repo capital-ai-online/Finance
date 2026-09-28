@@ -1,6 +1,6 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@f61df72e717399e783824d0b12190f2e7f6a96fd`
+**Baseline:** `main@60109a28b365d388750703804c6e237ef0e269f7`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
@@ -61,22 +61,21 @@ permission is not already `read`, expose no raw REST proxy, use no user-supplied
 provider values and require exact post-write readback. Provider mutation cannot
 occur from the PR branch and Human/CODEOWNER merge remains mandatory.
 
-## Current execution priority — Human-directed Merge Cadence 2026-09-23
+## Current Release/Deployment cadence
 
-### OPS-MERGE-CADENCE-01 — Dual-Mode 5-Merge Deploy / 10-Merge Version Runtime
+### OPS-MERGE-CADENCE-01 — 5-Merge Deploy / Release-Acceptance Versioning
 
-**State:** `ACTIVE / CADENCE_5_10 / CURRENT_MAIN_DERIVED`  
+**State:** `DONE_MAIN / VERSION_CADENCE_SUPERSEDED / DEPLOY_CADENCE_ACTIVE`  
 **Baseline:** `cadenceEpoch=PR #1336 / merge f340654adab7198c13fa82cc8f177846c1c66ece`  
-**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08`  
-**Dependency:** cadence authority is active on CURRENT_MAIN; live ordinal/deploy/version progress is derived read-only by `/api/roadmap/cadence`.
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-06, PVC-07, PVC-08`
 
-Fresh Owner direction requires the productive chain to be prepared before the Governance activation merge. This slice therefore makes the existing CI/Post-Merge/Exact-SHA-Recovery/Release-Gate paths dual-mode rather than creating replacements. Pre-v1.1 authority preserves per-main-merge deployment; after the fixed cadence contract becomes CURRENT_MAIN, normal deployment occurs at 5/10/15/... PR-merge ordinals and the next PR at ordinal 9 mod 10 receives the strict next PATCH through the existing registered PR Autofix writer and Release Version Gate.
+The fixed **5-merge deployment cadence remains active**. Healthy canonical Production lag below a due boundary is `DEPLOYMENT_QUEUED`; due/failed/unhealthy/diverged Production remains fail-closed drift.
 
-CI, PR synchronization, Self-Healing continuation and the read-only live cadence projection remain bound to latest CURRENT_MAIN. Healthy expected Production lag below a due 5-merge boundary is DEPLOYMENT_QUEUED and cannot trigger Exact-SHA Recovery. Real due/failed/unhealthy/diverged Production remains fail-closed drift.
+The former fixed **10-merge package PATCH cadence is retired**. PR #1497 removed the productive PR-CI gate and deregistered/deleted the `MERGE_CADENCE_PATCH_V1` repair path. Merge count no longer mutates `package.json` or `package-lock.json`. Accepted Production Release versions come only from the Release Acceptance chain defined by `/AGENTS.md@CURRENT_MAIN`.
 
-Detailed package: work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md.
+Detailed packages: `work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md` and `work-packages/OPS_RETIRED_MERGE_CADENCE_VERSION_GATE_2026-09-28.md`.
 
-**Exit:** dual-mode implementation is Human-merged and verified before GOV #1336 activation; no second controller/registry exists; FE can consume the read-only /api/roadmap/cadence projection in an owner-correct successor.
+**Exit:** #1495 is terminal after the closure claim becomes `released / exclusive=false`; no second deployment, version or repair authority exists.
 
 ## Terminal Version-Management evidence — Artifact Version Inventory
 

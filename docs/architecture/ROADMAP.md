@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-28`  
-**Baseline:** `main@d6fa99aa0980f72744855cf0d111c9cb91df0e38`  
+**Baseline:** `main@60109a28b365d388750703804c6e237ef0e269f7`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -95,6 +95,9 @@ This ledger is the repository-level **closure projection** for processed canonic
 | `docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI04_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1456 · merge `a503cea6b4ff9c72f8cf2a35113ab7a537922574` · exact-head CI/Governance/Container/Project/PR PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; VAI-01..04 merged and claim `released / exclusive=false` |
 
 | `docs/projects/operations/work-packages/OPS_08_SUPABASE_RESILIENCE_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1486 · merge `314cc14e3345573ee86b969ca84cf98e5c2d858a` · exact-head CI/Governance/Container/Project/PR/zizmor PASS | `MERGED_MAIN / EVIDENCE_GATE` | `MERGED_MAIN / EVIDENCE_GATE` | successful encrypted recovery artifact + verified weekly Google-Drive mirror remain open; claim `released / exclusive=false` |
+
+| `docs/projects/operations/work-packages/OPS_MERGE_CADENCE_01_2026-09-23.md` | `CAPITAL-AI-OPS` | PR #1338 · merge `72a22038c88d3cc170cbecac6d04547d7226853d` · supersession closure via PR #1497 · merge `4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0` | `DONE_MAIN / VERSION_CADENCE_SUPERSEDED` | `DONE_MAIN / VERSION_CADENCE_SUPERSEDED` | fixed 5-merge deployment cadence remains operational; merge-count package PATCH authority retired; claim `released / exclusive=false` |
+| `docs/projects/operations/work-packages/OPS_RETIRED_MERGE_CADENCE_VERSION_GATE_2026-09-28.md` | `CAPITAL-AI-OPS` | PR #1497 · merge `4ccc6cdf3bb8ddad5c4957c6bdea8f35f5871fd0` · CI #6691 / Governance #6175 / Container #3666 / Project #938 / PR #1032 / zizmor #767 PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; 5-merge deploy cadence remains active, fixed 10-merge package PATCH path is retired; claim `released / exclusive=false` |
 
 After every successful Human/CODEOWNER merge that carries a canonical work-package identity, the existing Post-Merge Production Correlation → Self-Healing continuation path must correlate:
 
