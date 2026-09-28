@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-ROADMAP-OWNER-TIMELINE-20260927",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "xAI",
     "model": "Grok",
     "executionSurface": "Grok GitHub connector"
   },
   "workItem": "Overwrite the public /roadmap page with an owner work-state timeline driven by /api/roadmap/state, without inventing calendar dates.",
-  "workItemDE": "Die \u00f6ffentliche /roadmap-Seite durch eine Owner-Work-State-Timeline aus /api/roadmap/state ersetzen, ohne Kalenderdaten zu erfinden.",
+  "workItemDE": "Die öffentliche /roadmap-Seite durch eine Owner-Work-State-Timeline aus /api/roadmap/state ersetzen, ohne Kalenderdaten zu erfinden.",
   "priority": "P2",
-  "priorityReason": "Pr\u00e4sentations\u00e4nderung der bestehenden Live-Projektion. Kein Security-, Deploy- oder Datenpfad.",
+  "priorityReason": "Präsentationsänderung der bestehenden Live-Projektion. Kein Security-, Deploy- oder Datenpfad.",
   "projectId": "CAPITAL-AI-FE",
   "projectFolder": "docs/projects/frontend/",
   "projectStage": "cross-cutting; no productive PVC",
@@ -31,5 +31,7 @@
     "src/features/public/ui/RoadmapDashboard.tsx",
     ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-OWNER-TIMELINE-20260927.json"
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "releasedAt": "2026-09-28T03:01:00+02:00",
+  "releaseReason": "Associated PR #1472 is merged on CURRENT_MAIN; stale exclusive coordination metadata released before successor work."
 }
