@@ -57,15 +57,25 @@ jobs:
             echo "local_date=$(TZ=Europe/Berlin date +%F)" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          LOCAL_HOUR="$(TZ=Europe/Berlin date +%H)"
+          LOCAL_DATE="$(TZ=Europe/Berlin date +%F)"
           LOCAL_WEEKDAY="$(TZ=Europe/Berlin date +%u)"
-          echo "local_date=$(TZ=Europe/Berlin date +%F)" >> "$GITHUB_OUTPUT"
-          if [ "$LOCAL_HOUR" = '04' ]; then
-            echo 'execute=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'execute=false' >> "$GITHUB_OUTPUT"
+          UTC_OFFSET="$(TZ=Europe/Berlin date +%z)"
+          SCHEDULE='${{ github.event.schedule }}'
+          echo "local_date=$LOCAL_DATE" >> "$GITHUB_OUTPUT"
+
+          # GitHub scheduled workflows may start minutes or hours after their nominal
+          # cron slot. Never gate on the runner's actual wall-clock hour. Instead,
+          # select the cron slot that maps to 04:00 Europe/Berlin for the current
+          # CET/CEST offset.
+          EXECUTE='false'
+          if [ "$UTC_OFFSET" = '+0200' ] && [ "$SCHEDULE" = '0 2 * * *' ]; then
+            EXECUTE='true'
+          elif [ "$UTC_OFFSET" = '+0100' ] && [ "$SCHEDULE" = '0 3 * * *' ]; then
+            EXECUTE='true'
           fi
-          if [ "$LOCAL_HOUR" = '04' ] && [ "$LOCAL_WEEKDAY" = '1' ]; then
+          echo "execute=$EXECUTE" >> "$GITHUB_OUTPUT"
+
+          if [ "$EXECUTE" = 'true' ] && [ "$LOCAL_WEEKDAY" = '1' ]; then
             echo 'weekly=true' >> "$GITHUB_OUTPUT"
           else
             echo 'weekly=false' >> "$GITHUB_OUTPUT"
