@@ -363,7 +363,7 @@ export function createCryptoRouter(
       res.setHeader('x-correlation-id', correlationId);
       const symbol = String(req.params.symbol || '').toUpperCase().trim();
       if (!symbol) return res.status(400).json({ error: 'Cryptocurrency symbol is required.', correlationId });
-      const consensus = await getCryptoSpotConsensus(symbol);
+      const consensus = await getCryptoSpotConsensus(symbol, { correlationId });
       recordMarketIntegrityObservation({
         symbol,
         capability: 'spot-consensus',
