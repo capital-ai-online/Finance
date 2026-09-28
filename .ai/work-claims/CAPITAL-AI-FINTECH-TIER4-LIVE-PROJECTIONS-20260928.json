@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-TIER4-LIVE-PROJECTIONS-20260928",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..16 bounded verified-quote and canonical-score live projection over the existing Tier-3/4 asset-room transport.",
+  "workItem": "Resolve issues #1455 and #1450 by projecting existing verified quote/consensus authority and canonical ScoringDispatcher results into the existing Tier-4 client contract without promoting raw Tier-3 ticks to financial truth.",
+  "startedAt": "2026-09-28",
+  "baseBranch": "main",
+  "baseSha": "f61df72e717399e783824d0b12190f2e7f6a96fd",
+  "branch": "agent/fintech-tier4-live-projections-20260928",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "Merged Tier-3 market-data-fanout/1.0.0 and Tier-4 market-live-client/1.0.0",
+    "Merged PR #1452 authenticated /api/market-data/live transport",
+    "Existing crypto spot-consensus and Traditional verified-quote authorities",
+    "Existing ScoringModelRegistry -> ScoringDispatcher -> Domain Executor -> CanonicalScoreResult authority",
+    "Provider display/redistribution entitlement attestation before productive activation",
+    "CAPITAL-AI-FE issue #1447 remains downstream browser-consumer ownership"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-LIVE-TRANSPORT-20260925.json",
+    ".ai/work-claims/CAPITAL-AI-FINTECH-TIER4-LIVE-PROJECTIONS-20260928.json",
+    "docs/projects/fintech/work-packages/FIN_TIER4_LIVE_PROJECTIONS_2026-09-28.md",
+    "server/marketData/liveTier4ProjectionRuntime.ts",
+    "server.application.ts",
+    ".env.example",
+    "src/platform/MarketData/LiveClientFeedContract.ts",
+    "src/platform/MarketData/Fanout/MarketDataFanoutHub.ts",
+    "src/platform/MarketData/Fanout/MarketDataWebSocketRoomMultiplexer.ts",
+    "src/services/marketDataConsensus.ts",
+    "src/services/externalSpotPriceAdapters.ts",
+    "src/services/cryptoSpotConsensus.ts",
+    "src/services/traditionalQuoteEvidence.ts",
+    "src/routes/cryptoRoutes.ts",
+    "tests/unit/liveTier4ProjectionRuntime.test.ts",
+    "tests/unit/liveClientFeedContract.test.ts",
+    "tests/unit/marketDataTier3Fanout.test.ts",
+    "tests/unit/providerSecurityRemediation.test.ts"
+  ],
+  "protectedBoundaries": [
+    "Raw market-data-fanout ticks stay alertEligible=false and scoringEligible=false and are never copied into verified quote or score values.",
+    "ScoringModelRegistry and ScoringDispatcher remain the only productive model-selection/execution authority.",
+    "Crypto verified live quote projection reuses the existing multi-provider spot consensus; Traditional projection reuses the existing alertEligible verified quote contract.",
+    "Sideband Tier-4 events reuse existing asset:<assetClass>:<SYMBOL> rooms and do not enter the Tier-3 raw-tick ring or Redis payload authority.",
+    "No provider, Render, Redis, secret, IAM, billing or external control-plane mutation.",
+    "Runtime and redistribution remain fail-closed unless both live-client enablement and explicit entitlement attestation are true.",
+    "Frontend/browser changes remain CAPITAL-AI-FE owned under issue #1447.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "overlapReadback": {
+    "currentMain": "f61df72e717399e783824d0b12190f2e7f6a96fd",
+    "openPullRequests": [
+      "#1490 CAPITAL-AI-OPS only; no changed-path overlap observed"
+    ],
+    "staleBranches": [
+      "agent/fintech-tier1-multiprovider-stream-ingress-20260925 is 268 behind and claims server/marketData/liveMarketDataRuntime.ts; this slice deliberately does not modify that path."
+    ],
+    "directChangedFileOverlap": false
+  },
+  "exitGate": "Focused Tier-3/Tier-4 projection tests plus TypeScript/build and exact-head Required Checks; verified quote/scoring projection stays lineage-preserving and fail-closed; fresh CURRENT_MAIN/writer correlation; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
