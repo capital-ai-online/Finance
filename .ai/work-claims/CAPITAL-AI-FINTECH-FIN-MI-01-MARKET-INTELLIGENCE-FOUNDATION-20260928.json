@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FINTECH-FIN-MI-01-MARKET-INTELLIGENCE-FOUNDATION-20260928",
+  "status": "active",
+  "exclusive": true,
+  "project": "CAPITAL-AI-FINTECH",
+  "projectFolder": "fintech",
+  "ownerScope": "PVC-09..17 Market Intelligence component contracts, provider-capability metadata, evidence/confidence/risk/eligibility foundation.",
+  "workItem": "FIN-MI-01 Enterprise Market Intelligence Foundation: materialize an additive 50-component analysis registry and fail-closed result/policy contracts without changing provider, scoring or ranking authority.",
+  "workItemDE": "FIN-MI-01 Enterprise Market Intelligence Foundation: additive 50-Komponenten-Registry plus fail-closed Ergebnis-/Policy-Verträge materialisieren, ohne Provider-, Scoring- oder Ranking-Authority zu verändern.",
+  "startedAt": "2026-09-28T17:16:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "dcef421fe6e350a3a2ade61d0299aad9ecca213c",
+  "branch": "agent/fintech-market-intelligence-foundation-20260928",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "dependencies": [
+    "/AGENTS.md@CURRENT_MAIN",
+    "docs/projects/README.md",
+    "docs/projects/PROJECT_VALUE_CHAIN.md",
+    "docs/projects/fintech/ROADMAP.md",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/Scoring/AnalysisConnectionRegistry.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/ScoringDispatcher.ts",
+    "src/platform/Ranking/CrossAssetRanking.ts"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FINTECH-FIN-MI-01-MARKET-INTELLIGENCE-FOUNDATION-20260928.json",
+    "docs/projects/fintech/work-packages/FIN_MI_01_MARKET_INTELLIGENCE_FOUNDATION_2026-09-28.md",
+    "src/platform/MarketIntelligence/contracts.ts",
+    "src/platform/MarketIntelligence/reasonCodeCatalog.ts",
+    "src/platform/MarketIntelligence/componentPolicies.ts",
+    "src/platform/MarketIntelligence/AnalysisComponentRegistry.ts",
+    "src/platform/MarketIntelligence/runtimeValidation.ts",
+    "src/platform/MarketIntelligence/index.ts",
+    "tests/unit/analysisComponentRegistry.test.ts",
+    "tests/unit/analysisComponentAuthorityBoundary.test.ts",
+    "tests/unit/analysisComponentRuntimeValidation.test.ts"
+  ],
+  "protectedBoundaries": [
+    "ProviderMatrix remains the single provider metadata authority.",
+    "ScoringModelRegistry and ScoringDispatcher remain the sole productive scoring authority path.",
+    "CanonicalScoreResult and CrossAssetRanking semantics are unchanged.",
+    "No provider activation, Render, Supabase, secret, IAM, billing, deployment or migration mutation.",
+    "No demo/mock result may become score-, ranking- or alert-eligible.",
+    "Unsupported options, generic whale flow and institutional flow remain fail-closed.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "overlapReadback": {
+    "currentMain": "dcef421fe6e350a3a2ade61d0299aad9ecca213c",
+    "openPullRequests": [],
+    "directChangedFileOverlap": false,
+    "note": "Existing non-main FE/OPS branches do not touch the claimed MarketIntelligence/test/work-package paths; server/routes/registerApplicationRoutes.ts is intentionally excluded from this slice."
+  },
+  "exitGate": "Exactly 50 unique components; 38/38 AnalysisConnectionContracts correlated; provider capability dependencies resolve through ProviderMatrix; fail-closed lifecycle/demo/risk eligibility tests plus TypeScript/required exact-head checks pass; fresh CURRENT_MAIN overlap remains clean; Human/CODEOWNER merge.",
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
