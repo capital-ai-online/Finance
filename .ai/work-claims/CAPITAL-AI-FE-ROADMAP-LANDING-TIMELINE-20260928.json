@@ -28,8 +28,17 @@
     "repoSlug": "capital-ai-online/Finance"
   },
   "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LANDING-TIMELINE-20260928.json",
     "src/features/public/ui/RoadmapDashboard.tsx",
-    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LANDING-TIMELINE-20260928.json"
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    "index.html",
+    "metadata.json",
+    "docs/ceo/EXECUTIVE_SUMMARY.md",
+    "docs/code-quality/CODE_QUALITY_STANDARDS.md"
   ],
-  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "versionImpact": "PATCH",
+  "versionImpactReason": "CURRENT_MAIN merge cadence requires this candidate to materialize package version 0.6.7 before Human/CODEOWNER merge. No MINOR or MAJOR contract change."
 }
