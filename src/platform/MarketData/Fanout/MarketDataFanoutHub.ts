@@ -1,4 +1,10 @@
 import type { CanonicalMarketDataSnapshot } from '../contracts';
+import {
+  isCanonicalMarketLiveScore,
+  isVerifiedMarketLiveQuote,
+  type MarketLiveCanonicalScoreEvent,
+  type MarketLiveVerifiedQuoteEvent,
+} from '../LiveClientFeedContract';
 import { MarketDataRingBuffer } from './MarketDataRingBuffer';
 import {
   fanoutTickFromSnapshot,
@@ -20,7 +26,7 @@ export interface MarketDataFanoutHubOptions {
   ringBuffer?: MarketDataRingBuffer;
   multiplexer?: MarketDataWebSocketRoomMultiplexer;
   multiplexerOptions?: MarketDataRoomMultiplexerOptions;
-  onFanoutError?: (stage: 'redis-write' | 'redis-read' | 'redis-subscribe', error: unknown) => void;
+  onFanoutError?: (stage: 'redis-write' | 'redis-read' | 'redis-subscribe' | 'local-observer', error: unknown) => void;
   dedupeCapacity?: number;
 }
 
@@ -31,6 +37,7 @@ export class MarketDataFanoutHub implements MarketDataFanoutSink {
   private readonly onFanoutError?: MarketDataFanoutHubOptions['onFanoutError'];
   private readonly dedupeCapacity: number;
   private readonly seen = new Set<string>();
+  private readonly localTickObservers = new Set<(tick: MarketDataFanoutTick) => void>();
 
   constructor(options: MarketDataFanoutHubOptions = {}) {
     this.redis = options.redis;
@@ -49,6 +56,13 @@ export class MarketDataFanoutHub implements MarketDataFanoutSink {
   /** Integration point for a post-Tier-2 accepted trade/BBO adapter. */
   publishTick(tick: MarketDataFanoutTick): boolean {
     if (!isMarketDataFanoutTick(tick) || !this.acceptTick(tick)) return false;
+    for (const observer of this.localTickObservers) {
+      try {
+        observer(tick);
+      } catch (error) {
+        this.onFanoutError?.('local-observer', error);
+      }
+    }
     if (this.redis) {
       void this.redis.writeAndPublish(tick).catch(error => {
         this.onFanoutError?.('redis-write', error);
@@ -73,6 +87,19 @@ export class MarketDataFanoutHub implements MarketDataFanoutSink {
 
     this.ringBuffer.append(tick);
     this.multiplexer.publish(tick);
+    return true;
+  }
+
+  observeLocalAcceptedTicks(observer: (tick: MarketDataFanoutTick) => void): () => void {
+    this.localTickObservers.add(observer);
+    return () => {
+      this.localTickObservers.delete(observer);
+    };
+  }
+
+  publishLiveClientEvent(event: MarketLiveVerifiedQuoteEvent | MarketLiveCanonicalScoreEvent): boolean {
+    if (!isVerifiedMarketLiveQuote(event) && !isCanonicalMarketLiveScore(event)) return false;
+    this.multiplexer.publishProjection(event.topic, event);
     return true;
   }
 
