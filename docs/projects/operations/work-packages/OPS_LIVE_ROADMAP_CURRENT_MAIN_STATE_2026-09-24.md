@@ -4,7 +4,7 @@
 **Owner:** `CAPITAL-AI-OPS`  
 **PVC:** `PVC-02 / PVC-08`  
 **Baseline:** `main@a9f1be965ccb31e173019d507f78320f5fdad933`  
-**State:** `OWNER-DIRECTED / IMPLEMENTATION_IN_PROGRESS`
+**State:** `DONE_MAIN / TERMINAL`
 
 ## Outcome
 
@@ -49,3 +49,12 @@ The OPS Roadmap also needs to surface two current bounded packages that existed 
 4. Cadence and state reads work for the private repository through authenticated Contents/API reads.
 5. Unit tests and exact-head required checks pass.
 6. Human/CODEOWNER merge remains required before FE consumes the new contract.
+
+
+## Post-Merge Closure — 2026-09-28
+
+- Human/CODEOWNER merge: PR #1356.
+- Merge SHA: `46a3339c3447470cfe2ee741960023643997505e`; implementation head: `e305b60180f7ff85c679cde0b3218972d0b162af`.
+- Fresh CURRENT_MAIN readback: `f0b9b9f3368b3c9cc241fadef3100af89dc5256a`; the merge SHA is an ancestor of this generation (`behind=0`).
+- Work claim `.ai/work-claims/CAPITAL-AI-OPS-LIVE-ROADMAP-CURRENT-MAIN-STATE-20260924.json` is `released / exclusive=false`.
+- The bounded package has no remaining implementation or provider gate. Later Roadmap slices are separate work items.
