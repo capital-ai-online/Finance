@@ -25,13 +25,15 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).not.toContain('copilot/*');
   });
 
-  it('keeps least privilege and never persists checkout credentials', () => {
+  it('keeps branch write privilege isolated to bounded pre-create convergence and never persists checkout credentials', () => {
     const yaml = workflow();
     expect(yaml).toContain('permissions: {}');
     expect(yaml).toContain('converge-project-labels:\n    name: Kanonische Projektlabel-Provider-Metadaten konvergieren\n    permissions:\n      contents: read\n      issues: write');
-    expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    permissions:\n      contents: read\n      pull-requests: write');
+    expect(yaml).toContain('precreate-sync:\n    name: Agenten-Branch vor Draft-PR auf CURRENT_MAIN konvergieren\n    permissions:\n      contents: write\n      pull-requests: read');
+    expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    needs: [precreate-sync]\n    permissions:\n      contents: read\n      issues: write\n      pull-requests: write');
+    expect(yaml.match(/contents: write/g)?.length).toBe(1);
     expect(yaml.match(/persist-credentials: false/g)?.length).toBe(4);
-    expect(yaml).not.toContain('contents: write');
+    expect(yaml).not.toContain('persist-credentials: true');
   });
 
   it('runs provider-label convergence only on direct relevant main pushes and never on reusable handoffs', () => {
@@ -68,6 +70,7 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('node ../policy/scripts/pr/renderPullRequestBody.mjs');
     expect(yaml).toContain('PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md');
     expect(yaml).toContain("PR_COORDINATION_FAIL_CLOSED: 'true'");
+    expect(yaml).toContain('PR_TRUSTED_HANDOFF: ${{ inputs.trusted_handoff }}');
   });
 
   it('refreshes trusted main and reruns correlation immediately before external create mutation', () => {
@@ -81,18 +84,56 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('PR_CORRELATION_OUTPUT: artifacts/pr/final-create-correlation.json');
   });
 
-  it('serializes the automated agent PR lane before creating a successor', () => {
+  it('uses deterministic project-lane triage before creating a successor', () => {
     const yaml = workflow();
     expect(yaml).toContain('--state open');
     expect(yaml).toContain('--base main');
-    expect(yaml).toContain('test("^(agent|claude|grok|ai)/")');
-    expect(yaml).toContain('Geordnete Agenten-PR-Lane blockiert');
-    expect(yaml).toContain('älterer aktiver Agenten-PR');
+    expect(yaml).toContain('--json number,headRefName,createdAt,title,labels');
+    expect(yaml).toContain('agentLaneTriage.mjs');
+    expect(yaml).toContain('PR_PROJECT_ID');
+    expect(yaml).toContain('LANE_AVAILABLE');
+    expect(yaml).toContain('Draft-PR deferred by deterministic project-lane triage');
+    expect(yaml).not.toContain('Geordnete Agenten-PR-Lane blockiert');
 
-    const laneIndex = yaml.indexOf('Geordnete Agenten-PR-Lane blockiert');
+    const laneIndex = yaml.indexOf('agentLaneTriage.mjs');
     const createIndex = yaml.lastIndexOf('gh pr create');
     expect(laneIndex).toBeGreaterThan(-1);
     expect(createIndex).toBeGreaterThan(laneIndex);
+  });
+
+  it('converges a stale branch before candidate checkout and production preflight without force-push', () => {
+    const yaml = workflow();
+    const syncIndex = yaml.indexOf('Agenten-Branch vor Draft-PR auf CURRENT_MAIN konvergieren');
+    const checkoutIndex = yaml.indexOf('Angeforderten Agenten-Branch auschecken');
+    const preflightIndex = yaml.indexOf('Produktions-Baseline vor PR-Erstellung prüfen');
+
+    expect(syncIndex).toBeGreaterThan(-1);
+    expect(checkoutIndex).toBeGreaterThan(syncIndex);
+    expect(preflightIndex).toBeGreaterThan(checkoutIndex);
+    expect(yaml).toContain('behind|diverged)');
+    expect(yaml).toContain('repos/${GITHUB_REPOSITORY}/merges');
+    expect(yaml).toContain('-f "base=$HEAD_BRANCH"');
+    expect(yaml).toContain('-f "head=$live_main_sha"');
+    expect(yaml).toContain('after_lineage');
+    expect(yaml).toContain('CURRENT_MAIN bewegte sich während Pre-create-Sync');
+    expect(yaml).toContain('sync-agent-pr-branches.yml');
+    expect(yaml).toContain("needs.precreate-sync.outputs.existing_pr != 'true'");
+    expect(yaml).not.toContain('git push --force');
+    expect(yaml).not.toContain('git push -f');
+  });
+
+  it('accepts trusted default-branch autonomous and self-healing handoffs without weakening manual dispatch', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("inputs.trusted_handoff == 'agent-autocreate'");
+    expect(yaml).toContain("github.event_name == 'workflow_run'");
+    expect(yaml).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(yaml).toContain('github.event.workflow_run.head_repository.full_name == github.repository');
+    expect(yaml).toContain("inputs.trusted_handoff == 'self-healing-recovery'");
+    expect(yaml).toContain("github.event_name == 'schedule'");
+    expect(yaml).toContain("github.ref == 'refs/heads/main'");
+    expect(yaml).toContain("github.triggering_actor == 'SvenKulessa'");
+    expect(yaml).toContain("github.actor == 'SvenKulessa'");
+    expect(yaml.match(/PR_TRUSTED_HANDOFF: \$\{\{ inputs\.trusted_handoff \}\}/g)?.length).toBe(2);
   });
 
   it('prevents duplicate open PR creation and always opens as draft against main', () => {
@@ -103,4 +144,31 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('--head "$HEAD_BRANCH"');
     expect(yaml).toContain('--title "$PR_TITLE"');
   });
-});
+});\n\ndescribe('autonomous agent Draft-PR intake', () => {
+  const signalPath = path.join(root, '.github/workflows/agent-branch-signal.yml');
+  const intakePath = path.join(root, '.github/workflows/agent-draft-pr-autocreate.yml');
+
+  it('keeps the branch signal unprivileged and free of candidate checkout', () => {
+    const yaml = fs.readFileSync(signalPath, 'utf8');
+    expect(yaml).toContain('permissions: {}');
+    expect(yaml).toContain("'agent/**'");
+    expect(yaml).toContain("'claude/**'");
+    expect(yaml).toContain("'grok/**'");
+    expect(yaml).toContain("'ai/**'");
+    expect(yaml).not.toContain('actions/checkout');
+    expect(yaml).not.toContain('pull-requests: write');
+    expect(yaml).not.toContain('issues: write');
+  });
+
+  it('uses workflow_run default-branch privilege separation for Draft-PR creation', () => {
+    const yaml = fs.readFileSync(intakePath, 'utf8');
+    expect(yaml).toContain("workflow_run:");
+    expect(yaml).toContain("workflows: ['Agent Branch Signal']");
+    expect(yaml).toContain("types: [completed]");
+    expect(yaml).toContain("github.event.workflow_run.head_repository.full_name == github.repository");
+    expect(yaml).toContain('uses: ./.github/workflows/open-agent-draft-pr.yml');\n    expect(yaml).toContain('contents: write');
+    expect(yaml).toContain('trusted_handoff: agent-autocreate');
+    expect(yaml).not.toContain('actions/checkout');
+    expect(yaml).not.toContain('\n    steps:');
+  });
+});\n
