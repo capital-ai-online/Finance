@@ -242,7 +242,11 @@ describe('Roadmap dashboard projection', () => {
     expect(dashboard).toContain('Branches · behind 0');
     expect(dashboard).toContain('OwnerStateMobileCards');
     expect(dashboard).toContain('space-y-3 lg:hidden');
-    expect(dashboard).toContain('Live Branch-Evidence ist fail-closed');
+    expect(dashboard).toContain("fetch('/api/roadmap/branches'");
+    expect(dashboard).toContain('LiveBranchCards');
+    expect(dashboard).toContain('behind=0');
+    expect(dashboard).toContain('ahead&gt;0');
+    expect(dashboard).toContain('Branch-Evidence und CURRENT_MAIN sind nicht korreliert');
     expect(dashboard).toContain('hidden lg:block');
     expect(dashboard).toContain('Parallel Worker Projection');
     expect(dashboard).toContain('parallelisierbare Worker-Lanes');
