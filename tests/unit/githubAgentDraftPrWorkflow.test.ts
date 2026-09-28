@@ -176,4 +176,4 @@ describe('autonomous agent Draft-PR intake', () => {
     expect(yaml).not.toContain('actions/checkout');
     expect(yaml).not.toContain('\n    steps:');
   });
-}});
+});
