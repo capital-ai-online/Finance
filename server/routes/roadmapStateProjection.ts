@@ -15,6 +15,7 @@ export interface RoadmapProjectRoute {
   projectId: string;
   pvcRelationship: string;
   folder: string;
+  branchSlug: string;
   displayName: string;
   symbol: string;
   color: string;
@@ -194,7 +195,7 @@ export function parseRoadmapProjectRouting(markdown: string): RoadmapProjectRout
     const cells = line.split('|').slice(1, -1).map(cleanCell);
     if (cells.length < 9) continue;
 
-    const [projectId, pvcRelationship, folder, _branchSlug, displayName, symbol, color] =
+    const [projectId, pvcRelationship, folder, branchSlug, displayName, symbol, color] =
       cells;
     if (!/^CAPITAL-AI-[A-Z-]+$/.test(projectId)) continue;
     if (!folder.startsWith('docs/projects/') || !folder.endsWith('/')) continue;
@@ -203,6 +204,7 @@ export function parseRoadmapProjectRouting(markdown: string): RoadmapProjectRout
       projectId,
       pvcRelationship,
       folder,
+      branchSlug,
       displayName,
       symbol,
       color,
