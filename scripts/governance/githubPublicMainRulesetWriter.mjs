@@ -78,7 +78,6 @@ function pullRequestParameters() {
     require_code_owner_review: true,
     require_last_push_approval: false,
     required_review_thread_resolution: true,
-    require_extra_approval_for_unattributed_changes: false,
     required_reviewers: [],
     dismissal_restriction: {
       enabled: false,
@@ -225,7 +224,6 @@ function matchesDesired(projected) {
     && pull.requireCodeOwnerReview
     && !pull.requireLastPushApproval
     && pull.requiredReviewThreadResolution
-    && !pull.requireExtraApprovalForUnattributedChanges
     && pull.requiredReviewers.length === 0
     && !pull.dismissalRestrictionEnabled
     && JSON.stringify(pull.allowedMergeMethods) === JSON.stringify(['merge'])

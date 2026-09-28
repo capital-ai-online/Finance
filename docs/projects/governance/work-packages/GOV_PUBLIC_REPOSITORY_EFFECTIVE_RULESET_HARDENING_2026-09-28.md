@@ -36,3 +36,8 @@ No visibility change, license change, merge/approval automation, second PR write
 4. Human/CODEOWNER merge;
 5. post-merge repository ruleset readback proves one approval, Code Owner review, stale dismissal, resolved conversations, strict four-check set and no bypass;
 6. Enterprise readback either proves App-backed convergence or remains an explicit provider-IAM blocker.
+
+
+## Provider-schema correction
+
+The live GET projection currently exposes `require_extra_approval_for_unattributed_changes`, but GitHub's current documented repository/Enterprise ruleset update schema does not document that property as a writable pull-request parameter. The bounded writers therefore do not echo this provider-only field in PUT payloads. They continue to enforce the documented review controls: one approval, stale-review dismissal, Code Owner review, last-push approval off, review-thread resolution, empty required-reviewer list, unrestricted dismissal and merge-only semantics.

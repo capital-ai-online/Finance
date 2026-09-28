@@ -102,7 +102,6 @@ describe('public main repository ruleset writer', () => {
       require_code_owner_review: true,
       require_last_push_approval: false,
       required_review_thread_resolution: true,
-      require_extra_approval_for_unattributed_changes: false,
       allowed_merge_methods: ['merge'],
     });
     const status = body.rules.find(
@@ -130,7 +129,12 @@ describe('public main repository ruleset writer', () => {
 
   it('fails closed if required checks drift', async () => {
     const drifted = ruleset();
-    drifted.rules.find((rule) => rule.type === 'required_status_checks').parameters.required_status_checks.pop();
+    const statusRule = drifted.rules.find((rule) => rule.type === 'required_status_checks') as {
+      type: string;
+      parameters: { required_status_checks: Array<{ context: string; integration_id?: number }> };
+    } | undefined;
+    if (!statusRule) throw new Error('required_status_checks fixture missing');
+    statusRule.parameters.required_status_checks.pop();
     const fetchImpl = vi.fn(async (input: string | URL | Request) =>
       String(input).includes('?includes_parents=false')
         ? response([{ id: 20849710, name: PUBLIC_MAIN_RULESET.name, target: 'branch' }])
