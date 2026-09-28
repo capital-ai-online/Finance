@@ -2,8 +2,8 @@
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
-**Status date:** `2026-09-27`  
-**Baseline:** `main@bba1cfbda80f42071242992a725e4abc1d83143e`  
+**Status date:** `2026-09-28`  
+**Baseline:** `main@f0b9b9f3368b3c9cc241fadef3100af89dc5256a`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -87,6 +87,9 @@ This ledger is the repository-level **closure projection** for processed canonic
 | `docs/projects/operations/work-packages/OPS_02_SUPABASE_MIGRATION_LEDGER_RECONCILIATION.md` | `CAPITAL-AI-OPS` | PR #1467 · merge `b4fe15600a20e22c0b5d58f8d358888491cdf0a0` · CI #6595 / Governance #6106 / Container #3578 / Project #891 / PR #973 PASS; Supabase Preview `skipped` | `MERGED_MAIN / EVIDENCE_GATE / SUPABASE_PREVIEW_NOT_PROVEN` | `MERGED_MAIN / EVIDENCE_GATE` | exact provider Preview/readback remains required by the package exit gate |
 
 ### Closure invariant
+
+| `docs/projects/operations/work-packages/OPS_LIVE_ROADMAP_CURRENT_MAIN_STATE_2026-09-24.md` | `CAPITAL-AI-OPS` | PR #1356 · merge `46a3339c3447470cfe2ee741960023643997505e` · CURRENT_MAIN readback `f0b9b9f3368b3c9cc241fadef3100af89dc5256a` | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim is `released / exclusive=false` |
+| `docs/projects/operations/work-packages/OPS_ROADMAP_BRANCH_EVIDENCE_2026-09-28.md` | `CAPITAL-AI-OPS` | PR #1479 · merge `8862857f962a681c7853268e15822c719654412f` · exact-head CI/Governance/Container/Project/PR PASS · FE successor #1476 merged | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim is `released / exclusive=false` |
 
 After every successful Human/CODEOWNER merge that carries a canonical work-package identity, the existing Post-Merge Production Correlation → Self-Healing continuation path must correlate:
 

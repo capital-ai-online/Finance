@@ -4,7 +4,7 @@
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08`  
 **Issue:** #1474  
 **Baseline:** `main@14677ea3acc5316e025d784c7dc35d3a6b2dfe1a`  
-**State:** `IMPLEMENTED_ON_BRANCH / HUMAN_MERGE_REQUIRED`
+**State:** `DONE_MAIN / TERMINAL`
 
 ## Ziel
 
@@ -49,6 +49,15 @@ Beim Owner-Readback vor Umsetzung wurden unter anderem folgende Branch-Relatione
 - [x] kanonische Branch-Slug-Zuordnung;
 - [x] divergierte/behind Branches fail-closed;
 - [x] fokussierter Unit-Test ergänzt;
-- [ ] Exact-Head CI/Governance/Security;
-- [ ] Human/CODEOWNER Merge;
-- [ ] FE #1476 danach gegen gemergten Response-Vertrag korrelieren.
+- [x] Exact-Head CI/Governance/Security — PR #1479 Head `4f725c9703433af64f30f0c51d675fdc46aa6f51`: CI #6651, Governance #6148, Container Security #3631, Project #914 und PR #1008 erfolgreich;
+- [x] Human/CODEOWNER Merge — PR #1479 als `8862857f962a681c7853268e15822c719654412f` gemerged;
+- [x] FE #1476 gegen den gemergten Response-Vertrag korreliert und als `be5e1d8d2574c55677d2e3ac855ee0b137626305` gemerged.
+
+
+## Post-Merge Closure — 2026-09-28
+
+- OPS-Merge: PR #1479 → `8862857f962a681c7853268e15822c719654412f`.
+- Fresh CURRENT_MAIN readback: `f0b9b9f3368b3c9cc241fadef3100af89dc5256a`; der OPS-Merge ist Vorfahr dieser Generation (`behind=0`).
+- FE-Nachfolger: PR #1476 → `be5e1d8d2574c55677d2e3ac855ee0b137626305`, Human/CODEOWNER-gemerged.
+- Der zugehörige Work Claim wird durch #1485 auf `released / exclusive=false` konvergiert.
+- Für dieses bounded OPS-Paket verbleibt kein Gate; Branch-Evidence bleibt read-only und nicht autorisierend.
