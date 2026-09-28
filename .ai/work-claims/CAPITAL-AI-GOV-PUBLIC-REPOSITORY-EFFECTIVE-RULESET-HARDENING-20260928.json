@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-GOV-PUBLIC-REPOSITORY-EFFECTIVE-RULESET-HARDENING-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Harden the effective public Finance main ruleset to one Human/CODEOWNER approval and remove the unsupported Classic-PAT Enterprise ruleset write fallback.",
+  "priority": "P0",
+  "projectId": "CAPITAL-AI-GOV",
+  "projectFolder": "docs/projects/governance/",
+  "projectStage": "PVC-05",
+  "startedAt": "2026-09-28T15:41:00Z",
+  "baseBranch": "main",
+  "baseSha": "dcef421fe6e350a3a2ade61d0299aad9ecca213c",
+  "lastSyncedMainSha": "dcef421fe6e350a3a2ade61d0299aad9ecca213c",
+  "branch": "agent/governance-public-repo-effective-ruleset-hardening-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-GOV-PUBLIC-REPOSITORY-EFFECTIVE-RULESET-HARDENING-20260928.json",
+    ".github/workflows/github-public-readiness-hardening.yml",
+    "docs/projects/governance/ROADMAP.md",
+    "docs/projects/governance/work-packages/GOV_PUBLIC_REPOSITORY_EFFECTIVE_RULESET_HARDENING_2026-09-28.md",
+    "scripts/governance/githubPublicMainRulesetWriter.mjs",
+    "scripts/operations/githubPublicReadinessEnterpriseWriter.mjs",
+    "scripts/operations/runGitHubPublicMainRulesetWrite.mjs",
+    "scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs",
+    "tests/unit/githubPublicMainRulesetWriter.test.ts",
+    "tests/unit/githubPublicReadinessHardening.test.ts"
+  ],
+  "protectedBoundaries": [
+    "No direct main mutation.",
+    "No repository visibility or license mutation.",
+    "No merge or approval automation.",
+    "No bypass actor may be added.",
+    "Repository ruleset writer is fixed to capital-ai-online/Finance/main-production-protection.",
+    "Enterprise writer accepts only the Enterprise App installation token; Classic PAT fallback is prohibited.",
+    "Human/CODEOWNER merge remains required."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment."
+}
