@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "CAPITAL-AI-FE-ROADMAP-LIVE-STATE-CONSUMER-20260924",
-  "status": "active",
-  "exclusive": true,
+  "status": "released",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
@@ -46,5 +46,7 @@
   ],
   "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation.",
   "recorrelatedAt": "2026-09-24T06:15:00Z",
-  "recorrelationNote": "CURRENT_MAIN advanced from 5c1b6727... to c19f4ed6... via merged SEC PR #1385. Changed-file correlation shows no overlap with this FE slice; the change set is rebuilt losslessly from fresh CURRENT_MAIN."
+  "recorrelationNote": "CURRENT_MAIN advanced from 5c1b6727... to c19f4ed6... via merged SEC PR #1385. Changed-file correlation shows no overlap with this FE slice; the change set is rebuilt losslessly from fresh CURRENT_MAIN.",
+  "releasedAt": "2026-09-28T03:01:00+02:00",
+  "releaseReason": "Associated PR #1390 is merged on CURRENT_MAIN; stale exclusive coordination metadata released before successor work."
 }
