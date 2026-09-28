@@ -144,7 +144,9 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain('--head "$HEAD_BRANCH"');
     expect(yaml).toContain('--title "$PR_TITLE"');
   });
-});\n\ndescribe('autonomous agent Draft-PR intake', () => {
+});
+
+describe('autonomous agent Draft-PR intake', () => {
   const signalPath = path.join(root, '.github/workflows/agent-branch-signal.yml');
   const intakePath = path.join(root, '.github/workflows/agent-draft-pr-autocreate.yml');
 
@@ -166,9 +168,10 @@ describe('GitHub agent draft PR bot governance', () => {
     expect(yaml).toContain("workflows: ['Agent Branch Signal']");
     expect(yaml).toContain("types: [completed]");
     expect(yaml).toContain("github.event.workflow_run.head_repository.full_name == github.repository");
-    expect(yaml).toContain('uses: ./.github/workflows/open-agent-draft-pr.yml');\n    expect(yaml).toContain('contents: write');
+    expect(yaml).toContain('uses: ./.github/workflows/open-agent-draft-pr.yml');
+    expect(yaml).toContain('contents: write');
     expect(yaml).toContain('trusted_handoff: agent-autocreate');
     expect(yaml).not.toContain('actions/checkout');
     expect(yaml).not.toContain('\n    steps:');
   });
-});\n
+}});
