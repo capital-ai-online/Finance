@@ -378,7 +378,7 @@ export function createCryptoRouter(
         : consensus.status === 'SOURCE_CONFLICT'
           ? 409
           : 422;
-      return res.status(httpStatus).json({ symbol, correlationId, ...consensus });
+      return res.status(httpStatus).json({ symbol, ...consensus });
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating spot-price consensus:', error);
       return res.status(503).json({
