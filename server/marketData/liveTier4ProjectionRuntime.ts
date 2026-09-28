@@ -313,7 +313,9 @@ export class LiveTier4ProjectionRuntime {
         }
 
         if (normalizedSignal.assetClass === 'crypto') {
-          return this.projectCryptoConsensusQuote(normalizedSignal);
+          return this.projectCryptoConsensusQuote(
+            normalizedSignal as LiveTier4ProjectionSignal & { assetClass: 'crypto' },
+          );
         }
         if (
           normalizedSignal.assetClass === 'stock'
@@ -578,12 +580,16 @@ export class LiveTier4ProjectionRuntime {
     );
   }
 
-  async projectFromMarketTick(tick: MarketDataFanoutTick): Promise<readonly LiveTier4ProjectionOutcome[]> {
+  async projectFromMarketTick(tick: unknown): Promise<readonly LiveTier4ProjectionOutcome[]> {
     if (!isMarketDataFanoutTick(tick)) {
+      const candidate = tick && typeof tick === 'object' ? tick as Record<string, unknown> : {};
+      const assetClass = typeof candidate.assetClass === 'string'
+        ? candidate.assetClass as MarketDataAssetClass
+        : 'crypto';
       const signal: LiveTier4ProjectionSignal = {
-        symbol: String(tick?.symbol || ''),
-        assetClass: tick?.assetClass ?? 'crypto',
-        correlationId: String(tick?.correlationId || ''),
+        symbol: String(candidate.symbol || ''),
+        assetClass,
+        correlationId: String(candidate.correlationId || ''),
       };
       return [{
         kind: 'verified-quote',
