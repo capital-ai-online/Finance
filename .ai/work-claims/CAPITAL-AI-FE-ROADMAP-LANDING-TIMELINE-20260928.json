@@ -17,7 +17,7 @@
   "projectStage": "cross-cutting; no productive PVC",
   "startedAt": "2026-09-28T07:16:20+02:00",
   "baseBranch": "main",
-  "baseSha": "f61df72e717399e783824d0b12190f2e7f6a96fd",
+  "baseSha": "9a4c41e94515e729fa67972a252f8381228881d1",
   "branch": "grok/finance-roadmap-landing-timeline-20260928",
   "pullRequest": null,
   "productionBaseline": {
