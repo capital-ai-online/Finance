@@ -93,8 +93,8 @@ describe('P2B production CI runner consolidation', () => {
     expect(deploy).toContain('test "$live_main_sha" = "$VERIFIED_COMMIT_SHA"');
     expect(deploy).toContain('CAPITAL_AI_RENDER_API_KEY: ${{ secrets.CAPITAL_AI_RENDER_API_KEY }}');
     expect(deploy).toContain('CAPITAL_AI_RENDER_WORKSPACE_ID: ${{ vars.CAPITAL_AI_RENDER_WORKSPACE_ID }}');
-    expect(deploy).toContain('test "$CAPITAL_AI_RENDER_API_KEY"');
-    expect(deploy).toContain('test "$CAPITAL_AI_RENDER_WORKSPACE_ID"');
+    expect(deploy).toContain('test -n "$CAPITAL_AI_RENDER_API_KEY"');
+    expect(deploy).toContain('test -n "$CAPITAL_AI_RENDER_WORKSPACE_ID"');
     expect(deploy).toContain('node p2b-runtime/artifacts/deployment/triggerRenderExactCommit.mjs');
     expect(deploy).not.toContain('RENDER_DEPLOY_HOOK_URL');
     expect(deploy).not.toContain('ref=main');
