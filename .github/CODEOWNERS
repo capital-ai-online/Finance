@@ -56,8 +56,8 @@
 /docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md @SvenKulessa
 
 # Catch-all ownership mapping. CODEOWNERS uses last-matching-pattern precedence; since every rule
-# above also maps to @SvenKulessa, this entry only extends ownership coverage to paths not listed
-# explicitly. CODEOWNERS by itself does not require an approving review. Live ruleset readback on
-# 2026-09-14 reports require_code_owner_review=false; any future enforcement change is a separate
-# Owner-controlled GitHub Ruleset mutation and must be verified independently after that mutation.
+# above also maps to @SvenKulessa, this entry extends ownership coverage to paths not listed
+# explicitly. The public-readiness Enterprise ruleset is designed to require one Human/CODEOWNER
+# approval while keeping require_last_push_approval=false for the single-Human-Owner model.
+# Effective enforcement remains provider state and must be verified by live ruleset readback.
 * @SvenKulessa

@@ -37,3 +37,5 @@ jobs:
     with:
       head_branch: ${{ github.event.workflow_run.head_branch }}
       trusted_handoff: agent-autocreate
+    secrets:
+      CAPITAL_AI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}

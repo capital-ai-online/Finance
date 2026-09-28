@@ -1,0 +1,73 @@
+name: GitHub Public Repository Readiness Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/github-public-readiness-hardening.yml'
+      - 'scripts/operations/githubPublicReadinessEnterpriseWriter.mjs'
+      - 'scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs'
+      - 'scripts/security/verifyPublicRepositoryReadiness.mjs'
+      - '.github/FUNDING.yml'
+      - '.github/CODEOWNERS'
+      - '.github/SECURITY.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-public-repository-readiness-hardening
+  cancel-in-progress: false
+
+jobs:
+  harden:
+    name: Public-Readiness kontrolliert härten
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+
+    steps:
+      - name: Exakten CURRENT_MAIN auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Node.js 24 einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Repository-seitige Public-Readiness fail-closed prüfen
+        run: node scripts/security/verifyPublicRepositoryReadiness.mjs
+
+      - name: Enterprise-Installation-Token erzeugen
+        id: enterprise_app_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+          enterprise: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+
+      - name: Enterprise main-Ruleset atomar härten und zurücklesen
+        env:
+          CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
+          CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN: ${{ steps.enterprise_app_token.outputs.token }}
+        run: node scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs
+
+      - name: Public-Cutover bewusst gehalten ausweisen
+        run: |
+          {
+            echo '## Public Repository Readiness'
+            echo
+            echo '- Enterprise branch ruleset: `READBACK_VERIFIED`'
+            echo '- PR author identity: `GITHUB_APP_REQUIRED`'
+            echo '- Human review: `1 x @SvenKulessa`'
+            echo '- Repository visibility mutation: `NOT_PERFORMED`'
+            echo '- Historical Git / Actions log disclosure: `HUMAN_REVIEW_REQUIRED`'
+            echo '- License: `PROPRIETARY / UNLICENSED` unchanged'
+          } >> "$GITHUB_STEP_SUMMARY"
