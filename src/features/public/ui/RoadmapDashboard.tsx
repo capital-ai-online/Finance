@@ -35,6 +35,11 @@ import {
   type RoadmapLiveItem,
   type RoadmapLiveState,
 } from './roadmapLiveState';
+import {
+  parseRoadmapBranchProjection,
+  type RoadmapBranchClientState,
+  type RoadmapBranchEvidence,
+} from './roadmapBranchState';
 
 type ProductionIdentityState =
   | { status: 'loading'; commitSha: null; branch: null; version: null }
@@ -301,6 +306,57 @@ function OwnerStateTimeline({
 }
 
 
+function LiveBranchCards({
+  branches,
+}: {
+  branches: RoadmapBranchEvidence[];
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-label="Live Branches mit behind 0">
+      {branches.map((branch) => {
+        const route = branch.projectId
+          ? PROJECT_ROUTES.find((candidate) => candidate.projectId === branch.projectId)
+          : undefined;
+        return (
+          <LandingPanel key={branch.name} className="border-brand-primary/20 bg-brand-primary/5 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] font-black uppercase tracking-[0.15em] text-brand-primary">
+                  {branch.projectId ?? 'OWNER UNRESOLVED'}
+                </p>
+                <h3 className="mt-2 break-all text-xs font-black leading-5 text-white">
+                  {branch.name}
+                </h3>
+              </div>
+              <span className="shrink-0 rounded-full border border-brand-success/30 bg-brand-success/10 px-2 py-1 font-mono text-[10px] font-black text-brand-success">
+                behind 0
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 font-mono text-[10px] text-white/55">
+              <span className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
+                ahead +{branch.aheadBy}
+              </span>
+              <span className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
+                {shortSha(branch.headSha)}
+              </span>
+            </div>
+            {branch.ownerResolution === 'RESOLVED' ? (
+              <p className="mt-3 break-words text-[10px] leading-5 text-white/45">
+                <span style={{ color: route?.color }}>{route?.symbol ?? '•'}</span>{' '}
+                {branch.projectLabel} · {branch.projectFolder}
+              </p>
+            ) : (
+              <p className="mt-3 text-[10px] font-bold leading-5 text-score-warning">
+                Project Owner nicht eindeutig auflösbar — Branch-Evidence bleibt sichtbar, aber nicht autorisierend.
+              </p>
+            )}
+          </LandingPanel>
+        );
+      })}
+    </div>
+  );
+}
+
 function OwnerStateMobileCards({
   items,
   selectedId,
@@ -447,6 +503,11 @@ export function RoadmapDashboard() {
     projection: null,
     error: null,
   });
+  const [liveBranches, setLiveBranches] = useState<RoadmapBranchClientState>({
+    status: 'loading',
+    projection: null,
+    error: null,
+  });
   const [projectFilters, setProjectFilters] = useState<RoadmapProjectFilters>(EMPTY_FILTERS);
   const [statusFilter, setStatusFilter] = useState<RoadmapStatusFilter>('active');
   const [workPackageQuery, setWorkPackageQuery] = useState('');
@@ -510,8 +571,63 @@ export function RoadmapDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch('/api/roadmap/branches', {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('roadmap-branch-evidence-unavailable');
+        return parseRoadmapBranchProjection(await response.json());
+      })
+      .then((projection) => {
+        if (!controller.signal.aborted) {
+          setLiveBranches({ status: 'available', projection, error: null });
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setLiveBranches({
+            status: 'unavailable',
+            projection: null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
   const liveProjection =
     liveRoadmap.status === 'available' ? liveRoadmap.projection : null;
+  const branchProjection =
+    liveBranches.status === 'available' ? liveBranches.projection : null;
+
+  const visibleLiveBranches = useMemo(() => {
+    const query = workPackageQuery.trim().toLowerCase();
+    return (
+      branchProjection?.branches.filter((branch) => {
+        if (projectFilters.owner && branch.projectId !== projectFilters.owner) return false;
+        if (projectFilters.folder && branch.projectFolder !== projectFilters.folder) return false;
+        if (projectFilters.label && branch.projectLabel !== projectFilters.label) return false;
+        if (!query) return true;
+        return [
+          branch.name,
+          branch.headSha,
+          branch.projectId ?? '',
+          branch.projectFolder ?? '',
+          branch.projectLabel ?? '',
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+      }) ?? []
+    );
+  }, [branchProjection, projectFilters, workPackageQuery]);
 
   const filteredLiveItems = useMemo(() => {
     const query = workPackageQuery.trim().toLowerCase();
@@ -572,6 +688,12 @@ export function RoadmapDashboard() {
   }, [executionLanes, filteredLiveItems, visibleIntegrations, visibleWorkPackages]);
 
   const liveCurrentMainSha = liveProjection?.repository.currentMainSha ?? null;
+  const branchCurrentMainSha = branchProjection?.repository.currentMainSha ?? null;
+  const branchEvidenceAligned =
+    Boolean(liveCurrentMainSha) &&
+    Boolean(branchCurrentMainSha) &&
+    liveCurrentMainSha === branchCurrentMainSha &&
+    branchProjection?.stale === false;
   const productionAligned =
     liveProjection?.stale === false &&
     production.status === 'available' &&
@@ -586,8 +708,9 @@ export function RoadmapDashboard() {
       title="Roadmap"
       description={
         <>
-          Smartphone-first Control-Center-Projektion aus <code>/api/roadmap/state</code>.
-          Aktiv und Pending bleiben CURRENT_MAIN-gebunden; Branch-Live-Evidence wird getrennt und fail-closed behandelt.
+          Smartphone-first Control-Center-Projektion aus <code>/api/roadmap/state</code> und
+          <code> /api/roadmap/branches</code>. Aktiv und Pending bleiben CURRENT_MAIN-gebunden;
+          Live zeigt ausschließlich aktuelle Branches mit <code>behind=0</code> und <code>ahead&gt;0</code>.
         </>
       }
       actions={
@@ -962,9 +1085,13 @@ export function RoadmapDashboard() {
               </h2>
             </div>
             <p className="max-w-xl text-xs leading-5 text-white/45">
-              {liveRoadmap.status === 'available'
-                ? `${metrics.owners} beteiligte Owner · ${visibleTimelineItems.length} sichtbar · Filter ${statusFilter.toUpperCase()} · ${liveRoadmap.projection.stale ? 'STALE' : 'CURRENT_MAIN'} ${shortSha(liveCurrentMainSha)}`
-                : 'Live Work-State nicht verfügbar'}
+              {statusFilter === 'live'
+                ? liveBranches.status === 'available'
+                  ? `${visibleLiveBranches.length} Branches · behind 0 · ${branchEvidenceAligned ? 'CURRENT_MAIN' : 'STALE / DRIFT'} ${shortSha(branchCurrentMainSha)}`
+                  : 'Live Branch-Evidence nicht verfügbar'
+                : liveRoadmap.status === 'available'
+                  ? `${metrics.owners} beteiligte Owner · ${visibleTimelineItems.length} sichtbar · Filter ${statusFilter.toUpperCase()} · ${liveRoadmap.projection.stale ? 'STALE' : 'CURRENT_MAIN'} ${shortSha(liveCurrentMainSha)}`
+                  : 'Live Work-State nicht verfügbar'}
             </p>
           </div>
           <p className="mb-4 max-w-3xl text-xs leading-5 text-white/50">
@@ -981,15 +1108,32 @@ export function RoadmapDashboard() {
               Live Work-State nicht verfügbar — aktive Arbeit wird fail-closed ausgeblendet.
             </LandingPanel>
           ) : statusFilter === 'live' ? (
-            <LandingPanel className="border-score-warning/25 bg-score-warning/5 p-4">
-              <p className="text-sm font-bold text-score-warning">Live Branch-Evidence ist fail-closed.</p>
-              <p className="mt-2 text-xs leading-5 text-white/55">
-                <code>/api/roadmap/state</code> ist CURRENT_MAIN-gebunden und enthält bewusst keine Branch-Liste.
-                Für „Live“ muss ein OPS-eigener read-only Vertrag Branches gegen CURRENT_MAIN vergleichen und nur
-                <code> behind=0 </code> projizieren. Der Browser erhält dafür keinen GitHub-Token und behauptet bis dahin
-                keine Branch-Aktivität.
-              </p>
-            </LandingPanel>
+            liveBranches.status === 'loading' ? (
+              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+                Live Branch-Evidence wird geladen…
+              </LandingPanel>
+            ) : liveBranches.status === 'unavailable' ? (
+              <LandingPanel className="border-score-warning/25 bg-score-warning/5 p-4">
+                <p className="text-sm font-bold text-score-warning">Live Branch-Evidence nicht verfügbar.</p>
+                <p className="mt-2 text-xs leading-5 text-white/55">
+                  Der Live-Filter bleibt fail-closed. Es werden keine Branch-Zustände aus lokalen oder statischen Daten erfunden.
+                </p>
+              </LandingPanel>
+            ) : !branchEvidenceAligned ? (
+              <LandingPanel className="border-[#F87171]/25 bg-[#F87171]/5 p-4">
+                <p className="text-sm font-bold text-[#F87171]">Branch-Evidence und CURRENT_MAIN sind nicht korreliert.</p>
+                <p className="mt-2 text-xs leading-5 text-white/55">
+                  Work-State {shortSha(liveCurrentMainSha)} · Branch-Evidence {shortSha(branchCurrentMainSha)}.
+                  Bis beide Projektionen denselben Main-SHA belegen, wird Live fail-closed ausgeblendet.
+                </p>
+              </LandingPanel>
+            ) : visibleLiveBranches.length === 0 ? (
+              <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
+                Keine aktuellen Branches mit behind=0 und ahead&gt;0 im gewählten Filter.
+              </LandingPanel>
+            ) : (
+              <LiveBranchCards branches={visibleLiveBranches} />
+            )
           ) : visibleTimelineItems.length === 0 ? (
             <LandingPanel className="border-white/8 bg-surface/65 p-4 text-sm text-text-secondary">
               Keine Arbeitspakete im aktuellen Status- und Project-Filter.
