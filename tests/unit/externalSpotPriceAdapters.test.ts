@@ -33,6 +33,7 @@ describe('gateway-governed crypto spot observation conversion', () => {
       retrievedAt: '2026-08-31T18:00:01.000Z',
       unit: 'USD',
       evidenceId: 'quote:coinapi:BTC:USD:test',
+      qualityState: 'LIVE',
     });
   });
 
