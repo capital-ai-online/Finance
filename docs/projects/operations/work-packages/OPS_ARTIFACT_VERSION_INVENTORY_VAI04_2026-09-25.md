@@ -1,6 +1,6 @@
 # OPS-ARTIFACT-VERSION-INVENTORY-VAI04
 
-Status: IMPLEMENTED_ON_BRANCH / EXACT_HEAD_VALIDATION_REQUIRED
+Status: DONE_MAIN / TERMINAL
 Project: CAPITAL-AI-OPS
 Primary PVC: PVC-06 Version Management
 Supporting PVC: PVC-04 Supervisor, PVC-07 Release Management
@@ -42,3 +42,14 @@ Unclassified, ambiguous, invalid-hash, owner-unresolved or non-deterministic evi
 - focused tests prove routing and negative cases;
 - exact-head CI/Governance/Security readback required before merge;
 - Human/CODEOWNER merge boundary remains authoritative.
+
+
+## Main completion evidence
+
+- Human/CODEOWNER merge: PR #1456.
+- Merge commit: `a503cea6b4ff9c72f8cf2a35113ab7a537922574`; implementation head: `70f26f27c57970a821ca7734f5fe217aa455c861`.
+- Exact-head evidence before merge: CI #6537, Governance #6059, Container Security #3522, Project Directive #844 and PR #937 completed successfully.
+- Fresh CURRENT_MAIN readback: `f61df72e717399e783824d0b12190f2e7f6a96fd`; the VAI-04 merge is an ancestor of this generation with `behind=0`.
+- VAI-01 #1430, VAI-02 #1443 and VAI-03 #1445 are also Human/CODEOWNER-merged.
+- Deterministic consumer/declaration drift delegates only to the existing `RECONCILE_REPOSITORY_PROJECTION` path; unclassified/ambiguous evidence remains `OBSERVE_ONLY`.
+- The VAI-04 work claim is released/non-exclusive by this closure slice. No second controller, writer family, version authority or merge authority is created.
