@@ -278,11 +278,29 @@ jobs:
               github.rest.issues.listForRepo,
               { owner, repo, state: 'all', per_page: 100 },
             );
-            const existing = issues.find(
+            // A package can be touched by several merged PRs. Match the open
+            // handoff to its canonical finding paths, not only the latest PR.
+            function findingPaths(issue) {
+              const body = String(issue.body || '');
+              const matches = body.matchAll(
+                /^- \x60[A-Z_]+\x60 — \x60(docs\/projects\/[^/]+\/work-packages\/[^\x60\n]+\.md)\x60/gm,
+              );
+              return [...new Set([...matches].map(match => match[1]))].sort();
+            }
+            const findingPackagePaths =
+              [...new Set(findings.map(finding => finding.workPackagePath))].sort();
+            const closureIssues = issues.filter(
+              issue => !issue.pull_request && String(issue.body || '').includes(marker),
+            );
+            const samePaths = (left, right) =>
+              left.length === right.length && left.every((path, index) => path === right[index]);
+            const existing = closureIssues.find(
+              issue => String(issue.body || '').includes('- Merged PR: #' + mergedPr.number),
+            ) || closureIssues.find(
               issue =>
-                !issue.pull_request &&
-                String(issue.body || '').includes(marker) &&
-                String(issue.body || '').includes('- Merged PR: #' + mergedPr.number),
+                issue.state === 'open' &&
+                findingPackagePaths.length > 0 &&
+                samePaths(findingPaths(issue), findingPackagePaths),
             ) || null;
 
             if (await currentMainSha() !== sourceSha) {
@@ -293,11 +311,16 @@ jobs:
             }
 
             if (findings.length === 0) {
-              if (existing && existing.state === 'open') {
+              const converged = closureIssues.filter(issue => {
+                const paths = findingPaths(issue);
+                return issue.state === 'open' && paths.length > 0 &&
+                  paths.every(path => packagePaths.has(path));
+              });
+              for (const issue of converged) {
                 await github.rest.issues.createComment({
                   owner,
                   repo,
-                  issue_number: existing.number,
+                  issue_number: issue.number,
                   body:
                     '✅ Roadmap closure re-correlation PASS for PR #' +
                     mergedPr.number +
@@ -308,7 +331,7 @@ jobs:
                     '. Work-package documentation, claim lifecycle and leading Roadmap reference are converged.',
                 });
                 await github.rest.issues.update({
-                  owner, repo, issue_number: existing.number, state: 'closed',
+                  owner, repo, issue_number: issue.number, state: 'closed',
                 });
               }
               core.notice(
