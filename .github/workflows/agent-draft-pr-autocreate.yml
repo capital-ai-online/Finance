@@ -29,7 +29,9 @@ jobs:
        startsWith(github.event.workflow_run.head_branch, 'grok/') ||
        startsWith(github.event.workflow_run.head_branch, 'ai/'))
     permissions:
-      contents: read
+      # The reusable writer isolates contents:write to its bounded precreate-sync job.
+      # Candidate code is still never checked out or executed by this listener.
+      contents: write
       issues: write
       pull-requests: write
     uses: ./.github/workflows/open-agent-draft-pr.yml
