@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-OPS-ROADMAP-DEPLOY-SNAPSHOT-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-6",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Generate a deterministic Roadmap snapshot from the exact deployed source commit during the existing build.",
+  "priority": "P1",
+  "projectId": "CAPITAL-AI-OPS",
+  "projectFolder": "docs/projects/operations/",
+  "projectStage": "PVC-02/08",
+  "startedAt": "2026-09-28T13:12:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "23ec8398e855094eea51268c555f506cdb822f9a",
+  "branch": "agent/operations-roadmap-deploy-snapshot-20260928",
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-OPS-ROADMAP-DEPLOY-SNAPSHOT-20260928.json",
+    "scripts/automation/buildRoadmapDeploySnapshot.ts",
+    "package.json",
+    "tests/unit/roadmapDeploySnapshot.test.ts"
+  ],
+  "releaseCondition": "Release after Human/CODEOWNER merge or abandonment; FE consumption and route retirement are successor work.",
+  "versionImpact": "PATCH"
+}
