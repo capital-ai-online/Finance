@@ -45,6 +45,21 @@ jobs:
       - name: Repository-seitige Public-Readiness fail-closed prüfen
         run: node scripts/security/verifyPublicRepositoryReadiness.mjs
 
+      - name: Repository-Installation-Token für main-Ruleset erzeugen
+        id: repository_app_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-administration: write
+
+      - name: Effektiven Repository main-Ruleset atomar härten und zurücklesen
+        env:
+          CAPITAL_AI_GITHUB_REPOSITORY_ADMIN_TOKEN: ${{ steps.repository_app_token.outputs.token }}
+        run: node scripts/operations/runGitHubPublicMainRulesetWrite.mjs
+
       - name: Enterprise-Installation-Token erzeugen
         id: enterprise_app_token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # zizmor: ignore[github-app] Enterprise installation tokens cannot be permission-downscoped; provider permissions are bounded at the installation.
@@ -53,14 +68,10 @@ jobs:
           private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
           enterprise: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
 
-      - name: Enterprise main-Ruleset atomar härten und zurücklesen
+      - name: Enterprise main-Ruleset App-only atomar härten und zurücklesen
         env:
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
           CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN: ${{ steps.enterprise_app_token.outputs.token }}
-          # Historical secret name; live inventory already observed admin:enterprise.
-          # It is used only after an App-token GET 403 and is reverified from X-OAuth-Scopes
-          # before any provider mutation can occur.
-          CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
         run: node scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs
 
       - name: Public-Cutover bewusst gehalten ausweisen
@@ -68,10 +79,14 @@ jobs:
           {
             echo '## Public Repository Readiness'
             echo
-            echo '- Enterprise branch ruleset: `READBACK_VERIFIED`'
-            echo '- Provider auth: `APP_PREFERRED / ADMIN_PAT_ONLY_AFTER_APP_GET_403`'
+            echo '- Repository main ruleset: `READBACK_VERIFIED`'
+            echo '- Enterprise branch ruleset: `READBACK_VERIFIED_OR_EXPLICIT_IAM_BLOCKER`'
+            echo '- Provider auth: `GITHUB_APP_ONLY`'
             echo '- PR author identity: `GITHUB_APP_REQUIRED`'
             echo '- Human review: `1 x @SvenKulessa`'
+            echo '- Code Owner review: `REQUIRED`'
+            echo '- Conversation resolution: `REQUIRED`'
+            echo '- Last-push approval: `OFF`'
             echo '- Repository visibility mutation: `NOT_PERFORMED`'
             echo '- Historical Git / Actions log disclosure: `HUMAN_REVIEW_REQUIRED`'
             echo '- License: `PROPRIETARY / UNLICENSED` unchanged'

@@ -12,10 +12,9 @@ const writer = createGitHubPublicReadinessEnterpriseWriter({
   enterprise: requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG'),
   organization: 'capital-ai-online',
   repository: 'Finance',
-  enterpriseInstallationToken: String(
-    process.env.CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN || '',
-  ).trim(),
-  enterpriseAdminPat: String(process.env.CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT || '').trim(),
+  enterpriseInstallationToken: requiredEnv(
+    'CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN',
+  ),
 });
 
 const result = await writer.ensure();
@@ -27,6 +26,7 @@ process.stdout.write(`${JSON.stringify({
   authSource: result.authSource,
   mutationPerformed: result.mutationPerformed,
   visibilityMutationPerformed: false,
+  classicPatFallback: false,
   target: {
     organization: 'capital-ai-online',
     repository: 'Finance',
@@ -34,7 +34,6 @@ process.stdout.write(`${JSON.stringify({
     requiredApprovingReviewCount: 1,
     requireCodeOwnerReview: true,
     requireLastPushApproval: false,
-    requireExtraApprovalForUnattributedChanges: false,
     requiredReviewThreadResolution: true,
   },
   after: result.after,
