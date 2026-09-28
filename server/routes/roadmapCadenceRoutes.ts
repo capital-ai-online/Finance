@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDeploymentIdentity, type DeploymentIdentity } from '../deploymentIdentity';
+import { readGithubContentsToken } from '../ownerAuthorization/currentMain';
 import {
   loadRoadmapStateProjection,
   parseRoadmapProjectRouting,
@@ -64,7 +65,7 @@ function githubHeaders(): Record<string, string> {
     'User-Agent': 'capital-ai-roadmap-cadence/1.0.0',
     'X-GitHub-Api-Version': '2022-11-28',
   };
-  const token = String(process.env.GITHUB_TOKEN || '').trim();
+  const token = readGithubContentsToken();
   if (token) headers.Authorization = 'Bearer ' + token;
   return headers;
 }

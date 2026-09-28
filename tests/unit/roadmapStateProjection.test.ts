@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildRoadmapStateFromSources,
   parseRoadmapProjectRouting,
+  projectShippedRoadmap,
 } from '../../server/routes/roadmapStateProjection';
 
 const root = process.cwd();
@@ -161,5 +162,14 @@ describe('application-wide Roadmap CURRENT_MAIN projection', () => {
     expect(item('WP-SEO-CONTENT')?.state).toBe('READY');
     expect(item('SEC-WEB-20')?.workerCandidate).toBe(false);
     expect(item('QM-PR900-04')?.workerCandidate).toBe(false);
+  });
+
+  it('marks a shipped-image projection stale and still returns owner items', () => {
+    const projection = projectShippedRoadmap(root, 'a'.repeat(40), 'ADR0104_CURRENT_MAIN_UNRESOLVED');
+
+    expect(projection.stale).toBe(true);
+    expect(projection.repository.currentMainSha).toBe('a'.repeat(40));
+    expect(projection.items.length).toBeGreaterThan(0);
+    expect(projection.warnings.some((warning) => warning.source === 'shipped-image')).toBe(true);
   });
 });

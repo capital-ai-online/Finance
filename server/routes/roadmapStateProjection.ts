@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { getDeploymentIdentity } from '../deploymentIdentity';
 import {
   fetchCurrentMainTextFile,
   resolveCurrentMainSha,
@@ -581,6 +584,22 @@ export function buildRoadmapStateFromSources(input: {
 }
 
 export async function buildRoadmapStateProjection(): Promise<RoadmapStateProjection> {
+  try {
+    return await buildLiveRoadmapStateProjection();
+  } catch (error) {
+    const shippedRoot = String(process.env.ROADMAP_SHIPPED_ROOT || '').trim();
+    const commitSha = getDeploymentIdentity().commitSha;
+    if (!shippedRoot || !commitSha || !/^[0-9a-f]{40}$/.test(commitSha)) throw error;
+    const reason = error instanceof Error ? error.message : String(error);
+    try {
+      return projectShippedRoadmap(shippedRoot, commitSha, reason);
+    } catch {
+      throw error;
+    }
+  }
+}
+
+async function buildLiveRoadmapStateProjection(): Promise<RoadmapStateProjection> {
   const currentMainSha = await resolveCurrentMainSha();
   const projectMapping = await fetchCurrentMainTextFile(
     PROJECT_MAPPING_PATH,
@@ -608,6 +627,52 @@ export async function buildRoadmapStateProjection(): Promise<RoadmapStateProject
     liveRoadmap,
     projectRoadmaps,
   });
+}
+
+export function projectShippedRoadmap(
+  root: string,
+  currentMainSha: string,
+  reason: string,
+): RoadmapStateProjection {
+  if (!/^[0-9a-f]{40}$/.test(currentMainSha)) throw new Error('ROADMAP_SHIPPED_SHA_INVALID');
+  const base = path.resolve(root);
+  const read = (relativePath: string): string => {
+    const full = path.resolve(base, relativePath);
+    if (full !== base && !full.startsWith(base + path.sep)) {
+      throw new Error('ROADMAP_SHIPPED_PATH_ESCAPE');
+    }
+    return fs.readFileSync(full, 'utf8');
+  };
+  const projectMapping = read(PROJECT_MAPPING_PATH);
+  const routes = parseRoadmapProjectRouting(projectMapping);
+  const liveRoadmap = read(LIVE_ROADMAP_PATH);
+  const projectRoadmaps = Object.fromEntries(
+    routes.map((route) => {
+      const relativePath = route.folder + 'ROADMAP.md';
+      return [relativePath, read(relativePath)];
+    }),
+  );
+  const projection = buildRoadmapStateFromSources({
+    currentMainSha,
+    projectMapping,
+    liveRoadmap,
+    projectRoadmaps,
+  });
+  return {
+    ...projection,
+    stale: true,
+    warnings: [
+      ...projection.warnings,
+      {
+        code: 'UNRESOLVED_LIVE_PROJECT',
+        source: 'shipped-image',
+        detail:
+          'GitHub CURRENT_MAIN is unreadable (' +
+          reason +
+          '). Items are the roadmap markdown shipped with this deployment, not a live GitHub read.',
+      },
+    ],
+  };
 }
 
 export async function loadRoadmapStateProjection(): Promise<RoadmapStateProjection> {

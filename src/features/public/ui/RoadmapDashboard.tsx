@@ -119,49 +119,6 @@ const INTEGRATION_STYLE: Record<RoadmapIntegrationState, string> = {
   'legacy-drift': 'border-[#F87171]/30 bg-[#F87171]/10 text-[#F87171]',
 };
 
-const PHASES = [
-  {
-    id: 'foundation',
-    title: 'Foundation',
-    status: 'Abgeschlossen',
-    accent: 'text-roadmap-foundation',
-    line: 'bg-roadmap-foundation',
-    detail: 'Trust Root, konsolidierte Architektur und kanonische Branding-Verträge sind auf Main etabliert.',
-  },
-  {
-    id: 'automation',
-    title: 'Automation',
-    status: 'In Umsetzung',
-    accent: 'text-roadmap-automation',
-    line: 'bg-roadmap-automation',
-    detail: 'Governance-Convergence, dokumentarische Workflows und CI-/Preflight-Steuerung bleiben aktive Arbeit.',
-  },
-  {
-    id: 'runtime',
-    title: 'Self-Healing Runtime',
-    status: 'In Umsetzung',
-    accent: 'text-roadmap-runtime',
-    line: 'bg-roadmap-runtime',
-    detail: 'SH-02.11 ist mit RETRY_SAFE_OPERATION aktiviert; SH-02.12 und weitere generische/protected Self-Healing-Aktionen bleiben held.',
-  },
-  {
-    id: 'product',
-    title: 'Produkt & Markt',
-    status: 'In Umsetzung',
-    accent: 'text-roadmap-product-market',
-    line: 'bg-roadmap-product-market',
-    detail: 'Roadmap, Consent/GA4, FAQ, Sentiment, Auth/Profile, SEO Launch sowie Social/TTS- und Media-Slices werden getrennt nach Main-, Production- und Provider-Evidence projiziert.',
-  },
-  {
-    id: 'scaling',
-    title: 'Skalierung',
-    status: 'Geplant / gehalten',
-    accent: 'text-roadmap-scaling',
-    line: 'bg-roadmap-scaling',
-    detail: 'Spätere Produktivaktivierungen bleiben von Security-, Compliance-, Quality-, Runtime- und Human-Gates abhängig.',
-  },
-] as const;
-
 function shortSha(value: string | null | undefined) {
   return value ? value.slice(0, 8) : 'nicht verfügbar';
 }
@@ -1070,37 +1027,6 @@ export function RoadmapDashboard() {
                     Abhängigkeiten: {lane.dependencies.join(' · ')}
                   </p>
                 ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section aria-labelledby="roadmap-phases-title" className="landing-page-panel landing-page-panel--elevated">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-brand-primary">
-                Projekt-Roadmap
-              </p>
-              <h2 id="roadmap-phases-title" className="mt-1 text-xl font-black text-white sm:text-2xl">
-                Von Foundation bis Skalierung
-              </h2>
-            </div>
-            <p className="max-w-xl text-xs leading-5 text-white/50">
-              Phasen sind eine visuelle Portfolio-Projektion. SEC wird bereits aus der zentralen Live-Roadmap geführt;
-              andere Owner behalten ihre kanonischen Projektquellen bis zur owner-korrekten Migration.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-3 lg:grid-cols-5">
-            {PHASES.map((phase, index) => (
-              <div key={phase.id} className="relative rounded-xl border border-white/8 bg-black/20 p-4">
-                <div className={`mb-4 h-1 w-full rounded-full ${phase.line}`} />
-                <p className="font-mono text-[10px] font-black uppercase tracking-[0.14em] text-white/40">
-                  Phase {index + 1}
-                </p>
-                <h3 className={`mt-1 text-sm font-black ${phase.accent}`}>{phase.title}</h3>
-                <p className="mt-2 text-xs font-bold text-white/75">{phase.status}</p>
-                <p className="mt-3 text-xs leading-5 text-text-secondary">{phase.detail}</p>
               </div>
             ))}
           </div>
