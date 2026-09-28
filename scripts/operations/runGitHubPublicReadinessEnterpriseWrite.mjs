@@ -1,5 +1,43 @@
 import { createGitHubPublicReadinessEnterpriseWriter } from './githubPublicReadinessEnterpriseWriter.mjs';
-function requiredEnv(name){const value=String(process.env[name]||'').trim();if(!value)throw new Error(`[PUBLIC-READINESS-ENTERPRISE-WRITE] missing required environment variable: ${name}`);return value;}
-const writer=createGitHubPublicReadinessEnterpriseWriter({enterprise:requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG'),organization:'capital-ai-online',repository:'Finance',enterpriseInstallationToken:requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN')});
-const result=await writer.ensure();
-process.stdout.write(`${JSON.stringify({status:'PASS',mode:'BOUNDED_PUBLIC_READINESS_ENTERPRISE_RULESET_WRITE',operation:result.status,mutationPerformed:result.mutationPerformed,visibilityMutationPerformed:false,target:{organization:'capital-ai-online',repository:'Finance',branch:'~DEFAULT_BRANCH',requiredApprovingReviewCount:1,requireCodeOwnerReview:true,requireLastPushApproval:false,requireExtraApprovalForUnattributedChanges:false,requiredReviewThreadResolution:true},after:result.after,rawProxy:false,tokenLogged:false},null,2)}\n`);
+
+function requiredEnv(name) {
+  const value = String(process.env[name] || '').trim();
+  if (!value) {
+    throw new Error(`[PUBLIC-READINESS-ENTERPRISE-WRITE] missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+const writer = createGitHubPublicReadinessEnterpriseWriter({
+  enterprise: requiredEnv('CAPITAL_AI_GITHUB_ENTERPRISE_SLUG'),
+  organization: 'capital-ai-online',
+  repository: 'Finance',
+  enterpriseInstallationToken: String(
+    process.env.CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN || '',
+  ).trim(),
+  enterpriseAdminPat: String(process.env.CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT || '').trim(),
+});
+
+const result = await writer.ensure();
+
+process.stdout.write(`${JSON.stringify({
+  status: 'PASS',
+  mode: 'BOUNDED_PUBLIC_READINESS_ENTERPRISE_RULESET_WRITE',
+  operation: result.status,
+  authSource: result.authSource,
+  mutationPerformed: result.mutationPerformed,
+  visibilityMutationPerformed: false,
+  target: {
+    organization: 'capital-ai-online',
+    repository: 'Finance',
+    branch: '~DEFAULT_BRANCH',
+    requiredApprovingReviewCount: 1,
+    requireCodeOwnerReview: true,
+    requireLastPushApproval: false,
+    requireExtraApprovalForUnattributedChanges: false,
+    requiredReviewThreadResolution: true,
+  },
+  after: result.after,
+  rawProxy: false,
+  tokenLogged: false,
+}, null, 2)}\n`);

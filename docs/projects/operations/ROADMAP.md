@@ -1,11 +1,11 @@
 # CAPITAL-AI-OPS — Canonical Roadmap
 
-**Baseline:** `main@60109a28b365d388750703804c6e237ef0e269f7`
+**Baseline:** `main@ea78aa68e7df3ec50ab23efae06988787eff52f0`
 **Project:** `CAPITAL-AI-OPS`  
 **Folder:** `docs/projects/operations/`  
 **Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-04, PVC-06, PVC-07, PVC-08, PVC-18`  
 **Status:** `ACTIVE — CANONICAL PROJECT ROADMAP`  
-**Reconciliation:** 2026-09-26 — CURRENT_MAIN `f961ce6c9a15a4c627b7e6a21adf840f1584b5e9`; SH-02.13 implementation correlates merged code/test evidence with owner work-package documentation, the leading Live Roadmap and claim lifecycle; #1463/#1466/#1467 OPS closure drift is reconciled without fabricating provider PASS, while #1465 remains an owner-correct GOV handoff.
+**Reconciliation:** 2026-09-28 — CURRENT_MAIN `c1a10880a96b7406970ab6aaf7ea2637a2f77d71`; PR #1514 is merged. Public-Readiness repository hardening is on main, while provider exit remains fail-closed because post-merge run #36431654977 received HTTP 403 from the Enterprise ruleset API after successful App-token minting. The bounded provider-auth remediation is the active OPS continuation; repository visibility remains private.
 **Trust root:** `/AGENTS.md@current-main`
 
 ## Reconciliation rule
@@ -60,6 +60,19 @@ one bounded writer capability whose only permitted transition is
 permission is not already `read`, expose no raw REST proxy, use no user-supplied
 provider values and require exact post-write readback. Provider mutation cannot
 occur from the PR branch and Human/CODEOWNER merge remains mandatory.
+
+
+## Current execution priority — Public repository readiness provider closure 2026-09-28
+
+### OPS-PUBLIC-REPOSITORY-READINESS — App-first Enterprise ruleset hardening
+
+**State:** `PROVIDER_AUTH_REMEDIATION_ON_BRANCH / PUBLIC_CUTOVER_HELD`  
+**Owner/PVC:** `CAPITAL-AI-OPS / PVC-02, PVC-08, PVC-18`  
+**Source package:** `work-packages/OPS_PUBLIC_REPOSITORY_READINESS_2026-09-28.md`
+
+PR #1514 is Human/CODEOWNER-merged as `c1a10880a96b7406970ab6aaf7ea2637a2f77d71`. Repository preflight, GitHub Sponsors metadata, App-authored future Draft-PR creation and the solo-owner review model are on main. Post-merge run #36431654977 minted the Enterprise installation token but failed closed on the first Enterprise-ruleset GET with HTTP 403. The successor uses the App token first and may fall back to the already-provisioned classic PAT only after that exact GET-403 condition and only after provider headers prove `admin:enterprise`. The writer remains fixed to one named Enterprise ruleset and performs no repository-visibility or license mutation.
+
+**Exit:** Human/CODEOWNER merge of the bounded remediation followed by a successful exact-main `GitHub Public Repository Readiness Hardening` run with `UPDATED_AND_VERIFIED` or `NOOP_ALREADY_HARDENED`. Public cutover remains a separate Human Owner action.
 
 ## Current Release/Deployment cadence
 

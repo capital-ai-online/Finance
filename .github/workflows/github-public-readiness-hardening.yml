@@ -47,7 +47,7 @@ jobs:
 
       - name: Enterprise-Installation-Token erzeugen
         id: enterprise_app_token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # zizmor: ignore[github-app] GitHub enterprise installation tokens cannot be permission-downscoped; the Enterprise installation is least-privilege.
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # zizmor: ignore[github-app] Enterprise installation tokens cannot be permission-downscoped; provider permissions are bounded at the installation.
         with:
           client-id: ${{ vars.CAPITAL_AI_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.CAPITAL_AI_GITHUB_APP_PRIVATE_KEY }}
@@ -57,6 +57,10 @@ jobs:
         env:
           CAPITAL_AI_GITHUB_ENTERPRISE_SLUG: ${{ vars.CAPITAL_AI_GITHUB_ENTERPRISE_SLUG }}
           CAPITAL_AI_GITHUB_ENTERPRISE_INSTALLATION_TOKEN: ${{ steps.enterprise_app_token.outputs.token }}
+          # Historical secret name; live inventory already observed admin:enterprise.
+          # It is used only after an App-token GET 403 and is reverified from X-OAuth-Scopes
+          # before any provider mutation can occur.
+          CAPITAL_AI_GITHUB_ENTERPRISE_ADMIN_PAT: ${{ secrets.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT }}
         run: node scripts/operations/runGitHubPublicReadinessEnterpriseWrite.mjs
 
       - name: Public-Cutover bewusst gehalten ausweisen
@@ -65,6 +69,7 @@ jobs:
             echo '## Public Repository Readiness'
             echo
             echo '- Enterprise branch ruleset: `READBACK_VERIFIED`'
+            echo '- Provider auth: `APP_PREFERRED / ADMIN_PAT_ONLY_AFTER_APP_GET_403`'
             echo '- PR author identity: `GITHUB_APP_REQUIRED`'
             echo '- Human review: `1 x @SvenKulessa`'
             echo '- Repository visibility mutation: `NOT_PERFORMED`'
