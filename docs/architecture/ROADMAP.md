@@ -3,7 +3,7 @@
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
 **Version:** `3.1.0`  
 **Status date:** `2026-09-28`  
-**Baseline:** `main@f61df72e717399e783824d0b12190f2e7f6a96fd`  
+**Baseline:** `main@d6fa99aa0980f72744855cf0d111c9cb91df0e38`  
 **Role:** current-state index / non-authorizing  
 **Repository Agent Trust Root:** `/AGENTS.md`
 
@@ -93,6 +93,8 @@ This ledger is the repository-level **closure projection** for processed canonic
 
 | `docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI03_2026-09-24.md` | `CAPITAL-AI-OPS` | PR #1445 · merge `9fec05d184794427eea384ae069f505f4b07a1e5` · exact-head CI/Governance/Container/Project/PR PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; claim `released / exclusive=false` |
 | `docs/projects/operations/work-packages/OPS_ARTIFACT_VERSION_INVENTORY_VAI04_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1456 · merge `a503cea6b4ff9c72f8cf2a35113ab7a537922574` · exact-head CI/Governance/Container/Project/PR PASS | `DONE_MAIN / TERMINAL` | `DONE_MAIN / TERMINAL` | none; VAI-01..04 merged and claim `released / exclusive=false` |
+
+| `docs/projects/operations/work-packages/OPS_08_SUPABASE_RESILIENCE_2026-09-25.md` | `CAPITAL-AI-OPS` | PR #1486 · merge `314cc14e3345573ee86b969ca84cf98e5c2d858a` · exact-head CI/Governance/Container/Project/PR/zizmor PASS | `MERGED_MAIN / EVIDENCE_GATE` | `MERGED_MAIN / EVIDENCE_GATE` | successful encrypted recovery artifact + verified weekly Google-Drive mirror remain open; claim `released / exclusive=false` |
 
 After every successful Human/CODEOWNER merge that carries a canonical work-package identity, the existing Post-Merge Production Correlation → Self-Healing continuation path must correlate:
 
