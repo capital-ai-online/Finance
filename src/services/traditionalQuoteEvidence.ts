@@ -1,4 +1,5 @@
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+import type { MarketDataQualityState } from '../platform/MarketData/contracts';
 import { MarketDataGateway } from '../platform/MarketData/MarketDataGateway';
 import { ProviderRegistry } from '../platform/MarketData/ProviderRegistry';
 import { RateLimitBudget } from '../platform/MarketData/RateLimitBudget';
@@ -28,6 +29,8 @@ export interface VerifiedTraditionalQuote {
   sourcePath: string | null;
   alertEligible: boolean;
   executionPriceEligible: boolean;
+  correlationId?: string | null;
+  qualityState?: MarketDataQualityState | null;
   evidenceAgeMs?: number | null;
   maxAgeMs?: number;
   reason?: string;
@@ -130,6 +133,8 @@ async function fetchGatewayTraditionalQuote(
     sourcePath: 'https://api.twelvedata.com/quote',
     alertEligible: ready,
     executionPriceEligible: false,
+    correlationId: snapshot.correlationId,
+    qualityState: snapshot.qualityState,
     evidenceAgeMs: snapshot.freshnessMs,
     maxAgeMs: options.maxAgeMs ?? DEFAULT_MAX_QUOTE_AGE_MS,
     reason: snapshot.reason,
@@ -164,7 +169,7 @@ async function fetchFmpIndexQuote(symbol: string, options: QuoteOptions): Promis
       contractVersion: TRADITIONAL_QUOTE_CONTRACT_VERSION,
       status: 'UNSUPPORTED_ASSET', symbol, assetClass: 'index', price: null, currency: null,
       provider: null, providers: [], observedAt: null, retrievedAt, evidenceIds: [], sourcePath: null,
-      alertEligible: false, executionPriceEligible: false,
+      alertEligible: false, executionPriceEligible: false, correlationId: null, qualityState: null,
       reason: 'No approved FMP index mapping exists for this symbol.',
     };
   }
@@ -210,6 +215,8 @@ async function fetchFmpIndexQuote(symbol: string, options: QuoteOptions): Promis
     sourcePath: 'https://financialmodelingprep.com/stable/quote',
     alertEligible: ready,
     executionPriceEligible: false,
+    correlationId: snapshot.correlationId,
+    qualityState: snapshot.qualityState,
     evidenceAgeMs: snapshot.freshnessMs,
     maxAgeMs: options.maxAgeMs ?? DEFAULT_MAX_QUOTE_AGE_MS,
     reason: snapshot.reason,
