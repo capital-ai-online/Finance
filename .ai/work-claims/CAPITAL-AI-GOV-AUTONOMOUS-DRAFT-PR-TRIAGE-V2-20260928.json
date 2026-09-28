@@ -87,5 +87,7 @@
     "requiredChecks": "PASS",
     "productionBaseline": "PASS",
     "decisionState": "READY_FOR_HUMAN_DECISION"
-  }
+  },
+  "closureSync": true,
+  "closureSyncEvidence": "PR #1506/#1508 documentation and leading-Roadmap reconciliation; provider intake evidence remains gated."
 }
