@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-LANDING-TIMELINE-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector"
+  },
+  "workItem": "Replace the current /roadmap default with the full owner work-state timeline, using the landing-page brand profile.",
+  "workItemDE": "Die aktuelle /roadmap-Seite auf CURRENT_MAIN durch die volle Owner-Work-State-Timeline im Landingpage-Branding ersetzen, ohne Kalenderdaten zu erfinden.",
+  "priority": "P2",
+  "priorityReason": "Praesentationsaenderung der bestehenden Live-Projektion. Kein Security-, Deploy- oder Datenpfad.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "startedAt": "2026-09-28T07:16:20+02:00",
+  "baseBranch": "main",
+  "baseSha": "9a4c41e94515e729fa67972a252f8381228881d1",
+  "branch": "grok/finance-roadmap-landing-timeline-20260928",
+  "pullRequest": null,
+  "productionBaseline": {
+    "checkedAt": "2026-09-28T05:16:20Z",
+    "version": "0.6.6",
+    "commitSha": "f0b9b9f3368b3c9cc241fadef3100af89dc5256a",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-LANDING-TIMELINE-20260928.json",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    "index.html",
+    "metadata.json",
+    "docs/ceo/EXECUTIVE_SUMMARY.md",
+    "docs/code-quality/CODE_QUALITY_STANDARDS.md"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "versionImpact": "PATCH",
+  "versionImpactReason": "CURRENT_MAIN merge cadence requires this candidate to materialize package version 0.6.7 before Human/CODEOWNER merge. No MINOR or MAJOR contract change."
+}
