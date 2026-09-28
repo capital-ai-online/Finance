@@ -49,6 +49,8 @@ jobs:
       - id: gate
         name: Local-time and weekly cadence resolve
         shell: bash
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" != 'schedule' ]; then
@@ -60,7 +62,6 @@ jobs:
           LOCAL_DATE="$(TZ=Europe/Berlin date +%F)"
           LOCAL_WEEKDAY="$(TZ=Europe/Berlin date +%u)"
           UTC_OFFSET="$(TZ=Europe/Berlin date +%z)"
-          SCHEDULE='${{ github.event.schedule }}'
           echo "local_date=$LOCAL_DATE" >> "$GITHUB_OUTPUT"
 
           # GitHub scheduled workflows may start minutes or hours after their nominal
