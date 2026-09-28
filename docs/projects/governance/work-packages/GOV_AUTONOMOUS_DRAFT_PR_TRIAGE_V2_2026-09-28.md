@@ -6,7 +6,7 @@
 **Execution baseline:** `main@8542844df2f4044fa9fd793e04f034d508d74d46`  
 **Branch:** `agent/governance-autonomous-draft-pr-triage-v2-20260928`  
 **Priority:** `P1`  
-**Status:** `RECONSTRUCTED_ON_CURRENT_MAIN / STATIC_AND_SIGNAL_VALIDATION_PASS / BOOTSTRAP_PR_PENDING`
+**Status:** `MERGED / EXIT_VERIFIED / POST_MERGE_AUTONOMOUS_INTAKE_VALIDATION_IN_PROGRESS`
 
 ## Owner direction
 
@@ -191,3 +191,41 @@ manuellen Owner-`workflow_dispatch` erzeugt werden. Dieser V2-Branch enthält
 nicht vorliegt. Nach Human/CODEOWNER-Merge aktiviert erst `main` den
 autonomen `workflow_run`-Intake; der V2-Branch darf sich nicht selbst als
 Default-Branch-Workflow autorisieren.
+
+
+## Post-Merge Closure — 2026-09-28
+
+- PR #1506 merged from exact head `61bcde7637cdb7b1d7c578e9a7e0dea616f3b166`.
+- Merge commit / observed CURRENT_MAIN: `7eaca6eab69857e99bfb54c2afb372c22d93d958`.
+- Exact-head Required Checks, Governance, Security and Production / Deploy Cadence: **PASS**.
+- Decision state before merge: `READY_FOR_HUMAN_DECISION`.
+- The V2 work claim is released and non-exclusive in this closure projection.
+- The merged default-branch workflow is now authoritative for the autonomous
+  `Agent Branch Signal -> workflow_run -> canonical Draft-PR writer` path.
+- This closure branch is intentionally used as the first post-merge provider
+  validation of that path. Successful provider-created Draft-PR intake closes
+  the final behavioral exit evidence; Human/CODEOWNER merge remains unchanged.
+
+
+## Post-Merge Provider Failure — autonomous intake startup
+
+Provider validation on closure branch
+`agent/governance-draft-pr-v2-postmerge-closure-20260928` exposed:
+
+- Agent Branch Signal reached the provider path;
+- Autonomous Draft-PR intake run `36407585596` terminated as
+  `startup_failure` before any job was created;
+- the reusable writer still declared `issues: write` on its dormant
+  project-label convergence job while the autonomous caller intentionally
+  delegated only `contents: write + pull-requests: write`;
+- GitHub validates reusable-workflow permission ceilings before job-level
+  conditions, so the dormant higher permission prevented startup.
+
+Bounded correction:
+
+- project-label convergence uses `pull-requests: write`, which is already
+  delegated by the caller and sufficient for repository-label mutation in
+  this existing workflow contract;
+- no new token, actor, queue, PR writer or merge authority is introduced;
+- regression coverage denies reintroduction of `issues: write` in this
+  reusable workflow.

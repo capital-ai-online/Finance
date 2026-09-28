@@ -28,7 +28,7 @@ describe('GitHub agent draft PR bot governance', () => {
   it('keeps branch write privilege isolated to bounded pre-create convergence and never persists checkout credentials', () => {
     const yaml = workflow();
     expect(yaml).toContain('permissions: {}');
-    expect(yaml).toContain('converge-project-labels:\n    name: Kanonische Projektlabel-Provider-Metadaten konvergieren\n    permissions:\n      contents: read\n      issues: write');
+    expect(yaml).toContain('converge-project-labels:\n    name: Kanonische Projektlabel-Provider-Metadaten konvergieren\n    permissions:\n      contents: read\n      pull-requests: write');
     expect(yaml).toContain('precreate-sync:\n    name: Agenten-Branch vor Draft-PR auf CURRENT_MAIN konvergieren\n    permissions:\n      contents: write\n      pull-requests: read');
     expect(yaml).toContain('preflight-and-open:\n    name: Vertrauenswürdige Korrelation und Draft-PR-Erstellung\n    needs: [precreate-sync]\n    permissions:\n      contents: read\n      pull-requests: write');
     expect(yaml.match(/contents: write/g)?.length).toBe(1);
