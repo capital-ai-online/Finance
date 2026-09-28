@@ -363,7 +363,7 @@ export function createCryptoRouter(
       res.setHeader('x-correlation-id', correlationId);
       const symbol = String(req.params.symbol || '').toUpperCase().trim();
       if (!symbol) return res.status(400).json({ error: 'Cryptocurrency symbol is required.', correlationId });
-      const consensus = await getCryptoSpotConsensus(symbol);
+      const consensus = await getCryptoSpotConsensus(symbol, { correlationId });
       recordMarketIntegrityObservation({
         symbol,
         capability: 'spot-consensus',
@@ -378,7 +378,7 @@ export function createCryptoRouter(
         : consensus.status === 'SOURCE_CONFLICT'
           ? 409
           : 422;
-      return res.status(httpStatus).json({ symbol, correlationId, ...consensus });
+      return res.status(httpStatus).json({ symbol, ...consensus });
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating spot-price consensus:', error);
       return res.status(503).json({

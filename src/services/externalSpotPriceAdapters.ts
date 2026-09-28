@@ -23,5 +23,6 @@ export function marketObservationFromCanonicalSnapshot(
     retrievedAt: snapshot.receivedAt,
     unit: snapshot.currency,
     evidenceId: snapshot.evidenceId,
+    qualityState: snapshot.qualityState,
   };
 }

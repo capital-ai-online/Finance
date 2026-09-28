@@ -48,7 +48,7 @@ function verifiedQuote(index: number, price = 100): MarketLiveVerifiedQuoteEvent
     kind: 'verified-quote',
     verification: 'VERIFIED',
     eventId: `quote-${index}`,
-    topic: 'verified-quote:crypto:BTC',
+    topic: 'asset:crypto:BTC',
     assetId: 'crypto:BTC',
     symbol: 'BTC',
     assetClass: 'crypto',
@@ -123,6 +123,7 @@ describe('Tier 4 live client feed contract', () => {
 
     const invalid = { ...verifiedQuote(2), evidenceIds: [] };
     expect(isVerifiedMarketLiveQuote(invalid)).toBe(false);
+    expect(isVerifiedMarketLiveQuote({ ...verifiedQuote(2), topic: 'verified-quote:crypto:BTC' })).toBe(false);
     expect(evaluateMarketLivePriceAlert({ targetPrice: 99, condition: 'above' }, invalid)).toMatchObject({
       eligible: false,
       triggered: false,
@@ -166,7 +167,7 @@ describe('Tier 4 live client feed contract', () => {
       contractVersion: MARKET_LIVE_CLIENT_CONTRACT_VERSION,
       kind: 'canonical-score',
       eventId: 'score-1',
-      topic: 'canonical-score:crypto:BTC',
+      topic: 'asset:crypto:BTC',
       assetId: 'crypto:BTC',
       symbol: 'BTC',
       assetClass: 'crypto',
