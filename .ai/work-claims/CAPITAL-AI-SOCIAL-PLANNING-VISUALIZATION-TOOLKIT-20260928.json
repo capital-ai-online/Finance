@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-SOCIAL-PLANNING-VISUALIZATION-TOOLKIT-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "SOCIAL-P4 — Planning Visualization Toolkit for deterministic roadmaps, maps and planning graphs consumable by the existing SocialMediaEngine.",
+  "workItemDE": "SOCIAL-P4 — Deterministisches Planning-Visualization-Toolkit für Roadmaps, Maps und Planungsgraphen, konsumierbar durch die bestehende SocialMediaEngine.",
+  "priority": "P1",
+  "priorityReason": "Fresh Human/Owner direction requires reusable graphical planning output for Social orders without creating a second rendering/publishing authority.",
+  "projectId": "CAPITAL-AI-SOCIAL",
+  "projectFolder": "docs/projects/social-media/",
+  "projectStage": "cross-cutting Social Media rendering preparation; no productive PVC",
+  "startedAt": "2026-09-28T03:01:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "14677ea3acc5316e025d784c7dc35d3a6b2dfe1a",
+  "branch": "agent/social-planning-visualization-toolkit-20260928",
+  "issue": 1475,
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-SOCIAL-PLANNING-VISUALIZATION-TOOLKIT-20260928.json",
+    "docs/projects/social-media/ROADMAP.md",
+    "docs/projects/social-media/work-packages/SOCIAL_PLANNING_VISUALIZATION_TOOLKIT_2026-09-28.md",
+    "src/platform/SocialMediaEngine/Visualization/PlanningVisual.ts",
+    "src/platform/SocialMediaEngine/Visualization/D3PlanningVisualAdapter.ts",
+    "src/platform/SocialMediaEngine/Visualization/PlanningVisualMediaProjectAdapter.ts",
+    "src/platform/SocialMediaEngine/Visualization/PlanningVisualToolCatalog.ts",
+    "tests/unit/socialPlanningVisualToolkit.test.ts"
+  ],
+  "dependencies": [
+    "Existing MediaProjectV2 contract",
+    "Existing direct dependency d3",
+    "Canonical brand token source docs/frontend/design-tokens.json"
+  ],
+  "scopeBoundary": [
+    "No provider publication, OAuth, analytics, storage, deployment or productive PVC mutation.",
+    "No CDN or remote runtime loading.",
+    "No new npm dependency in this slice; D3 is already present in package.json and lockfile.",
+    "Mermaid, React Flow, Frappe Gantt and vis-timeline are catalogued as evaluated candidates only until a separate dependency/lockfile supply-chain gate authorizes installation.",
+    "MediaProjectV2 remains the canonical Social render/edit boundary; PlanningVisual is a subordinate input spec, not a parallel publishing authority."
+  ],
+  "acceptanceCriteria": [
+    "Bounded PlanningVisualSpec validates node/edge/lane/evidence input and rejects unsafe source references.",
+    "D3 adapter creates deterministic aspect-ratio-aware geometry for 1:1, 4:5 and 16:9 without calendar dates.",
+    "Adapter creates a valid offline publishReady=false MediaProjectV2 containing the PlanningVisual spec and geometry as render metadata.",
+    "Tool catalog documents currently available D3 and evaluated OSS candidates with license/upstream/use.",
+    "Focused unit tests prove determinism, validation and fail-closed candidate selection."
+  ],
+  "releaseCondition": "Release on Human/CODEOWNER merge, PR close, supersession or abandonment; no direct-main mutation."
+}
