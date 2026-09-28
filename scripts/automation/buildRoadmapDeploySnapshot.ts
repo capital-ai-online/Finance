@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {
   buildRoadmapStateFromSources,
@@ -42,7 +43,7 @@ export function buildRoadmapDeploySnapshot(commitSha = sourceCommit()) {
   });
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const snapshot = buildRoadmapDeploySnapshot();
   const destination = path.resolve(process.cwd(), 'public/roadmap-deploy-snapshot.json');
   fs.mkdirSync(path.dirname(destination), { recursive: true });
