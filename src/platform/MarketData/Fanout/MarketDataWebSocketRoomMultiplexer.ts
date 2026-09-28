@@ -136,6 +136,43 @@ export class MarketDataWebSocketRoomMultiplexer {
     return result;
   }
 
+  publishProjection(topic: string, event: unknown): MarketDataRoomPublishResult {
+    if (!parseMarketDataFanoutTopic(topic)) throw new Error('MARKET_DATA_FANOUT_INVALID_TOPIC');
+    const result: MarketDataRoomPublishResult = {
+      delivered: 0,
+      backpressured: 0,
+      disconnected: 0,
+      deltaFrames: 0,
+      fullFrames: 0,
+    };
+
+    for (const [client, state] of this.clients) {
+      const roomId = state.rooms.get(topic);
+      if (roomId === undefined) continue;
+      if (client.readyState !== OPEN) {
+        this.clients.delete(client);
+        result.disconnected += 1;
+        continue;
+      }
+      if (client.bufferedAmount > this.maxBufferedBytes) {
+        state.slowSkips += 1;
+        result.backpressured += 1;
+        if (state.slowSkips >= this.maxSlowSkips) {
+          client.close?.(1013, 'market-data-backpressure');
+          this.clients.delete(client);
+          result.disconnected += 1;
+        }
+        continue;
+      }
+
+      state.slowSkips = 0;
+      client.send(JSON.stringify(['event', roomId, event]));
+      result.delivered += 1;
+      result.fullFrames += 1;
+    }
+    return result;
+  }
+
   clientCount(): number {
     return this.clients.size;
   }
