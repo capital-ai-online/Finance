@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fetchVerifiedTraditionalQuote, TRADITIONAL_QUOTE_CONTRACT_VERSION } from '../../src/services/traditionalQuoteEvidence';
 
 describe('traditional quote evidence contract', () => {
-  it('returns a provenance-backed Twelve Data stock quote', async () => {
+  it('returns a provenance-backed delayed Twelve Data stock quote', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
       symbol: 'AAPL', close: '213.42', currency: 'USD', datetime: '2026-08-02T10:30:00Z',
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch;
@@ -20,7 +20,7 @@ describe('traditional quote evidence contract', () => {
     expect(quote.alertEligible).toBe(true);
     expect(quote.executionPriceEligible).toBe(false);
     expect(quote.correlationId).toContain('traditional-quote:stock:AAPL');
-    expect(quote.qualityState).toBe('LIVE');
+    expect(quote.qualityState).toBe('DELAYED');
     expect(quote.reason).toBeUndefined();
   });
 
