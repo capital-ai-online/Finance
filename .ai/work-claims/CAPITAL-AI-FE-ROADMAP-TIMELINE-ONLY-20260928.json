@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CAPITAL-AI-FE-ROADMAP-TIMELINE-ONLY-20260928",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector"
+  },
+  "workItem": "Show only the owner work-state timeline on /roadmap and serve it when GitHub CURRENT_MAIN cannot be read with the previously selected token.",
+  "workItemDE": "Auf /roadmap nur die Owner-Work-State-Timeline anzeigen und sie auch dann ausliefern, wenn der bisher gewaehlte GitHub-Token CURRENT_MAIN nicht lesen kann.",
+  "priority": "P2",
+  "priorityReason": "Die Timeline bleibt leer, weil /api/roadmap/state CURRENT_MAIN nicht aufloest, und der statische Phasen-Blueprint wird weiter gerendert. Kein neues Secret und keine Authorization-Entscheidung.",
+  "projectId": "CAPITAL-AI-FE",
+  "projectFolder": "docs/projects/frontend/",
+  "projectStage": "cross-cutting; no productive PVC",
+  "startedAt": "2026-09-28T12:30:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "a26828a7ddb9e25eb2407f7ec060316c7f432f37",
+  "branch": "grok/finance-roadmap-timeline-only-20260928",
+  "pullRequest": null,
+  "productionBaseline": {
+    "checkedAt": "2026-09-28T10:22:00Z",
+    "version": "0.6.7",
+    "commitSha": "8542844df2f4044fa9fd793e04f034d508d74d46",
+    "branch": "main",
+    "repoSlug": "capital-ai-online/Finance"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/CAPITAL-AI-FE-ROADMAP-TIMELINE-ONLY-20260928.json",
+    "Dockerfile",
+    "server/ownerAuthorization/currentMain.ts",
+    "server/routes/roadmapCadenceRoutes.ts",
+    "server/routes/roadmapStateProjection.ts",
+    "src/features/public/ui/RoadmapDashboard.tsx",
+    "tests/unit/roadmapDashboardProjection.test.ts",
+    "tests/unit/roadmapStateProjection.test.ts"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.",
+  "versionImpact": "PATCH",
+  "versionImpactReason": "Bugfix der bestehenden Roadmap-Projektion. Kein MINOR- oder MAJOR-Vertragswechsel. Der 10er-Merge-Version-Gate ist auf CURRENT_MAIN terminal und erzwingt hier keinen package.json-Write."
+}

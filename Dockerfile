@@ -33,6 +33,17 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
+# The public roadmap timeline reads these markdown sources. The runtime image otherwise
+# ships only dist/, so a GitHub 404 would fail closed and hide every owner lane.
+RUN set -eu; \
+    mkdir -p /app/roadmap-shipped; \
+    for f in docs/architecture/ROADMAP.md docs/projects/README.md docs/projects/*/ROADMAP.md; do \
+      mkdir -p "/app/roadmap-shipped/$(dirname "$f")"; \
+      cp "$f" "/app/roadmap-shipped/$f"; \
+    done; \
+    test -s /app/roadmap-shipped/docs/architecture/ROADMAP.md; \
+    test -s /app/roadmap-shipped/docs/projects/README.md
+
 # Exact source identity is non-sensitive build metadata. Git metadata stays excluded from context.
 ARG RELEASE_SOURCE_COMMIT
 ARG RENDER_GIT_COMMIT
@@ -92,7 +103,8 @@ RUN apk upgrade --no-cache libcrypto3 libssl3 \
 # Render binds public web services to PORT=10000 by default. Keeping the image default aligned
 # makes Docker's declared port, the process listener and the health check one explicit contract.
 ENV NODE_ENV=production \
-    PORT=10000
+    PORT=10000 \
+    ROADMAP_SHIPPED_ROOT=/app/roadmap-shipped
 
 # Create the runtime identity before copying artifacts.
 RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
@@ -100,6 +112,7 @@ RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
 COPY --chown=root:root package*.json ./
 COPY --from=prod-deps --chown=root:root /app/node_modules ./node_modules
 COPY --from=builder --chown=root:root /app/dist ./dist
+COPY --from=builder --chown=root:root /app/roadmap-shipped /app/roadmap-shipped
 COPY --from=builder --chown=root:root /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
 COPY --from=builder --chown=root:root /opt/ga4-mcp /opt/ga4-mcp
 

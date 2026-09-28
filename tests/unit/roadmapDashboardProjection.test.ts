@@ -180,11 +180,10 @@ describe('Roadmap dashboard projection', () => {
     expect(dashboard).not.toContain("app-shell-frame");
     expect(dashboard).not.toContain("ui-panel");
     expect(dashboard).toContain('text-brand-primary');
-    expect(dashboard).toContain('text-roadmap-foundation');
-    expect(dashboard).toContain('text-roadmap-automation');
-    expect(dashboard).toContain('text-roadmap-runtime');
-    expect(dashboard).toContain('text-roadmap-product-market');
-    expect(dashboard).toContain('text-roadmap-scaling');
+    expect(dashboard).not.toContain('Von Foundation bis Skalierung');
+    expect(dashboard).not.toContain('const PHASES');
+    expect(dashboard).toContain('OwnerStateTimeline');
+    expect(dashboard).toContain('Work-State nach Project Owner');
 
     expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.brandmark).toBe('docs/frontend/brandmark.json');
     expect(ROADMAP_DASHBOARD_SNAPSHOT.branding.designTokens).toBe(

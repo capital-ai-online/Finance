@@ -7,9 +7,19 @@ function githubHeaders(): Record<string, string> {
     'X-GitHub-Api-Version': '2022-11-28',
     'User-Agent': 'capital-ai-owner-authorization',
   };
-  const token = process.env.OWNER_AUTH_GITHUB_READ_TOKEN?.trim();
+  const token = readGithubContentsToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
+}
+
+export function readGithubContentsToken(): string {
+  return [
+    process.env.OWNER_AUTH_GITHUB_READ_TOKEN,
+    process.env.GITHUB_TOKEN,
+    process.env.CAPITAL_AI_GITHUB_ENTERPRISE_READ_PAT,
+  ]
+    .map((value) => String(value || '').trim())
+    .find((value) => value.length > 0) ?? '';
 }
 
 export async function resolveCurrentMainSha(): Promise<string> {
