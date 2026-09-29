@@ -80,7 +80,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@duneanalytics/client-sdk": "0.4.3",
-    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^13.3.2",
     "@stripe/stripe-js": "^9.8.0",
     "@supabase/supabase-js": "^2.116.0",
