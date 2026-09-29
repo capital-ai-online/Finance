@@ -106,8 +106,8 @@ Google Gemini ist wieder als **server-only, Free-Tier-only Research-Evidence-Pro
 | Node.js Engine | `>=24.18.0 <25` | `package.json#engines.node` |
 | TypeScript | `~7.0.2` | `package.json#devDependencies.typescript` |
 | React | `^19.3.0` | `package.json#dependencies.react` |
-| Vite | `^8.3.0` | `package.json#devDependencies.vite` |
-| Tailwind CSS | `^4.1.14` | `package.json#devDependencies.tailwindcss` |
+| Vite | `^8.3.1` | `package.json#devDependencies.vite` |
+| Tailwind CSS | `^4.3.3` | `package.json#devDependencies.tailwindcss` |
 | OpenAI SDK | `^7.3.0` | `package.json#dependencies.openai` |
 | Anthropic SDK | `^0.115.0` | `package.json#dependencies.@anthropic-ai/sdk` |
 | Supabase JS | `^2.116.0` | `package.json#dependencies.@supabase/supabase-js` |
