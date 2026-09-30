@@ -246,7 +246,8 @@ export function getAffectedFiles(changedFile: string, graph: DependencyGraph): s
 // Create file backup
 export function backupFile(relativeFilePath: string): string | null {
   try {
-    const srcPath = docsPath(relativeFilePath);
+    const normalizedRelativePath = String(relativeFilePath);
+    const srcPath = docsPath(normalizedRelativePath);
     if (!fs.existsSync(srcPath)) return null;
 
     if (!fs.existsSync(HISTORY_DIR)) {
@@ -254,7 +255,7 @@ export function backupFile(relativeFilePath: string): string | null {
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const safeName = relativeFilePath.replace(/[\/\\]/g, '_');
+    const safeName = normalizedRelativePath.replace(/[\/\\]/g, '_');
     const backupName = `${timestamp}_${safeName}`;
     const backupPath = historyPath(backupName);
 
@@ -820,8 +821,19 @@ hygieneRouter.post('/rollback', requireAdmin, requireWritableDocumentHygiene, (r
     return res.status(400).json({ error: 'filePath and backupName are required.' });
   }
 
-  const backupPath = historyPath(backupName);
-  const targetPath = docsPath(filePath);
+  let safeRelativeFilePath: string;
+  let targetPath: string;
+  try {
+    targetPath = docsPath(String(filePath));
+    safeRelativeFilePath = path.relative(DOCS_DIR, targetPath).replace(/\\/g, '/');
+  } catch (err) {
+    if (err instanceof UnsafePathError) {
+      return res.status(403).json({ error: 'Pfad liegt ausserhalb des Docs-Verzeichnisses.' });
+    }
+    throw err;
+  }
+
+  const backupPath = historyPath(String(backupName));
 
   try {
     if (!fs.existsSync(backupPath)) {
@@ -829,7 +841,7 @@ hygieneRouter.post('/rollback', requireAdmin, requireWritableDocumentHygiene, (r
     }
 
     // Backup current state first
-    backupFile(filePath);
+    backupFile(safeRelativeFilePath);
 
     // Restore backup
     fs.copyFileSync(backupPath, targetPath);
@@ -1280,13 +1292,24 @@ hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, asy
     return res.status(400).json({ error: 'filePath parameter is required.' });
   }
 
-  const fullPath = docsPath(filePath);
+  let safeRelativeFilePath: string;
+  let fullPath: string;
+  try {
+    fullPath = docsPath(String(filePath));
+    safeRelativeFilePath = path.relative(DOCS_DIR, fullPath).replace(/\\/g, '/');
+  } catch (err) {
+    if (err instanceof UnsafePathError) {
+      return res.status(403).json({ error: 'Pfad liegt ausserhalb des Docs-Verzeichnisses.' });
+    }
+    throw err;
+  }
+
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Dokument nicht gefunden: ${filePath}` });
   }
 
   try {
-    processFileEvent('change', filePath, email || 'Admin Manual Trigger');
+    processFileEvent('change', safeRelativeFilePath, email || 'Admin Manual Trigger');
     res.json({ success: true, message: `Hygieneprüfung für '${filePath}' erfolgreich gestartet.` });
   } catch (err: any) {
     res.status(500).json({ error: `Konnte Prüfung nicht starten: ${err.message || err}` });
