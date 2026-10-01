@@ -3,6 +3,7 @@
  * Path confinement, relative-redirect allowlisting, ReDoS-safe string helpers
  * and format-string-safe logging. Does not change product authority.
  */
+import fs from 'node:fs';
 import path from 'node:path';
 import type { Request, Response, NextFunction } from 'express';
 import { checkRateLimit, getClientIp } from './rateLimiter';
@@ -34,10 +35,40 @@ export function resolveWithinRoot(rootDir: string, candidate: string): string {
   assertNoNul(candidate);
   const root = path.resolve(rootDir);
   const resolved = path.resolve(root, candidate);
+
   const prefix = root.endsWith(path.sep) ? root : root + path.sep;
   if (resolved !== root && !resolved.startsWith(prefix)) {
     throw new UnsafePathError('path-escape');
   }
+
+  const realRoot = (() => {
+    try {
+      return fs.realpathSync.native(root);
+    } catch {
+      try {
+        return fs.realpathSync(root);
+      } catch {
+        return root;
+      }
+    }
+  })();
+  const realResolved = (() => {
+    try {
+      return fs.realpathSync.native(resolved);
+    } catch {
+      try {
+        return fs.realpathSync(resolved);
+      } catch {
+        return resolved;
+      }
+    }
+  })();
+
+  const realPrefix = realRoot.endsWith(path.sep) ? realRoot : realRoot + path.sep;
+  if (realResolved !== realRoot && !realResolved.startsWith(realPrefix)) {
+    throw new UnsafePathError('path-escape');
+  }
+
   return resolved;
 }
 
