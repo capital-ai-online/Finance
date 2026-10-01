@@ -535,7 +535,15 @@ export async function processFileEvent(
       return;
     }
 
-    const fullPath = docsPath(normPath);
+    let fullPath: string;
+    try {
+      fullPath = docsPath(normPath);
+    } catch (err) {
+      if (err instanceof UnsafePathError) {
+        throw new Error(`Ungültiger Dateipfad: ${normPath}`);
+      }
+      throw err;
+    }
     if (!fs.existsSync(fullPath)) {
       throw new Error(`Datei existiert nicht: ${fullPath}`);
     }
@@ -1276,17 +1284,27 @@ hygieneRouter.post('/lint-fix', requireAdmin, requireWritableDocumentHygiene, (r
 // 5. POST manual execution trigger
 hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, async (req, res) => {
   const { filePath, email } = req.body;
-  if (!filePath) {
+  if (!filePath || typeof filePath !== 'string') {
     return res.status(400).json({ error: 'filePath parameter is required.' });
   }
 
-  const fullPath = docsPath(filePath);
+  let fullPath: string;
+  try {
+    fullPath = docsPath(filePath);
+  } catch (err) {
+    if (err instanceof UnsafePathError) {
+      return res.status(400).json({ error: 'Invalid filePath.' });
+    }
+    throw err;
+  }
+
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: `Dokument nicht gefunden: ${filePath}` });
   }
 
   try {
-    processFileEvent('change', filePath, email || 'Admin Manual Trigger');
+    const normalizedRelativePath = path.relative(DOCS_DIR, fullPath).replace(/\\/g, '/');
+    processFileEvent('change', normalizedRelativePath, email || 'Admin Manual Trigger');
     res.json({ success: true, message: `Hygieneprüfung für '${filePath}' erfolgreich gestartet.` });
   } catch (err: any) {
     res.status(500).json({ error: `Konnte Prüfung nicht starten: ${err.message || err}` });
