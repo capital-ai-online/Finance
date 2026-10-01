@@ -33,6 +33,24 @@ const DOCS_DIR = path.join(process.cwd(), 'docs');
 const HISTORY_DIR = docsPath('.history');
 const HYGIENE_DB_FILE = path.join(process.cwd(), 'uploads', 'document_hygiene.json');
 
+function sanitizeDocRelativePath(input: unknown): string {
+  if (typeof input !== 'string') {
+    throw new UnsafePathError('invalid-path');
+  }
+  const normalized = input.trim().replace(/\\/g, '/');
+  if (
+    normalized.length === 0 ||
+    normalized.length > 2048 ||
+    normalized.startsWith('/') ||
+    normalized.includes('\0') ||
+    normalized.includes('..') ||
+    normalized.split('/').some((segment) => segment.length === 0 || segment === '.' || segment === '..')
+  ) {
+    throw new UnsafePathError('invalid-path');
+  }
+  return normalized;
+}
+
 function docsPath(relativeFilePath: string): string {
   return resolveWithinRoot(DOCS_DIR, relativeFilePath);
 }
@@ -497,7 +515,7 @@ export async function processFileEvent(
   relativePath: string,
   userEmail: string = 'Autonomer File Watcher'
 ) {
-  const normPath = relativePath.replace(/\\/g, '/');
+  const normPath = sanitizeDocRelativePath(relativePath);
   
   const logEntry: HygieneLogEntry = {
     id: 'hlog_' + Math.random().toString(36).substring(2, 12),
@@ -1280,15 +1298,19 @@ hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, asy
     return res.status(400).json({ error: 'filePath parameter is required.' });
   }
 
-  const fullPath = docsPath(filePath);
-  if (!fs.existsSync(fullPath)) {
-    return res.status(404).json({ error: `Dokument nicht gefunden: ${filePath}` });
-  }
-
   try {
-    processFileEvent('change', filePath, email || 'Admin Manual Trigger');
-    res.json({ success: true, message: `Hygieneprüfung für '${filePath}' erfolgreich gestartet.` });
+    const safeFilePath = sanitizeDocRelativePath(filePath);
+    const fullPath = docsPath(safeFilePath);
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ error: `Dokument nicht gefunden: ${safeFilePath}` });
+    }
+
+    processFileEvent('change', safeFilePath, email || 'Admin Manual Trigger');
+    res.json({ success: true, message: `Hygieneprüfung für '${safeFilePath}' erfolgreich gestartet.` });
   } catch (err: any) {
+    if (err instanceof UnsafePathError) {
+      return res.status(400).json({ error: 'Invalid filePath parameter.' });
+    }
     res.status(500).json({ error: `Konnte Prüfung nicht starten: ${err.message || err}` });
   }
 });
